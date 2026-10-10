@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "dev": "nodemon --inspect server.js",
+    "dev": "node --watch --inspect server.js",
     "start": "node server.js",
     "swagger": "node swagautogen.js",
     "test": "node --test \"test/*.test.js\""
@@ -40,6 +40,5 @@
     "ws": "^8.21.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
   }
 }
