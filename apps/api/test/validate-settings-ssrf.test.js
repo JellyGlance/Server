@@ -69,8 +69,8 @@ test("detectServerType in probe mode refuses loopback and sends LAN probes witho
   const { axios } = require("../classes/axios");
   const original = axios.get;
   const seen = [];
-  axios.get = async (url, options) => {
-    seen.push({ url, maxRedirects: options?.maxRedirects });
+  axios.get = async (url, config) => {
+    seen.push({ url, maxRedirects: config?.maxRedirects });
     return { data: { ProductName: "Jellyfin Server" } };
   };
   try {
@@ -78,6 +78,29 @@ test("detectServerType in probe mode refuses loopback and sends LAN probes witho
     assert.equal(seen.length, 0);
     assert.equal(await detectServerType("http://192.168.1.20:8096", { probe: true }), "jellyfin");
     assert.deepEqual(seen, [{ url: "http://192.168.1.20:8096/System/Info/Public", maxRedirects: 0 }]);
+  } finally {
+    axios.get = original;
+  }
+});
+
+test("detectServerType rebuilds the URL from validated parts and rejects bad input", async () => {
+  const { detectServerType } = require("../classes/server-type");
+  const { axios } = require("../classes/axios");
+  const original = axios.get;
+  const seen = [];
+  axios.get = async (url) => {
+    seen.push(url);
+    return { data: { ProductName: "Emby Server" } };
+  };
+  try {
+    assert.equal(await detectServerType("ftp://192.168.1.20", { probe: true }), null);
+    assert.equal(await detectServerType("http://user:pass@192.168.1.20:8096", { probe: true }), null);
+    assert.equal(await detectServerType("http://[::ffff:127.0.0.1]:8096", { probe: true }), null);
+    assert.equal(await detectServerType("http://169.254.169.254/latest", { probe: true }), null);
+    assert.equal(seen.length, 0);
+    assert.equal(await detectServerType("HTTP://Media.LAN", { probe: false }), "emby");
+    assert.equal(await detectServerType("https://10.0.0.5:8920/jf/web/index.html#!/home.html", { probe: true }), "emby");
+    assert.deepEqual(seen, ["http://media.lan/System/Info/Public", "https://10.0.0.5:8920/jf/System/Info/Public"]);
   } finally {
     axios.get = original;
   }

@@ -62,6 +62,19 @@ function probeLookup(hostname, options, callback) {
   });
 }
 
+// Resolves a hostname (or checks an IP literal) and throws if any address is blocked.
+async function resolveProbeHost(host) {
+  if (net.isIP(host)) {
+    if (isBlockedProbeAddress(host)) throw blockedError(host);
+    return [host];
+  }
+  const addresses = await dns.promises.lookup(host, { all: true });
+  if (!addresses.length || addresses.some((entry) => isBlockedProbeAddress(entry.address))) {
+    throw blockedError(host);
+  }
+  return addresses.map((entry) => entry.address);
+}
+
 // Checks a URL up front. IP literals skip lookup() inside net.connect, so they are
 // checked here; hostnames are resolved and every returned address must be allowed.
 async function assertProbeUrlAllowed(rawUrl) {
@@ -90,5 +103,6 @@ module.exports = {
   isBlockedProbeAddress,
   probeLookup,
   assertProbeUrlAllowed,
+  resolveProbeHost,
   probeRequestOptions,
 };
