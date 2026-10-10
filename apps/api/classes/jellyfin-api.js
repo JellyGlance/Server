@@ -4,6 +4,7 @@ const configClass = require("./config");
 const { axios } = require("./axios");
 const { getSessionData } = require("./sessions-socket-client");
 const { joinSafeHttpUrl, stripTrailingSlashes, toSafeHttpUrl } = require("../utils/security");
+const { assertProbeUrlAllowed, probeRequestOptions } = require("../utils/probe-guard");
 
 class JellyfinAPI {
   constructor() {
@@ -661,7 +662,7 @@ class JellyfinAPI {
     }
   }
 
-  async validateSettings(url, apikey) {
+  async validateSettings(url, apikey, { probe = false } = {}) {
     let result = { isValid: false, status: 400, errorMessage: "Invalid URL", url: url, cleanedUrl: "" };
     try {
       let _url = String(url || "").replace(/\/web\/index\.html#!\/home\.html$/, "");
@@ -680,12 +681,17 @@ class JellyfinAPI {
 
       const validation_url = joinSafeHttpUrl(_url, "/system/configuration");
 
-      const response = await axios.get(validation_url, {
+      let requestOptions = {
         headers: {
           Authorization: 'MediaBrowser Token="' + apikey + '"',
           "User-Agent": this.userAgent,
         },
-      });
+      };
+      if (probe) {
+        await assertProbeUrlAllowed(validation_url);
+        requestOptions = probeRequestOptions(requestOptions);
+      }
+      const response = await axios.get(validation_url, requestOptions);
       result.isValid = response.status == 200;
       if (result.isValid) {
         result.status = 200;
