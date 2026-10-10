@@ -73,6 +73,11 @@ async function detectServerType(url, { probe = false } = {}) {
 
   for (const path of ["/System/Info/Public", "/emby/System/Info/Public"]) {
     try {
+      // By design this contacts the media server URL an admin enters (setup wizard or
+      // admin-only settings). /proxy/validateSettings is limited to Owner/Admin with the
+      // settings permission (classes/route-guards.js), and in probe mode the host is
+      // resolved and loopback/link-local/metadata/IPv4-mapped addresses are refused,
+      // with no redirects (utils/probe-guard.js). LAN private ranges stay allowed.
       const { data } = await axios.get(`${origin}${basePath}${path}`, options);
       if (!data || typeof data !== "object") continue;
       const product = String(data.ProductName || "");
