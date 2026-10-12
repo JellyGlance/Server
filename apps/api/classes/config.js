@@ -1,9 +1,18 @@
 const db = require("../db");
+const { stripTrailingSlashes } = require("../utils/security");
 const { resolveServerType, setActiveServerType } = require("./server-type");
 
 let cachedConfig = null;
 let cachedConfigAt = 0;
 const CONFIG_CACHE_MS = 8000;
+
+// Saved or env-provided hosts may carry a trailing slash (e.g. "http://h:8096/"),
+// which turns `${JF_HOST}/Users` into "//Users". Strip it on read so existing
+// installs are repaired without a settings re-save.
+function normalizeHost(value) {
+  if (value == null) return value;
+  return stripTrailingSlashes(value);
+}
 
 class Config {
   async getConfig() {
@@ -29,7 +38,7 @@ class Config {
       setActiveServerType(serverType);
 
       const result = {
-        JF_HOST: process.env.JF_HOST ?? _config.JF_HOST,
+        JF_HOST: normalizeHost(process.env.JF_HOST ?? _config.JF_HOST),
         JF_EXTERNAL_HOST: _config.settings?.EXTERNAL_URL,
         JF_API_KEY: process.env.JF_API_KEY ?? _config.JF_API_KEY,
         APP_USER: _config.APP_USER,
