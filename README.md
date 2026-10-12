@@ -230,8 +230,6 @@ services:
       retries: 5
 
   jellyglance:
-    # Official image from v1.3.2 on. Older installs on ghcr.io/nerdy-technician/jellyglance
-    # should switch to this line (see the v1.3.2 release notes).
     image: ghcr.io/jellyglance/server:latest
     container_name: jellyglance
     restart: unless-stopped
@@ -295,12 +293,6 @@ The Docker image is designed around simple, visible paths:
 Backups created inside JellyGlance appear in `./backups`. To restore, place a backup JSON file in that folder or upload it from the Backup page.
 
 ## Updates
-
-> [!IMPORTANT]
-> **The Docker image is moving.** After v1.3.2, new releases are only published to `ghcr.io/jellyglance/server:latest`. Change your `image:` line to it, then pull and restart as below. See the [v1.3.2 release notes](https://github.com/JellyGlance/Server/releases/tag/v1.3.2).
->
-> - Building your own image? Pass `--build-arg JG_IMAGE_REPO=<your image repo>` so Settings knows which image it runs.
-> - To hide the image-move reminder in Settings, set `JG_HIDE_IMAGE_NOTICE=true` on the container.
 
 ```sh
 docker compose pull

@@ -20,14 +20,7 @@ RUN npm run build -w @jellyglance/web
 
 ARG TARGETARCH
 FROM node-${TARGETARCH} AS runtime
-# Image repo this build is published as. Every publish workflow passes its own
-# repo as a build-arg; self-builds can pass --build-arg JG_IMAGE_REPO=<repo>.
-# Unless it is ghcr.io/jellyglance/server (or empty on older images), Settings
-# shows the image-move notice. JG_HIDE_IMAGE_NOTICE=true hides it.
-ARG JG_IMAGE_REPO=""
-LABEL io.jellyglance.image.repo="${JG_IMAGE_REPO}"
-ENV JG_IMAGE_REPO=${JG_IMAGE_REPO} \
-  NODE_ENV=production \
+ENV NODE_ENV=production \
   CONFIG_DIR=/app/config \
   BACKUP_DIR=/app/backups
 WORKDIR /app

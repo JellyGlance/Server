@@ -17,8 +17,6 @@ services:
       retries: 5
 
   jellyglance:
-    # Official image from v1.3.2 on. Older installs on ghcr.io/nerdy-technician/jellyglance
-    # should switch to this line (see the v1.3.2 release notes).
     image: ghcr.io/jellyglance/server:latest
     container_name: jellyglance
     restart: unless-stopped

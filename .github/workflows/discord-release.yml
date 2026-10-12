@@ -8,8 +8,7 @@ on:
         required: true
   # Announce only after the release pipeline has built and pushed the images,
   # so nobody pulls a tag that doesn't exist yet. A failed or cancelled pipeline
-  # never announces. The optional legacy push runs inside the same job, so when
-  # it's switched on it must succeed too; when it's off it's skipped and doesn't block.
+  # never announces.
   workflow_run:
     workflows: ["JellyGlance Release Bot"]
     types: [completed]
@@ -33,8 +32,6 @@ jobs:
       packages: read # confirm the image tag exists on ghcr.io
     env:
       IMAGE_NAME: ghcr.io/jellyglance/server
-      LEGACY_IMAGE_NAME: ghcr.io/nerdy-technician/jellyglance
-      LEGACY_IMAGE_PUSH: ${{ vars.LEGACY_IMAGE_PUSH }}
       DISCORD_RELEASES_WEBHOOK: ${{ secrets.DISCORD_RELEASES_WEBHOOK }}
       DISCORD_BETA_RELEASES_WEBHOOK: ${{ secrets.DISCORD_BETA_RELEASES_WEBHOOK }}
 
@@ -78,10 +75,6 @@ jobs:
           set -euo pipefail
           docker buildx imagetools inspect "${IMAGE_NAME}:${TAG}" >/dev/null
           echo "Found ${IMAGE_NAME}:${TAG}"
-          if [ "${LEGACY_IMAGE_PUSH}" = "true" ]; then
-            docker buildx imagetools inspect "${LEGACY_IMAGE_NAME}:${TAG}" >/dev/null
-            echo "Found ${LEGACY_IMAGE_NAME}:${TAG}"
-          fi
 
       - name: Post Discord release update (stable)
         if: ${{ env.DISCORD_RELEASES_WEBHOOK != '' && steps.release.outputs.is_prerelease != 'true' }}

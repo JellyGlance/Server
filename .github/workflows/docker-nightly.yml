@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  # Primary image repo this workflow publishes to (also baked in as JG_IMAGE_REPO).
+  # Image repo this workflow publishes to.
   IMAGE_NAME: ghcr.io/jellyglance/server
 
 concurrency:
@@ -98,8 +98,3 @@ jobs:
           sbom: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Primary repo this build pushes to; Settings uses it to show the
-          # image-move notice. A dual publish must pass the primary repo only,
-          # never label the old repo as the new one.
-          build-args: |
-            JG_IMAGE_REPO=${{ env.IMAGE_NAME }}

@@ -27,18 +27,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Primary image repo this workflow publishes to (also baked in as JG_IMAGE_REPO).
+  # Image repo this workflow publishes to.
   IMAGE_NAME: ghcr.io/jellyglance/server
-  # Old user package, only pushed when the legacy push is switched on (see below).
-  LEGACY_IMAGE_NAME: ghcr.io/nerdy-technician/jellyglance
 
 jobs:
   release:
     name: "JellyGlance Release Bot · Pipeline"
     runs-on: ubuntu-latest
-    env:
-      # Job-level boolean so steps can check it without exposing the secret.
-      LEGACY_PUSH_ENABLED: ${{ vars.LEGACY_IMAGE_PUSH == 'true' && secrets.LEGACY_GHCR_TOKEN != '' }}
     permissions:
       contents: read # read the release via gh api and check out the tag
       packages: write # push images to ghcr.io/jellyglance/server
@@ -190,53 +185,4 @@ jobs:
           sbom: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Primary repo this build pushes to; Settings uses it to show the
-          # image-move notice. A dual publish must pass the primary repo only,
-          # never label the old repo as the new one.
-          build-args: |
-            JG_IMAGE_REPO=${{ env.IMAGE_NAME }}
 
-      # Optional legacy push to the old user package during the move. Off unless the
-      # repo var LEGACY_IMAGE_PUSH is 'true' AND the LEGACY_GHCR_TOKEN secret (classic
-      # PAT with write:packages for Nerdy-Technician) is set. It's a separate build with
-      # JG_IMAGE_REPO set to the legacy repo, so old-image users still see the move
-      # notice. Buildx reuses the cache from the primary build, so only the runtime
-      # layers after the ARG rebuild. Trivy scans the primary image only.
-      - name: Legacy image push skipped
-        if: env.LEGACY_PUSH_ENABLED != 'true'
-        run: echo "::notice::Legacy push to ${{ env.LEGACY_IMAGE_NAME }} skipped (needs repo var LEGACY_IMAGE_PUSH=true and secret LEGACY_GHCR_TOKEN)."
-
-      - name: Login to GHCR (legacy, Nerdy-Technician)
-        if: env.LEGACY_PUSH_ENABLED == 'true'
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: Nerdy-Technician
-          password: ${{ secrets.LEGACY_GHCR_TOKEN }}
-
-      - name: Docker metadata (legacy)
-        if: env.LEGACY_PUSH_ENABLED == 'true'
-        id: meta-legacy
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: ${{ env.LEGACY_IMAGE_NAME }}
-          tags: |
-            type=raw,value=${{ steps.release.outputs.tag }}
-            type=raw,value=${{ steps.release.outputs.version }}
-            type=raw,value=latest,enable=${{ steps.release.outputs.is_beta != 'true' }}
-            type=raw,value=main,enable=${{ steps.release.outputs.is_beta != 'true' }}
-            type=raw,value=beta,enable=${{ steps.release.outputs.is_beta == 'true' }}
-      - name: Build and push legacy image
-        if: env.LEGACY_PUSH_ENABLED == 'true'
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
-          push: true
-          provenance: false
-          sbom: false
-          tags: ${{ steps.meta-legacy.outputs.tags }}
-          labels: ${{ steps.meta-legacy.outputs.labels }}
-          # The legacy repo, so the Settings banner still tells these users to move.
-          build-args: |
-            JG_IMAGE_REPO=${{ env.LEGACY_IMAGE_NAME }}
