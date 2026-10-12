@@ -5,6 +5,7 @@ const packageJson = require("./package.json");
 const { compareVersions } = require("compare-versions");
 const memoizee = require("memoizee");
 const { getConfigDir } = require("./utils/storage-paths");
+const { createContributorsSource } = require("./utils/github-contributors");
 
 const REPO_OWNER = process.env.JS_REPO_OWNER || "JellyGlance";
 const REPO_NAME = process.env.JS_REPO_NAME || "Server";
@@ -111,21 +112,6 @@ function normalizeRelease(release) {
   };
 }
 
-function isBotContributor(contributor) {
-  const login = String(contributor?.login || contributor?.name || "").toLowerCase();
-  return contributor?.type === "Bot" || /\bbot\b/.test(login) || login.includes("[bot]") || login.includes("dependabot") || login.includes("github-actions");
-}
-
-function normalizeContributor(contributor) {
-  return {
-    id: contributor?.id || contributor?.login,
-    login: contributor?.login || "unknown",
-    avatar_url: contributor?.avatar_url || "",
-    profile_url: contributor?.html_url || `https://github.com/${contributor?.login || ""}`,
-    contributions: Number(contributor?.contributions || 0),
-  };
-}
-
 function readBundledReleaseNotes() {
   try {
     if (!fs.existsSync(BUNDLED_RELEASE_NOTES_FILE)) {
@@ -136,38 +122,6 @@ function readBundledReleaseNotes() {
   } catch (error) {
     console.warn(`Unable to read bundled release notes: ${error.message}`);
     return null;
-  }
-}
-
-function readContributorsCache() {
-  try {
-    if (!fs.existsSync(CONTRIBUTORS_CACHE_FILE)) {
-      return null;
-    }
-
-    return JSON.parse(fs.readFileSync(CONTRIBUTORS_CACHE_FILE, "utf8"));
-  } catch (error) {
-    console.warn(`Unable to read GitHub contributors cache: ${error.message}`);
-    return null;
-  }
-}
-
-function writeContributorsCache(data) {
-  try {
-    fs.mkdirSync(path.dirname(CONTRIBUTORS_CACHE_FILE), { recursive: true });
-    fs.writeFileSync(
-      CONTRIBUTORS_CACHE_FILE,
-      JSON.stringify(
-        {
-          cached_at: new Date().toISOString(),
-          data,
-        },
-        null,
-        2
-      )
-    );
-  } catch (error) {
-    console.warn(`Unable to write GitHub contributors cache: ${error.message}`);
   }
 }
 
@@ -314,26 +268,6 @@ async function fetchGithubStars() {
   return {
     stars: null,
     repository_url: REPOSITORY_URL,
-  };
-}
-
-function getCachedContributors({ allowStale = false } = {}) {
-  const cache = readContributorsCache();
-  if (!cache?.cached_at || !cache?.data?.contributors?.length) {
-    return null;
-  }
-
-  const age = Date.now() - new Date(cache.cached_at).getTime();
-  const maxAge = allowStale ? RELEASE_CACHE_MAX_STALE_MS : RELEASE_CACHE_TTL_MS;
-  if (!Number.isFinite(age) || age < 0 || age > maxAge) {
-    return null;
-  }
-
-  return {
-    ...cache.data,
-    cached: true,
-    cached_at: cache.cached_at,
-    stale: age > RELEASE_CACHE_TTL_MS,
   };
 }
 
@@ -514,51 +448,27 @@ async function fetchReleaseNotes() {
   }
 }
 
-async function fetchGithubContributors() {
-  const currentVersion = packageJson.version;
-  const cached = getCachedContributors();
-  if (cached) {
-    return cached;
-  }
-
-  try {
-    const response = await axios.get(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contributors`, {
-      headers: {
-        Accept: "application/vnd.github+json",
-        "User-Agent": `JellyGlance/${currentVersion}`,
-        ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
-      },
-      params: {
-        per_page: 100,
-        anon: "false",
-      },
-      timeout: 10000,
-    });
-
-    const data = {
-      repository_url: REPOSITORY_URL,
-      contributors: (response.data || [])
-        .filter((contributor) => !isBotContributor(contributor))
-        .map(normalizeContributor)
-        .filter((contributor) => contributor.login && contributor.login !== "unknown"),
-    };
-
-    if (data.contributors.length) {
-      writeContributorsCache(data);
-      return data;
-    }
-
-    throw new Error("GitHub returned no non-bot contributors");
-  } catch (error) {
-    const staleCache = getCachedContributors({ allowStale: true });
-    if (staleCache) {
-      console.warn(`Using cached GitHub contributors after fetch failed: ${error.message}`);
-      return staleCache;
-    }
-
-    throw error;
-  }
+async function fetchContributorList() {
+  const response = await axios.get(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contributors`, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      "User-Agent": `JellyGlance/${packageJson.version}`,
+      ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+    },
+    params: {
+      per_page: 100,
+      anon: "false",
+    },
+    timeout: 10000,
+  });
+  return response.data || [];
 }
+
+const fetchGithubContributors = createContributorsSource({
+  fetchList: fetchContributorList,
+  cacheFile: CONTRIBUTORS_CACHE_FILE,
+  repositoryUrl: REPOSITORY_URL,
+});
 
 async function checkForUpdates() {
   const currentVersion = packageJson.version;
