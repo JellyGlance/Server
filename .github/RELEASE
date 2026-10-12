@@ -17,7 +17,7 @@ Added
 - Dedicated JellyGlance GitHub Action bots plus PR validation / Actions naming standards
 
 Fixed
-- Webhook bursts no longer crash-loop JellyGlance on native/systemd installs ([#80](https://github.com/Nerdy-Technician/JellyGlance/pull/80))
+- Webhook bursts no longer crash-loop JellyGlance on native/systemd installs ([#80](https://github.com/JellyGlance/Server/pull/80))
 - Playback webhook spam from session flicker / device-id churn is filtered; episode start alerts are more reliable
 - Discord rich embeds no longer drop when multipart image uploads fail (text card still sends)
 - Active Sessions cards truncate long stream labels and titles so desktop/mobile layouts no longer overlap
@@ -30,13 +30,13 @@ Changed
 - Dependency bumps for production and development packages
 
 ## What's Changed
-* chore(deps-dev): bump the development-dependencies group with 6 updates by @dependabot[bot] in https://github.com/Nerdy-Technician/JellyGlance/pull/77
-* chore(deps): bump the production-dependencies group with 5 updates by @dependabot[bot] in https://github.com/Nerdy-Technician/JellyGlance/pull/76
-* Feat  add PR validation checks and standardize Actions naming by @Nerdy-Technician in https://github.com/Nerdy-Technician/JellyGlance/pull/78
-* fix: prevent crash-restart loop from unhandled refreshMaterializedView rejections by @mcgarrah in https://github.com/Nerdy-Technician/JellyGlance/pull/80
-* Update README.md by @Nerdy-Technician in https://github.com/Nerdy-Technician/JellyGlance/pull/81
+* chore(deps-dev): bump the development-dependencies group with 6 updates by @dependabot[bot] in https://github.com/JellyGlance/Server/pull/77
+* chore(deps): bump the production-dependencies group with 5 updates by @dependabot[bot] in https://github.com/JellyGlance/Server/pull/76
+* Feat  add PR validation checks and standardize Actions naming by @Nerdy-Technician in https://github.com/JellyGlance/Server/pull/78
+* fix: prevent crash-restart loop from unhandled refreshMaterializedView rejections by @mcgarrah in https://github.com/JellyGlance/Server/pull/80
+* Update README.md by @Nerdy-Technician in https://github.com/JellyGlance/Server/pull/81
 
 ## New Contributors
-* @mcgarrah made their first contribution in https://github.com/Nerdy-Technician/JellyGlance/pull/80
+* @mcgarrah made their first contribution in https://github.com/JellyGlance/Server/pull/80
 
-**Full Changelog**: https://github.com/Nerdy-Technician/JellyGlance/compare/v1.2.7...v1.2.8
+**Full Changelog**: https://github.com/JellyGlance/Server/compare/v1.2.7...v1.2.8
