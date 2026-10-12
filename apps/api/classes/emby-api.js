@@ -604,7 +604,7 @@ class EmbyAPI {
         _url = `${_url}/emby`;
       }
 
-      _url = toSafeHttpUrl(_url);
+      _url = stripTrailingSlashes(toSafeHttpUrl(_url));
       result.cleanedUrl = _url;
 
       if (!this.#isValidUrl(_url)) {
