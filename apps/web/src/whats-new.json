@@ -1,4 +1,26 @@
 {
+  "1.3.3": [
+    {
+      "icon": "download",
+      "title": "Now On The New Image Only",
+      "body": "From v1.3.3, updates are only published to ghcr.io/jellyglance/server:latest. If you are still on the old image, change the image: line in your docker-compose file (or your docker run command) to it, then pull and restart. Your settings and history stay as they are."
+    },
+    {
+      "icon": "shield",
+      "title": "Server Addresses With A Trailing Slash",
+      "body": "A Jellyfin or Emby address ending in / (for example http://192.168.1.10:8096/) no longer breaks user lists and other requests with 404 errors. Saved addresses and the JF_HOST setting are cleaned up automatically, and addresses with a subpath like /jellyfin keep working."
+    },
+    {
+      "icon": "magic",
+      "title": "New Project Home",
+      "body": "JellyGlance now lives at github.com/JellyGlance/Server, with the guides at JellyGlance/Documentation. Links in the app, README and issue forms point to the new locations, and old links redirect."
+    },
+    {
+      "icon": "speed",
+      "title": "Dependency Update",
+      "body": "fast-uri is updated to 4.2.2. Nothing to change on your side, just update and restart."
+    }
+  ],
   "1.3.2": [
     {
       "icon": "download",
