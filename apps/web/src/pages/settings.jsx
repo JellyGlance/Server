@@ -8,7 +8,6 @@ import { useTranslation } from "react-i18next";
 import ErrorBoundary from "./components/general/ErrorBoundary";
 import Loading from "./components/general/loading";
 import SettingsSearch from "./components/settings/SettingsSearch";
-import ImageMoveNotice from "./components/settings/ImageMoveNotice";
 import Settings3LineIcon from "remixicon-react/Settings3LineIcon";
 import ShieldKeyholeLineIcon from "remixicon-react/ShieldKeyholeLineIcon";
 import PulseLineIcon from "remixicon-react/PulseLineIcon";
@@ -567,7 +566,6 @@ export default function Settings() {
       </nav>
 
       <div className="tab-content">
-        <ImageMoveNotice />
         <div className={`settings-tab-pane bg-transparent tab-pane active show${activeTab === "tabIntegrations" ? " integrations-settings-tab" : ""}`.trim()}>
           {renderActiveSettingsPane()}
         </div>

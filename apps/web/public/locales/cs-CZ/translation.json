@@ -956,12 +956,5 @@
       "JELLYFIN_DOWN_DETAIL": "{{error}}{{version}}",
       "OPEN_HEALTH": "Otevřít stav systému"
     }
-  },
-  "IMAGE_MOVE_NOTICE": {
-    "TITLE": "JellyGlance is moving to a new Docker image",
-    "BODY": "After v{{version}}, updates will only be published to the JellyGlance/Server image. Switch your docker-compose file or docker run command to it as soon as possible, then pull and restart.",
-    "COPY": "Copy image line",
-    "COPIED": "Copied",
-    "RELEASE_NOTES": "Read the release notes"
   }
 }
