@@ -3,8 +3,9 @@ name: JellyGlance Release Bot
 # Releases are published by hand from the GitHub Releases page (using the
 # Release Drafter draft). Publishing a release triggers this workflow, which
 # stamps the release version into the package files, builds the app and pushes
-# the Docker images. Discord and Mastodon announcements run from their own
-# workflows on the same "release published" event.
+# the Docker images. The Discord announcement runs after this workflow succeeds
+# (workflow_run), so it only goes out once the images exist. Mastodon still runs
+# on the "release published" event.
 #
 # What's New (apps/web/src/whats-new.json) is bundled into the image, so merge
 # it into main before publishing the release.

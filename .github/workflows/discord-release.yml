@@ -6,8 +6,13 @@ on:
       tag:
         description: Release tag to announce, for example v1.1.0
         required: true
-  release:
-    types: [published]
+  # Announce only after the release pipeline has built and pushed the images,
+  # so nobody pulls a tag that doesn't exist yet. A failed or cancelled pipeline
+  # never announces. The optional legacy push runs inside the same job, so when
+  # it's switched on it must succeed too; when it's off it's skipped and doesn't block.
+  workflow_run:
+    workflows: ["JellyGlance Release Bot"]
+    types: [completed]
 
 permissions:
   contents: read
@@ -15,8 +20,21 @@ permissions:
 jobs:
   release:
     name: Post release update
+    # Only a successful pipeline run started by a published release (head_branch is
+    # then the tag). Manual image rebuilds of an old tag don't re-announce; use
+    # workflow_dispatch here for that.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'release')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # read the release via gh api
+      packages: read # confirm the image tag exists on ghcr.io
     env:
+      IMAGE_NAME: ghcr.io/jellyglance/server
+      LEGACY_IMAGE_NAME: ghcr.io/nerdy-technician/jellyglance
+      LEGACY_IMAGE_PUSH: ${{ vars.LEGACY_IMAGE_PUSH }}
       DISCORD_RELEASES_WEBHOOK: ${{ secrets.DISCORD_RELEASES_WEBHOOK }}
       DISCORD_BETA_RELEASES_WEBHOOK: ${{ secrets.DISCORD_BETA_RELEASES_WEBHOOK }}
 
@@ -30,7 +48,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          RELEASE_TAG: ${{ github.event.workflow_run.head_branch || inputs.tag }}
         run: |
           node <<'NODE'
           const fs = require("fs");
@@ -43,6 +61,27 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `url=${release.html_url}\n`);
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `is_prerelease=${!!release.prerelease}\n`);
           NODE
+
+      - name: Login to GitHub Container Registry
+        if: ${{ steps.release.outcome == 'success' }}
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Confirm the release image is published
+        if: ${{ steps.release.outcome == 'success' }}
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "${IMAGE_NAME}:${TAG}" >/dev/null
+          echo "Found ${IMAGE_NAME}:${TAG}"
+          if [ "${LEGACY_IMAGE_PUSH}" = "true" ]; then
+            docker buildx imagetools inspect "${LEGACY_IMAGE_NAME}:${TAG}" >/dev/null
+            echo "Found ${LEGACY_IMAGE_NAME}:${TAG}"
+          fi
 
       - name: Post Discord release update (stable)
         if: ${{ env.DISCORD_RELEASES_WEBHOOK != '' && steps.release.outputs.is_prerelease != 'true' }}
