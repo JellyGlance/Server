@@ -73,9 +73,20 @@ function parseReleaseBody(body) {
   return sections.length ? sections : [{ title: "Notes", items: ["No release notes were provided for this version."] }];
 }
 
+// The API already drops automation and AI accounts; this is a second guard for
+// older servers. Keep in line with apps/api/utils/github-contributors.js.
+const EXCLUDED_CONTRIBUTORS = new Set([
+  "dependabot", "dependabot-preview", "renovate", "renovate-bot", "renovatebot", "github-actions", "actions-user", "web-flow",
+  "copilot", "copilot-swe-agent", "github-copilot", "cursor", "cursoragent", "cursor-agent", "claude", "claude-code", "anthropic-claude",
+  "codex", "chatgpt-codex-connector", "openai-codex", "devin", "devin-ai-integration", "jellyglance-bot", "jellyglance-security-bot",
+  "imgbot", "allcontributors", "snyk-bot", "pre-commit-ci",
+]);
+
 function isBotContributor(contributor) {
-  const login = String(contributor?.login || "").toLowerCase();
-  return /\bbot\b/.test(login) || login.includes("[bot]") || login.includes("dependabot") || login.includes("github-actions");
+  if (String(contributor?.type || "").toLowerCase() === "bot") return true;
+  const login = String(contributor?.login || "").trim().toLowerCase();
+  if (!login || login.endsWith("[bot]") || login.endsWith("-bot") || login.endsWith("_bot")) return true;
+  return EXCLUDED_CONTRIBUTORS.has(login.replace(/\[bot\]$/, ""));
 }
 
 const PROJECT_OWNER_LOGIN = "Nerdy-Technician";

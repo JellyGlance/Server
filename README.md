@@ -5,15 +5,8 @@
   </picture>
 </p>
 
-> [!WARNING]
-> AFTER VERSION V1.3.2 the Project is being moved to https://github.com/JellyGlance/Server 
-
 <p align="center">
-  <strong>Your Jellyfin command center: live sessions, requests, users, libraries, stats, calendars, downloads, health, webhooks, and tasks in one clean dashboard.</strong>
-</p>
-
-<p align="center">
-  Built by <strong>Nerdy-Technician</strong> for self-hosted media servers that deserve better visibility than a pile of browser tabs.
+  <strong>A self-hosted dashboard for Jellyfin and Emby: live sessions, watch history, statistics, requests, downloads and the apps around your media server, in one place.</strong>
 </p>
 
 <p align="center">
@@ -60,64 +53,64 @@
   </a>
 </p>
 
-
 <p align="center">
   <a href="https://jellyglance.com/"><strong>Website</strong></a>
   ·
-  <a href="https://demo.jellyglance.com/"><strong>Live Demo</strong></a>
+  <a href="https://demo.jellyglance.com/"><strong>Live demo</strong></a>
   ·
   <a href="https://github.com/JellyGlance/Documentation"><strong>Documentation</strong></a>
   ·
   <a href="https://discord.gg/dMGhv8j2kx"><strong>Discord</strong></a>
-  ·
-  <a href="#quick-docker-start"><strong>Docker Start</strong></a>
-  ·
-  <a href="#integrations"><strong>Integrations</strong></a>
 </p>
 
-## Live Demo
+## Contents
 
-Try JellyGlance without installing anything at **[demo.jellyglance.com](https://demo.jellyglance.com/)**. It's read-only, filled with real film and TV data from TMDB and simulated viewers, downloads and requests, and resets every few hours. The demo's source is in **[JellyGlance/Demo](https://github.com/JellyGlance/Demo)**.
+- [What it is](#what-it-is)
+- [Screenshots](#screenshots)
+- [Features](#features)
+- [Integrations](#integrations)
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [Updating](#updating)
+- [Documentation](#documentation)
+- [Community and support](#community-and-support)
+- [Contributing](#contributing)
+- [License and credits](#license-and-credits)
 
-## Documentation
+## What it is
 
-Read the guides and contribute in **[JellyGlance/Documentation](https://github.com/JellyGlance/Documentation)**.
+JellyGlance connects to your Jellyfin or Emby server and keeps its own PostgreSQL history of what's played, by whom and on what. On top of that it gives you a home dashboard, statistics and recaps, and links to the request, download and \*arr apps you already run, so you can see and manage your server without a pile of browser tabs.
 
-- [Installation and first setup](https://github.com/JellyGlance/Documentation/blob/main/docs/guide/getting-started.md)
-- [Integration directory](https://github.com/JellyGlance/Documentation/blob/main/docs/integrations.md)
-- [Reverse proxy: Nginx, Caddy, Nginx Proxy Manager, and Traefik](https://github.com/JellyGlance/Documentation/blob/main/docs/operations/reverse-proxy.md)
-- [Configuration reference](https://github.com/JellyGlance/Documentation/blob/main/docs/reference/configuration.md)
-- [Backup and restore](https://github.com/JellyGlance/Documentation/blob/main/docs/operations/backup-restore.md)
-- [Troubleshooting](https://github.com/JellyGlance/Documentation/blob/main/docs/guide/troubleshooting.md)
+It runs as a single Docker container next to PostgreSQL. It's free, with no ads, subscriptions or paid tiers. Try the read-only **[live demo](https://demo.jellyglance.com/)** first if you like (its source is in [JellyGlance/Demo](https://github.com/JellyGlance/Demo)).
 
-For documentation corrections or requests, [open a docs issue](https://github.com/JellyGlance/Documentation/issues/new/choose). Application bugs belong in [this project's issue tracker](https://github.com/JellyGlance/Server/issues). Visit [jellyglance.com](https://jellyglance.com/) for the project website. Its source is in **[JellyGlance/Website](https://github.com/JellyGlance/Website)**. See [CONTRIBUTING.md](CONTRIBUTING.md) before changing widgets.
+## Screenshots
 
-## Why JellyGlance
+| Home | Activity |
+| --- | --- |
+| ![Home dashboard](.github/assets/screenshots/home.png) | ![Activity history](.github/assets/screenshots/activity.png) |
+| **Statistics** | **Requests** |
+| ![Statistics](.github/assets/screenshots/statistics.png) | ![Requests](.github/assets/screenshots/requests.png) |
+| **Libraries** | **Recently added** |
+| ![Libraries](.github/assets/screenshots/libraries-grid.png) | ![Recently added](.github/assets/screenshots/recently-added.png) |
 
-JellyGlance gives your Jellyfin server a proper dashboard: live sessions, request triage, user watch stats, recent media, library health, activity history, release calendars, download queues, webhooks, backups, and integrations in one polished place.
+## Features
 
-It is built around three jobs:
-
-- **Watch** live streams, playback history, watch-time trends, user activity, favourites, watchlists, and recently added media.
-- **Triage** requests, Jellyfin availability, failed integrations, webhook delivery, backups, and user access.
-- **Operate** calendars, download queues, scheduled syncs, health checks, quick actions, audit history, and notifications.
-
-## Highlights
-
-- **Live active sessions** with device, client, codec, bitrate, user, runtime, episode details, and platform icons.
-- **Customizable home command center** with drag-and-drop section order, visibility toggles, presets, density, themes, kiosk mode, and alert rules.
-- **Requests page** for Jellyseerr and Overseerr with combined search, posters, ratings, cast lists, season controls, route editing, availability checks, request actions, and direct open links.
-- **Wizarr invite management** with custom invite codes, server and library targeting, optional wizard bundle IDs, copy/open/delete actions, invite sync, and invite webhook notifications.
-- **3rd party app support** for Tdarr transcodes, Maintainerr cleanup, SickChill, Arr apps, Seerr apps, download clients, and webhooks.
-- **Recently added shelves** grouped by library with poster-first rows for fast scanning.
-- **User dashboards** for Jellyfin Quick Connect users, local JellyGlance users, OIDC-ready accounts, favourites, watchlists, Continue Watching, and recently watched media.
-- **Useful statistics** covering top movies, series, libraries, clients, users, trends, watch time, and activity heatmaps.
-- **Calendar and downloads** for release planning, torrent URLs, magnet links, torrent uploads, and active queues.
-- **Webhook notifications** with delivery history for session, media, request, task, backup, download, and health events.
-- **Admin audit trail** for settings, auth, integrations, webhooks, roles, backups, and restore-sensitive actions.
-- **Backup and restore friendly** Docker paths via `/app/config` and `/app/backups`.
+- **Jellyfin and Emby.** Pick the server type during setup or let JellyGlance detect it. Emby installs can import history from the Playback Reporting plugin, and Jellystat or Tautulli history can be imported too.
+- **Live sessions.** User, device, client, codec, bitrate and progress for everything playing now.
+- **A home dashboard you arrange.** Drag-and-drop sections, visibility toggles, presets, density, themes, kiosk mode and alert rules.
+- **Statistics and recaps.** Top movies, series, libraries, clients and users, watch-time trends, activity heatmaps, and weekly, monthly and yearly recaps with shareable cards.
+- **Activity history and libraries.** Full playback history, library views and recently added shelves grouped by library.
+- **Requests.** Search and manage Jellyseerr and Overseerr requests, with availability checks.
+- **Calendar and downloads.** Upcoming releases from the \*arr apps and the queues from your download clients.
+- **Users.** Dashboards with favourites, watchlists, Continue Watching and recently watched, and Wizarr invite management.
+- **Notifications.** Webhooks, Discord and Gotify, with delivery history, plus email newsletters.
+- **Sign-in options.** Local JellyGlance accounts, Jellyfin Quick Connect and OIDC, with roles and an admin audit trail.
+- **Backups.** Export and restore from the Backup page, stored in a plain folder you can see.
+- **Translations.** English (US and UK), Català, Čeština, Deutsch, Español, Français, Italiano, Polski and 中文.
 
 ## Integrations
+
+Connect these under **Settings > Integrations**. See the [integration directory](https://github.com/JellyGlance/Documentation/blob/main/docs/integrations.md) for setup details.
 
 <table>
   <tr>
@@ -206,9 +199,11 @@ It is built around three jobs:
   </tr>
 </table>
 
-## Quick Docker Start
+## Quick start
 
-Create a `docker-compose.yml`:
+### Docker Compose
+
+Create a `docker-compose.yml` (or start from the one in this repo):
 
 ```yaml
 services:
@@ -256,60 +251,128 @@ volumes:
   postgres-data:
 ```
 
-Start it:
+Start it with Docker Compose v2 (`docker compose`, with a space):
 
 ```sh
 docker compose up -d
 ```
 
-Use Docker Compose v2 (`docker compose`, with a space). The old Python `docker-compose` v1 log watcher can crash on modern Docker events with `KeyError: 'id'`.
+Then open `http://localhost:3000` and follow the setup:
 
-Open:
+1. Enter your Jellyfin or Emby server address, for example `http://192.168.1.10:8096`.
+2. Add an API key from your media server's dashboard.
+3. Choose how you sign in to JellyGlance and create the admin account.
+4. Let the first sync run.
 
-```text
-http://localhost:3000
+### docker run
+
+Start PostgreSQL first, then:
+
+```sh
+docker run -d --name jellyglance --restart unless-stopped \
+  -p 3000:3000 \
+  -v ./config:/app/config \
+  -v ./backups:/app/backups \
+  -e POSTGRES_IP=jellyglance-db -e POSTGRES_PORT=5432 \
+  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=change-me -e POSTGRES_DB=jellyglance \
+  -e JWT_SECRET=replace-me-with-a-long-random-secret \
+  ghcr.io/jellyglance/server:latest
 ```
 
-## First Run
+The container must be able to reach PostgreSQL by `POSTGRES_IP`, for example on the same Docker network.
 
-1. Open JellyGlance.
-2. Add your Jellyfin server URL.
-3. Add a Jellyfin API key so JellyGlance can sync users, libraries, artwork, sessions, and activity.
-4. Choose your admin access mode.
-5. Let the first sync run.
+### Proxmox LXC and Unraid
 
-After setup, JellyGlance can use artwork from your Jellyfin library for login backgrounds and media views.
+Scripts in [`packaging/`](packaging/README.md) set it up in an unprivileged Debian LXC on Proxmox VE, either by creating the container from the host (`create-lxc.sh`) or inside an existing one:
 
-## Persistent Folders
+```sh
+curl -fsSL https://raw.githubusercontent.com/JellyGlance/Server/main/packaging/proxmox/install-in-lxc.sh | bash
+```
 
-The Docker image is designed around simple, visible paths:
+Unraid Community Applications templates and a Compose file are in [`packaging/unraid`](packaging/unraid).
 
-| Host path | Container path | What it is for |
+### Persistent folders
+
+| Host path | Container path | Used for |
 | --- | --- | --- |
 | `./config` | `/app/config` | Runtime config and local app files |
 | `./backups` | `/app/backups` | Backup exports and restore uploads |
-| `postgres-data` | PostgreSQL data volume | Database storage |
+| `postgres-data` | PostgreSQL data volume | The database |
 
-Backups created inside JellyGlance appear in `./backups`. To restore, place a backup JSON file in that folder or upload it from the Backup page.
+To restore a backup, put the JSON file in `./backups` or upload it from the Backup page.
 
-## Updates
+## Configuration
+
+These are the main environment variables. The full list is in the [configuration reference](https://github.com/JellyGlance/Documentation/blob/main/docs/reference/configuration.md).
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `POSTGRES_IP` | | PostgreSQL host |
+| `POSTGRES_PORT` | | PostgreSQL port, usually `5432` |
+| `POSTGRES_USER` | `postgres` | PostgreSQL user |
+| `POSTGRES_PASSWORD` | | PostgreSQL password |
+| `POSTGRES_DB` | | Database name |
+| `POSTGRES_SSL_ENABLED` | `false` | Connect to PostgreSQL over TLS |
+| `JWT_SECRET` | | **Required.** Signs sign-in tokens and, unless `INTEGRATION_SECRET_KEY` is set, encrypts saved integration secrets. Keep it the same across updates. |
+| `INTEGRATION_SECRET_KEY` | `JWT_SECRET` | Separate key for encrypting integration secrets |
+| `TZ` | | Time zone, for example `Europe/London` |
+| `JS_PORT` | `3000` | Port inside the container (`PORT` also works) |
+| `JS_LISTEN_IP` | `0.0.0.0` | Address to listen on |
+| `JS_BASE_URL` | | Serve under a subpath, for example `/jellyglance` |
+| `JS_PUBLIC_URL` | | Public address of JellyGlance, used in notification links |
+| `JF_HOST` | | Jellyfin or Emby address. With `JF_API_KEY`, it skips the server step of setup and overrides the saved address. A trailing `/` is ignored. |
+| `JF_API_KEY` | | API key for that server |
+| `JF_SERVER_TYPE` | detected | `jellyfin` or `emby` |
+| `JS_USER`, `JS_PASSWORD` | | Create the first local admin account without the setup screen |
+| `REJECT_SELF_SIGNED_CERTIFICATES` | `true` | Set to `false` to allow self-signed HTTPS on your media server and apps |
+| `JF_USE_WEBSOCKETS` | `true` | Set to `false` to poll for sessions instead of using WebSockets |
+| `JS_GEOLITE_ACCOUNT_ID`, `JS_GEOLITE_LICENSE_KEY` | | Optional MaxMind GeoLite credentials to show where client IPs are |
+| `GITHUB_TOKEN` | | Optional token for the update check and the About page, to avoid GitHub rate limits |
+| `CONFIG_DIR`, `BACKUP_DIR` | `/app/config`, `/app/backups` | Where config and backups are stored |
+
+## Updating
 
 ```sh
 docker compose pull
 docker compose up -d
 ```
 
-## Community
-This Project will always be free: no ads, no ssotax, no buyouts, no subscription plan, Free Forever.
+Settings, history and your database are kept. **What's New** in the app shows the changes after each update, and [Releases](https://github.com/JellyGlance/Server/releases) has the full notes.
 
+## Documentation
 
+Guides live in **[JellyGlance/Documentation](https://github.com/JellyGlance/Documentation)**:
 
-<p align="center">
-  <a title="JellyGlance Discord" href="https://discord.gg/dMGhv8j2kx"><strong>JellyGlance Discord</strong></a>
-</p>
+- [Installation and first setup](https://github.com/JellyGlance/Documentation/blob/main/docs/guide/getting-started.md)
+- [Integration directory](https://github.com/JellyGlance/Documentation/blob/main/docs/integrations.md)
+- [Reverse proxy: Nginx, Caddy, Nginx Proxy Manager and Traefik](https://github.com/JellyGlance/Documentation/blob/main/docs/operations/reverse-proxy.md)
+- [Configuration reference](https://github.com/JellyGlance/Documentation/blob/main/docs/reference/configuration.md)
+- [Backup and restore](https://github.com/JellyGlance/Documentation/blob/main/docs/operations/backup-restore.md)
+- [Troubleshooting](https://github.com/JellyGlance/Documentation/blob/main/docs/guide/troubleshooting.md)
 
-## Credits
+Spotted a docs problem? [Open a docs issue](https://github.com/JellyGlance/Documentation/issues/new/choose).
 
-Created by **Nerdy-Technician**.
+## Community and support
 
-Inspired by **Jellystat**.
+- **Discord:** [discord.gg/dMGhv8j2kx](https://discord.gg/dMGhv8j2kx)
+- **Questions and ideas:** [GitHub Discussions](https://github.com/JellyGlance/Server/discussions)
+- **Bugs and feature requests:** [issues](https://github.com/JellyGlance/Server/issues/new/choose)
+- **Security reports:** see [SECURITY.md](SECURITY.md)
+
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first, especially before changing widgets. To work on it locally:
+
+```sh
+npm ci
+npm run dev     # API and web app with live reload
+npm test        # API tests
+npm run lint
+npm run build
+```
+
+The website's source is in [JellyGlance/Website](https://github.com/JellyGlance/Website).
+
+## License and credits
+
+See [LICENSE](LICENSE). Created by **Nerdy-Technician**, inspired by **[Jellystat](https://github.com/CyferShepard/Jellystat)**. Thanks to everyone who has contributed. You're listed on the About page in the app.
