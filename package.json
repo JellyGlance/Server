@@ -28,7 +28,7 @@
   "bugs": {
     "url": "https://github.com/JellyGlance/Server/issues"
   },
-  "license": "GPL-3.0",
+  "license": "MIT",
   "type": "module",
   "workspaces": [
     "apps/*"

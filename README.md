@@ -43,7 +43,7 @@
   <a href="https://github.com/JellyGlance/Server/blob/main/LICENSE">
     <img
       alt="License"
-      src="https://img.shields.io/github/license/JellyGlance/Server?style=for-the-badge&logo=gnu&logoColor=white&label=License&color=aa5cc3&labelColor=16111f">
+      src="https://img.shields.io/github/license/JellyGlance/Server?style=for-the-badge&logo=opensourceinitiative&logoColor=white&label=License&color=aa5cc3&labelColor=16111f">
   </a>
 
   <a href="https://github.com/JellyGlance/Server/pkgs/container/server">
@@ -375,4 +375,4 @@ The website's source is in [JellyGlance/Website](https://github.com/JellyGlance/
 
 ## License and credits
 
-See [LICENSE](LICENSE). Created by **Nerdy-Technician**, inspired by **[Jellystat](https://github.com/CyferShepard/Jellystat)**. Thanks to everyone who has contributed. You're listed on the About page in the app.
+JellyGlance is released under the [MIT License](LICENSE). Created by **Nerdy-Technician**, inspired by **[Jellystat](https://github.com/CyferShepard/Jellystat)**. Thanks to everyone who has contributed. You're listed on the About page in the app.
