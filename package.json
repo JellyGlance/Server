@@ -42,7 +42,7 @@
     "i18n:sync": "node scripts/i18n-sync.mjs",
     "widgets:check": "node scripts/widget-files.mjs --check",
     "widgets:sync": "node scripts/widget-files.mjs",
-    "lint": "npm run lint -w @jellyglance/web",
+    "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test -w @jellyglance/api",
     "bundle:budget": "node scripts/check-bundle-budget.cjs",
     "bundle:budget:update": "npm run build && node scripts/check-bundle-budget.cjs --update",

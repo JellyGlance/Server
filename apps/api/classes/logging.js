@@ -2,6 +2,7 @@ const db = require("../db");
 const dayjs = require("dayjs");
 const taskstate = require("../logging/taskstate");
 
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 const { jf_logging_columns, jf_logging_mapping } = require("../models/jf_logging");
 
 async function insertLog(uuid, triggertype, taskType) {

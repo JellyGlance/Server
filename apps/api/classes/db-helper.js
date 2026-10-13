@@ -1,4 +1,5 @@
 const { pool } = require("../db.js");
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 const pgp = require("pg-promise")();
 const { isSafeSqlExpression, isSafeSqlIdentifier, toBoundedInt } = require("../utils/security");
 

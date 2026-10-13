@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const WebhookManager = require('./webhook-manager');
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 const dbInstance = require('../db');
 
 class WebhookScheduler {
