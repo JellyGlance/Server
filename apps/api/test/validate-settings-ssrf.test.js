@@ -56,6 +56,8 @@ function runGuard(req) {
 test("/validateSettings requires the settings permission and an admin role", () => {
   assert.equal(isAdminSettingsPath("/validateSettings"), true);
   assert.equal(isAdminSettingsPath("/validatesettings"), true);
+  assert.equal(isAdminSettingsPath("/setconfig"), true);
+  assert.equal(isAdminSettingsPath("/setExternalUrl"), true);
   assert.equal(isAdminSettingsPath("/getconfig"), false);
   assert.deepEqual(runGuard({ user: { role: "Viewer" }, permissions: { dashboard: true } }), { status: 403, nextCalled: false });
   assert.deepEqual(runGuard({ user: { role: "Viewer" }, permissions: { dashboard: true, settings: true } }), { status: 403, nextCalled: false });

@@ -10,7 +10,8 @@ function requireAdminSettings(req, res, next) {
   return next();
 }
 
-const ADMIN_SETTINGS_PATHS = new Set(["/validatesettings"]);
+// /setconfig and /setexternalurl save and probe the media server address.
+const ADMIN_SETTINGS_PATHS = new Set(["/validatesettings", "/setconfig", "/setexternalurl"]);
 
 function isAdminSettingsPath(pathName) {
   return ADMIN_SETTINGS_PATHS.has(String(pathName || "").toLowerCase());
