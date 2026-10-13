@@ -32,7 +32,7 @@ function serverLabel(type = active) {
 
 // Ask the server what it is. Jellyfin always reports ProductName "Jellyfin Server";
 // Emby reports "Emby Server" or, on older builds, no ProductName at all.
-async function detectServerType(url) {
+async function detectServerType(url, requestOptions = {}) {
   const { axios } = require("./axios");
   const { stripTrailingSlashes, toSafeHttpUrl } = require("../utils/security");
   const raw = String(url || "");
@@ -42,7 +42,7 @@ async function detectServerType(url) {
   if (!/^https?:\/\//i.test(base)) base = `http://${base}`;
   for (const path of ["/System/Info/Public", "/emby/System/Info/Public"]) {
     try {
-      const { data } = await axios.get(toSafeHttpUrl(`${base}${path}`), { timeout: 5000 });
+      const { data } = await axios.get(toSafeHttpUrl(`${base}${path}`), { timeout: 5000, ...requestOptions });
       if (!data || typeof data !== "object") continue;
       const product = String(data.ProductName || "");
       if (/jellyfin/i.test(product)) return "jellyfin";
@@ -56,11 +56,11 @@ async function detectServerType(url) {
 
 // Pick the server type for a setup/settings request: env override, then what the
 // user chose, then what the server says it is, then whatever is active now.
-async function chooseServerType(requested, url) {
+async function chooseServerType(requested, url, requestOptions = {}) {
   const forced = envServerType();
   if (forced) return forced;
   if (SERVER_TYPES.includes(String(requested || "").toLowerCase())) return String(requested).toLowerCase();
-  return (await detectServerType(url)) || active;
+  return (await detectServerType(url, requestOptions)) || active;
 }
 
 async function saveServerType(type) {

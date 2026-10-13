@@ -590,7 +590,7 @@ class EmbyAPI {
     }
   }
 
-  async validateSettings(url, apikey) {
+  async validateSettings(url, apikey, requestOptions = {}) {
     let result = { isValid: false, status: 400, errorMessage: "Invalid URL", url: url, cleanedUrl: "" };
     try {
       let _url = String(url || "").replace(/\/web\/index\.html#!\/home\.html$/, "");
@@ -614,6 +614,7 @@ class EmbyAPI {
       const validation_url = joinSafeHttpUrl(_url, "/system/configuration");
 
       const response = await axios.get(validation_url, {
+        ...requestOptions,
         headers: {
           "X-MediaBrowser-Token": apikey,
         },

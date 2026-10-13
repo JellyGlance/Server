@@ -6,6 +6,7 @@ const configClass = require("../classes/config");
 const API = require("../classes/api-loader");
 const { getIntegrations } = require("../classes/integration-store");
 const { joinSafeHttpUrl, sendSafeError, toSafeHttpUrl, safeHttpGet} = require("../utils/security");
+const { assertSafeDestination, BlockedDestinationError, guardedLookup } = require("../utils/outbound-guard");
 
 const router = express.Router();
 const SAFE_DEVICE_NAME = /^[A-Za-z0-9._-]{1,64}$/;
@@ -404,8 +405,16 @@ router.get("/Audiobookshelf/Images/:itemId", async (req, res) => {
   }
 });
 
+// Admin-only connection check for a media server URL. The URL comes from the
+// request, so the destination is checked after DNS resolution and redirects are
+// not followed (a redirect could otherwise point the server at an internal host).
 router.post("/validateSettings", async (req, res) => {
-  const { url, apikey, serverType: requestedType } = req.body;
+  if (!req.permissions?.settings || !["Owner", "Admin"].includes(req.user?.role)) {
+    res.status(403).json({ message: "Admin role required" });
+    return;
+  }
+
+  const { url, apikey, serverType: requestedType } = req.body || {};
 
   if (url === undefined || apikey === undefined) {
     res.status(400);
@@ -413,8 +422,21 @@ router.post("/validateSettings", async (req, res) => {
     return;
   }
 
-  const serverType = await chooseServerType(requestedType, url);
-  const validation = await withServerType(serverType, () => API.validateSettings(url, apikey));
+  const raw = String(url || "").trim();
+  const candidate = /^https?:\/\//i.test(raw) ? raw : `http://${raw}`;
+  try {
+    await assertSafeDestination(candidate, { allowPrivate: true });
+  } catch (error) {
+    res.status(400).send(error instanceof BlockedDestinationError ? error.message : "Invalid URL");
+    return;
+  }
+
+  const requestOptions = { maxRedirects: 0, lookup: guardedLookup({ allowPrivate: true }) };
+  // No auto-detection here: probing the URL for its server type would be a second
+  // outbound call from request input. Callers pass serverType, otherwise the
+  // active type is used.
+  const serverType = await chooseServerType(requestedType, null);
+  const validation = await withServerType(serverType, () => API.validateSettings(candidate, apikey, requestOptions));
   if (validation.isValid === false) {
     res.status(validation.status);
     res.send(validation.errorMessage);

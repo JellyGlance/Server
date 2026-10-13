@@ -852,7 +852,8 @@ function authorizeApiRoute(req, res, next) {
             pathName.startsWith("/checkforupdates") ||
             pathName.startsWith("/admin-audit") ||
             pathName.startsWith("/deleteplaybackactivity") ||
-            pathName.startsWith("/getbackuptables")
+            pathName.startsWith("/getbackuptables") ||
+            pathName === "/validatesettings"
           ? "settings"
           : "dashboard";
 
