@@ -1,3 +1,4 @@
+const timers = require("./timers");
 const TaskManager = require("./task-manager-singleton");
 const db = require("../db");
 const TaskList = require("../global/task-list");
@@ -195,7 +196,8 @@ class TaskScheduler {
   }
 
   mainSchedulerUpdateLoop() {
-    setInterval(() => {
+    timers.clear(this.loopTimer);
+    this.loopTimer = timers.every(() => {
       const currentTime = new Date().getTime();
 
       for (const taskEnumKey in this.defaultIntervals) {
@@ -207,6 +209,11 @@ class TaskScheduler {
         }
       }
     }, 10000);
+  }
+
+  stop() {
+    timers.clear(this.loopTimer);
+    this.loopTimer = null;
   }
   beginTask(taskEnumKey) {
     switch (taskEnumKey) {
