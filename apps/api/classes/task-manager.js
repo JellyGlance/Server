@@ -1,3 +1,4 @@
+const timers = require("./timers");
 const { Worker } = require("worker_threads");
 const TaskList = require("../global/task-list");
 const { sendUpdate } = require("../ws");
@@ -124,12 +125,18 @@ class TaskManager {
   }
 
   emitTaskList() {
-    let emitTasks = setInterval(async () => {
+    timers.clear(this.emitTasksTimer);
+    this.emitTasksTimer = timers.every(async () => {
       const taskList = Object.keys(this.taskList).map((key) => {
         return { task: key, name: this.taskList[key].name, running: this.isTaskRunning(this.taskList[key].name) };
       });
       sendUpdate("task-list", taskList);
     }, 1000);
+  }
+
+  stop() {
+    timers.clear(this.emitTasksTimer);
+    this.emitTasksTimer = null;
   }
 }
 

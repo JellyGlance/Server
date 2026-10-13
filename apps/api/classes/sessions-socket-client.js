@@ -1,3 +1,4 @@
+const timers = require("./timers");
 const WebSocketClient = require("./websocket-client.js");
 
 let wsClient;
@@ -27,13 +28,13 @@ function initializeClient(websocketUrl, apiKey) {
 
     // Start sending ForceKeepAlive every 30 seconds
     if (keepAliveInterval) {
-      clearInterval(keepAliveInterval); // Clear any existing interval to avoid duplicates
+      timers.clear(keepAliveInterval); // Clear any existing interval to avoid duplicates
     }
-    keepAliveInterval = setInterval(() => {
+    keepAliveInterval = timers.every(() => {
       if (wsClient.getConnectionStatus() === "OPEN") {
         wsClient.send(JSON.stringify({ MessageType: "KeepAlive" }));
       } else {
-        clearInterval(keepAliveInterval); // Stop sending pings if connection is not open
+        timers.clear(keepAliveInterval); // Stop sending pings if connection is not open
       }
     }, 30000); // 30 seconds interval
   };

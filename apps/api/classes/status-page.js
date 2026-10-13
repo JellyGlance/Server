@@ -1,6 +1,7 @@
 // Public status page: layout config, a 5-minute uptime checker and the public payload builder.
 // Nothing here ever exposes usernames, devices, IPs or service URLs.
 const axios = require("axios");
+const timers = require("./timers");
 const db = require("../db");
 const configClass = require("./config");
 const API = require("./api-loader");
@@ -199,8 +200,13 @@ let timer = null;
 function startStatusChecks() {
   if (timer) return;
   const run = () => runStatusChecks().catch((error) => console.error("[STATUS] Check failed:", error.message));
-  setTimeout(run, 30 * 1000);
-  timer = setInterval(run, CHECK_INTERVAL_MS);
+  timers.after(run, 30 * 1000);
+  timer = timers.every(run, CHECK_INTERVAL_MS);
+}
+
+function stopStatusChecks() {
+  timers.clear(timer);
+  timer = null;
 }
 
 async function uptimeSummary(target, days) {
@@ -340,6 +346,7 @@ async function buildStatusPayload(config) {
 }
 
 module.exports = {
+  stopStatusChecks,
   BLOCK_TYPES,
   METRIC_ITEMS,
   normalizeConfig,

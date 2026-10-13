@@ -1,3 +1,4 @@
+const timers = require("./timers");
 // Threshold alerts: stuck downloads, low disk space, failed Jellyfin scheduled tasks, new playback devices
 // and user-defined rules (see alert-rules.js).
 // Alerts go out as the "threshold_alert" webhook event and as an admin-only in-app notification.
@@ -268,8 +269,13 @@ async function sendTestAlert() {
 
 function start() {
   if (timer) return;
-  setTimeout(() => runChecks().catch((error) => console.error("[ALERTS] Check failed:", error.message)), 60 * 1000);
-  timer = setInterval(() => runChecks().catch((error) => console.error("[ALERTS] Check failed:", error.message)), CHECK_INTERVAL_MS);
+  timers.after(() => runChecks().catch((error) => console.error("[ALERTS] Check failed:", error.message)), 60 * 1000);
+  timer = timers.every(() => runChecks().catch((error) => console.error("[ALERTS] Check failed:", error.message)), CHECK_INTERVAL_MS);
 }
 
-module.exports = { start, runChecks, sendTestAlert, getAlertSettings, saveAlertSettings, getAlertLog };
+function stop() {
+  timers.clear(timer);
+  timer = null;
+}
+
+module.exports = { start, stop, runChecks, sendTestAlert, getAlertSettings, saveAlertSettings, getAlertLog };
