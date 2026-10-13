@@ -432,7 +432,10 @@ router.post("/validateSettings", async (req, res) => {
   }
 
   const requestOptions = { maxRedirects: 0, lookup: guardedLookup({ allowPrivate: true }) };
-  const serverType = await chooseServerType(requestedType, candidate, requestOptions);
+  // No auto-detection here: probing the URL for its server type would be a second
+  // outbound call from request input. Callers pass serverType, otherwise the
+  // active type is used.
+  const serverType = await chooseServerType(requestedType, null);
   const validation = await withServerType(serverType, () => API.validateSettings(candidate, apikey, requestOptions));
   if (validation.isValid === false) {
     res.status(validation.status);
