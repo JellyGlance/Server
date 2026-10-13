@@ -25,6 +25,7 @@ const { addAuditEntry, getAuditLog, getWebhookDeliveryHistory } = require("../cl
 const { getUserPreferences } = require("../classes/user-preferences");
 const { buildOpsDigest, buildLibraryStorage, rememberDevices, pingThirdParty } = require("../classes/command-center");
 const { sendConfiguredMail, validateEmail } = require("../classes/smtp-mailer");
+const { createConnectionTestHandler } = require("../classes/connection-test");
 const { getBackupDir } = require("../utils/storage-paths");
 const {
   getIntegrations,
@@ -5380,6 +5381,12 @@ router.get("/getRecentlyAddedShelves", async (req, res) => {
     res.status(503).send({ error: "Unable to load recently added shelves" });
   }
 });
+
+// Admin-only: run live checks against the saved media server connection.
+router.post(
+  "/jellyfin/connection-test",
+  createConnectionTestHandler(() => new configClass().getConfig())
+);
 
 router.post("/setconfig", async (req, res) => {
   try {
