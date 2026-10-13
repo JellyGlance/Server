@@ -131,6 +131,7 @@ async function fetchDisks() {
       .catch(() => []);
     for (const disk of disks) {
       const total = Number(disk.totalSpace || 0);
+      // eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
       const free = Number(disk.freeSpace || 0);
       if (!total || total < 5 * 1024 ** 3) continue; // skip tiny system mounts
       const key = `${total}:${disk.path}`;

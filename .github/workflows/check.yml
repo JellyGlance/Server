@@ -40,7 +40,7 @@ jobs:
       - name: Check i18n locale sync
         run: npm run i18n:check
 
-      - name: Lint web
+      - name: Lint API and web
         run: npm run lint
 
       - name: Build web
@@ -54,7 +54,7 @@ jobs:
         run: |
           {
             echo "## Quality"
-            echo "- i18n check, widget files, lint, web build, docs build"
+            echo "- i18n check, widget files, API and web lint, web build, docs build"
             echo "- Result: **${{ job.status }}**"
           } >> "$GITHUB_STEP_SUMMARY"
 

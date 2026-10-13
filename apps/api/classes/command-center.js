@@ -12,6 +12,7 @@ const { getAuditLog, getWebhookDeliveryHistory, mergeSettings, getSettings } = r
 const { fetchSeerrIssueSnapshot } = require("./seerr-issues");
 const NewsletterCampaigns = require("./newsletter-campaigns");
 const { setDownloadPaused } = require("./download-client");
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 const { joinSafeHttpUrl, stripTrailingSlashes, toSafeHttpUrl, safeHttpGet, safeHttpPost} = require("../utils/security");
 
 let lastJellyfinSeenWrite = 0;
@@ -543,6 +544,7 @@ function findThirdParty(integrations, needle) {
   return (integrations.thirdParty || []).find((app) => String(app.name || app.slug || "").toLowerCase().includes(needle));
 }
 
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 function compactHealth(app, history) {
   const latest = history.find((row) => row.instanceId && row.instanceId === app?.instanceId) || history.find((row) => row.name && app?.name && row.name === app.name);
   return {

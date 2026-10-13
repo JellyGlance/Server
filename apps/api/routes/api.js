@@ -31,6 +31,7 @@ const {
   getIntegrations,
   saveIntegrations,
   getIntegrationData,
+  // eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
   saveIntegrationData,
   getIntegrationHealthHistory,
   saveIntegrationHealthResults,
@@ -1520,6 +1521,7 @@ async function fetchTdarrStatistics(integration) {
   }
 }
 
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 async function fetchTdarrCollection(integration, collection) {
   try {
     const data = await fetchTdarrCrudDb(integration, {
@@ -1597,6 +1599,7 @@ async function fetchTdarrJobReports(integration, searchTerms) {
   }
 }
 
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 async function enrichTdarrHistoryRows(integration, rows = []) {
   const reportCache = new Map();
   const sourceRows = uniqueTdarrRows(rows);
@@ -5554,6 +5557,7 @@ router.post("/setRequireLogin", async (req, res) => {
 
 router.post("/setAuthMode", async (req, res) => {
   try {
+    // eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
     const { mode, username, password, issuerUrl, clientId, clientSecret, redirectUri } = req.body;
     const config = await new configClass().getConfig();
 
