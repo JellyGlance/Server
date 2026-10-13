@@ -20,6 +20,7 @@ RUN npm run build -w @jellyglance/web
 
 ARG TARGETARCH
 FROM node-${TARGETARCH} AS runtime
+LABEL org.opencontainers.image.licenses="MIT"
 ENV NODE_ENV=production \
   CONFIG_DIR=/app/config \
   BACKUP_DIR=/app/backups
