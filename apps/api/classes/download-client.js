@@ -254,6 +254,17 @@ async function delugeRpc(client, method, params = []) {
   return call(method, params);
 }
 
+// daemon.get_version works on Deluge 1.3 and 2.x. Deluge 2 dropped daemon.info
+// ("Unknown method"), so that's only tried as a fallback for very old setups.
+async function delugeVersion(client) {
+  try {
+    return await delugeRpc(client, "daemon.get_version", []);
+  } catch (error) {
+    if (!/unknown method/i.test(String(error?.message || ""))) throw error;
+    return delugeRpc(client, "daemon.info", []);
+  }
+}
+
 async function nzbgetRpc(client, method, params = []) {
   const url = cleanUrl(client.values?.url);
   // NZBGet's default control user is "nzbget"; older setups saved only a password.
@@ -637,7 +648,7 @@ async function testDownloadClient(client) {
       return { ok: true, version, message: `Connected to ${version}` };
     }
     if (kind === "deluge") {
-      const version = (await delugeRpc(client, "daemon.info", [])) || "Deluge";
+      const version = (await delugeVersion(client)) || "Deluge";
       return { ok: true, version: String(version), message: `Connected to ${version}` };
     }
     if (kind === "nzbget") {
