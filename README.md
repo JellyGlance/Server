@@ -13,19 +13,13 @@
   <a href="https://github.com/JellyGlance/Server/releases/latest">
     <img
       alt="Latest Release"
-      src="https://img.shields.io/github/v/release/JellyGlance/Server?sort=semver&display_name=tag&style=for-the-badge&logo=github&logoColor=white&label=Latest%20Release&color=aa5cc3&labelColor=16111f">
-  </a>
-
-  <a href="https://github.com/JellyGlance/Server/releases">
-    <img
-      alt="Latest Beta"
-      src="https://img.shields.io/github/v/tag/JellyGlance/Server?include_prereleases&filter=*beta*&sort=semver&style=for-the-badge&logo=github&logoColor=white&label=Latest%20Beta&color=7c5cff&labelColor=16111f">
+      src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FJellyGlance%2FServer%2Freleases%2Flatest&query=%24.tag_name&cacheSeconds=3600&style=for-the-badge&logo=github&logoColor=white&label=Latest%20Release&color=aa5cc3&labelColor=16111f">
   </a>
 
   <a href="https://github.com/JellyGlance/Server/stargazers">
     <img
       alt="GitHub Stars"
-      src="https://img.shields.io/github/stars/JellyGlance/Server?style=for-the-badge&logo=github&logoColor=white&label=Stars&color=aa5cc3&labelColor=16111f">
+      src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FJellyGlance%2FServer&query=%24.stargazers_count&cacheSeconds=3600&style=for-the-badge&logo=github&logoColor=white&label=Stars&color=aa5cc3&labelColor=16111f">
   </a>
 
   <a href="https://github.com/JellyGlance/Server/actions/workflows/check-docker.yml">
