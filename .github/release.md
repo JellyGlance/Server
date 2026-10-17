@@ -58,7 +58,7 @@ title: JellyGlance v1.3.4
 
 - fix(downloads): use daemon.get_version for the Deluge connection test @Nerdy-Technician (#242)
 - fix(api): guard media server probes and drop nodemon @Nerdy-Technician (#224)
-- fix(ci): keep the upgrade test's stub request log in memory @Nerdy-Technician (#STUB_PR)
+- fix(ci): keep the upgrade test's stub request log in memory @Nerdy-Technician (#245)
 
 ### 🧰 Maintenance
 
@@ -70,7 +70,7 @@ title: JellyGlance v1.3.4
 - ci: add an upgrade-path test from the latest release @Nerdy-Technician (#232)
 - docs: drop the beta badge and fix the release and stars badges @Nerdy-Technician (#241)
 - docs: what's new for v1.3.4 @Nerdy-Technician
-- chore(deps): update eslint to 10.13.0 and qs to 6.16.1 @Nerdy-Technician (#DEPS_PR)
+- chore(deps): update eslint to 10.13.0 and qs to 6.16.1 @Nerdy-Technician (#246)
 - chore(deps): update dependency js-yaml to v5.5.0 (#240)
 - chore(deps): update production-dependencies to v19.3.1 (#238)
 - chore(deps): update node.js to a5f4366 (#236)
