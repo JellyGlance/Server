@@ -40,7 +40,7 @@ jobs:
       - name: Check i18n locale sync
         run: npm run i18n:check
 
-      - name: Lint web
+      - name: Lint API and web
         run: npm run lint
 
       - name: Build web
@@ -54,7 +54,7 @@ jobs:
         run: |
           {
             echo "## Quality"
-            echo "- i18n check, widget files, lint, web build, docs build"
+            echo "- i18n check, widget files, API and web lint, web build, docs build"
             echo "- Result: **${{ job.status }}**"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -62,6 +62,10 @@ jobs:
     name: "JellyGlance Security Bot · Secrets"
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # Secrets are empty on fork PRs. gitleaks-action needs a licence for org
+      # repos, so forks run the gitleaks CLI image instead (no licence needed).
+      HAS_GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -70,6 +74,7 @@ jobs:
 
       - name: Mint JellyGlance Security Bot token
         id: bot
+        if: env.HAS_GITLEAKS_LICENSE == 'true'
         uses: ./.github/actions/mint-bot-token
         with:
           bot-name: JellyGlance Security Bot
@@ -77,10 +82,24 @@ jobs:
           private-key: ${{ secrets.SECURITY_BOT_PRIVATE_KEY }}
 
       - name: Scan for secrets (Gitleaks)
+        if: env.HAS_GITLEAKS_LICENSE == 'true'
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
         env:
           GITHUB_TOKEN: ${{ steps.bot.outputs.token }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Scan for secrets (Gitleaks CLI, no licence)
+        if: env.HAS_GITLEAKS_LICENSE != 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          range="${HEAD_SHA}"
+          if [ -n "${BASE_SHA}" ]; then range="${BASE_SHA}..${HEAD_SHA}"; fi
+          docker run --rm -u "$(id -u):$(id -g)" -v "${PWD}:/repo" -w /repo \
+            ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            git /repo --log-opts="${range}" --redact --no-banner --exit-code 1
 
       - name: Block tracked env / credential files
         run: |
@@ -144,7 +163,8 @@ jobs:
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
-          comment-summary-in-pr: always
+          # Fork PRs get a read-only token, so posting the summary comment would 403.
+          comment-summary-in-pr: ${{ (github.event.pull_request.head.repo.full_name == github.repository) && 'always' || 'never' }}
           repo-token: ${{ steps.bot.outputs.token }}
 
       - name: npm audit report

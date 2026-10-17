@@ -865,6 +865,40 @@ function authorizeApiRoute(req, res, next) {
   return requirePermission(permission)(req, res, next);
 }
 
+// Graceful shutdown: on SIGTERM/SIGINT (docker stop, Ctrl+C) stop the background
+// timers, stop accepting connections, close the database pool and exit. A hard
+// exit after SHUTDOWN_TIMEOUT_MS covers connections that never close.
+const background = {};
+const SHUTDOWN_TIMEOUT_MS = 10000;
+function installShutdownHandlers(server) {
+  let shuttingDown = false;
+  const shutdown = (signal) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[JellyGlance] ${signal} received, shutting down`);
+    setTimeout(() => process.exit(0), SHUTDOWN_TIMEOUT_MS).unref();
+    try {
+      background.taskScheduler?.stop?.();
+      background.taskManager?.stop?.();
+      thresholdAlerts.stop();
+      require("./classes/status-page").stopStatusChecks();
+      require("./classes/config-ready").stop();
+      require("./classes/timers").stopAll();
+    } catch (error) {
+      console.warn("[JellyGlance] Error stopping background work:", error.message);
+    }
+    server.close(() => {
+      dbInstance.pool
+        .end()
+        .catch(() => {})
+        .finally(() => process.exit(0));
+    });
+    if (typeof server.closeIdleConnections === "function") server.closeIdleConnections();
+  };
+  process.once("SIGTERM", () => shutdown("SIGTERM"));
+  process.once("SIGINT", () => shutdown("SIGINT"));
+}
+
 // start server
 (async () => {
   try {
@@ -883,11 +917,12 @@ function authorizeApiRoute(req, res, next) {
     server.requestTimeout = 0;
     server.headersTimeout = 0;
     setupWebSocketServer(server, BASE_NAME);
+    installShutdownHandlers(server);
     server.listen(PORT, LISTEN_IP, async () => {
       console.log(`[JellyGlance] Server listening on http://${LISTEN_IP}:${PORT}`);
       ActivityMonitor.ActivityMonitor(1000);
-      new TaskManager();
-      new TaskScheduler();
+      background.taskManager = new TaskManager();
+      background.taskScheduler = new TaskScheduler();
       thresholdAlerts.start();
       require("./classes/status-page").startStatusChecks();
       try {

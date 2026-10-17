@@ -1425,6 +1425,7 @@ router.get("/syncPlaybackPluginData", async (req, res) => {
   }
 });
 
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);

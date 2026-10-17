@@ -111,6 +111,7 @@ function normalizeJellyfinUrl(url) {
   return stripTrailingSlashes(url);
 }
 
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 function queueSetupJellyfinTasks() {
   const taskManager = new TaskManager().getInstance();
   const taskQueue = ["JellyfinSync", "PartialJellyfinSync", "JellyfinPlaybackReportingPluginSync", "RefreshDashboardStats"];
@@ -307,6 +308,7 @@ function renderOidcCallbackPage({ token, errorMessage, appPath = "" }) {
 </html>`;
 }
 
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 function getOidcErrorMessage(error, fallback = "Unable to complete OIDC login") {
   const data = error?.response?.data;
   if (typeof data === "string" && data.trim()) {

@@ -3,6 +3,7 @@ const { sendSafeError, safeHttpGet } = require("../utils/security");
 
 const router = express.Router();
 
+// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 const geoliteUrlBase = "https://geolite.info/geoip/v2.1/city";
 
 const geoliteAccountId = process.env.JS_GEOLITE_ACCOUNT_ID;

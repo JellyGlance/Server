@@ -6,18 +6,6 @@ const JellyfinAPI = require("../classes/jellyfin-api");
 const EmbyAPI = require("../classes/emby-api");
 const { stripTrailingSlashes } = require("../utils/security");
 
-// The API classes poll for config on a 5s interval from their constructor;
-// unref that timer so the test process can exit.
-function make(Cls) {
-  const original = global.setInterval;
-  global.setInterval = (...args) => original(...args).unref();
-  try {
-    return new Cls();
-  } finally {
-    global.setInterval = original;
-  }
-}
-
 async function withAxiosGet(fn) {
   const seen = [];
   const original = axios.get;
@@ -42,7 +30,7 @@ test("stripTrailingSlashes removes only trailing slashes", () => {
 test("Jellyfin validateSettings saves a bare address without a trailing slash", async () => {
   let result;
   const seen = await withAxiosGet(async () => {
-    result = await make(JellyfinAPI).validateSettings("192.168.1.10:8096", "key");
+    result = await new JellyfinAPI().validateSettings("192.168.1.10:8096", "key");
   });
   assert.equal(result.cleanedUrl, "http://192.168.1.10:8096");
   assert.deepEqual(seen, ["http://192.168.1.10:8096/system/configuration"]);
@@ -51,7 +39,7 @@ test("Jellyfin validateSettings saves a bare address without a trailing slash", 
 test("Jellyfin validateSettings keeps subpaths and drops their trailing slash", async () => {
   let result;
   await withAxiosGet(async () => {
-    result = await make(JellyfinAPI).validateSettings("http://h:8096/jellyfin/", "key");
+    result = await new JellyfinAPI().validateSettings("http://h:8096/jellyfin/", "key");
   });
   assert.equal(result.cleanedUrl, "http://h:8096/jellyfin");
 });
@@ -59,7 +47,7 @@ test("Jellyfin validateSettings keeps subpaths and drops their trailing slash", 
 test("Emby validateSettings saves the address without a trailing slash", async () => {
   let result;
   await withAxiosGet(async () => {
-    result = await make(EmbyAPI).validateSettings("http://h:8096/", "key");
+    result = await new EmbyAPI().validateSettings("http://h:8096/", "key");
   });
   assert.equal(result.cleanedUrl, "http://h:8096/emby");
 });
@@ -98,7 +86,7 @@ test("getUsers calls /Users without a double slash", async () => {
     ["http://h:8096", "http://h:8096/Users"],
     ["http://h:8096/jellyfin", "http://h:8096/jellyfin/Users"],
   ]) {
-    const api = make(JellyfinAPI);
+    const api = new JellyfinAPI();
     api.config = { JF_HOST: host, JF_API_KEY: "key" };
     api.configReady = true;
     const seen = await withAxiosGet(() => api.getUsers());

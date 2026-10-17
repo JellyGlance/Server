@@ -2,8 +2,8 @@
 # because node:24-bookworm-slim has no arm/v7 variant.
 ARG TARGETARCH
 
-FROM node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 AS node-amd64
-FROM node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 AS node-arm64
+FROM node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5 AS node-amd64
+FROM node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5 AS node-arm64
 FROM node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS node-arm
 
 FROM node-${TARGETARCH} AS deps
@@ -20,6 +20,7 @@ RUN npm run build -w @jellyglance/web
 
 ARG TARGETARCH
 FROM node-${TARGETARCH} AS runtime
+LABEL org.opencontainers.image.licenses="MIT"
 ENV NODE_ENV=production \
   CONFIG_DIR=/app/config \
   BACKUP_DIR=/app/backups

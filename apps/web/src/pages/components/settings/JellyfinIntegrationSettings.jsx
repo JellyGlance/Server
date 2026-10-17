@@ -10,6 +10,7 @@ import EyeOffFillIcon from "remixicon-react/EyeOffFillIcon";
 import axios from "../../../lib/axios_instance";
 import Config from "../../../lib/config";
 import Loading from "../general/loading";
+import MediaServerConnectionTest from "./MediaServerConnectionTest";
 
 export default function JellyfinIntegrationSettings({ compact = false, firstRun = false }) {
   const [config, setConfig] = useState(null);
@@ -179,6 +180,8 @@ export default function JellyfinIntegrationSettings({ compact = false, firstRun 
           </div>
         </Form>
       )}
+
+      {hasSavedConnection && !firstRun ? <MediaServerConnectionTest token={config.token} hostUrl={config.hostUrl} /> : null}
     </section>
   );
 }

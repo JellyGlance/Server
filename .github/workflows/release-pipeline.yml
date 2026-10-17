@@ -4,8 +4,8 @@ name: JellyGlance Release Bot
 # Release Drafter draft). Publishing a release triggers this workflow, which
 # stamps the release version into the package files, builds the app and pushes
 # the Docker images. The Discord announcement runs after this workflow succeeds
-# (workflow_run), so it only goes out once the images exist. Mastodon still runs
-# on the "release published" event.
+# (workflow_run), and so does the Mastodon post, so both only go out once the
+# images exist.
 #
 # What's New (apps/web/src/whats-new.json) is bundled into the image, so merge
 # it into main before publishing the release.
@@ -153,6 +153,13 @@ jobs:
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+        with:
+          # Pull Docker Hub base images through Google's public mirror first. It is
+          # unauthenticated and not subject to Docker Hub's anonymous pull limits,
+          # which is what made fork PR builds fail with 429s.
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["mirror.gcr.io"]
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0

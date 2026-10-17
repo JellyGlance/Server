@@ -1,6 +1,7 @@
 const { compareVersions } = require("compare-versions");
 
 const configClass = require("./config");
+const { whenReady } = require("./config-ready");
 const { axios } = require("./axios");
 const { getSessionData } = require("./sessions-socket-client");
 const { joinSafeHttpUrl, stripTrailingSlashes, toSafeHttpUrl } = require("../utils/security");
@@ -17,12 +18,8 @@ class JellyfinAPI {
   }
   //Helper classes
   #checkReadyStatus() {
-    let checkConfigError = setInterval(async () => {
-      const success = await this.#fetchConfig();
-      if (success) {
-        clearInterval(checkConfigError);
-      }
-    }, 5000); // Check every 5 seconds
+    // Retry every 5 seconds until the config is ready, on the shared config-ready poll.
+    this.stopReadyCheck = whenReady(() => this.#fetchConfig());
   }
 
   async #fetchConfig() {
