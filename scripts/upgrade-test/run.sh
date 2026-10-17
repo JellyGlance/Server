@@ -23,7 +23,6 @@ STUB="${PREFIX}-stub"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK="$(mktemp -d)"
-STUB_LOG="${WORK}/stub.log"
 
 # Throwaway values for a throwaway database; nothing here is a real credential.
 PG_PASS="upgrade-test-db"
@@ -66,9 +65,15 @@ start_app() {
 }
 
 login() {
-  curl -fsS -X POST "${APP_URL}/auth/login" -H 'content-type: application/json' \
-    -d "{\"username\":\"${ADMIN_USER}\",\"password\":\"${ADMIN_PASS}\"}" \
-    | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const t=JSON.parse(s).token;if(!t)process.exit(1);process.stdout.write(t)})'
+  local body
+  body="$(curl -fsS -X POST "${APP_URL}/auth/login" -H 'content-type: application/json' \
+    -d "{\"username\":\"${ADMIN_USER}\",\"password\":\"${ADMIN_PASS}\"}")" || return 1
+  node -e 'const t=JSON.parse(process.argv[1]).token;if(!t)process.exit(1);process.stdout.write(t)' "${body}"
+}
+
+# Every request the media server stub has seen, one "METHOD /path" per line.
+stub_requests() {
+  docker exec "${STUB}" node -e 'fetch("http://127.0.0.1:8096/__stub/requests").then((r)=>r.text()).then((t)=>process.stdout.write(t))'
 }
 
 psql_db() { docker exec -i "${DB}" psql -v ON_ERROR_STOP=1 -U postgres -d jellyglance -tA "$@"; }
@@ -80,8 +85,8 @@ chmod 777 "${WORK}"
 log "media server stub (${STUB})"
 # Any image with Node will do; the image under test is always available locally.
 docker run -d --name "${STUB}" --network "${NET}" --entrypoint node \
-  -v "${HERE}:/stub:ro" -v "${WORK}:/work" \
-  -e STUB_PORT=8096 -e STUB_API_KEY="${JF_KEY}" -e STUB_LOG=/work/stub.log \
+  -v "${HERE}:/stub:ro" \
+  -e STUB_PORT=8096 -e STUB_API_KEY="${JF_KEY}" \
   "${NEW_IMAGE}" /stub/media-server-stub.cjs >/dev/null
 docker run -d --name "${DB}" --network "${NET}" -e POSTGRES_PASSWORD="${PG_PASS}" -e POSTGRES_DB=jellyglance "${PG_IMAGE}" >/dev/null
 for _ in $(seq 1 30); do docker exec "${DB}" pg_isready -U postgres -d jellyglance >/dev/null 2>&1 && break; sleep 1; done
@@ -111,8 +116,8 @@ SQL
 log "upgrade to ${NEW_IMAGE} on the same database (no bootstrap env)"
 docker stop "${APP}" >/dev/null
 # Only look at requests made by the new release.
-STUB_MARK="$(wc -l <"${STUB_LOG}")"
-new_requests() { tail -n "+$((STUB_MARK + 1))" "${STUB_LOG}"; }
+STUB_MARK="$(stub_requests | wc -l)"
+new_requests() { stub_requests | tail -n "+$((STUB_MARK + 1))"; }
 start_app "${NEW_IMAGE}"
 NEW_VERSION="$(node -p "require('${WORK}/configured.json').version")"
 echo "new version: ${NEW_VERSION}"
