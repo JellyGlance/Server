@@ -1,12 +1,13 @@
 // Minimal Jellyfin stand-in for the upgrade-path test. It answers the handful of
 // endpoints JellyGlance touches at start-up and records every path it is asked
-// for, so the test can check that request URLs are built correctly.
+// for, so the test can check that request URLs are built correctly. The paths
+// are kept in memory and read back from GET /__stub/requests, so nothing a
+// client sends is ever written to disk.
 const http = require("node:http");
-const fs = require("node:fs");
 
 const port = Number(process.env.STUB_PORT || 8096);
 const apiKey = process.env.STUB_API_KEY || "upgrade-test-key";
-const logFile = process.env.STUB_LOG || "/tmp/media-server-stub.log";
+const requests = [];
 
 const serverId = "0123456789abcdef0123456789abcdef";
 const adminUser = {
@@ -36,7 +37,12 @@ function authorised(req) {
 http
   .createServer((req, res) => {
     const pathOnly = String(req.url || "/").split("?")[0];
-    fs.appendFileSync(logFile, `${req.method} ${pathOnly}\n`);
+    if (pathOnly === "/__stub/requests") {
+      res.writeHead(200, { "content-type": "text/plain" });
+      res.end(requests.map((line) => `${line}\n`).join(""));
+      return;
+    }
+    requests.push(`${req.method} ${pathOnly}`);
     const key = pathOnly.toLowerCase();
     const body = routes[key];
     if (key !== "/system/info/public" && !authorised(req)) {
