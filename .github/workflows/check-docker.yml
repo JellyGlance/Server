@@ -1,17 +1,10 @@
 name: JellyGlance Build Bot
 
 on:
+  # No paths filter on pull_request: the per-platform build checks are required
+  # on main, so they must report on every PR. The "changes" job below decides
+  # whether there is anything to build; docs-only PRs finish in seconds.
   pull_request:
-    paths:
-      - "Dockerfile"
-      - ".dockerignore"
-      - "docker-compose*.yml"
-      - "package.json"
-      - "package-lock.json"
-      - "apps/**"
-      - "scripts/entrypoint.sh"
-      - ".github/workflows/check-docker.yml"
-      - ".github/actions/mint-bot-token/**"
   push:
     branches:
       - main
@@ -41,6 +34,52 @@ permissions:
   issues: write
 
 jobs:
+  # Keep this list in sync with the push paths above.
+  changes:
+    name: "JellyGlance Build Bot · Changes"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      docker: ${{ steps.result.outputs.docker }}
+    steps:
+      - name: Filter changed paths
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            docker:
+              - "Dockerfile"
+              - ".dockerignore"
+              - "docker-compose*.yml"
+              - "package.json"
+              - "package-lock.json"
+              - "apps/**"
+              - "scripts/entrypoint.sh"
+              - ".github/workflows/check-docker.yml"
+              - ".github/actions/mint-bot-token/**"
+
+      - name: Decide
+        id: result
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_DOCKER: ${{ steps.filter.outputs.docker }}
+        run: |
+          set -euo pipefail
+          # Push (already path-filtered), schedule and manual runs always build.
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            docker=true
+          elif [ "$PR_DOCKER" = "true" ]; then
+            docker=true
+          else
+            docker=false
+          fi
+          echo "docker=$docker" >> "$GITHUB_OUTPUT"
+          echo "Docker-relevant changes: $docker"
+
   # PRs/pushes: amd64 + arm64 in parallel (fast enough for CI).
   # Weekly/manual: also build arm/v7 (slow under QEMU — keep off the PR critical path).
   prepare:
@@ -63,7 +102,12 @@ jobs:
 
   build:
     name: "JellyGlance Build Bot · ${{ matrix.platform }}"
-    needs: prepare
+    # Always runs so the required per-platform checks report on every PR. When
+    # nothing Docker-relevant changed, every step below is skipped and the job
+    # still concludes with success.
+    needs:
+      - prepare
+      - changes
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -75,22 +119,34 @@ jobs:
       # base images authenticated and avoid Docker Hub 429s. Secrets are empty
       # on fork PRs, which keep pulling anonymously.
       HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+      RUN_BUILD: ${{ needs.changes.outputs.docker }}
     steps:
+      - name: Nothing to build
+        if: env.RUN_BUILD != 'true'
+        run: |
+          echo "No Docker-relevant changes in this PR; skipping the ${{ matrix.platform }} build."
+          {
+            echo "## JellyGlance Build Bot · \`${{ matrix.platform }}\`"
+            echo "- Result: **skipped (no Docker-relevant changes)**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Checkout
+        if: env.RUN_BUILD == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Login Docker Hub (optional, avoids pull rate limits)
-        if: env.HAS_DOCKERHUB == 'true'
+        if: env.RUN_BUILD == 'true' && env.HAS_DOCKERHUB == 'true'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Setup QEMU
-        if: matrix.platform != 'linux/amd64'
+        if: env.RUN_BUILD == 'true' && matrix.platform != 'linux/amd64'
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
 
       - name: Setup Buildx
+        if: env.RUN_BUILD == 'true'
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
         with:
           # Pull Docker Hub base images through Google's public mirror first. It is
@@ -101,6 +157,7 @@ jobs:
               mirrors = ["mirror.gcr.io"]
 
       - name: Build image (${{ matrix.platform }} — no push)
+        if: env.RUN_BUILD == 'true'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
@@ -114,7 +171,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=docker-${{ matrix.platform }}
 
       - name: Docker summary
-        if: always()
+        if: always() && env.RUN_BUILD == 'true'
         run: |
           {
             echo "## JellyGlance Build Bot · \`${{ matrix.platform }}\`"
@@ -124,13 +181,16 @@ jobs:
   report:
     name: "JellyGlance Build Bot · Report"
     needs:
+      - changes
       - prepare
       - build
     # Fork PRs get a read-only token and no secrets, so their report comment is
     # posted by pr-report-fork.yml (workflow_run) instead. Same-repo PRs only here.
+    # No comment when nothing Docker-relevant changed (nothing was built).
     if: >-
       always() && github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -131,6 +131,16 @@ jobs:
             let body;
 
             if (process.env.WORKFLOW_PATH === '.github/workflows/check-docker.yml') {
+              // check-docker.yml always reports its per-platform checks; when a PR
+              // has no Docker-relevant changes each one only runs "Nothing to build".
+              // Nothing was built, so there is nothing to report.
+              const platformJobs = jobs.filter((j) => j.name.startsWith('JellyGlance Build Bot · linux/'));
+              const nothingBuilt = platformJobs.length > 0 && platformJobs.every((j) =>
+                (j.steps || []).some((s) => s.name === 'Nothing to build' && s.conclusion === 'success'));
+              if (nothingBuilt) {
+                core.info('No Docker-relevant changes in this PR; no build report to post.');
+                return;
+              }
               const build = resultOf('JellyGlance Build Bot · linux/');
               const overall = build === 'success' ? 'PASSED' : build === 'cancelled' ? 'CANCELLED' : 'FAILED';
               body = [
