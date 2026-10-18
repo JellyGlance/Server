@@ -5045,6 +5045,27 @@
 .jellyfin-plugin-summary .is-warn b {
   color: var(--jg-plugin-warn);
 }
+.jellyfin-plugin-summary .is-short {
+  display: none;
+}
+
+/* Small phones: one wrapping line with short labels and dot separators. */
+@media (max-width: 375px) {
+  .jellyfin-plugin-summary {
+    gap: 2px 0;
+  }
+  .jellyfin-plugin-summary .is-long {
+    display: none;
+  }
+  .jellyfin-plugin-summary .is-short {
+    display: inline;
+  }
+  .jellyfin-plugin-summary > span + span::before {
+    content: "·";
+    margin: 0 6px;
+    color: #7f8da3;
+  }
+}
 
 /* ---------- toolbar ---------- */
 .jellyfin-plugin-toolbar {

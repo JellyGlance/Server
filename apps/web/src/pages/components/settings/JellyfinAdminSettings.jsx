@@ -291,14 +291,23 @@ export default function JellyfinAdminSettings({ view = "devices" }) {
                       <b>{pluginSummary.total}</b> plugins
                     </span>
                     <span>
-                      <b>{pluginSummary.enabled}</b> of {pluginSummary.total} enabled
+                      <b>{pluginSummary.enabled}</b>
+                      <span className="is-long"> of {pluginSummary.total} enabled</span>
+                      <span className="is-short"> enabled</span>
                     </span>
                     {pluginSummary.duplicates ? (
                       <span className="is-warn">
-                        <b>{pluginSummary.duplicates}</b> with duplicate versions
+                        <b>{pluginSummary.duplicates}</b>
+                        <span className="is-long"> with duplicate versions</span>
+                        <span className="is-short">{pluginSummary.duplicates === 1 ? " duplicate" : " duplicates"}</span>
                       </span>
                     ) : null}
-                    {pluginTotal !== pluginSummary.total ? <span>{pluginTotal} packages reported</span> : null}
+                    {pluginTotal !== pluginSummary.total ? (
+                      <span>
+                        <span className="is-long">{pluginTotal} packages reported</span>
+                        <span className="is-short">{pluginTotal} packages</span>
+                      </span>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
