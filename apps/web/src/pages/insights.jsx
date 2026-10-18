@@ -7,6 +7,8 @@ import HeartPulseLineIcon from "remixicon-react/HeartPulseLineIcon";
 import PulseLineIcon from "remixicon-react/PulseLineIcon";
 import PlayList2LineIcon from "remixicon-react/PlayList2LineIcon";
 import axios from "../lib/axios_instance";
+import { useTranslation } from "react-i18next";
+import { formatDate as formatLocaleDate } from "../lib/format-date";
 import "./css/insights.css";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -30,8 +32,7 @@ function bytes(value) {
 }
 
 function dateText(value) {
-  if (!value) return "Never";
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
+  return formatLocaleDate(value, { day: "numeric", month: "short", year: "numeric" }, { fallback: "Never" });
 }
 
 function poster(id, width = 180) {
@@ -501,6 +502,8 @@ export const INSIGHT_TABS = [
 const TABS = INSIGHT_TABS;
 
 export default function Insights() {
+  // Re-render dates and numbers in the new locale when the language changes.
+  useTranslation();
   const [params, setParams] = useSearchParams();
   const active = TABS.find((tab) => tab.id === params.get("tab")) || TABS[0];
   const ActiveComponent = active.Component;
