@@ -13,6 +13,7 @@ import Alert from "react-bootstrap/Alert";
 
 import "../../css/settings/backups.css";
 import { Trans, useTranslation } from "react-i18next";
+import { formatDate } from "../../../lib/format-date";
 import i18next from "i18next";
 
 function getHeaders(contentType = "application/json") {
@@ -121,7 +122,7 @@ function Row(file) {
     <React.Fragment>
       <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
         <TableCell>{data.name}</TableCell>
-        <TableCell>{Intl.DateTimeFormat(i18n.language || "en-GB", options).format(new Date(data.datecreated))}</TableCell>
+        <TableCell>{formatDate(data.datecreated, options, { locale: i18n.language })}</TableCell>
         <TableCell>{formatFileSize(data.size)}</TableCell>
         <TableCell className="">
           <div className="d-flex justify-content-center">

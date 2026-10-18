@@ -21,6 +21,7 @@ import "../../css/settings/backups.css";
 
 import TerminalComponent from "./TerminalComponent";
 import { Trans, useTranslation } from "react-i18next";
+import { formatDate } from "../../../lib/format-date";
 
 const token = localStorage.getItem('token');
 
@@ -87,7 +88,7 @@ function formatDurationTime(seconds) {
         </TableCell>
         <TableCell>{data.Name}</TableCell>
         <TableCell>{data.Type}</TableCell>
-        <TableCell>{Intl.DateTimeFormat(i18n.language || 'en-GB', options).format(new Date(data.TimeRun))}</TableCell>
+        <TableCell>{formatDate(data.TimeRun, options, { locale: i18n.language })}</TableCell>
         <TableCell>{formatDurationTime(data.Duration)}</TableCell>
         <TableCell>{data.ExecutionType}</TableCell>
         <TableCell><div className={`badge ${ data.Result.toLowerCase() ==='success' ? 'text-bg-success' : data.Result.toLowerCase() ==='running' ? 'text-bg-warning' : 'text-bg-danger '} rounded-pill text-uppercase`} >{data.Result}</div></TableCell>
