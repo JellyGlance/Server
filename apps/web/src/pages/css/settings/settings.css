@@ -6501,3 +6501,27 @@
 
 .settings-search-results button { box-sizing: border-box; }
 .settings-search-results strong, .settings-search-results span { overflow-wrap: anywhere; }
+
+/* Alert rules: trigger line, actions, test and history */
+.threshold-rule { flex-direction: column; align-items: stretch; }
+.threshold-rule-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.threshold-rule-line select { max-width: 100%; }
+.threshold-rule-cooldown { display: inline-flex; align-items: center; gap: 6px; }
+.threshold-rule-actions { display: grid; gap: 6px; padding-left: 26px; }
+.threshold-rule-action { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.threshold-rule-action-url { flex: 2 1 220px; min-width: 0; }
+.threshold-rule-action-token { flex: 1 1 140px; min-width: 0; }
+.threshold-rule-action .threshold-rule-remove { margin-left: 0; }
+.threshold-rule-action-add, .threshold-rule-test, .threshold-rule-history-toggle { justify-self: start; padding: 4px 10px; min-height: 32px; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 8px; background: transparent; color: #e6edf7; font-size: 12px; font-weight: 600; }
+.threshold-rule-action-add { border-style: dashed; }
+.threshold-rule-test:disabled { opacity: 0.6; }
+.threshold-rule-hint { color: rgba(199, 211, 230, 0.55); }
+.threshold-rule-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-left: 26px; color: rgba(199, 211, 230, 0.6); }
+.threshold-rule-results { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.threshold-rule-results .is-ok { color: #3fb950; }
+.threshold-rule-results .is-failed { color: #ff6b6b; }
+.threshold-rule-history { display: grid; gap: 4px; padding-left: 26px; }
+@media (max-width: 576px) {
+  .threshold-rule-actions, .threshold-rule-footer, .threshold-rule-history { padding-left: 0; }
+  .threshold-rule-action-url, .threshold-rule-action-token { flex-basis: 100%; }
+}
