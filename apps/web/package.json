@@ -20,7 +20,6 @@
     "@mui/x-date-pickers": "^9.14.0",
     "axios": "^1.20.0",
     "bootstrap": "^5.2.3",
-    "crypto-js": "^4.1.1",
     "dayjs": "^1.11.13",
     "file-saver": "^2.0.5",
     "i18next": "^26.4.2",

@@ -1,5 +1,4 @@
 const express = require("express");
-const CryptoJS = require("crypto-js");
 const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
@@ -8,8 +7,9 @@ const { axios } = require("../classes/axios");
 const { addAuditEntry } = require("../classes/admin-history");
 const campaigns = require("../classes/newsletter-campaigns");
 const reportBuilder = require("../classes/newsletter-report-builder");
-const { encryptSecret, decryptSecret, getIntegrations } = require("../classes/integration-store");
+const { encryptSecret, getIntegrations } = require("../classes/integration-store");
 const { isValidEmail } = require("../utils/security");
+const { decryptPassword, upgradeLegacyPassword } = require("../classes/smtp-mailer");
 const { fetchJellyfinUserItems, normalizeJellyfinMediaItem } = require("../classes/watch-tonight");
 
 const router = express.Router();
@@ -17,9 +17,6 @@ const HISTORY_LIMIT = 50;
 const SETTINGS_KEY = "Newsletter";
 const logoPath = path.join(__dirname, "..", "..", "web", "src", "pages", "images", "icon-b-512.png");
 
-function secretKey() {
-  return process.env.JWT_SECRET || process.env.POSTGRES_PASSWORD || "jellyglance-newsletter";
-}
 
 async function getSettings() {
   const { rows } = await db.query('SELECT settings FROM app_config where "ID"=1');
@@ -47,20 +44,6 @@ function defaultNewsletterSettings() {
     },
     history: [],
   };
-}
-
-function decryptPassword(value) {
-  if (!value) return "";
-  const modern = decryptSecret(value);
-  if (modern && modern !== value) {
-    return modern;
-  }
-  try {
-    const bytes = CryptoJS.AES.decrypt(value, secretKey());
-    return bytes.toString(CryptoJS.enc.Utf8);
-  } catch {
-    return "";
-  }
 }
 
 function publicSettings(settings) {
@@ -110,7 +93,7 @@ function mergeNewsletterSettings(existingSettings, incoming) {
   const nextPassword =
     incoming.smtp?.password && String(incoming.smtp.password).trim()
       ? encryptSecret(String(incoming.smtp.password))
-      : current.smtp.password;
+      : upgradeLegacyPassword(current.smtp.password);
 
   return {
     ...current,
