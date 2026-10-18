@@ -8,6 +8,8 @@ import TimerLineIcon from "remixicon-react/TimerLineIcon";
 import ArrowRightLineIcon from "remixicon-react/ArrowRightLineIcon";
 import Database2LineIcon from "remixicon-react/Database2LineIcon";
 import axios from "../lib/axios_instance";
+import { useTranslation } from "react-i18next";
+import { formatDate as formatLocaleDate, formatNumber as formatLocaleNumber } from "../lib/format-date";
 import "./css/maintainerr.css";
 import "./css/integrations.css";
 
@@ -22,14 +24,13 @@ const emptyBundle = {
 };
 
 function formatDate(value) {
-  if (!value) return "Never";
-  return new Intl.DateTimeFormat("en-GB", {
+  return formatLocaleDate(value, {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }, { fallback: "Never" });
 }
 
 function formatBytes(bytes) {
@@ -56,7 +57,7 @@ function formatDuration(seconds) {
 }
 
 function formatNumber(value) {
-  return new Intl.NumberFormat("en-GB").format(Number(value || 0));
+  return formatLocaleNumber(value);
 }
 
 function normalizeRows(rows = []) {
@@ -72,6 +73,8 @@ function normalizeRows(rows = []) {
 }
 
 export default function Maintainerr() {
+  // Re-render dates and numbers in the new locale when the language changes.
+  useTranslation();
   const [bundle, setBundle] = useState(emptyBundle);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
