@@ -1,6 +1,8 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import { useCompactChart } from "../../../lib/breakpoints";
 
 function PlayMethodChart({ stats, types }) {
+  const compact = useCompactChart();
   const colors = [
     "rgb(54, 162, 235)", // blue
     "rgb(255, 99, 132)", // pink
@@ -67,10 +69,10 @@ function PlayMethodChart({ stats, types }) {
             </linearGradient>
           ))}
         </defs>
-        <XAxis dataKey="Key" interval={0} angle={-60} textAnchor="end" height={100} />
+        <XAxis dataKey="Key" interval={compact ? "preserveStartEnd" : 0} minTickGap={compact ? 28 : 5} angle={compact ? 0 : -60} textAnchor={compact ? "middle" : "end"} height={compact ? 28 : 100} />
         <YAxis domain={[0, max]} />
         <Tooltip content={<CustomTooltip />} />
-        <Legend verticalAlign="bottom" />
+        {compact ? null : <Legend verticalAlign="bottom" />}
         {types.map((type, index) => (
           <Area
             key={type.Id}

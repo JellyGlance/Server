@@ -782,7 +782,7 @@ export default function Home({ kioskMode = false }) {
   const sectionLabels = HOME_SECTION_DEFINITIONS.reduce((labels, section) => ({ ...labels, [section.id]: t(`HOME_PAGE.SECTIONS.${section.id}`, { defaultValue: section.label }) }), {});
   const orderedSectionIds = useMemo(
     () => getHomeDisplayOrder(homeSettings, { promoteOperations: requestUrgency > 0 }),
-    [homeSettings.hidden, homeSettings.order, homeSettings.pinned, requestUrgency]
+    [homeSettings.hidden, homeSettings.order, homeSettings.pinned, homeSettings.preset, requestUrgency]
   );
   useEffect(() => {
     if (!kioskMode) return undefined;

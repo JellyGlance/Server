@@ -154,6 +154,28 @@ body::-webkit-scrollbar-thumb:hover {
   background-color: rgba(148, 163, 184, 0.48);
 }
 
+/* Touch devices: 16px inputs stop iOS Safari zooming on focus, and controls get a 44px hit area. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
+  select,
+  textarea,
+  .form-control,
+  .form-select {
+    font-size: max(var(--jg-input-font, 16px), 1rem) !important;
+    min-height: var(--jg-touch-min, 44px);
+  }
+
+  .btn,
+  .page-tabs button,
+  .settings-mobile-menu-list button {
+    min-height: var(--jg-touch-min, 44px);
+  }
+
+  .MuiCheckbox-root {
+    opacity: 1 !important;
+  }
+}
+
 /* Right-to-left languages (Arabic, Hebrew, Persian, Urdu). Bootstrap ships an LTR build, so flip the few controls that hard-code a side. */
 [dir="rtl"] .form-select {
   padding-right: 0.75rem;

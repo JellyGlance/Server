@@ -1,6 +1,6 @@
 import baseUrl from "./baseurl";
 
-const ICON = `${baseUrl}/icon-b-192.png`;
+const ICON = `${baseUrl}/icon-192.png`;
 let registrationPromise = null;
 
 export function systemNotificationsSupported() {

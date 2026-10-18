@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Seleziona/Deseleziona riga",
     "TOGGLE_SELECT_ALL": "Seleziona/Deseleziona tutto",
     "MIN": "Min",
-    "MAX": "Max"
+    "MAX": "Max",
+    "NO_RESULTS": "No activity found.",
+    "SWIPE_HINT": "Swipe sideways for more columns."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Primo",
@@ -454,6 +456,23 @@
       "KEY_SAVED_HINT": "A key is saved and kept hidden. Paste it again, or a new one, when you update the connection.",
       "SHOW_KEY": "Show API key",
       "HIDE_KEY": "Hide API key"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Public client (no secret, PKCE only). Removes the saved secret.",
+      "SCOPES": "Scopes",
+      "GROUPS_CLAIM": "Groups claim",
+      "ROLE_MAPPING": "Group to role mapping",
+      "ROLE_MAPPING_HINT": "One group=Role per line. The highest matching role wins. Leave empty to keep roles set on the Users page.",
+      "LINK_POLICY": "Link sign-ins to users",
+      "LINK_VERIFIED_EMAIL": "Only on a verified email that matches a user (recommended)",
+      "LINK_USERNAME": "By username (trust the provider's usernames)",
+      "LINK_MANUAL": "Never automatically (existing links only)",
+      "LINK_USERNAME_WARNING": "Only use this if nobody can pick their own username at your provider, or they could sign in as another user.",
+      "DEFAULT_ROLE": "Default role",
+      "AUTO_PROVISION": "Create a JellyGlance account for sign-ins that match no user",
+      "BREAK_GLASS": "Local accounts and the JS_USER / JS_PASSWORD environment login keep working, so you can still get in if single sign-on breaks.",
+      "USE_LOCAL": "Sign in with a local account instead",
+      "USE_SSO": "Back to single sign-on"
     }
   },
   "TASK_TYPE": {
@@ -1065,5 +1084,19 @@
     "HISTORY_other": "{{count}} alerts",
     "DELIVERED": "delivered",
     "TEST_NO_ACTIONS": "Test logged. Add an action to send it anywhere."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Primary",
+    "MORE": "More",
+    "MORE_HAS_UPDATES": "New items in More",
+    "CLOSE": "Close menu",
+    "BACK": "Back"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Install JellyGlance for a kiosk-friendly Home dashboard.",
+    "VIEWER": "Install JellyGlance. This account opens My Glance from the home screen.",
+    "IOS_HINT": "Install JellyGlance: tap Share in Safari, then Add to Home Screen.",
+    "INSTALL": "Install",
+    "NOT_NOW": "Not now"
   }
 }

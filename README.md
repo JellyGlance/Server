@@ -57,6 +57,21 @@
   <a href="https://discord.gg/dMGhv8j2kx"><strong>Discord</strong></a>
 </p>
 
+<p align="center">
+  <img src="docs/images/jellyglance-hero.png" alt="JellyGlance dashboard and statistics pages" width="100%">
+</p>
+
+<details>
+  <summary><strong>Take the tour</strong>: dashboard, statistics, libraries and activity</summary>
+  <br>
+  <p align="center">
+    <picture>
+      <source srcset="docs/images/jellyglance-tour.webp" type="image/webp">
+      <img src="docs/images/jellyglance-tour.gif" alt="Animated tour of the JellyGlance dashboard, statistics, library and activity pages" width="100%">
+    </picture>
+  </p>
+</details>
+
 ## Contents
 
 - [What it is](#what-it-is)
@@ -98,7 +113,7 @@ It runs as a single Docker container next to PostgreSQL. It's free, with no ads,
 - **Calendar and downloads.** Upcoming releases from the \*arr apps and the queues from your download clients.
 - **Users.** Dashboards with favourites, watchlists, Continue Watching and recently watched, and Wizarr invite management.
 - **Notifications.** Webhooks, Discord and Gotify, with delivery history, plus email newsletters.
-- **Sign-in options.** Local JellyGlance accounts, Jellyfin Quick Connect and OIDC, with roles and an admin audit trail.
+- **Sign-in options.** Local JellyGlance accounts, Jellyfin Quick Connect and OIDC single sign-on (Authentik, Authelia, Keycloak; see [docs/oidc.md](docs/oidc.md)), with group-to-role mapping, roles and an admin audit trail.
 - **Backups.** Export and restore from the Backup page, stored in a plain folder you can see.
 - **Translations.** English (US and UK), Català, Čeština, Deutsch, Español, Français, Italiano, Polski and 中文.
 

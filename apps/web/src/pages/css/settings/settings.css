@@ -3641,7 +3641,7 @@
   .settings-mobile-menu-list button {
     flex: 0 0 auto;
     justify-content: center;
-    min-height: 38px;
+    min-height: var(--jg-touch-min, 44px);
     max-width: 176px;
     padding: 0 12px;
   }

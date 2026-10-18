@@ -1115,7 +1115,7 @@
   }
 }
 
-@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+@media (max-width: 900px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
   .home-user-wrap {
     gap: 14px;
     margin-top: 10px;

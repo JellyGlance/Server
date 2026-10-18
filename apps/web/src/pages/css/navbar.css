@@ -15,7 +15,7 @@
   display: none;
 }
 
-@media (min-width: 901px) and (hover: hover) {
+@media (min-width: 1025px), (min-width: 901px) and (hover: hover) {
   .navbar {
     position: fixed !important;
     inset: 0 auto 0 0;
@@ -41,7 +41,7 @@
   }
 }
 
-@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+@media (max-width: 900px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
   :root {
     --mobile-menu-top-offset: calc(env(safe-area-inset-top, 0px) + 108px);
   }
@@ -465,7 +465,7 @@
   gap: 0.4rem;
 }
 
-@media (min-width: 901px) and (hover: hover) {
+@media (min-width: 1025px), (min-width: 901px) and (hover: hover) {
   .navbar .navbar-nav {
     display: flex !important;
     min-height: 0;
@@ -656,7 +656,7 @@
   display: none;
 }
 
-@media (min-width: 901px) and (hover: hover) {
+@media (min-width: 1025px), (min-width: 901px) and (hover: hover) {
   .navitem {
     border-radius: 0 14px 14px 0;
   }
@@ -723,7 +723,7 @@
   box-shadow: 0 0 18px rgba(var(--primary-rgb), 0.28);
 }
 
-@media (min-width: 901px) and (hover: hover) {
+@media (min-width: 1025px), (min-width: 901px) and (hover: hover) {
   .desktop-navigation.is-collapsed .sticky-top {
     align-items: center;
     padding-top: 10px !important;
@@ -875,7 +875,7 @@
   z-index: 1090 !important;
 }
 
-@media (min-width: 901px) and (hover: hover) {
+@media (min-width: 1025px), (min-width: 901px) and (hover: hover) {
   body.modal-open .desktop-navigation {
     z-index: 1000;
   }
@@ -1652,7 +1652,7 @@
   }
 }
 
-@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+@media (max-width: 900px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
   .navbar {
     position: fixed !important;
     top: 0 !important;
@@ -1853,7 +1853,7 @@
   display: contents;
 }
 
-@media (min-width: 901px) and (hover: hover) {
+@media (min-width: 1025px), (min-width: 901px) and (hover: hover) {
   .navbar > .sticky-top {
     overflow: hidden;
   }
@@ -1905,3 +1905,228 @@
 .install-app-button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 8px 12px; border: 1px solid rgba(var(--primary-light-rgb, 139, 92, 246), 0.3); border-radius: 10px; background: rgba(var(--primary-rgb, 139, 92, 246), 0.14); color: #e6edf7; font-size: 13px; font-weight: 600; cursor: pointer; }
 .install-app-button:hover { background: rgba(var(--primary-rgb, 139, 92, 246), 0.26); }
 .install-app-hint { margin: 6px 2px 0; color: rgba(199, 211, 230, 0.75); font-size: 12px; line-height: 1.4; }
+
+/* ---------- Mobile shell: bottom tab bar and "More" sheet ---------- */
+.mobile-tabbar,
+.mobile-app-menu-scrim,
+.mobile-app-menu-grabber {
+  display: none;
+}
+
+@media (max-width: 900px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
+  .mobile-app-topbar {
+    grid-template-columns: var(--jg-touch-min) minmax(0, 1fr) var(--jg-touch-min);
+    min-height: calc(var(--jg-topbar-h) + var(--jg-safe-top));
+    padding: calc(var(--jg-safe-top) + 6px) max(12px, env(safe-area-inset-right, 0px)) 6px max(12px, env(safe-area-inset-left, 0px));
+  }
+
+  .mobile-app-back {
+    display: grid;
+    width: var(--jg-touch-min);
+    height: var(--jg-touch-min);
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(var(--primary-light-rgb), 0.28);
+    border-radius: var(--jg-control-radius);
+    background: rgba(255, 255, 255, 0.045);
+    color: #f3e8ff;
+  }
+
+  .mobile-app-account {
+    width: var(--jg-touch-min);
+    height: var(--jg-touch-min);
+    flex: 0 0 var(--jg-touch-min);
+  }
+
+  .mobile-tabbar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1050;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    height: calc(var(--jg-tabbar-h) + var(--jg-safe-bottom));
+    padding: 0 max(6px, env(safe-area-inset-right, 0px)) var(--jg-safe-bottom) max(6px, env(safe-area-inset-left, 0px));
+    border-top: 1px solid rgba(var(--primary-light-rgb), 0.14);
+    background: rgba(9, 12, 18, 0.94);
+    backdrop-filter: blur(16px);
+  }
+
+  .mobile-tab {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    min-height: var(--jg-touch-min);
+    align-content: center;
+    justify-items: center;
+    gap: 3px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--subtle-text-color, #9aa7bb);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .mobile-tab-ico {
+    display: grid;
+    width: 56px;
+    height: 30px;
+    place-items: center;
+    border-radius: 999px;
+    transition: background-color 0.15s ease;
+  }
+
+  .mobile-tab-ico svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mobile-tab-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-tab[aria-current="page"] {
+    color: #ffffff;
+  }
+
+  .mobile-tab[aria-current="page"] .mobile-tab-ico {
+    background: rgba(var(--primary-rgb), 0.32);
+    color: var(--primary-light-color);
+    box-shadow: inset 0 0 0 1px rgba(var(--primary-light-rgb), 0.35);
+  }
+
+  .mobile-tab:focus-visible {
+    outline: 2px solid var(--primary-light-color);
+    outline-offset: -4px;
+    border-radius: 12px;
+  }
+
+  .mobile-tab-badge {
+    position: absolute;
+    top: 4px;
+    left: calc(50% + 8px);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--primary-light-color);
+    color: #06070b;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 18px;
+  }
+
+  .mobile-tab-dot {
+    position: absolute;
+    top: 8px;
+    left: calc(50% + 12px);
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--primary-light-color);
+    box-shadow: 0 0 0 2px rgba(9, 12, 18, 0.94);
+  }
+
+  .mobile-app-menu-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 1047;
+    display: block;
+    border: 0;
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  .mobile-app-menu-panel {
+    inset: auto 0 calc(var(--jg-tabbar-h) + var(--jg-safe-bottom)) 0;
+    min-height: 0;
+    max-height: min(78dvh, calc(100dvh - var(--jg-topbar-h) - var(--jg-tabbar-h) - var(--jg-safe-top) - var(--jg-safe-bottom)));
+    padding: 8px var(--jg-gutter) 16px;
+    border: 1px solid rgba(var(--primary-light-rgb), 0.16);
+    border-bottom: 0;
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(105%);
+    transition: opacity 0.18s ease, transform 0.22s ease;
+  }
+
+  .mobile-app-menu-panel.is-open {
+    transform: none;
+  }
+
+  .mobile-app-menu-grabber {
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 2px auto 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .mobile-app-menu-shell {
+    min-height: 0;
+    max-width: none;
+    gap: 16px;
+  }
+
+  .mobile-app-menu-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px 8px;
+  }
+
+  .mobile-app-menu-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .mobile-app-menu-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .Toastify__toast-container--bottom-left,
+  .Toastify__toast-container--bottom-center,
+  .Toastify__toast-container--bottom-right {
+    bottom: calc(var(--jg-tabbar-h) + var(--jg-safe-bottom) + 8px) !important;
+  }
+
+  .pwa-install-banner {
+    bottom: calc(var(--jg-tabbar-h) + var(--jg-safe-bottom) + 12px) !important;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 900px) {
+  .mobile-tabbar {
+    grid-template-columns: repeat(5, minmax(0, 120px));
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .mobile-app-menu-panel {
+    left: 50%;
+    right: auto;
+    width: min(640px, calc(100vw - 40px));
+    border-bottom: 1px solid rgba(var(--primary-light-rgb), 0.16);
+    border-radius: 22px;
+    bottom: calc(var(--jg-tabbar-h) + var(--jg-safe-bottom) + 10px);
+    transform: translate(-50%, 120%);
+  }
+
+  .mobile-app-menu-panel.is-open {
+    transform: translateX(-50%);
+  }
+
+  .mobile-app-menu-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-app-menu-panel {
+    transition: none;
+  }
+}
