@@ -20,7 +20,7 @@ import IndeterminateCircleFillIcon from 'remixicon-react/IndeterminateCircleFill
 import "../../css/settings/backups.css";
 
 import TerminalComponent from "./TerminalComponent";
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 const token = localStorage.getItem('token');
 
@@ -28,6 +28,7 @@ const token = localStorage.getItem('token');
 function Row(logs) {
   const { data } = logs;
   const [open, setOpen] = React.useState(false);
+  const { i18n } = useTranslation();
 
 
   const twelve_hr = JSON.parse(localStorage.getItem('12hr'));
@@ -86,7 +87,7 @@ function formatDurationTime(seconds) {
         </TableCell>
         <TableCell>{data.Name}</TableCell>
         <TableCell>{data.Type}</TableCell>
-        <TableCell>{Intl.DateTimeFormat('en-UK', options).format(new Date(data.TimeRun))}</TableCell>
+        <TableCell>{Intl.DateTimeFormat(i18n.language || 'en-GB', options).format(new Date(data.TimeRun))}</TableCell>
         <TableCell>{formatDurationTime(data.Duration)}</TableCell>
         <TableCell>{data.ExecutionType}</TableCell>
         <TableCell><div className={`badge ${ data.Result.toLowerCase() ==='success' ? 'text-bg-success' : data.Result.toLowerCase() ==='running' ? 'text-bg-warning' : 'text-bg-danger '} rounded-pill text-uppercase`} >{data.Result}</div></TableCell>

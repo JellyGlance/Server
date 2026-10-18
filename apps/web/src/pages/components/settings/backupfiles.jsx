@@ -12,7 +12,7 @@ import TableRow from "@mui/material/TableRow";
 import Alert from "react-bootstrap/Alert";
 
 import "../../css/settings/backups.css";
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import i18next from "i18next";
 
 function getHeaders(contentType = "application/json") {
@@ -25,6 +25,7 @@ function getHeaders(contentType = "application/json") {
 function Row(file) {
   const { data } = file;
   const [disabled, setDisabled] = useState(false);
+  const { i18n } = useTranslation();
 
   async function downloadBackup(filename) {
     axios
@@ -120,7 +121,7 @@ function Row(file) {
     <React.Fragment>
       <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
         <TableCell>{data.name}</TableCell>
-        <TableCell>{Intl.DateTimeFormat("en-UK", options).format(new Date(data.datecreated))}</TableCell>
+        <TableCell>{Intl.DateTimeFormat(i18n.language || "en-GB", options).format(new Date(data.datecreated))}</TableCell>
         <TableCell>{formatFileSize(data.size)}</TableCell>
         <TableCell className="">
           <div className="d-flex justify-content-center">
