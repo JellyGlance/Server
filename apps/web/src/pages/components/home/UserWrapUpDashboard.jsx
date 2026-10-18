@@ -71,7 +71,7 @@ function buildUserAchievements(user, rank) {
   const titleTarget = getNextTarget(uniqueTitles, [5, 10, 25, 50, 100, 250, 500]);
   const clientTarget = getNextTarget(uniqueClients, [2, 3, 5, 8, 12]);
 
-  return [
+  const achievements = [
     {
       id: "rank",
       title: rank === 1 ? "Household Champion" : "Leaderboard Climber",
@@ -154,6 +154,8 @@ function buildUserAchievements(user, rank) {
       progress: recentDays === Infinity ? 0 : Math.max(0, 100 - recentDays * 8),
     },
   ];
+  // Only admins get a rank back from the API, so leave the badge out without one.
+  return rank ? achievements : achievements.filter((achievement) => achievement.id !== "rank");
 }
 
 function greeting() {
@@ -414,11 +416,15 @@ export function QuickConnectUserWrap({ user, rank }) {
       <div className="user-wrap-body">
         <div className="user-wrap-title-row">
           <h3>Personal Wrap-Up</h3>
-          <span>Rank #{rank}</span>
+          {rank ? <span>Rank #{rank}</span> : null}
         </div>
 
         <div className="wrap-metric-grid">
-          <WrapMetric icon={TrophyLineIcon} label="Server rank" value={`#${rank}`} detail={`${user.TotalStreams || 0} streams`} imageId={heroImageId} />
+          {rank ? (
+            <WrapMetric icon={TrophyLineIcon} label="Server rank" value={`#${rank}`} detail={`${user.TotalStreams || 0} streams`} imageId={heroImageId} />
+          ) : (
+            <WrapMetric icon={TimeLineIcon} label="Watch time" value={formatWatchTime(user.TotalWatchTime)} detail={`${user.UniqueTitles || 0} titles`} imageId={heroImageId} />
+          )}
           <WrapMetric icon={PlayCircleLineIcon} label="Total streams" value={user.TotalStreams || 0} detail={formatWatchTime(user.TotalWatchTime)} imageId={seriesImageId} />
           <WrapMetric icon={FilmLineIcon} label="Top title" value={user.TopTitle?.Name} detail={`${user.TopTitle?.Count || 0} plays`} imageId={user.TopTitle?.ItemId || heroImageId} />
           <WrapMetric icon={StackLineIcon} label="Top library" value={user.TopLibrary?.Name} detail={`${user.TopLibrary?.Count || 0} plays`} imageId={heroImageId} />
