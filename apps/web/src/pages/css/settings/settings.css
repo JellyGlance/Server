@@ -6525,3 +6525,74 @@
   .threshold-rule-actions, .threshold-rule-footer, .threshold-rule-history { padding-left: 0; }
   .threshold-rule-action-url, .threshold-rule-action-token { flex-basis: 100%; }
 }
+
+.playback-retention-intro {
+  margin: 0;
+  padding: 0 14px;
+  color: #aebbd0;
+  font-size: 13px;
+}
+
+.playback-retention-warning {
+  display: flex;
+  gap: 10px;
+  margin: 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(248, 113, 113, 0.55);
+  border-radius: 10px;
+  background: rgba(127, 29, 29, 0.35);
+  color: #fecaca;
+  font-size: 13px;
+}
+
+.playback-retention-warning svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #f87171;
+}
+
+.playback-retention-warning div {
+  display: grid;
+  gap: 4px;
+}
+
+.playback-retention-warning strong {
+  color: #fff;
+  font-weight: 900;
+}
+
+.playback-retention-toggle,
+.playback-retention-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playback-retention-toggle input,
+.playback-retention-confirm input {
+  width: auto !important;
+  margin: 0 !important;
+}
+
+.playback-retention-confirm {
+  margin: 0 14px;
+  color: #fecaca;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.playback-retention-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 0 14px 12px;
+  color: #aebbd0;
+  font-size: 12px;
+}
+
+.playback-retention-message {
+  margin: 0;
+  padding: 0 14px 12px;
+  color: #bbf7d0;
+  font-size: 13px;
+}
