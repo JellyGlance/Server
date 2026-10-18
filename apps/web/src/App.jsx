@@ -10,7 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import Config from "./lib/config";
 import { applyFontWeightPreference } from "./lib/appearance";
-import { INTEGRATIONS_STORAGE_KEY } from "./lib/integrations-storage";
+import { clearSessionStorage } from "./lib/auth-storage";
 import { prewarmActiveSessions } from "./lib/session-cache";
 import { applyPwaStartUrl, isOpsRole, pwaStartPath } from "./lib/pwa-manifest";
 import { getStoredWorkspaceMode, WORKSPACE_MODE_UPDATED_EVENT } from "./lib/workspace-mode";
@@ -311,15 +311,7 @@ function App() {
           setConfig(newConfig);
         } else {
           if (newConfig.response.status === 403 || newConfig.response.status === 401) {
-            const savedIntegrations = localStorage.getItem(INTEGRATIONS_STORAGE_KEY);
-            const firstRunExtras = localStorage.getItem(FIRST_RUN_EXTRAS_KEY);
-            localStorage.clear();
-            if (savedIntegrations) {
-              localStorage.setItem(INTEGRATIONS_STORAGE_KEY, savedIntegrations);
-            }
-            if (firstRunExtras) {
-              localStorage.setItem(FIRST_RUN_EXTRAS_KEY, firstRunExtras);
-            }
+            clearSessionStorage(localStorage);
             window.location.reload();
           } else if (newConfig.response.status !== 403) {
             seterrorFlag(true);
