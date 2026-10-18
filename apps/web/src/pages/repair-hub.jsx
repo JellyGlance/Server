@@ -15,6 +15,7 @@ import Tv2LineIcon from "remixicon-react/Tv2LineIcon";
 import ComputerLineIcon from "remixicon-react/ComputerLineIcon";
 import { useTranslation } from "react-i18next";
 import axios from "../lib/axios_instance";
+import { formatDate as formatLocaleDate } from "../lib/format-date";
 import "./css/repair-hub.css";
 
 const numberFormat = new Intl.NumberFormat();
@@ -31,14 +32,17 @@ function formatNumber(value) {
 }
 
 function formatDate(value, emptyLabel) {
-  if (!value) return emptyLabel || "";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+  return formatLocaleDate(
+    value,
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+    { fallback: emptyLabel || "" }
+  );
 }
 
 function itemMeta(item, fallback) {

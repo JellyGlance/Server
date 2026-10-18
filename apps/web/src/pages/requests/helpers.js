@@ -1,13 +1,13 @@
 import i18n from "i18next";
+import { formatDate as formatLocaleDate } from "../../lib/format-date";
 
 export function formatDate(value) {
-  if (!value) return i18n.t("FEATURES.REQUESTS.UNKNOWN");
-  return new Intl.DateTimeFormat("en-GB", {
+  return formatLocaleDate(value, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }, { fallback: i18n.t("FEATURES.REQUESTS.UNKNOWN") });
 }
 
 export function getRequestAge(value) {
