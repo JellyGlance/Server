@@ -1098,5 +1098,11 @@
     "IOS_HINT": "Install JellyGlance: tap Share in Safari, then Add to Home Screen.",
     "INSTALL": "Install",
     "NOT_NOW": "Not now"
+  },
+  "WIZARR": {
+    "USED_BY": "Used by {{user}}",
+    "COPY_INVITE": "Copy invite link {{code}}",
+    "OPEN_INVITE": "Open invite {{code}}",
+    "DELETE_INVITE": "Delete invite {{code}}"
   }
 }
