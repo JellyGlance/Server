@@ -82,6 +82,9 @@ function GlobalStats(props) {
       )
       .then((dayData) => {
         setMethod(dayData.data);
+      })
+      .catch((error) => {
+        console.log(error);
       });
   }
 

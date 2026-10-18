@@ -8,6 +8,7 @@ const { getIntegrations } = require("../classes/integration-store");
 const { fetchHouseholdWatchTonight } = require("../classes/watch-tonight");
 const { sendSafeError } = require("../utils/security");
 const { catalogCountSql, catalogCounts, groupPlaysByType } = require("../classes/library-types");
+const { canViewAllUsers, normalizeUserId, ownMediaUserId, resolveStatsUser, sameUserId, sendForbidden } = require("../classes/stats-access");
 
 const router = express.Router();
 
@@ -769,13 +770,22 @@ router.get("/getAllUserActivity", async (req, res) => {
     res.set("Pragma", "no-cache");
     res.set("Expires", "0");
     res.set("Surrogate-Control", "no-store");
-    const { rows } = await db.query(`
+    const admin = canViewAllUsers(req);
+    const ownId = admin ? null : ownMediaUserId(req.user);
+    if (!admin && !ownId) {
+      return res.send([]);
+    }
+    const { rows } = await db.query(
+      `
       SELECT
         a.*,
         COALESCE(u."IsAdministrator", false) AS "IsAdministrator"
       FROM jf_all_user_activity a
       LEFT JOIN jf_users u ON u."Id" = a."UserId"
-    `);
+      ${admin ? "" : `WHERE replace(lower(a."UserId"), '-', '') = $1`}
+    `,
+      admin ? [] : [normalizeUserId(ownId)]
+    );
     res.send(rows);
   } catch (error) {
     res.send([]);
@@ -899,7 +909,13 @@ async function enrichUserWrapUp(user) {
 router.get("/getUserWrapUp", async (req, res) => {
   try {
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-    const { rows: users } = await db.query(`
+    const admin = canViewAllUsers(req);
+    const ownId = admin ? null : ownMediaUserId(req.user);
+    if (!admin && !ownId) {
+      return res.json([]);
+    }
+    const { rows: users } = await db.query(
+      `
       SELECT
         u."Id" AS "UserId",
         u."Name" AS "UserName",
@@ -913,9 +929,12 @@ router.get("/getUserWrapUp", async (req, res) => {
         count(DISTINCT a."Client")::int AS "UniqueClients"
       FROM jf_users u
       LEFT JOIN jf_playback_activity a ON a."UserId" = u."Id"
+      ${admin ? "" : `WHERE replace(lower(u."Id"), '-', '') = $1`}
       GROUP BY u."Id", u."Name", u."PrimaryImageTag", u."IsAdministrator"
       ORDER BY COALESCE(sum(a."PlaybackDuration"), 0) DESC, u."Name" ASC
-    `);
+    `,
+      admin ? [] : [normalizeUserId(ownId)]
+    );
 
     const enrichedUsers = await Promise.all(users.map(enrichUserWrapUp));
 
@@ -932,6 +951,11 @@ router.get("/getUserProfileWrapUp", async (req, res) => {
     const userKey = String(req.query.user || "").trim().toLowerCase();
     if (!userKey) {
       return res.status(400).json({ error: "Missing user query parameter" });
+    }
+    const admin = canViewAllUsers(req);
+    const ownId = admin ? null : ownMediaUserId(req.user);
+    if (!admin && !ownId) {
+      return sendForbidden(res);
     }
 
     const { rows } = await db.query(
@@ -967,12 +991,25 @@ router.get("/getUserProfileWrapUp", async (req, res) => {
       [userKey]
     );
 
+    // Non-admins can only open their own profile. Unknown users get the same 403 so the
+    // response doesn't reveal who else exists.
+    if (!admin && (!rows.length || !sameUserId(rows[0].UserId, ownId))) {
+      return sendForbidden(res);
+    }
+
     if (!rows.length) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const user = await enrichUserWrapUp(rows[0]);
-    return res.json({ user, rank: Number(rows[0].Rank || 1) });
+    if (admin) {
+      const user = await enrichUserWrapUp(rows[0]);
+      return res.json({ user, rank: Number(rows[0].Rank || 1) });
+    }
+
+    // The rank compares against everyone else's watch time, so only admins get it.
+    const { Rank: _rank, ...ownRow } = rows[0];
+    const user = await enrichUserWrapUp(ownRow);
+    return res.json({ user, rank: null });
   } catch (error) {
     console.log(error);
     sendSafeError(res, error);
@@ -981,8 +1018,10 @@ router.get("/getUserProfileWrapUp", async (req, res) => {
 
 router.post("/getUserLastPlayed", async (req, res) => {
   try {
-    const { userid } = req.body;
-    const { rows } = await db.query(`select * from fs_last_user_activity($1) limit 15`, [userid]);
+    const scope = resolveStatsUser(req, req.body?.userid);
+    if (scope.forbidden) return sendForbidden(res);
+    if (!scope.admin && !scope.userId) return res.send([]);
+    const { rows } = await db.query(`select * from fs_last_user_activity($1) limit 15`, [scope.userId]);
     res.send(rows);
   } catch (error) {
     console.log(error);
@@ -994,12 +1033,15 @@ router.post("/getUserLastPlayed", async (req, res) => {
 //Global Stats
 router.post("/getGlobalUserStats", async (req, res) => {
   try {
-    const { hours, userid } = req.body;
+    const { hours } = req.body;
+    const scope = resolveStatsUser(req, req.body?.userid);
+    if (scope.forbidden) return sendForbidden(res);
+    if (!scope.admin && !scope.userId) return res.send({});
     let _hours = hours;
     if (hours === undefined) {
       _hours = 24;
     }
-    const { rows } = await db.query(`select * from fs_user_stats($1,$2)`, [_hours, userid]);
+    const { rows } = await db.query(`select * from fs_user_stats($1,$2)`, [_hours, scope.userId]);
     res.send(rows[0]);
   } catch (error) {
     console.log(error);
@@ -1410,9 +1452,15 @@ router.get("/getViewsByLibraryType", async (req, res) => {
 
 router.get("/getGenreUserStats", async (req, res) => {
   try {
-    const { size = 50, page = 1, userid } = req.query;
+    const { size = 50, page = 1 } = req.query;
+    const scope = resolveStatsUser(req, req.query.userid);
+    if (scope.forbidden) return sendForbidden(res);
+    const userid = scope.userId;
 
-    if (userid === undefined) {
+    if (!userid) {
+      if (!scope.admin) {
+        return res.send({ current_page: page, pages: 0, size: size, results: [] });
+      }
       res.status(400);
       res.send("No User ID provided");
       return;
