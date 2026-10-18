@@ -22,6 +22,17 @@ import {
 
 import "../../css/settings/settings.css";
 import { InputGroup } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
+
+const OIDC = "SETTINGS_PAGE.OIDC";
+const OIDC_ROLES = ["Owner", "Admin", "Manager", "Viewer", "Household", "Disabled"];
+
+function roleMappingToText(mapping) {
+  if (!mapping || typeof mapping !== "object") return typeof mapping === "string" ? mapping : "";
+  return Object.entries(mapping)
+    .map(([group, role]) => `${group}=${role}`)
+    .join("\n");
+}
 
 const authModes = [
   {
@@ -45,6 +56,7 @@ const authModes = [
 ];
 
 export default function SecuritySettings() {
+  const { t } = useTranslation();
   const [authMode, setAuthMode] = useState("quick-connect");
   const [showOidcSecret, setShowOidcSecret] = useState(false);
   const [oidcValues, setOidcValues] = useState({});
@@ -67,8 +79,15 @@ export default function SecuritySettings() {
         setOidcValues({
           issuerUrl: nextAuth.issuerUrl || "",
           clientId: nextAuth.clientId || "",
-          clientSecret: nextAuth.clientSecret || "",
+          clientSecret: "",
           redirectUri: nextAuth.redirectUri || `${window.location.origin}/auth/oidc/callback`,
+          scopes: nextAuth.scopes || "openid profile email",
+          groupsClaim: nextAuth.groupsClaim || "groups",
+          roleMapping: roleMappingToText(nextAuth.roleMapping),
+          linkPolicy: nextAuth.linkPolicy || "verified_email",
+          autoProvision: Boolean(nextAuth.autoProvision),
+          defaultRole: nextAuth.defaultRole || "Viewer",
+          clearClientSecret: false,
         });
       } catch (error) {
         console.log(error);
@@ -130,7 +149,8 @@ export default function SecuritySettings() {
   }
 
   function handleOidcChange(event) {
-    setOidcValues({ ...oidcValues, [event.target.name]: event.target.value });
+    const { name, type, checked, value } = event.target;
+    setOidcValues({ ...oidcValues, [name]: type === "checkbox" ? checked : value });
   }
 
   function handleActiveSessionIpPrivacyChange(value) {
@@ -277,6 +297,87 @@ export default function SecuritySettings() {
               <Col>
                 <Form.Control name="redirectUri" value={oidcValues.redirectUri || ""} onChange={handleOidcChange} />
               </Col>
+            </Form.Group>
+
+            <Form.Group className="mb-3 security-oidc-check">
+              <div>
+                <Form.Check
+                  type="checkbox"
+                  id="oidc-public-client"
+                  name="clearClientSecret"
+                  checked={Boolean(oidcValues.clearClientSecret)}
+                  onChange={handleOidcChange}
+                  label={t(`${OIDC}.PUBLIC_CLIENT`)}
+                />
+              </div>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3">
+              <Form.Label column>{t(`${OIDC}.SCOPES`)}</Form.Label>
+              <Col>
+                <Form.Control name="scopes" value={oidcValues.scopes || ""} onChange={handleOidcChange} placeholder="openid profile email groups" />
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3">
+              <Form.Label column>{t(`${OIDC}.GROUPS_CLAIM`)}</Form.Label>
+              <Col>
+                <Form.Control name="groupsClaim" value={oidcValues.groupsClaim || ""} onChange={handleOidcChange} placeholder="groups" />
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3">
+              <Form.Label column>{t(`${OIDC}.ROLE_MAPPING`)}</Form.Label>
+              <Col>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  name="roleMapping"
+                  value={oidcValues.roleMapping || ""}
+                  onChange={handleOidcChange}
+                  placeholder={"jellyglance-admins=Admin\njellyglance-users=Viewer"}
+                />
+                <Form.Text muted>{t(`${OIDC}.ROLE_MAPPING_HINT`)}</Form.Text>
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3">
+              <Form.Label column>{t(`${OIDC}.LINK_POLICY`)}</Form.Label>
+              <Col>
+                <Form.Select name="linkPolicy" value={oidcValues.linkPolicy || "verified_email"} onChange={handleOidcChange}>
+                  <option value="verified_email">{t(`${OIDC}.LINK_VERIFIED_EMAIL`)}</option>
+                  <option value="username">{t(`${OIDC}.LINK_USERNAME`)}</option>
+                  <option value="manual">{t(`${OIDC}.LINK_MANUAL`)}</option>
+                </Form.Select>
+                {oidcValues.linkPolicy === "username" ? <Form.Text className="text-warning">{t(`${OIDC}.LINK_USERNAME_WARNING`)}</Form.Text> : null}
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3">
+              <Form.Label column>{t(`${OIDC}.DEFAULT_ROLE`)}</Form.Label>
+              <Col>
+                <Form.Select name="defaultRole" value={oidcValues.defaultRole || "Viewer"} onChange={handleOidcChange}>
+                  {OIDC_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Col>
+            </Form.Group>
+
+            <Form.Group className="mb-3 security-oidc-check">
+              <div>
+                <Form.Check
+                  type="checkbox"
+                  id="oidc-auto-provision"
+                  name="autoProvision"
+                  checked={Boolean(oidcValues.autoProvision)}
+                  onChange={handleOidcChange}
+                  label={t(`${OIDC}.AUTO_PROVISION`)}
+                />
+                <Form.Text muted>{t(`${OIDC}.BREAK_GLASS`)}</Form.Text>
+              </div>
             </Form.Group>
           </div>
         )}

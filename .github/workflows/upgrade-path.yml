@@ -8,15 +8,10 @@ name: Upgrade path
 # Uses public images only and no secrets, so it runs the same on fork PRs.
 
 on:
+  # No paths filter on pull_request: "Upgrade from latest release" is a required
+  # check on main, so it must report on every PR. The "changes" job below
+  # decides whether the test actually needs to run.
   pull_request:
-    paths:
-      - "apps/api/**"
-      - "Dockerfile"
-      - "package.json"
-      - "package-lock.json"
-      - "scripts/entrypoint.sh"
-      - "scripts/upgrade-test/**"
-      - ".github/workflows/upgrade-path.yml"
   push:
     branches: [main]
   workflow_dispatch:
@@ -34,22 +29,80 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Upgrade path · Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      upgrade: ${{ steps.result.outputs.upgrade }}
+    steps:
+      - name: Filter changed paths
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            upgrade:
+              - "apps/api/**"
+              - "Dockerfile"
+              - "package.json"
+              - "package-lock.json"
+              - "scripts/entrypoint.sh"
+              - "scripts/upgrade-test/**"
+              - ".github/workflows/upgrade-path.yml"
+
+      - name: Decide
+        id: result
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_UPGRADE: ${{ steps.filter.outputs.upgrade }}
+        run: |
+          set -euo pipefail
+          # Pushes to main and manual runs always test, as before.
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            upgrade=true
+          elif [ "$PR_UPGRADE" = "true" ]; then
+            upgrade=true
+          else
+            upgrade=false
+          fi
+          echo "upgrade=$upgrade" >> "$GITHUB_OUTPUT"
+          echo "Upgrade-relevant changes: $upgrade"
+
   upgrade:
     name: Upgrade from latest release
+    # Always runs so the required check reports on every PR. When nothing
+    # upgrade-relevant changed, every step below is skipped and the job still
+    # concludes with success.
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      RUN_UPGRADE: ${{ needs.changes.outputs.upgrade }}
     steps:
+      - name: Nothing to test
+        if: env.RUN_UPGRADE != 'true'
+        run: |
+          echo "No upgrade-relevant changes in this PR; skipping the upgrade-path test."
+          echo "Upgrade from latest release: skipped (no upgrade-relevant changes)" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Checkout
+        if: env.RUN_UPGRADE == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
       - name: Setup Node.js
+        if: env.RUN_UPGRADE == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
 
       - name: Setup Docker Buildx
+        if: env.RUN_UPGRADE == 'true'
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
         with:
           buildkitd-config-inline: |
@@ -57,6 +110,7 @@ jobs:
               mirrors = ["mirror.gcr.io"]
 
       - name: Build image under test
+        if: env.RUN_UPGRADE == 'true'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
@@ -69,6 +123,7 @@ jobs:
           cache-from: type=gha,scope=docker-linux/amd64
 
       - name: Run upgrade-path test
+        if: env.RUN_UPGRADE == 'true'
         env:
           OLD_IMAGE: ${{ inputs.old_image || 'ghcr.io/jellyglance/server:latest' }}
           NEW_IMAGE: jellyglance:upgrade-test
