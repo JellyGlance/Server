@@ -29,6 +29,7 @@ const authRouter = require("./routes/auth");
 const apiRouter = require("./routes/api");
 const commandCenterRouter = require("./routes/command-center");
 const proxyRouter = require("./routes/proxy");
+const { requireAdminSettings, isAdminSettingsPath } = require("./classes/route-guards");
 const { router: syncRouter } = require("./routes/sync");
 const statsRouter = require("./routes/stats");
 const backupRouter = require("./routes/backup");
@@ -797,6 +798,11 @@ function authorizeApiRoute(req, res, next) {
       return requirePermission("dashboard")(req, res, next);
     }
     return requirePermission("settings")(req, res, next);
+  }
+
+  // Probes arbitrary user-supplied URLs, so it's limited to admins with the settings permission.
+  if (isAdminSettingsPath(pathName)) {
+    return requireAdminSettings(req, res, next);
   }
 
   if (pathName.startsWith("/server-management")) {

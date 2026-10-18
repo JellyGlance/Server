@@ -1,14 +1,11 @@
-const CryptoJS = require("crypto-js");
 const nodemailer = require("nodemailer");
 const db = require("../db");
-const { decryptSecret } = require("./integration-store");
+const { encryptSecret, decryptSecret } = require("./integration-store");
 const { isValidEmail } = require("../utils/security");
+const { decryptLegacy, isLegacyCiphertext } = require("../utils/legacy-crypto");
 
 const SETTINGS_KEY = "Newsletter";
 
-function secretKey() {
-  return process.env.JWT_SECRET || process.env.POSTGRES_PASSWORD || "jellyglance-newsletter";
-}
 
 function defaultNewsletterSettings() {
   return {
@@ -51,12 +48,18 @@ function decryptPassword(value) {
   if (modern && modern !== value) {
     return modern;
   }
-  try {
-    const bytes = CryptoJS.AES.decrypt(value, secretKey());
-    return bytes.toString(CryptoJS.enc.Utf8);
-  } catch {
-    return "";
-  }
+  return decryptLegacy(value);
+}
+
+// Re-encrypt an old crypto-js password with the current AES-256-GCM scheme. Anything else
+// (already current, empty, unreadable, or no key to encrypt with) comes back unchanged,
+// so running it again is a no-op.
+function upgradeLegacyPassword(value) {
+  if (!isLegacyCiphertext(value)) return value;
+  const plain = decryptLegacy(value);
+  if (!plain) return value;
+  const upgraded = encryptSecret(plain);
+  return typeof upgraded === "string" && upgraded.startsWith("jgenc:") ? upgraded : value;
 }
 
 function validateEmail(value) {
@@ -122,6 +125,7 @@ async function sendConfiguredMail({ to, subject, text, html, attachments = [] })
 module.exports = {
   createTransport,
   decryptPassword,
+  upgradeLegacyPassword,
   defaultNewsletterSettings,
   getAppSettings,
   getNewsletterSettings,
