@@ -39,6 +39,10 @@
     "SIZE_SMALL": "Kompaktní",
     "SIZE_MEDIUM": "Poloviční šířka",
     "SIZE_LARGE": "Plná šířka",
+    "OPERATIONS_MOVED_UP_one": "{{section}} je teď výš: {{count}} požadavek vyžaduje pozornost.",
+    "OPERATIONS_MOVED_UP_few": "{{section}} je teď výš: {{count}} požadavky vyžadují pozornost.",
+    "OPERATIONS_MOVED_UP_many": "{{section}} je teď výš: {{count}} požadavků vyžaduje pozornost.",
+    "OPERATIONS_MOVED_UP_other": "{{section}} je teď výš: {{count}} požadavků vyžaduje pozornost.",
     "SECTIONS": {
       "sessions": "Aktivní relace",
       "streamCapacity": "Kapacita streamů",

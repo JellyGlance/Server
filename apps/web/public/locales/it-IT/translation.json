@@ -39,6 +39,8 @@
     "SIZE_SMALL": "Compatto",
     "SIZE_MEDIUM": "Mezza larghezza",
     "SIZE_LARGE": "Larghezza intera",
+    "OPERATIONS_MOVED_UP_one": "La sezione {{section}} sale in cima: {{count}} richiesta richiede attenzione.",
+    "OPERATIONS_MOVED_UP_other": "La sezione {{section}} sale in cima: {{count}} richieste richiedono attenzione.",
     "SECTIONS": {
       "sessions": "Sessioni attive",
       "streamCapacity": "Capacità stream",

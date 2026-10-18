@@ -39,6 +39,8 @@
     "SIZE_SMALL": "Compacte",
     "SIZE_MEDIUM": "Mitja amplada",
     "SIZE_LARGE": "Amplada completa",
+    "OPERATIONS_MOVED_UP_one": "La secció {{section}} puja: {{count}} petició necessita atenció.",
+    "OPERATIONS_MOVED_UP_other": "La secció {{section}} puja: {{count}} peticions necessiten atenció.",
     "SECTIONS": {
       "sessions": "Sessions actives",
       "streamCapacity": "Capacitat de flux",

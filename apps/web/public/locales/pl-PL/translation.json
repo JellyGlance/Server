@@ -39,6 +39,10 @@
     "SIZE_SMALL": "Zwarte",
     "SIZE_MEDIUM": "Pół szerokości",
     "SIZE_LARGE": "Pełna szerokość",
+    "OPERATIONS_MOVED_UP_one": "Sekcja {{section}} jest teraz wyżej: {{count}} prośba wymaga uwagi.",
+    "OPERATIONS_MOVED_UP_few": "Sekcja {{section}} jest teraz wyżej: {{count}} prośby wymagają uwagi.",
+    "OPERATIONS_MOVED_UP_many": "Sekcja {{section}} jest teraz wyżej: {{count}} próśb wymaga uwagi.",
+    "OPERATIONS_MOVED_UP_other": "Sekcja {{section}} jest teraz wyżej: {{count}} prośby wymaga uwagi.",
     "SECTIONS": {
       "sessions": "Aktywne sesje",
       "streamCapacity": "Pojemność strumieni",

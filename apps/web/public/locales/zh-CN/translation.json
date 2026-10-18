@@ -39,6 +39,8 @@
     "SIZE_SMALL": "紧凑",
     "SIZE_MEDIUM": "半宽",
     "SIZE_LARGE": "全宽",
+    "OPERATIONS_MOVED_UP_one": "{{section}}已上移：{{count}} 个点播需要处理。",
+    "OPERATIONS_MOVED_UP_other": "{{section}}已上移：{{count}} 个点播需要处理。",
     "SECTIONS": {
       "sessions": "活动会话",
       "streamCapacity": "串流容量",

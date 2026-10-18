@@ -39,6 +39,8 @@
     "SIZE_SMALL": "Kompakt",
     "SIZE_MEDIUM": "Halbe Breite",
     "SIZE_LARGE": "Volle Breite",
+    "OPERATIONS_MOVED_UP_one": "{{section}} ist nach oben gerückt: {{count}} Anfrage braucht Aufmerksamkeit.",
+    "OPERATIONS_MOVED_UP_other": "{{section}} ist nach oben gerückt: {{count}} Anfragen brauchen Aufmerksamkeit.",
     "SECTIONS": {
       "sessions": "Aktive Sitzungen",
       "streamCapacity": "Stream-Kapazität",
