@@ -15,6 +15,7 @@ const API = require("../classes/api-loader");
 const TaskManager = require("../classes/task-manager-singleton");
 const TaskScheduler = require("../classes/task-scheduler-singleton");
 const { sendSafeError } = require("../utils/security");
+const { filterLibraryItems } = require("../classes/library-types");
 
 const router = express.Router();
 
@@ -35,11 +36,6 @@ const taskstate = require("../logging/taskstate");
 
 let syncTask;
 let PlaybacksyncTask;
-
-// Item types stored in jf_library_items. MusicVideo is what Jellyfin assigns everything in a
-// "musicvideos" library; Video covers home videos and files in "mixed" libraries. Without
-// them those libraries sync as empty and their plays never link to an item.
-const LIBRARY_ITEM_TYPES = ["Movie", "Audio", "Series", "MusicVideo", "Video"];
 
 /////////////////////////////////////////Functions
 
@@ -673,7 +669,7 @@ async function scanSingleLibrary(library) {
       ParentId: library.Id,
     }));
 
-    let library_items = libraryItemsWithParent.filter((item) => LIBRARY_ITEM_TYPES.includes(item.Type));
+    let library_items = filterLibraryItems(libraryItemsWithParent);
     let seasons = libraryItemsWithParent.filter((item) => ["Season"].includes(item.Type));
     let episodes = libraryItemsWithParent.filter((item) => ["Episode"].includes(item.Type));
 
@@ -811,7 +807,7 @@ async function fullSync(triggertype) {
           ...{ ParentId: item.Id },
         }));
 
-        let library_items = libraryItemsWithParent.filter((item) => LIBRARY_ITEM_TYPES.includes(item.Type));
+        let library_items = filterLibraryItems(libraryItemsWithParent);
 
         let seasons = libraryItemsWithParent.filter((item) => ["Season"].includes(item.Type));
         let episodes = libraryItemsWithParent.filter((item) => ["Episode"].includes(item.Type));
@@ -1037,7 +1033,7 @@ async function partialSync(triggertype) {
           ...{ ParentId: library.Id },
         }));
 
-        let library_items = libraryItemsWithParent.filter((item) => LIBRARY_ITEM_TYPES.includes(item.Type));
+        let library_items = filterLibraryItems(libraryItemsWithParent);
 
         let seasons = libraryItemsWithParent.filter((item) => ["Season"].includes(item.Type));
         let episodes = libraryItemsWithParent.filter((item) => ["Episode"].includes(item.Type));

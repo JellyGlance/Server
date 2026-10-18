@@ -4,34 +4,20 @@ import "../../css/library/library-card.css";
 
 import Card from 'react-bootstrap/Card';
 
-import TvLineIcon from "remixicon-react/TvLineIcon";
-import FilmLineIcon from "remixicon-react/FilmLineIcon";
-import FileMusicLineIcon from "remixicon-react/FileMusicLineIcon";
-import CheckboxMultipleBlankLineIcon from "remixicon-react/CheckboxMultipleBlankLineIcon";
 import { Trans } from "react-i18next";
 import i18next from "i18next";
 import baseUrl from "../../../lib/baseurl";
+import { libraryTypeMeta } from "../../../lib/library-types";
 
 function LibraryCard(props) {
   const [imageLoaded, setImageLoaded] = useState(true);
-  const SeriesIcon=<TvLineIcon size={"50%"} color="white"/> ;
-  const MovieIcon=<FilmLineIcon size={"50%"} color="white"/> ;
-  const MusicIcon=<FileMusicLineIcon size={"50%"}    color="white"/> ;
-  const MixedIcon=<CheckboxMultipleBlankLineIcon size={"50%"}    color="white"/> ;
-
-  const default_image=<div className="default_library_image default_library_image_hover d-flex justify-content-center align-items-center">{props.data.CollectionType==='tvshows' ? SeriesIcon : props.data.CollectionType==='movies'? MovieIcon : props.data.CollectionType==='music'? MusicIcon : MixedIcon} </div>;
-  const typeLabel =
-    props.data.CollectionType === "tvshows"
-      ? i18next.t("SERIES")
-      : props.data.CollectionType === "movies"
-        ? i18next.t("MOVIES")
-        : props.data.CollectionType === "music"
-          ? i18next.t("MUSIC")
-          : "Mixed";
-  const libraryIcon =
-    props.data.CollectionType === "tvshows" ? SeriesIcon : props.data.CollectionType === "movies" ? MovieIcon : props.data.CollectionType === "music" ? MusicIcon : MixedIcon;
+  const libraryMeta = libraryTypeMeta(props.data.CollectionType);
+  const TypeIcon = libraryMeta.icon;
+  const libraryIcon = <TypeIcon size={"50%"} color="white" />;
+  const default_image=<div className="default_library_image default_library_image_hover d-flex justify-content-center align-items-center">{libraryIcon} </div>;
+  const typeLabel = libraryMeta.name;
   const primaryItemCount = props.data.CollectionType === "tvshows" ? props.data.Episode_Count : props.data.Library_Count;
-  const primaryItemLabel = props.data.CollectionType === "tvshows" ? i18next.t("EPISODES") : props.data.CollectionType === "music" ? i18next.t("SONGS") : i18next.t("FILES");
+  const primaryItemLabel = props.data.CollectionType === "tvshows" ? i18next.t("EPISODES") : libraryMeta.units;
 
   function formatFileSize(sizeInBytes) {
     const sizeInKB = sizeInBytes / 1024; // 1 KB = 1024 bytes
