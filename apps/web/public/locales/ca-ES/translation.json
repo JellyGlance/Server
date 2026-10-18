@@ -39,6 +39,8 @@
     "SIZE_SMALL": "Compacte",
     "SIZE_MEDIUM": "Mitja amplada",
     "SIZE_LARGE": "Amplada completa",
+    "OPERATIONS_MOVED_UP_one": "La secció {{section}} puja: {{count}} petició necessita atenció.",
+    "OPERATIONS_MOVED_UP_other": "La secció {{section}} puja: {{count}} peticions necessiten atenció.",
     "SECTIONS": {
       "sessions": "Sessions actives",
       "streamCapacity": "Capacitat de flux",
@@ -439,7 +441,19 @@
       "HINT_TLS_CERT": "Use a trusted certificate, or set REJECT_SELF_SIGNED_CERTIFICATES=false if you use a self-signed one.",
       "HINT_TLS_PROTOCOL": "The port may be plain http. Try http:// instead of https://.",
       "HINT_NO_LIBRARIES": "Add a library in your media server, or check that the API key's user can see libraries.",
-      "HINT_NO_ARTWORK": "That is fine if the library is new; artwork appears after a metadata refresh."
+      "HINT_NO_ARTWORK": "That is fine if the library is new; artwork appears after a metadata refresh.",
+      "RESULTS_TITLE": "Connection status",
+      "TESTS_SAVED": "Checks the saved connection. Save changes first, then test.",
+      "UNTESTED": "Not tested yet. Press Test connection to check the saved server.",
+      "RUNNING_SUMMARY": "Checking the {{server}} connection…",
+      "STATUS_PASS": "Passed",
+      "STATUS_WARN": "Needs a look",
+      "STATUS_FAIL": "Failed",
+      "STATUS_SKIP": "Skipped",
+      "KEY_PLACEHOLDER": "Paste your API key",
+      "KEY_SAVED_HINT": "A key is saved and kept hidden. Paste it again, or a new one, when you update the connection.",
+      "SHOW_KEY": "Show API key",
+      "HIDE_KEY": "Hide API key"
     }
   },
   "TASK_TYPE": {
