@@ -15,6 +15,10 @@ require.cache[axiosPath] = {
         for (const [suffix, data] of responses) if (url.endsWith(suffix)) return { data };
         throw new Error(`no stub for ${url}`);
       },
+      // safeHttpGet (used by detectServerType) calls axios.request with baseURL + path.
+      async request(config) {
+        return this.get(`${config.baseURL || ""}${config.url}`);
+      },
     },
   },
 };

@@ -378,8 +378,17 @@ router.post("/validateSettings", async (req, res) => {
     return;
   }
 
-  const serverType = await chooseServerType(requestedType, url);
-  const validation = await withServerType(serverType, () => API.validateSettings(url, apikey));
+  let serverType;
+  let validation;
+  try {
+    // Probe mode: refuse loopback/link-local/metadata targets and don't follow redirects.
+    serverType = await chooseServerType(requestedType, url, { probe: true });
+    validation = await withServerType(serverType, () => API.validateSettings(url, apikey, { probe: true }));
+  } catch (error) {
+    res.status(error?.code === "EPROBEBLOCKED" ? 400 : 502);
+    res.send(error?.code === "EPROBEBLOCKED" ? "Destination not allowed" : "Validation failed");
+    return;
+  }
   if (validation.isValid === false) {
     res.status(validation.status);
     res.send(validation.errorMessage);

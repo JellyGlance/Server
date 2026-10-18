@@ -5,7 +5,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "dev": "nodemon --inspect server.js",
+    "dev": "node --watch --inspect server.js",
     "start": "node server.js",
     "swagger": "node swagautogen.js",
     "test": "node --test \"test/*.test.js\"",
@@ -43,7 +43,6 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.12.0",
-    "globals": "^17.13.0",
-    "nodemon": "^3.1.10"
+    "globals": "^17.13.0"
   }
 }
