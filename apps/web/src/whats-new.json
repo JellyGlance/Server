@@ -1,4 +1,76 @@
 {
+  "1.4.0": [
+    {
+      "icon": "rocket",
+      "title": "Made For Phones And Tablets",
+      "body": "Phones and smaller tablets get a bottom tab bar, with More for the rest of your pages, your account and Install app. The main pages have proper phone and tablet layouts, detail pages get a back button, and installing as an app is cleaner. Desktop is unchanged."
+    },
+    {
+      "icon": "shield",
+      "title": "Safer Single Sign-On",
+      "body": "OIDC sign-in now properly checks every login with your provider's signing keys, so a forged or replayed login can't get in. Accounts are linked more carefully, so a matching username at the provider can't take over an existing account, and you can map provider groups to JellyGlance roles."
+    },
+    {
+      "icon": "users",
+      "title": "Viewers See Only Their Own Activity",
+      "body": "Viewers now only see their own history, stats, wrap-up and profile, across the Activity page, the most active lists and the Timeline. Opening someone else's profile shows Profile not available. Owners, admins and managers still see everyone, as before."
+    },
+    {
+      "icon": "shield",
+      "title": "Locked-Down Media Server Checks",
+      "body": "Only admins can change or test the media server address, and those checks refuse loopback, link-local and cloud metadata addresses. Running Jellyfin or Emby on the same host? Set JS_ALLOW_LOOPBACK_MEDIA_SERVER=true. LAN servers work as before."
+    },
+    {
+      "icon": "movie",
+      "title": "Every Stream Counted",
+      "body": "When one person or device plays more than one thing at once, each stream now gets its own history entry, watch time and start and stop notifications. Stopping one stream no longer ends or silences the other."
+    },
+    {
+      "icon": "speed",
+      "title": "Faster Stats And Optional History Clean-Up",
+      "body": "Views over time and Popular days now load several times faster on big libraries, with the same numbers. You can also trim old per-play history under Settings → Health → Playback History Retention. It's off by default and permanent, so back up first."
+    },
+    {
+      "icon": "chat",
+      "title": "Smarter Alert Rules",
+      "body": "Alerts can now fire on events too: a new user, the media server going down or coming back, new library items or a new device. Each rule can post to Discord, Gotify or a webhook, with its own cooldown and a Send test button. Existing rules keep working as before."
+    },
+    {
+      "icon": "movie",
+      "title": "Books, Photos, Trailers And Home Videos",
+      "body": "Music video, home video, book, audiobook, photo and trailer libraries now sync properly instead of showing as empty, and they get their own icons, labels and counts across the library pages and stats."
+    },
+    {
+      "icon": "magic",
+      "title": "Redesigned Plugins Page",
+      "body": "The Jellyfin plugins page shows a clear status for every plugin, groups duplicate copies left behind by updates, counts only plugins that are really running, and adds search and filters."
+    },
+    {
+      "icon": "palette",
+      "title": "Home Keeps Your Layout",
+      "body": "Your saved Home layout, pins and sizes now survive updates and expired sign-ins. Active sessions stays at the top of the built-in layouts even when requests need attention, and the layout editor shows the full width labels again."
+    },
+    {
+      "icon": "palette",
+      "title": "Tidier Media Server Settings",
+      "body": "The Jellyfin Connection card has the form and the connection status side by side, a hidden saved API key, Test connection and Update in one row, and a clearer pass, warning or fail result for each check."
+    },
+    {
+      "icon": "chat",
+      "title": "45 More Languages",
+      "body": "JellyGlance now speaks 55 languages, with 45 new ones including Japanese, Korean, Hindi, Dutch, Swedish, Turkish and Brazilian Portuguese. Pick yours from the language picker, where each one is listed under its own name. Arabic, Hebrew, Persian and Urdu switch the whole layout to right-to-left."
+    },
+    {
+      "icon": "chat",
+      "title": "More Of JellyGlance In Your Language",
+      "body": "Dates and numbers now follow the language you pick. The user wrap-up, profile rails and Wizarr invites are translated, the wrap-up is in German, the connection test is in Czech, and Wizarr's invite buttons have clear screen reader labels."
+    },
+    {
+      "icon": "speed",
+      "title": "Smaller Fixes",
+      "body": "crypto-js is gone, and older newsletter SMTP passwords are upgraded next time you save. The About page lists every contributor, and Documentation opens docs.jellyglance.com. Nothing to change on your side, just update and restart."
+    }
+  ],
   "1.3.4": [
     {
       "icon": "magic",

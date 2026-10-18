@@ -449,6 +449,7 @@ select option:hover {
 .whats-new-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: max-content;
   gap: 9px;
   max-height: min(58vh, 560px);
   overflow: auto;
