@@ -98,7 +98,7 @@ It runs as a single Docker container next to PostgreSQL. It's free, with no ads,
 - **Calendar and downloads.** Upcoming releases from the \*arr apps and the queues from your download clients.
 - **Users.** Dashboards with favourites, watchlists, Continue Watching and recently watched, and Wizarr invite management.
 - **Notifications.** Webhooks, Discord and Gotify, with delivery history, plus email newsletters.
-- **Sign-in options.** Local JellyGlance accounts, Jellyfin Quick Connect and OIDC, with roles and an admin audit trail.
+- **Sign-in options.** Local JellyGlance accounts, Jellyfin Quick Connect and OIDC single sign-on (Authentik, Authelia, Keycloak; see [docs/oidc.md](docs/oidc.md)), with group-to-role mapping, roles and an admin audit trail.
 - **Backups.** Export and restore from the Backup page, stored in a plain folder you can see.
 - **Translations.** English (US and UK), Català, Čeština, Deutsch, Español, Français, Italiano, Polski and 中文.
 
