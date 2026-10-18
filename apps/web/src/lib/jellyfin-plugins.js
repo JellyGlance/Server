@@ -15,8 +15,18 @@ export const PLUGIN_STATUS = {
   Deleted: { label: "Pending removal", cls: "is-deleted", rank: 3, hint: "Uninstalled. Removed on next Jellyfin restart." },
 };
 
+// Shown for a status this page doesn't know, so it isn't mistaken for Enabled.
+export const UNKNOWN_PLUGIN_STATUS = {
+  label: "Unknown",
+  cls: "is-unknown",
+  rank: 3,
+  hint: "Jellyfin reported a status JellyGlance doesn't recognise.",
+};
+
+// A missing status means Active (older servers don't send one).
 export function pluginStatus(status) {
-  return PLUGIN_STATUS[status] || PLUGIN_STATUS.Active;
+  if (!status) return PLUGIN_STATUS.Active;
+  return PLUGIN_STATUS[status] || UNKNOWN_PLUGIN_STATUS;
 }
 
 export function comparePluginVersions(a = "", b = "") {

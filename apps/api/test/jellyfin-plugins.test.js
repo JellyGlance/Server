@@ -31,10 +31,12 @@ function loadWebHelpers() {
   return import(pathToFileURL(path.join(__dirname, "../../web/src/lib/jellyfin-plugins.js")).href);
 }
 
-test("packages match by GUID whatever the dashes, then by name", () => {
+test("packages match by GUID whatever the dashes, and by name only when there's no ID", () => {
   assert.equal(matchJellyfinPluginPackage(PLUGINS[0], PACKAGES), PACKAGES[0]);
-  assert.equal(matchJellyfinPluginPackage({ Name: "trakt", Id: "other" }, PACKAGES), PACKAGES[1]);
-  assert.equal(matchJellyfinPluginPackage({ Name: "Missing", Id: "nope" }, PACKAGES), undefined);
+  assert.equal(matchJellyfinPluginPackage({ Name: "trakt" }, PACKAGES), PACKAGES[1]);
+  // A different plugin that happens to share a name doesn't borrow its manifest.
+  assert.equal(matchJellyfinPluginPackage({ Name: "Trakt", Id: "0123456789abcdef0123456789abcdef" }, PACKAGES), undefined);
+  assert.equal(matchJellyfinPluginPackage({ Name: "Missing" }, PACKAGES), undefined);
 });
 
 test("only Active plugins count as enabled and a missing status means Active", () => {
@@ -153,4 +155,19 @@ test("sorting by name, status and version", async () => {
   assert.deepEqual(names("nonsense", "name"), names("all", "name"));
   assert.ok(comparePluginVersions("12.10.0.0", "12.9.0.0") > 0);
   assert.deepEqual(["Intro Skipper", "JellyTag", "TMDb", "NotifySync", "Trakt", "!!"].map(pluginInitials), ["IS", "JT", "TM", "NS", "Tr", ""]);
+});
+
+test("an unrecognised status shows as Unknown, not Enabled", async () => {
+  const { pluginStatus, groupJellyfinPlugins, visiblePluginGroups, countPluginFilters } = await loadWebHelpers();
+  assert.equal(pluginStatus("SomethingNew").label, "Unknown");
+  assert.equal(pluginStatus("SomethingNew").cls, "is-unknown");
+  assert.equal(pluginStatus(undefined).label, "Enabled");
+  assert.equal(pluginStatus("Superceded").label, "Superseded");
+  const groups = groupJellyfinPlugins([
+    { id: "a", name: "Alpha", version: "1.0", status: "Active" },
+    { id: "b", name: "Beta", version: "1.0", status: "SomethingNew" },
+    { id: "c", name: "Gamma", version: "1.0", status: "Superceded" },
+  ]);
+  assert.deepEqual(visiblePluginGroups(groups, "all", "status").map((group) => group.name), ["Beta", "Gamma", "Alpha"]);
+  assert.equal(countPluginFilters(groups).enabled, 1);
 });

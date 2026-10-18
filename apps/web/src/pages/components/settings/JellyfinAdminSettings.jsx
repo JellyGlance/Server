@@ -112,13 +112,13 @@ function PluginCard({ group }) {
       <footer className="jellyfin-plugin-footer">
         <div className="jellyfin-plugin-versions">
           <span className="jellyfin-plugin-version" title="Loaded version">
-            v{group.version || "?"}
+            {group.version ? `v${group.version}` : "Version unavailable"}
           </span>
-          {group.others.map((other) => {
+          {group.others.map((other, index) => {
             const otherStatus = pluginStatus(other.status);
             return (
               <span
-                key={other.version}
+                key={`${other.version}-${index}`}
                 className="jellyfin-plugin-version is-older"
                 title={`${other.version}: ${otherStatus.label}. ${otherStatus.hint}`}
               >
@@ -316,7 +316,7 @@ export default function JellyfinAdminSettings({ view = "devices" }) {
               <div className="jellyfin-plugin-toolbar">
                 <label className="jellyfin-plugin-search">
                   Search plugins
-                  <div>
+                  <span>
                     <SearchLineIcon />
                     <input
                       ref={pluginSearchRef}
@@ -326,7 +326,7 @@ export default function JellyfinAdminSettings({ view = "devices" }) {
                       placeholder="Name, description or version..."
                       aria-describedby="jf-plugin-results"
                     />
-                  </div>
+                  </span>
                 </label>
                 <label className="jellyfin-plugin-sort">
                   Sort

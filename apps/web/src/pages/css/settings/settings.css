@@ -5094,7 +5094,8 @@
   font-size: 12px;
   font-weight: 760;
 }
-.jellyfin-plugin-search > div {
+.jellyfin-plugin-search > span {
+  display: block;
   position: relative;
 }
 .jellyfin-plugin-search svg {
@@ -5377,6 +5378,11 @@
   --c: var(--jg-plugin-muted);
   --c-rgb: var(--jg-plugin-muted-rgb);
   border-style: dashed;
+}
+.jellyfin-plugin-status.is-unknown {
+  --c: var(--jg-plugin-muted);
+  --c-rgb: var(--jg-plugin-muted-rgb);
+  border-style: dotted;
 }
 .jellyfin-plugin-status.is-deleted::before {
   border-radius: 1px;

@@ -12,13 +12,14 @@ function normalizeGuid(value) {
     .toLowerCase();
 }
 
+// Match by GUID; fall back to the name only when the plugin reports no ID.
 function matchJellyfinPluginPackage(plugin, packages = []) {
   const pluginId = normalizeGuid(plugin.Id || plugin.Guid || plugin.id);
+  if (pluginId) {
+    return packages.find((entry) => pluginId === normalizeGuid(entry.guid || entry.Guid || entry.id));
+  }
   const pluginName = String(plugin.Name || plugin.name || "").trim().toLowerCase();
-  return (
-    packages.find((entry) => pluginId && pluginId === normalizeGuid(entry.guid || entry.Guid || entry.id)) ||
-    packages.find((entry) => pluginName && pluginName === String(entry.name || entry.Name || "").trim().toLowerCase())
-  );
+  return packages.find((entry) => pluginName && pluginName === String(entry.name || entry.Name || "").trim().toLowerCase());
 }
 
 function getJellyfinOrigin(config) {
