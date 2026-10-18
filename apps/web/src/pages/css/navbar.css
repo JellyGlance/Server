@@ -37,7 +37,7 @@
   }
 
   .App > .d-flex {
-    padding-left: var(--jg-sidebar-width, 13.75rem);
+    padding-inline-start: var(--jg-sidebar-width, 13.75rem);
   }
 }
 
@@ -248,7 +248,7 @@
     background: rgba(255, 255, 255, 0.035);
     color: #f8fafc;
     font: inherit;
-    text-align: left;
+    text-align: start;
   }
 
   .mobile-app-menu-account {
@@ -519,7 +519,7 @@
   background: transparent;
   border: 1px solid transparent;
   font: inherit;
-  text-align: left;
+  text-align: start;
 }
 
 .account-navitem:hover {
@@ -559,7 +559,7 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  text-align: left;
+  text-align: start;
   line-height: 1.2;
 }
 
@@ -696,7 +696,7 @@
   gap: 8px;
   min-width: 0;
   flex: 1;
-  margin-left: 10px;
+  margin-inline-start: 10px;
 }
 
 .nav-text > span:first-child {
@@ -1005,7 +1005,7 @@
   background:
     linear-gradient(135deg, rgba(var(--primary-rgb), 0.18), rgba(var(--secondary-rgb), 0.08)),
     rgba(255, 255, 255, 0.04);
-  text-align: left;
+  text-align: start;
 }
 
 .profile-modal-identity > div:last-child {
@@ -1172,7 +1172,7 @@
   border-radius: 10px;
   background: rgba(var(--primary-rgb), 0.1);
   color: #f8fafc;
-  text-align: left;
+  text-align: start;
 }
 
 .profile-whats-new-button svg {
@@ -1244,7 +1244,7 @@
   border-radius: 10px;
   background: rgba(6, 9, 14, 0.56);
   color: #e5edf8;
-  text-align: left;
+  text-align: start;
 }
 
 .profile-font-options button.is-active {
@@ -1341,7 +1341,7 @@
   font-size: 12px;
   font-weight: 850;
   padding: 0 10px;
-  text-align: left;
+  text-align: start;
 }
 
 .profile-theme-select-button[aria-expanded="true"] {

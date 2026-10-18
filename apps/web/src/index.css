@@ -175,3 +175,38 @@ body::-webkit-scrollbar-thumb:hover {
     opacity: 1 !important;
   }
 }
+
+/* Right-to-left languages (Arabic, Hebrew, Persian, Urdu). Bootstrap ships an LTR build, so flip the few controls that hard-code a side. */
+[dir="rtl"] .form-select {
+  padding-right: 0.75rem;
+  padding-left: 2.25rem;
+  background-position: left 0.75rem center;
+}
+
+[dir="rtl"] .form-check {
+  padding-right: 1.5em;
+  padding-left: 0;
+}
+
+[dir="rtl"] .form-check .form-check-input {
+  float: right;
+  margin-right: -1.5em;
+  margin-left: 0;
+}
+
+[dir="rtl"] .form-switch {
+  padding-right: 2.5em;
+}
+
+[dir="rtl"] .form-switch .form-check-input {
+  margin-right: -2.5em;
+  background-position: right center;
+}
+
+[dir="rtl"] .form-switch .form-check-input:checked {
+  background-position: left center;
+}
+
+[dir="rtl"] .modal-header .btn-close {
+  margin: calc(-0.5 * var(--bs-modal-header-padding-y)) auto calc(-0.5 * var(--bs-modal-header-padding-y)) calc(-0.5 * var(--bs-modal-header-padding-x));
+}

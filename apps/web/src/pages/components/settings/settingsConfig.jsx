@@ -20,7 +20,7 @@ import "../../css/settings/settings.css";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "i18next";
 import { FONT_WEIGHT_OPTIONS, getStoredFontWeight, saveFontWeightPreference } from "../../../lib/appearance";
-import { languages } from "../../../lib/languages";
+import { languages } from "../../../lib/languages.js";
 import { navData } from "../../../lib/navdata";
 import { DEFAULT_THEME, THEME_GROUPS, THEME_PRESETS, filterThemePresets, findMatchingThemePreset, getStoredTheme, resetTheme, saveTheme, themeColorFields } from "../../../lib/theme";
 import {

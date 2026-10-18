@@ -51,7 +51,7 @@ function syncShape(source, target = {}, stats) {
 const source = readJson(sourceFile);
 const localeNames = fs
   .readdirSync(localesRoot, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
+  .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
   .map((entry) => entry.name)
   .sort();
 
