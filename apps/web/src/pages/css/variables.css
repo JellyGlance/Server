@@ -27,3 +27,23 @@
 html.jg-nav-collapsed {
   --jg-sidebar-width: 4.875rem;
 }
+
+/* Mobile shell and touch tokens */
+:root {
+  --jg-touch-min: 44px;
+  --jg-touch-gap: 8px;
+  --jg-topbar-h: 56px;
+  --jg-tabbar-h: 64px;
+  --jg-safe-top: env(safe-area-inset-top, 0px);
+  --jg-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --jg-gutter: 12px;
+  --jg-card-radius: 14px;
+  --jg-control-radius: 12px;
+  --jg-input-font: 16px;
+}
+
+@media (min-width: 600px) {
+  :root {
+    --jg-gutter: 20px;
+  }
+}

@@ -10,7 +10,8 @@ import ArrowRightSLineIcon from "remixicon-react/ArrowRightSLineIcon";
 import ErrorWarningLineIcon from "remixicon-react/ErrorWarningLineIcon";
 import SearchLineIcon from "remixicon-react/SearchLineIcon";
 import MagicLineIcon from "remixicon-react/MagicLineIcon";
-import MenuLineIcon from "remixicon-react/MenuLineIcon";
+import Apps2LineIcon from "remixicon-react/Apps2LineIcon";
+import ArrowLeftLineIcon from "remixicon-react/ArrowLeftLineIcon";
 import ShieldUserFillIcon from "remixicon-react/ShieldUserFillIcon";
 import UserStarFillIcon from "remixicon-react/UserStarFillIcon";
 import logo_dark from "../../images/icon-b-512.png";
@@ -260,6 +261,20 @@ function applyNavbarIntegrations(integrations, setters) {
   return { tdarr, requests };
 }
 
+const OPS_TAB_LINKS = ["", "activity", "libraries", "statistics"];
+const USER_TAB_LINKS = ["me", "recently-added", "libraries", "statistics"];
+const DETAIL_ROUTE = /^\/(users|libraries)\/[^/]+|^\/libraries\/item\/[^/]+/;
+
+// Four primary destinations for the bottom tab bar, backfilled from the user's nav order when one is hidden.
+export function pickTabItems(items, myGlanceFirst) {
+  const tabs = (myGlanceFirst ? USER_TAB_LINKS : OPS_TAB_LINKS).map((link) => items.find((item) => item.link === link)).filter(Boolean);
+  for (const item of items) {
+    if (tabs.length >= 4) break;
+    if (!tabs.includes(item)) tabs.push(item);
+  }
+  return tabs.slice(0, 4);
+}
+
 function navItemTo(item) {
   const link = String(item?.link || "");
   if (!link) return "/";
@@ -375,6 +390,27 @@ export default function Navbar() {
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  const closeMobileNav = () => {
+    setIsMobileNavOpen(false);
+    document.getElementById("mobile-tab-more")?.focus();
+  };
+
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMobileNavOpen) return undefined;
+    document.querySelector("#mobile-app-navigation a, #mobile-app-navigation button")?.focus({ preventScroll: true });
+    const onKey = (event) => {
+      if (event.key !== "Escape") return;
+      setIsMobileNavOpen(false);
+      document.getElementById("mobile-tab-more")?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isMobileNavOpen]);
 
   useEffect(() => {
     function handleWorkspaceModeUpdated(event) {
@@ -992,19 +1028,23 @@ export default function Navbar() {
     return 0;
   };
 
+  const myGlanceFirst = !canOpenHome || (isJellyfinAdmin && workspaceMode === "user");
+  const tabItems = pickTabItems(visibleNavData, myGlanceFirst);
+  const moreItems = visibleNavData.filter((item) => !tabItems.includes(item));
+  const moreActive = moreItems.some((item) => isNavItemActive(item, location));
+  const moreHasBadge = moreItems.some((item) => getNavBadgeCount(item.link) > 0);
+  const isDetailRoute = DETAIL_ROUTE.test(location.pathname);
+
   return (
     <>
       <div className="mobile-app-topbar">
-        <button
-          className="mobile-app-menu"
-          type="button"
-          onClick={() => setIsMobileNavOpen((isOpen) => !isOpen)}
-          aria-label={isMobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
-          aria-controls="mobile-app-navigation"
-          aria-expanded={isMobileNavOpen}
-        >
-          <MenuLineIcon size={24} />
-        </button>
+        {isDetailRoute ? (
+          <button className="mobile-app-back" type="button" onClick={() => navigate(-1)} aria-label={t("MOBILE_NAV.BACK")}>
+            <ArrowLeftLineIcon size={22} />
+          </button>
+        ) : (
+          <span aria-hidden="true" />
+        )}
         <Link className="mobile-app-brand" to={homePath}>
           <img src={logo_dark} alt="" />
           <img src={projectText} alt="JellyGlance" />
@@ -1014,10 +1054,51 @@ export default function Navbar() {
         </button>
       </div>
 
-      <div id="mobile-app-navigation" className={`mobile-app-menu-panel${isMobileNavOpen ? " is-open" : ""}`} aria-hidden={!isMobileNavOpen}>
+      <nav className="mobile-tabbar" aria-label={t("MOBILE_NAV.PRIMARY")}>
+        {tabItems.map((item) => {
+          const badgeCount = getNavBadgeCount(item.link);
+          const isActive = !isMobileNavOpen && isNavItemActive(item, location);
+          return (
+            <Link key={item.id} to={navItemTo(item)} className="mobile-tab" aria-current={isActive ? "page" : undefined} onClick={() => setIsMobileNavOpen(false)}>
+              <span className="mobile-tab-ico">{item.icon}</span>
+              <span className="mobile-tab-label">{item.text}</span>
+              {badgeCount > 0 ? <span className="mobile-tab-badge">{badgeCount}</span> : null}
+            </Link>
+          );
+        })}
+        <button
+          type="button"
+          className="mobile-tab"
+          id="mobile-tab-more"
+          aria-haspopup="dialog"
+          aria-controls="mobile-app-navigation"
+          aria-expanded={isMobileNavOpen}
+          aria-current={isMobileNavOpen || moreActive ? "page" : undefined}
+          onClick={() => setIsMobileNavOpen((isOpen) => !isOpen)}
+        >
+          <span className="mobile-tab-ico">
+            <Apps2LineIcon />
+          </span>
+          <span className="mobile-tab-label">{t("MOBILE_NAV.MORE")}</span>
+          {moreHasBadge ? <span className="mobile-tab-dot" aria-label={t("MOBILE_NAV.MORE_HAS_UPDATES")} /> : null}
+        </button>
+      </nav>
+
+      {isMobileNavOpen ? <button type="button" className="mobile-app-menu-scrim" aria-label={t("MOBILE_NAV.CLOSE")} onClick={closeMobileNav} /> : null}
+
+      <div
+        id="mobile-app-navigation"
+        className={`mobile-app-menu-panel${isMobileNavOpen ? " is-open" : ""}`}
+        aria-hidden={!isMobileNavOpen}
+        role="dialog"
+        aria-modal={isMobileNavOpen ? "true" : undefined}
+        aria-label={t("MOBILE_NAV.MORE")}
+        inert={isMobileNavOpen ? undefined : ""}
+      >
+        <span className="mobile-app-menu-grabber" aria-hidden="true" />
         <nav className="mobile-app-menu-shell" aria-label="Mobile navigation">
           <div className="mobile-app-menu-grid">
-            {visibleNavData.map((item) => {
+            {moreItems.map((item) => {
               const isActive = isNavItemActive(item, location);
               const badgeCount = getNavBadgeCount(item.link);
 

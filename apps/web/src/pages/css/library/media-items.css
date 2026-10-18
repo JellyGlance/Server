@@ -54,3 +54,11 @@
     box-shadow: none !important;
     border-color: var(--primary-color) !important;
   }
+/* Fluid poster grid: 3 per row on a 390px phone instead of 2 plus a gap. */
+@media (max-width: 900px) {
+  .media-items-container {
+    grid-template-columns: repeat(auto-fill, minmax(min(30%, 110px), 1fr));
+    grid-gap: 12px;
+    padding: 12px;
+  }
+}

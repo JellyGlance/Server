@@ -1261,3 +1261,28 @@
     flex-basis: auto;
   }
 }
+
+/* ---------- Phone and tablet pass: compact, left-aligned cards ---------- */
+@media (max-width: 780px) {
+  .users-row-card {
+    justify-items: stretch;
+    text-align: left;
+  }
+
+  .users-row-person {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 900px) {
+  .users-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 900px) {
+  .users-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
