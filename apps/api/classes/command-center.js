@@ -3,6 +3,7 @@ const { mediaServerAuthHeaders } = require("./server-type");
 const fs = require("fs");
 const path = require("path");
 const db = require("../db");
+const { catalogCountSql, catalogCounts } = require("./library-types");
 const { axios } = require("./axios");
 const { getIntegrations, getIntegrationData, getIntegrationHealthHistory } = require("./integration-store");
 const configClass = require("./config");
@@ -379,6 +380,7 @@ async function buildHomepageWidgets() {
             COALESCE(sum(CASE WHEN "CollectionType" = 'movies' THEN "Library_Count" ELSE 0 END), 0)::int AS movies,
             COALESCE(sum(CASE WHEN "CollectionType" = 'tvshows' THEN "Library_Count" ELSE 0 END), 0)::int AS shows,
             COALESCE(sum(CASE WHEN "CollectionType" = 'tvshows' THEN "Episode_Count" ELSE 0 END), 0)::int AS episodes,
+            ${catalogCountSql({ quoted: false })},
             COALESCE(count(*) FILTER (WHERE archived = false), 0)::int AS libraries
          FROM js_library_stats_overview`
       )
@@ -405,6 +407,7 @@ async function buildHomepageWidgets() {
     movies: Number(catalog.movies || 0),
     shows: Number(catalog.shows || 0),
     episodes: Number(catalog.episodes || 0),
+    ...catalogCounts(catalog, { quoted: false }),
     addedWeek,
     downloads: downloads.filter((item) => Number(item.progress || 0) < 100).length,
     downloadTotal: downloads.length,
@@ -565,6 +568,7 @@ async function loadCatalogCounts() {
             COALESCE(sum(CASE WHEN "CollectionType" = 'movies' THEN "Library_Count" ELSE 0 END), 0)::int AS movies,
             COALESCE(sum(CASE WHEN "CollectionType" = 'tvshows' THEN "Library_Count" ELSE 0 END), 0)::int AS shows,
             COALESCE(sum(CASE WHEN "CollectionType" = 'tvshows' THEN "Episode_Count" ELSE 0 END), 0)::int AS episodes,
+            ${catalogCountSql({ quoted: false })},
             COALESCE(count(*) FILTER (WHERE archived = false), 0)::int AS libraries
          FROM js_library_stats_overview`
       )
@@ -575,6 +579,7 @@ async function loadCatalogCounts() {
     movies: Number(catalog.movies || 0),
     shows: Number(catalog.shows || 0),
     episodes: Number(catalog.episodes || 0),
+    ...catalogCounts(catalog, { quoted: false }),
     libraries: Number(catalog.libraries || 0),
     addedWeek,
   };

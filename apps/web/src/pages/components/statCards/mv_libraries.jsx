@@ -3,11 +3,8 @@ import axios from "../../../lib/axios_instance";
 
 import ItemStatComponent from "./ItemStatComponent";
 
-import TvLineIcon from "remixicon-react/TvLineIcon";
-import FilmLineIcon from "remixicon-react/FilmLineIcon";
-import FileMusicLineIcon from "remixicon-react/FileMusicLineIcon";
-import CheckboxMultipleBlankLineIcon from "remixicon-react/CheckboxMultipleBlankLineIcon";
 import { Trans } from "react-i18next";
+import { libraryTypeMeta } from "../../../lib/library-types";
 
 function MVLibraries(props) {
   const [data, setData] = useState();
@@ -53,14 +50,11 @@ function MVLibraries(props) {
     return  <></>;
   }
 
-  const SeriesIcon=<TvLineIcon size={"100%"} /> ;
-  const MovieIcon=<FilmLineIcon size={"100%"} /> ;
-  const MusicIcon=<FileMusicLineIcon size={"100%"} /> ;
-  const MixedIcon=<CheckboxMultipleBlankLineIcon size={"100%"} /> ;
 
 
+  const TopLibraryIcon = libraryTypeMeta(data[0].CollectionType).icon;
   return (
-    <ItemStatComponent icon={data[0].CollectionType==="tvshows"? SeriesIcon: data[0].CollectionType==="movies"? MovieIcon : data[0].CollectionType==="music"? MusicIcon :MixedIcon} data={data} heading={<Trans i18nKey="STAT_CARDS.MOST_VIEWED_LIBRARIES" />} units={<Trans i18nKey="UNITS.PLAYS" />}/>
+    <ItemStatComponent icon={<TopLibraryIcon size={"100%"} />} data={data} heading={<Trans i18nKey="STAT_CARDS.MOST_VIEWED_LIBRARIES" />} units={<Trans i18nKey="UNITS.PLAYS" />}/>
   );
 }
 

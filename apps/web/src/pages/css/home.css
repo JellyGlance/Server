@@ -1938,25 +1938,6 @@
     grid-template-columns: 1fr;
   }
 
-  .home-order-list {
-    grid-template-columns: 1fr;
-  }
-
-  .home-order-list article {
-    grid-template-columns: 28px minmax(0, 1fr);
-  }
-
-  .home-order-list article > div {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: minmax(54px, 1fr) repeat(3, minmax(44px, 1fr));
-  }
-
-  .home-order-list select,
-  .home-order-list button {
-    width: 100%;
-  }
-
   .home-active-sessions {
     padding: 16px 12px;
   }
@@ -2126,19 +2107,24 @@
 }
 
 .home-order-list {
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
   gap: 8px;
 }
 
+/* The title keeps at least ~8.5rem; when the card is too narrow for the title and the controls, the controls wrap onto their own row. */
 .home-order-list article {
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
   min-height: 38px;
-  padding: 5px 6px 5px 8px;
+  padding: 6px 6px 6px 8px;
   border-color: rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.028);
 }
 
 .home-order-list article > span {
+  flex: none;
   width: 20px;
   height: 20px;
   border-radius: 6px;
@@ -2149,8 +2135,16 @@
 }
 
 .home-order-list strong {
+  flex: 1 1 8.5rem;
   font-size: 12px;
   font-weight: 680;
+}
+
+.home-order-list article > div {
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 }
 
 .home-order-list select,
@@ -2161,16 +2155,16 @@
   background-color: rgba(5, 8, 13, 0.86);
 }
 
-.home-order-list select {
-  width: 36px;
-  padding-right: 12px;
-  background-position: right 4px center;
-  background-size: 8px 6px;
-  font-size: 10px;
-}
-
-.home-order-list article > div {
-  gap: 4px;
+/* Matches the global select rule in App.css so its caret padding doesn't squeeze the label. */
+.home-order-list select:not(.form-select):not([multiple]):not([size]) {
+  width: auto;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 24px 0 9px;
+  background-position: right 8px center;
+  background-size: 9px 6px;
+  font-size: 11px;
+  line-height: 26px;
 }
 
 @media (max-width: 980px) {
@@ -2190,5 +2184,19 @@
 
   .home-order-panel-heading {
     grid-template-columns: 1fr;
+  }
+
+  .home-order-list article > div {
+    flex-basis: 100%;
+  }
+
+  .home-order-list select:not(.form-select):not([multiple]):not([size]) {
+    flex: 1 1 auto;
+    height: 34px;
+  }
+
+  .home-order-list button {
+    width: 40px;
+    min-height: 34px;
   }
 }

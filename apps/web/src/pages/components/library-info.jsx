@@ -1,8 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "../../lib/axios_instance";
-import TvLineIcon from "remixicon-react/TvLineIcon";
-import FilmLineIcon from "remixicon-react/FilmLineIcon";
 import BarChartBoxLineIcon from "remixicon-react/BarChartBoxLineIcon";
 import HistoryLineIcon from "remixicon-react/HistoryLineIcon";
 import Settings3LineIcon from "remixicon-react/Settings3LineIcon";
@@ -22,6 +20,7 @@ import LibraryOptions from "./library/library-options";
 import GlobalStats from "./general/globalStats";
 import GenreLibraryStats from "./library/genre-library-stats.jsx";
 import "../css/library-detail.css";
+import { libraryTypeMeta } from "../../lib/library-types";
 
 function LibraryInfo() {
   const { LibraryId } = useParams();
@@ -73,8 +72,9 @@ function LibraryInfo() {
     { key: "tabActivity", label: <Trans i18nKey="TAB_CONTROLS.ACTIVITY" />, icon: HistoryLineIcon },
     { key: "tabOptions", label: <Trans i18nKey="TAB_CONTROLS.OPTIONS" />, icon: Settings3LineIcon },
   ];
-  const LibraryIcon = data.CollectionType === "tvshows" ? TvLineIcon : FilmLineIcon;
-  const libraryType = data.CollectionType === "tvshows" ? "Series library" : "Movie library";
+  const libraryMeta = libraryTypeMeta(data.CollectionType);
+  const LibraryIcon = libraryMeta.icon;
+  const libraryType = libraryMeta.label;
 
   return (
     <div className="library-detail-page">
