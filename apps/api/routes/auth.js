@@ -205,13 +205,66 @@ function readCookie(req, name) {
   const header = req.headers?.cookie || "";
   for (const part of header.split(";")) {
     const [key, ...rest] = part.trim().split("=");
-    if (key === name) return decodeURIComponent(rest.join("="));
+    if (key !== name) continue;
+    try {
+      return decodeURIComponent(rest.join("="));
+    } catch {
+      // A malformed cookie is treated as missing rather than failing the request.
+      return "";
+    }
   }
   return "";
 }
 
 function hashBinding(value) {
   return createHash("sha256").update(String(value)).digest("hex");
+}
+
+// Checks that a verified state token belongs to an OIDC login started in this browser.
+// Every comparison runs on every callback; nothing taken from the request can skip one.
+function isValidOidcCallbackState(statePayload, binding) {
+  const payload = statePayload && typeof statePayload === "object" ? statePayload : {};
+  const checks = [
+    payload.type === "oidc",
+    typeof payload.verifier === "string" && payload.verifier.length > 0,
+    typeof payload.nonce === "string" && payload.nonce.length > 0,
+    typeof payload.binding === "string" && payload.binding.length > 0,
+    typeof binding === "string" && binding.length > 0,
+    oidc.safeEqual(hashBinding(binding ?? ""), payload.binding),
+  ];
+  return checks.every(Boolean);
+}
+
+const OIDC_CALLBACK_FALLBACK_ERROR = "Unable to complete OIDC login";
+// Fixed, user-facing text per known failure. Exception messages can carry provider or
+// request data, so they are only ever logged, never sent back to the browser.
+const OIDC_CALLBACK_ERRORS = new Map([
+  ["bad_alg", "Unable to complete OIDC login: the ID token uses an algorithm that is not allowed"],
+  ["bad_discovery", "Unable to complete OIDC login: the provider's discovery document is invalid"],
+  ["bad_nonce", "Unable to complete OIDC login: the ID token does not match this sign-in attempt"],
+  ["bad_token", "Unable to complete OIDC login: the ID token was rejected"],
+  ["blocked_host", "Unable to complete OIDC login: the provider address is not allowed"],
+  ["endpoint_host", "Unable to complete OIDC login: a provider endpoint is not on the issuer's host"],
+  ["invalid_url", "Unable to complete OIDC login: the provider URL is not valid"],
+  ["issuer_mismatch", "Unable to complete OIDC login: the provider's issuer does not match the configured issuer"],
+  ["missing_issuer", "Unable to complete OIDC login: no issuer URL is configured"],
+  ["unknown_key", "Unable to complete OIDC login: no matching signing key was found"],
+]);
+
+function describeOidcCallbackError(error) {
+  const code = error instanceof oidc.OidcError ? error.code : "";
+  const errorMessage = OIDC_CALLBACK_ERRORS.get(code);
+  if (errorMessage) return { status: 400, errorMessage };
+  return { status: 502, errorMessage: OIDC_CALLBACK_FALLBACK_ERROR };
+}
+
+// Bearer-like values (JWTs, long opaque tokens) are masked before an error reaches the log.
+function redactOidcErrorDetail(value) {
+  return sanitizeForLog(
+    String(value ?? "")
+      .replace(/eyJ[\w-]*\.[\w-]*\.[\w-]*/g, "[redacted-jwt]")
+      .replace(/[A-Za-z0-9_\-+/=]{32,}/g, "[redacted]")
+  );
 }
 
 // Media server users JellyGlance knows about, from the last sync or live as a fallback.
@@ -631,21 +684,17 @@ router.get("/oidc/callback", async (req, res) => {
     const auth = settings.auth || {};
     appPath = getOidcAppPath(auth);
 
+    if (auth.mode !== "oidc") return fail(400, "OIDC login is not enabled");
+
+    const binding = readCookie(req, OIDC_BINDING_COOKIE);
+    res.clearCookie(OIDC_BINDING_COOKIE, { path: "/auth/oidc" });
     let statePayload;
     try {
       statePayload = await verifyOidcState(typeof req.query.state === "string" ? req.query.state : "");
     } catch {
       return fail(400, "OIDC callback is missing or invalid state");
     }
-    const binding = readCookie(req, OIDC_BINDING_COOKIE);
-    res.clearCookie(OIDC_BINDING_COOKIE, { path: "/auth/oidc" });
-    if (
-      statePayload?.type !== "oidc" ||
-      typeof statePayload.verifier !== "string" ||
-      typeof statePayload.nonce !== "string" ||
-      !binding ||
-      !oidc.safeEqual(hashBinding(binding), statePayload.binding)
-    ) {
+    if (!isValidOidcCallbackState(statePayload, binding)) {
       return fail(400, "OIDC state is invalid or was started in another browser");
     }
     if (typeof req.query.error === "string") {
@@ -653,7 +702,6 @@ router.get("/oidc/callback", async (req, res) => {
     }
     const code = typeof req.query.code === "string" ? req.query.code : "";
     if (!code) return fail(400, "OIDC login was denied or incomplete");
-    if (auth.mode !== "oidc") return fail(400, "OIDC login is not enabled");
 
     const options = oidc.resolveSettings(auth, process.env, decryptSecret);
     const discovery = await oidc.discover(options.issuerUrl);
@@ -727,8 +775,13 @@ router.get("/oidc/callback", async (req, res) => {
     });
     return res.send(renderOidcCallbackPage({ token, appPath }));
   } catch (error) {
-    console.log("[OIDC] callback failed", sanitizeForLog(error?.code || error?.response?.status || error?.message));
-    return fail(error?.code ? 400 : 502, error?.code ? `Unable to complete OIDC login: ${error.message}` : "Unable to complete OIDC login");
+    console.log(
+      "[OIDC] callback failed",
+      redactOidcErrorDetail(error?.code || error?.response?.status || "error"),
+      redactOidcErrorDetail(error?.message)
+    );
+    const { status, errorMessage } = describeOidcCallbackError(error);
+    return fail(status, errorMessage);
   }
 });
 
@@ -756,6 +809,8 @@ function resolveAuthSummary(config) {
 }
 
 router.pickOidcOptions = pickOidcOptions;
+router.isValidOidcCallbackState = isValidOidcCallbackState;
+router.describeOidcCallbackError = describeOidcCallbackError;
 router.testOidcDiscovery = testOidcDiscovery;
 
 router.get("/isConfigured", async (req, res) => {
