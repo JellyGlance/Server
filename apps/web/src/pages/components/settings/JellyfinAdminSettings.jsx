@@ -303,10 +303,7 @@ export default function JellyfinAdminSettings({ view = "devices" }) {
                       </span>
                     ) : null}
                     {pluginTotal !== pluginSummary.total ? (
-                      <span>
-                        <span className="is-long">{pluginTotal} packages reported</span>
-                        <span className="is-short">{pluginTotal} packages</span>
-                      </span>
+                      <span title="Every copy Jellyfin reports, including older versions">{pluginTotal} installed copies</span>
                     ) : null}
                   </div>
                 ) : null}
