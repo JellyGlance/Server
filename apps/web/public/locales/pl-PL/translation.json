@@ -40,8 +40,6 @@
     "SIZE_MEDIUM": "Pół szerokości",
     "SIZE_LARGE": "Pełna szerokość",
     "OPERATIONS_MOVED_UP_one": "Sekcja {{section}} jest teraz wyżej: {{count}} prośba wymaga uwagi.",
-    "OPERATIONS_MOVED_UP_few": "Sekcja {{section}} jest teraz wyżej: {{count}} prośby wymagają uwagi.",
-    "OPERATIONS_MOVED_UP_many": "Sekcja {{section}} jest teraz wyżej: {{count}} próśb wymaga uwagi.",
     "OPERATIONS_MOVED_UP_other": "Sekcja {{section}} jest teraz wyżej: {{count}} prośby wymaga uwagi.",
     "SECTIONS": {
       "sessions": "Aktywne sesje",
@@ -65,7 +63,9 @@
       "automation": "Kanał automatyzacji",
       "quickActions": "Szybkie akcje",
       "operations": "Operacje"
-    }
+    },
+    "OPERATIONS_MOVED_UP_few": "Sekcja {{section}} jest teraz wyżej: {{count}} prośby wymagają uwagi.",
+    "OPERATIONS_MOVED_UP_many": "Sekcja {{section}} jest teraz wyżej: {{count}} próśb wymaga uwagi."
   },
   "SESSIONS": {
     "NO_SESSIONS": "Nie znaleziono aktywnych sesji",
@@ -1036,5 +1036,36 @@
     "MIXED_LIBRARY": "Mixed library",
     "MIXED_LIBRARIES": "MIXED LIBRARIES",
     "MIXED_UNITS": "Items"
+  },
+  "ALERT_RULES": {
+    "INTRO": "Alert on a live number crossing your limit or on events like a new user or the media server going down. Each rule can send to its own Discord, Gotify or webhook targets and waits for its cooldown before firing again. Hours use the server's time zone.",
+    "WHEN": "when",
+    "TRIGGER": "Trigger",
+    "GROUP_METRICS": "Live numbers",
+    "GROUP_EVENTS": "Events",
+    "AT_LEAST": "at least",
+    "COOLDOWN": "cooldown",
+    "MINUTES": "min",
+    "RULE_ON": "Rule on",
+    "RULE_OFF": "Rule off",
+    "ACTION_TYPE": "Action type",
+    "URL_SAVED": "Saved ({{hint}}). Leave blank to keep.",
+    "URL_PLACEHOLDER_DISCORD": "https://discord.com/api/webhooks/…",
+    "URL_PLACEHOLDER_GOTIFY": "https://gotify.example.com",
+    "URL_PLACEHOLDER_WEBHOOK": "https://example.com/hooks/jellyglance",
+    "TOKEN_SAVED": "Token saved. Leave blank to keep.",
+    "TOKEN_REQUIRED": "Application token",
+    "TOKEN_OPTIONAL": "Bearer token (optional)",
+    "REMOVE_ACTION": "Remove action",
+    "ADD_ACTION": "Add action",
+    "NO_ACTIONS": "No actions: alerts only go to this page and webhooks subscribed to Threshold alert.",
+    "SEND_TEST": "Send test",
+    "TESTING": "Sending…",
+    "LAST_FIRED": "Last fired {{when}}",
+    "NEVER_FIRED": "Never fired",
+    "HISTORY_one": "{{count}} alert",
+    "HISTORY_other": "{{count}} alerts",
+    "DELIVERED": "delivered",
+    "TEST_NO_ACTIONS": "Test logged. Add an action to send it anywhere."
   }
 }
