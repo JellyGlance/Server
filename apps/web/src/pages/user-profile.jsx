@@ -106,6 +106,7 @@ export default function UserProfilePage() {
   const [profileUser, setProfileUser] = useState(null);
   const [profileRank, setProfileRank] = useState(0);
   const [access, setAccess] = useState(null);
+  const [profileForbidden, setProfileForbidden] = useState(false);
   const [config, setConfig] = useState(null);
   const [mediaLists, setMediaLists] = useState({ favourites: [], watchlist: [] });
   const [mediaListsLoading, setMediaListsLoading] = useState(false);
@@ -125,9 +126,12 @@ export default function UserProfilePage() {
               headers: { Authorization: `Bearer ${token}` },
             })
             .catch(async (error) => {
-              // 404 means no such user and 403 means it isn't the signed-in user's profile, so only
-              // fall back to the full list for other errors.
-              if (![403, 404].includes(error.response?.status)) {
+              // 403 means this isn't the signed-in user's own profile.
+              if (error.response?.status === 403) {
+                return { data: { user: null, rank: 0, forbidden: true } };
+              }
+              // 404 means no such user, so only fall back to the full list for other errors.
+              if (error.response?.status !== 404) {
                 const fallback = await axios.get("/stats/getUserWrapUp", { headers: { Authorization: `Bearer ${token}` } });
                 const rankedUsers = [...(fallback.data || [])].sort((a, b) => Number(b.TotalWatchTime || 0) - Number(a.TotalWatchTime || 0));
                 const normalizedKey = decodeURIComponent(userKey).toLowerCase();
@@ -145,12 +149,14 @@ export default function UserProfilePage() {
 
               return { data: { user: null, rank: 0 } };
             }),
-          axios.get("/api/userAccess", { headers: { Authorization: `Bearer ${token}` } }),
+          // Account management details need the Users permission; the profile itself doesn't.
+          axios.get("/api/userAccess", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: null })),
         ]);
 
         setConfig(configResponse);
         setProfileUser(profileResponse.data?.user || null);
         setProfileRank(Number(profileResponse.data?.rank || 0));
+        setProfileForbidden(Boolean(profileResponse.data?.forbidden));
         setAccess(accessResponse.data);
       } catch (error) {
         console.log(error);
@@ -274,7 +280,7 @@ export default function UserProfilePage() {
 
     return (
       <div className="user-profile-page">
-        <QuickConnectUserWrap user={matchedUser} rank={rank || 1} />
+        <QuickConnectUserWrap user={matchedUser} rank={rank || null} />
         <nav className="user-profile-subnav" aria-label="Profile sections">
           {PROFILE_SECTIONS.map((section) => (
             <button
@@ -376,6 +382,18 @@ export default function UserProfilePage() {
             <UserMediaRail title="Library Gaps" subtitle="Watchlisted shows with an unwatched next episode to catch up on." items={filterMedia(mediaLists.libraryGaps || [])} />
           </> : null}
         </div>
+      </div>
+    );
+  }
+
+  if (profileForbidden) {
+    return (
+      <div className="user-profile-page">
+        <section className="user-profile-empty">
+          <h1>Profile not available</h1>
+          <p>You can only view your own profile.</p>
+          <Link to="/me">Go to My Glance</Link>
+        </section>
       </div>
     );
   }
