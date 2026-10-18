@@ -3,6 +3,9 @@ const assert = require("node:assert/strict");
 const path = require("path");
 const { pathToFileURL } = require("url");
 const {
+  isValidPluginId,
+  isAllowedPluginImageUrl,
+  shouldTryNextPluginImage,
   matchJellyfinPluginPackage,
   buildJellyfinPluginImageUrl,
   pluginImageCandidates,
@@ -54,25 +57,51 @@ test("descriptions fall back to the repository manifest and carry their source",
   assert.deepEqual([webhook.description, webhook.descriptionSource, webhook.owner], ["", "", ""]);
 });
 
-test("plugin images use Jellyfin's versioned endpoint, then the repository URL", () => {
+const JF_CONFIG = { JF_HOST: "http://jf:8096", IS_JELLYFIN: true };
+
+test("plugin images use Jellyfin's versioned endpoint, then a same-origin repository URL", () => {
   assert.equal(buildJellyfinPluginImageUrl(PLUGINS[2]), `/proxy/Plugins/Images/?id=${NOTIFYSYNC_ID}&version=6.0.1.0`);
   assert.equal(
-    buildJellyfinPluginImageUrl(PLUGINS[0], PACKAGES[0]),
-    "/proxy/Plugins/Images/?url=https%3A%2F%2Frepo.jellyfin.org%2Faudiodb.png"
+    buildJellyfinPluginImageUrl(PLUGINS[0], { imageUrl: "http://jf:8096/repo/audiodb.png" }, JF_CONFIG),
+    "/proxy/Plugins/Images/?url=http%3A%2F%2Fjf%3A8096%2Frepo%2Faudiodb.png"
   );
+  // The proxy refuses other origins, so the card shouldn't wait for that 404.
+  assert.equal(buildJellyfinPluginImageUrl(PLUGINS[0], PACKAGES[0], JF_CONFIG), "");
+  assert.equal(buildJellyfinPluginImageUrl(PLUGINS[0], PACKAGES[0]), "");
+  assert.equal(buildJellyfinPluginImageUrl({ ...PLUGINS[2], Id: ".." }), "");
   assert.equal(buildJellyfinPluginImageUrl(PLUGINS[3]), "");
+  assert.equal(isAllowedPluginImageUrl("https://raw.githubusercontent.com/MediaBrowser/Emby.Resources/x.png", { ...JF_CONFIG, IS_JELLYFIN: false }), true);
 });
 
-test("the image proxy tries the versioned endpoint first and ignores odd versions", () => {
-  assert.deepEqual(pluginImageCandidates("http://jf:8096", "abc", "6.0.1.0"), [
-    "http://jf:8096/Plugins/abc/6.0.1.0/Image",
-    "http://jf:8096/Plugins/abc/Image",
-    "http://jf:8096/Plugins/abc/Images/Primary",
-    "http://jf:8096/Plugins/abc/Thumb",
+test("plugin ids must be GUIDs", () => {
+  assert.equal(isValidPluginId(NOTIFYSYNC_ID), true);
+  assert.equal(isValidPluginId("9A1B2C3D-4E5F-4A6B-8C7D-0E1F2A3B4C5D"), true);
+  for (const id of ["..", "%2e%2e", "../System/Info", `${NOTIFYSYNC_ID}/..`, "", undefined, [NOTIFYSYNC_ID], { id: NOTIFYSYNC_ID }]) {
+    assert.equal(isValidPluginId(id), false, String(id));
+  }
+});
+
+test("the image proxy tries the versioned endpoint first and refuses odd ids and versions", () => {
+  assert.deepEqual(pluginImageCandidates("http://jf:8096", NOTIFYSYNC_ID, "6.0.1.0"), [
+    `http://jf:8096/Plugins/${NOTIFYSYNC_ID}/6.0.1.0/Image`,
+    `http://jf:8096/Plugins/${NOTIFYSYNC_ID}/Image`,
+    `http://jf:8096/Plugins/${NOTIFYSYNC_ID}/Images/Primary`,
+    `http://jf:8096/Plugins/${NOTIFYSYNC_ID}/Thumb`,
   ]);
-  assert.equal(pluginImageCandidates("http://jf:8096", "abc", "../../System").length, 3);
-  assert.equal(pluginImageCandidates("http://jf:8096", "abc", ["1.0", "2.0"]).length, 3);
-  assert.equal(pluginImageCandidates("http://jf:8096", "abc").length, 3);
+  assert.deepEqual(pluginImageCandidates("http://jf:8096", "..", "6.0.1.0"), []);
+  assert.deepEqual(pluginImageCandidates("http://jf:8096", "%2e%2e", "6.0.1.0"), []);
+  assert.deepEqual(pluginImageCandidates("http://jf:8096", [NOTIFYSYNC_ID, NOTIFYSYNC_ID], "6.0.1.0"), []);
+  assert.equal(pluginImageCandidates("http://jf:8096", NOTIFYSYNC_ID, "../../System").length, 3);
+  assert.equal(pluginImageCandidates("http://jf:8096", NOTIFYSYNC_ID, ["1.0", "2.0"]).length, 3);
+  assert.equal(pluginImageCandidates("http://jf:8096", NOTIFYSYNC_ID, "1234567890.0").length, 3);
+  assert.equal(pluginImageCandidates("http://jf:8096", NOTIFYSYNC_ID).length, 3);
+});
+
+test("only an HTTP error moves on to the next image endpoint", () => {
+  assert.equal(shouldTryNextPluginImage({ response: { status: 404 } }), true);
+  assert.equal(shouldTryNextPluginImage(Object.assign(new Error("timeout of 5000ms exceeded"), { code: "ECONNABORTED" })), false);
+  assert.equal(shouldTryNextPluginImage(Object.assign(new Error("connect ECONNREFUSED"), { code: "ECONNREFUSED" })), false);
+  assert.equal(shouldTryNextPluginImage(undefined), false);
 });
 
 test("duplicate copies of a plugin are grouped into one card", async () => {

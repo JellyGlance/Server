@@ -8037,8 +8037,9 @@ router.get("/jellyfin/plugins", async (req, res) => {
       : Array.isArray(packagesResponse.data?.Items)
         ? packagesResponse.data.Items
         : [];
+    const config = await new configClass().getConfig();
     res.send({
-      ...buildJellyfinPluginsResponse(plugins, packages),
+      ...buildJellyfinPluginsResponse(plugins, packages, config),
       syncedAt: new Date().toISOString(),
     });
   } catch (error) {
