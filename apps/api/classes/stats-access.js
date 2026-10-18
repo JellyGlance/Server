@@ -1,6 +1,6 @@
 const { isAdmin } = require("./request-rules");
 
-// Who may read whose playback stats on the /stats routes.
+// Who may read whose playback stats and activity on the /stats and /api routes.
 // Owners, admins and roles with the Users permission (which is also what full API keys and the
 // internal user get from the auth middleware) can read any user. Everyone else only gets their
 // own linked media-server user.
@@ -62,8 +62,46 @@ function resolveStatsUser(req, requestedUserId) {
   return { admin: false, userId: null, forbidden: true };
 }
 
-function sendForbidden(res) {
-  return res.status(403).json({ error: "You can only view your own stats" });
+// The same rules for the server-wide activity lists (history, timelines, "most active"), which can
+// also carry a UserId filter. A non-admin may only filter on their own id; anything else is forbidden.
+function resolveActivityScope(req, { userId, filters } = {}) {
+  const scope = resolveStatsUser(req, userId);
+  if (scope.admin || scope.forbidden) return scope;
+  const own = scope.userId;
+  for (const filter of Array.isArray(filters) ? filters : []) {
+    if (!filter || filter.field !== "UserId") continue;
+    const asked = [filter.value, ...(typeof filter.in === "string" ? filter.in.split(",") : [])].filter(
+      (value) => value !== undefined && value !== null && String(value).trim() !== ""
+    );
+    if (asked.some((value) => !own || !sameUserId(value, own))) {
+      return { admin: false, userId: null, forbidden: true };
+    }
+  }
+  return scope;
 }
 
-module.exports = { canViewAllUsers, normalizeUserId, ownMediaUserId, resolveStatsUser, sameUserId, sendForbidden, unwrapTokenUser };
+// Adds "only this user's rows" to a db-helper query. Call it after any search or filters have been
+// applied, so nothing later replaces the where list.
+function restrictQueryToUser(query, userId, column = 'a."UserId"') {
+  query.values = query.values || [];
+  query.where = query.where || [];
+  query.values.push(normalizeUserId(userId));
+  query.where.push({ field: `replace(lower(${column}), '-', '')`, operator: "=", value: `$${query.values.length}` });
+  return query;
+}
+
+function sendForbidden(res) {
+  return res.status(403).json({ error: "You can only view your own activity" });
+}
+
+module.exports = {
+  canViewAllUsers,
+  normalizeUserId,
+  ownMediaUserId,
+  resolveActivityScope,
+  resolveStatsUser,
+  restrictQueryToUser,
+  sameUserId,
+  sendForbidden,
+  unwrapTokenUser,
+};

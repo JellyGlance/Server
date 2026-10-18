@@ -304,6 +304,8 @@ function Activity() {
   }
 
   const activityRows = Array.isArray(data?.results) ? data.results : [];
+  // The API only returns the signed-in user's own plays unless they can see every user.
+  const showingOwnActivity = data?.scope === "self";
 
   if (activityRows.length === 0) {
     return (
@@ -346,7 +348,10 @@ function Activity() {
           <h1>
             <Trans i18nKey="MENU_TABS.ACTIVITY" />
           </h1>
-          <span>Review watch history, playback method, device, and session details. <Link to="/timeline">Open Timeline view</Link>.</span>
+          <span>
+            {showingOwnActivity ? "Showing your activity only. " : ""}Review watch history, playback method, device, and session details.{" "}
+            <Link to="/timeline">Open Timeline view</Link>.
+          </span>
         </div>
 
         <div className="activity-controls">
