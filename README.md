@@ -57,6 +57,21 @@
   <a href="https://discord.gg/dMGhv8j2kx"><strong>Discord</strong></a>
 </p>
 
+<p align="center">
+  <img src="docs/images/jellyglance-hero.png" alt="JellyGlance dashboard and statistics pages" width="100%">
+</p>
+
+<details>
+  <summary><strong>Take the tour</strong>: dashboard, statistics, libraries and activity</summary>
+  <br>
+  <p align="center">
+    <picture>
+      <source srcset="docs/images/jellyglance-tour.webp" type="image/webp">
+      <img src="docs/images/jellyglance-tour.gif" alt="Animated tour of the JellyGlance dashboard, statistics, library and activity pages" width="100%">
+    </picture>
+  </p>
+</details>
+
 ## Contents
 
 - [What it is](#what-it-is)
