@@ -61,7 +61,6 @@ function isAllowedPluginImageUrl(url, config) {
   }
 }
 
-
 function buildPluginImageProxyUrl(imageUrl) {
   return imageUrl ? `/proxy/Plugins/Images/?url=${encodeURIComponent(imageUrl)}` : "";
 }
@@ -101,6 +100,19 @@ function pluginImageCandidates(jellyfinHost, id, version) {
     `${jellyfinHost}/Plugins/${encodedId}/Images/Primary`,
     `${jellyfinHost}/Plugins/${encodedId}/Thumb`,
   ];
+}
+
+// The fetches behind GET /proxy/Plugins/Images/. Only Jellyfin's own image
+// endpoints, built here from a valid plugin id, carry the API key; a repository
+// image URL from the query string is fetched without it. Either way the URL
+// must pass isAllowedPluginImageUrl.
+function pluginImageRequests(config, { id, version, url } = {}, jellyfinHeaders = {}) {
+  if (url) {
+    return typeof url === "string" && isAllowedPluginImageUrl(url, config) ? [{ url, headers: {} }] : [];
+  }
+  return pluginImageCandidates(config?.JF_HOST, id, version)
+    .filter((candidate) => isAllowedPluginImageUrl(candidate, config))
+    .map((candidate) => ({ url: candidate, headers: jellyfinHeaders }));
 }
 
 // Move on to the next image endpoint only when Jellyfin answered with an HTTP
@@ -150,6 +162,7 @@ module.exports = {
   buildPluginImageProxyUrl,
   buildJellyfinPluginImageUrl,
   pluginImageCandidates,
+  pluginImageRequests,
   normalizeJellyfinPlugin,
   buildJellyfinPluginsResponse,
 };

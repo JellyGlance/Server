@@ -9,6 +9,7 @@ const {
   matchJellyfinPluginPackage,
   buildJellyfinPluginImageUrl,
   pluginImageCandidates,
+  pluginImageRequests,
   normalizeJellyfinPlugin,
   buildJellyfinPluginsResponse,
 } = require("../utils/jellyfin-plugins");
@@ -97,6 +98,36 @@ test("the image proxy tries the versioned endpoint first and refuses odd ids and
   assert.equal(pluginImageCandidates("http://jf:8096", NOTIFYSYNC_ID, ["1.0", "2.0"]).length, 3);
   assert.equal(pluginImageCandidates("http://jf:8096", NOTIFYSYNC_ID, "1234567890.0").length, 3);
   assert.equal(pluginImageCandidates("http://jf:8096", NOTIFYSYNC_ID).length, 3);
+});
+
+test("only Jellyfin's own image endpoints get the API key, never a URL from the query", () => {
+  const key = { Authorization: "MediaBrowser Token=\"test-key\"" };
+  const byId = pluginImageRequests(JF_CONFIG, { id: NOTIFYSYNC_ID, version: "6.0.1.0" }, key);
+  assert.equal(byId.length, 4);
+  for (const request of byId) {
+    assert.ok(request.url.startsWith(`http://jf:8096/Plugins/${NOTIFYSYNC_ID}/`), request.url);
+    assert.deepEqual(request.headers, key);
+  }
+
+  // A same-origin repository URL is allowed but fetched without the key.
+  assert.deepEqual(pluginImageRequests(JF_CONFIG, { url: "http://jf:8096/repo/audiodb.png" }, key), [
+    { url: "http://jf:8096/repo/audiodb.png", headers: {} },
+  ]);
+  // Adding an id alongside a URL doesn't bring the key back.
+  assert.deepEqual(pluginImageRequests(JF_CONFIG, { id: NOTIFYSYNC_ID, url: "http://jf:8096/repo/audiodb.png" }, key), [
+    { url: "http://jf:8096/repo/audiodb.png", headers: {} },
+  ]);
+  const emby = { ...JF_CONFIG, IS_JELLYFIN: false };
+  const embyUrl = "https://raw.githubusercontent.com/MediaBrowser/Emby.Resources/master/images/plugin.png";
+  assert.deepEqual(pluginImageRequests(emby, { url: embyUrl }, key), [{ url: embyUrl, headers: {} }]);
+
+  // Anything the proxy wouldn't fetch gives no requests at all.
+  for (const url of ["https://evil.example/x.png", "http://jf:8096.evil.example/x.png", "file:///etc/passwd", "javascript:alert(1)", embyUrl, ["http://jf:8096/a.png"]]) {
+    assert.deepEqual(pluginImageRequests(JF_CONFIG, { url }, key), [], String(url));
+  }
+  assert.deepEqual(pluginImageRequests(JF_CONFIG, { id: ".." }, key), []);
+  assert.deepEqual(pluginImageRequests(JF_CONFIG, { id: "%2e%2e" }, key), []);
+  assert.deepEqual(pluginImageRequests({}, { id: NOTIFYSYNC_ID }, key), []);
 });
 
 test("only an HTTP error moves on to the next image endpoint", () => {

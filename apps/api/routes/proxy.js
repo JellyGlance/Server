@@ -6,7 +6,7 @@ const configClass = require("../classes/config");
 const API = require("../classes/api-loader");
 const { getIntegrations } = require("../classes/integration-store");
 const { joinSafeHttpUrl, sendSafeError, toSafeHttpUrl, safeHttpGet} = require("../utils/security");
-const { isAllowedPluginImageUrl, isValidPluginId, pluginImageCandidates, shouldTryNextPluginImage } = require("../utils/jellyfin-plugins");
+const { isValidPluginId, pluginImageRequests, shouldTryNextPluginImage } = require("../utils/jellyfin-plugins");
 
 const router = express.Router();
 const SAFE_DEVICE_NAME = /^[A-Za-z0-9._-]{1,64}$/;
@@ -286,18 +286,18 @@ router.get("/Plugins/Images/", async (req, res) => {
     return;
   }
 
-  const candidates = imageUrl ? [imageUrl] : pluginImageCandidates(config.JF_HOST, id, version);
+  const requests = pluginImageRequests(
+    config,
+    { id, version, url: imageUrl },
+    mediaServerAuthHeaders(config.JF_API_KEY),
+  );
 
-  for (const url of candidates) {
+  for (const { url, headers } of requests) {
     try {
-      if (!/^https?:\/\//i.test(url) || !isAllowedPluginImageUrl(url, config)) {
-        continue;
-      }
-
       const response = await safeHttpGet(url, "", {
         responseType: "arraybuffer",
         headers: {
-          ...(imageUrl ? {} : mediaServerAuthHeaders(config.JF_API_KEY)),
+          ...headers,
           "User-Agent": "JellyGlance/1.0.6",
         },
         timeout: 5000,
