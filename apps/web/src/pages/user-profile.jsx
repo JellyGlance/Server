@@ -125,7 +125,9 @@ export default function UserProfilePage() {
               headers: { Authorization: `Bearer ${token}` },
             })
             .catch(async (error) => {
-              if (error.response?.status !== 404) {
+              // 404 means no such user and 403 means it isn't the signed-in user's profile, so only
+              // fall back to the full list for other errors.
+              if (![403, 404].includes(error.response?.status)) {
                 const fallback = await axios.get("/stats/getUserWrapUp", { headers: { Authorization: `Bearer ${token}` } });
                 const rankedUsers = [...(fallback.data || [])].sort((a, b) => Number(b.TotalWatchTime || 0) - Number(a.TotalWatchTime || 0));
                 const normalizedKey = decodeURIComponent(userKey).toLowerCase();
