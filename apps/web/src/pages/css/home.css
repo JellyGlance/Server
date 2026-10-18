@@ -766,6 +766,13 @@
   gap: 12px;
 }
 
+/* Two cards (top item and your week) for accounts that only see their own activity. */
+@media (min-width: 1181px) {
+  .home-week-grid.is-own-week {
+    grid-template-columns: minmax(280px, 1.35fr) minmax(180px, 1.7fr);
+  }
+}
+
 .home-week-grid article {
   min-width: 0;
   min-height: 0;
