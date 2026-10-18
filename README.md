@@ -319,6 +319,7 @@ These are the main environment variables. The full list is in the [configuration
 | `JF_SERVER_TYPE` | detected | `jellyfin` or `emby` |
 | `JS_USER`, `JS_PASSWORD` | | Create the first local admin account without the setup screen |
 | `REJECT_SELF_SIGNED_CERTIFICATES` | `true` | Set to `false` to allow self-signed HTTPS on your media server and apps |
+| `JS_ALLOW_LOOPBACK_MEDIA_SERVER` | `false` | Set to `true` if your media server runs on the same host as JellyGlance (host networking) and you enter a `localhost`/`127.0.0.1` address |
 | `JF_USE_WEBSOCKETS` | `true` | Set to `false` to poll for sessions instead of using WebSockets |
 | `JS_GEOLITE_ACCOUNT_ID`, `JS_GEOLITE_LICENSE_KEY` | | Optional MaxMind GeoLite credentials to show where client IPs are |
 | `GITHUB_TOKEN` | | Optional token for the update check and the About page, to avoid GitHub rate limits |

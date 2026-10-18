@@ -9,21 +9,46 @@ const https = require("https");
 
 const METADATA_ADDRESSES = new Set(["169.254.169.254", "100.100.100.200", "fd00:ec2::254"]);
 
+// Media server on the same host with host networking: loopback stays refused unless
+// the admin opts in with JS_ALLOW_LOOPBACK_MEDIA_SERVER=true.
+function loopbackAllowed() {
+  return String(process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER || "").trim().toLowerCase() === "true";
+}
+
 function isBlockedIPv4(ip) {
   const parts = ip.split(".").map(Number);
   if (parts.length !== 4 || parts.some((p) => !Number.isInteger(p) || p < 0 || p > 255)) return true;
   const [a, b] = parts;
   if (a === 0) return true; // "this" network / unspecified
-  if (a === 127) return true; // loopback
+  if (a === 127) return !loopbackAllowed(); // loopback, opt-in via JS_ALLOW_LOOPBACK_MEDIA_SERVER
   if (a === 169 && b === 254) return true; // link-local (incl. 169.254.169.254 metadata)
+  if (a === 192 && b === 0 && parts[2] === 0) return true; // 192.0.0.0/24 IETF protocol assignments
+  if (a === 198 && (b === 18 || b === 19)) return true; // 198.18.0.0/15 benchmarking
   if (a >= 224) return true; // multicast / reserved / broadcast
   return METADATA_ADDRESSES.has(ip);
 }
 
+// Returns the embedded IPv4 address of an IPv4-mapped IPv6 address (caller has
+// already matched the ::ffff: prefix), or null.
+function mappedIPv4(lower) {
+  const tail = lower.slice(lower.lastIndexOf("ffff:") + 5);
+  if (net.isIPv4(tail)) return tail;
+  const hex = tail.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (!hex) return null;
+  const hi = parseInt(hex[1], 16);
+  const lo = parseInt(hex[2], 16);
+  return `${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`;
+}
+
 function isBlockedIPv6(ip) {
   const lower = ip.toLowerCase().split("%")[0];
-  if (lower === "::" || lower === "::1") return true; // unspecified / loopback
-  if (/^::ffff:/i.test(lower) || /^0{0,4}(:0{0,4}){4}:ffff:/i.test(lower)) return true; // IPv4-mapped
+  if (lower === "::") return true; // unspecified
+  if (lower === "::1") return !loopbackAllowed(); // loopback
+  if (/^::ffff:/i.test(lower) || /^0{0,4}(:0{0,4}){4}:ffff:/i.test(lower)) {
+    // IPv4-mapped: judge the embedded IPv4 address, refuse anything we can't decode.
+    const v4 = mappedIPv4(lower);
+    return v4 ? isBlockedIPv4(v4) : true;
+  }
   if (/^fe[89ab][0-9a-f]?:/i.test(lower)) return true; // fe80::/10 link-local
   if (/^ff/i.test(lower)) return true; // multicast
   return METADATA_ADDRESSES.has(lower);

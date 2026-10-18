@@ -5,13 +5,13 @@ const { isBlockedProbeAddress, assertProbeUrlAllowed, probeRequestOptions, probe
 const { requireAdminSettings, isAdminSettingsPath } = require("../classes/route-guards");
 
 test("probe guard blocks loopback, link-local, metadata and IPv4-mapped addresses", () => {
-  for (const ip of ["127.0.0.1", "127.8.9.10", "0.0.0.0", "169.254.169.254", "169.254.1.1", "100.100.100.200", "::1", "::", "fe80::1", "fd00:ec2::254", "::ffff:127.0.0.1", "::ffff:10.0.0.5", "::ffff:7f00:1"]) {
+  for (const ip of ["127.0.0.1", "127.8.9.10", "0.0.0.0", "169.254.169.254", "169.254.1.1", "100.100.100.200", "::1", "::", "fe80::1", "fd00:ec2::254", "::ffff:127.0.0.1", "::ffff:7f00:1", "::ffff:a9fe:a9fe", "::ffff:0.0.0.0", "192.0.0.8", "198.18.0.1", "198.19.255.1", "240.0.0.1"]) {
     assert.equal(isBlockedProbeAddress(ip), true, ip);
   }
 });
 
 test("probe guard keeps LAN private ranges and public hosts reachable", () => {
-  for (const ip of ["192.168.1.20", "10.0.0.5", "172.16.4.2", "172.31.255.1", "100.64.0.1", "8.8.8.8", "fd12:3456::10", "2001:db8::1"]) {
+  for (const ip of ["192.168.1.20", "10.0.0.5", "172.16.4.2", "172.31.255.1", "100.64.0.1", "8.8.8.8", "fd12:3456::10", "2001:db8::1", "::ffff:10.0.0.5", "::ffff:c0a8:114"]) {
     assert.equal(isBlockedProbeAddress(ip), false, ip);
   }
 });
@@ -105,5 +105,20 @@ test("detectServerType rebuilds the URL from validated parts and rejects bad inp
     assert.deepEqual(seen, ["http://media.lan/System/Info/Public", "https://10.0.0.5:8920/jf/System/Info/Public"]);
   } finally {
     axios.get = original;
+  }
+});
+
+test("loopback stays blocked unless JS_ALLOW_LOOPBACK_MEDIA_SERVER=true", () => {
+  const previous = process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER;
+  try {
+    delete process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER;
+    for (const ip of ["127.0.0.1", "::1", "::ffff:127.0.0.1"]) assert.equal(isBlockedProbeAddress(ip), true, ip);
+    process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER = "true";
+    for (const ip of ["127.0.0.1", "::1", "::ffff:127.0.0.1"]) assert.equal(isBlockedProbeAddress(ip), false, ip);
+    // The opt-in never opens metadata or link-local.
+    for (const ip of ["169.254.169.254", "::ffff:169.254.169.254", "fe80::1", "0.0.0.0"]) assert.equal(isBlockedProbeAddress(ip), true, ip);
+  } finally {
+    if (previous === undefined) delete process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER;
+    else process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER = previous;
   }
 });
