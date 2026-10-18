@@ -40,6 +40,7 @@
     "SIZE_MEDIUM": "Pola širine",
     "SIZE_LARGE": "Puna širina",
     "OPERATIONS_MOVED_UP_one": "{{section}} pomaknut gore: {{count}} zahtjev treba pozornost.",
+    "OPERATIONS_MOVED_UP_few": "{{section}} pomaknut gore: {{count}} zahtjeva trebaju pozornost.",
     "OPERATIONS_MOVED_UP_other": "{{section}} pomaknut gore: {{count}} zahtjeva treba pozornost.",
     "SECTIONS": {
       "sessions": "Aktivne sesije",
@@ -63,8 +64,7 @@
       "automation": "Tijek automatizacije",
       "quickActions": "Brze radnje",
       "operations": "Operacije"
-    },
-    "OPERATIONS_MOVED_UP_few": "{{section}} pomaknut gore: {{count}} zahtjeva trebaju pozornost."
+    }
   },
   "SESSIONS": {
     "NO_SESSIONS": "Nema aktivnih sesija",
@@ -152,7 +152,9 @@
     "TOGGLE_SELECT_ROW": "Odaberi redak",
     "TOGGLE_SELECT_ALL": "Odaberi sve",
     "MIN": "Min.",
-    "MAX": "Maks."
+    "MAX": "Maks.",
+    "NO_RESULTS": "Nema pronađenih aktivnosti.",
+    "SWIPE_HINT": "Povucite ustranu za više stupaca."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Prva",
@@ -477,8 +479,8 @@
   "TIMELINE_PAGE": {
     "TIMELINE": "Vremenska crta",
     "EPISODES_one": "epizoda",
-    "EPISODES_other": "epizoda",
-    "EPISODES_few": "epizode"
+    "EPISODES_few": "epizode",
+    "EPISODES_other": "epizoda"
   },
   "SEARCH": "Pretraživanje",
   "TOTAL": "Ukupno",
@@ -678,13 +680,13 @@
       "EMPTY": "Nema aktivnih preuzimanja. Dodajte klijent u Postavke > Integracije, zatim sinkronizirajte red čekanja.",
       "CLIENTS": "Klijenti",
       "DOWNLOAD_COUNT_one": "{{count}} preuzimanje",
+      "DOWNLOAD_COUNT_few": "{{count}} preuzimanja",
       "DOWNLOAD_COUNT_other": "{{count}} preuzimanja",
       "NO_CLIENTS_YET": "Još nema dodanih klijenata za preuzimanje.",
       "NEW_TORRENT": "Novi torrent",
       "MAGNET_DOWNLOAD": "Magnet preuzimanje",
       "TORRENT_DOWNLOAD": "Torrent preuzimanje",
-      "QUEUED": "U redu čekanja",
-      "DOWNLOAD_COUNT_few": "{{count}} preuzimanja"
+      "QUEUED": "U redu čekanja"
     },
     "MY_GLANCE": {
       "TITLE": "Moj Glance",
@@ -787,6 +789,7 @@
       "NEVER": "Nikad",
       "CAMPAIGN": "Kampanja",
       "RECIPIENTS_one": "{{count}} primatelj",
+      "RECIPIENTS_few": "{{count}} primatelja",
       "RECIPIENTS_other": "{{count}} primatelja",
       "NO_SENDS": "Još nema slanja kampanja.",
       "EDIT_CAMPAIGN": "Uredi kampanju",
@@ -831,15 +834,14 @@
       "ENABLE_SMTP": "Omogući zajedničku SMTP konfiguraciju",
       "LEGACY_RECIPIENTS": "Zadani primatelji (stari)",
       "LEGACY_HELP_one": "{{count}} primatelj koristi se kada kampanja nema konfigurirane primatelje.",
+      "LEGACY_HELP_few": "{{count}} primatelja koriste se kada kampanja nema konfigurirane primatelje.",
       "LEGACY_HELP_other": "{{count}} primatelja koristi se kada kampanja nema konfigurirane primatelje.",
       "SAVE_SMTP": "Spremi SMTP",
       "REFRESH": "Osvježi",
       "OPEN_TAB": "Otvori u kartici",
       "PREVIEW_SUBJECT": "Pregled biltena",
       "GENERATED": "Generirano {{date}}",
-      "PREVIEW_EMPTY": "Generirajte pregled da biste vidjeli bilten.",
-      "RECIPIENTS_few": "{{count}} primatelja",
-      "LEGACY_HELP_few": "{{count}} primatelja koriste se kada kampanja nema konfigurirane primatelje."
+      "PREVIEW_EMPTY": "Generirajte pregled da biste vidjeli bilten."
     },
     "REQUESTS": {
       "TITLE": "Pronađite ili zatražite medije",
@@ -1067,9 +1069,23 @@
     "LAST_FIRED": "Zadnje okidanje {{when}}",
     "NEVER_FIRED": "Nikad okinuto",
     "HISTORY_one": "{{count}} upozorenje",
+    "HISTORY_few": "{{count}} upozorenja",
     "HISTORY_other": "{{count}} upozorenja",
     "DELIVERED": "isporučeno",
-    "TEST_NO_ACTIONS": "Test zabilježen. Dodajte radnju kako biste ga negdje poslali.",
-    "HISTORY_few": "{{count}} upozorenja"
+    "TEST_NO_ACTIONS": "Test zabilježen. Dodajte radnju kako biste ga negdje poslali."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Glavno",
+    "MORE": "Više",
+    "MORE_HAS_UPDATES": "Nove stavke u izborniku Više",
+    "CLOSE": "Zatvori izbornik",
+    "BACK": "Natrag"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Instalirajte JellyGlance za početnu nadzornu ploču prikladnu za kiosk.",
+    "VIEWER": "Instalirajte JellyGlance. Ovaj račun s početnog zaslona otvara Moj Glance.",
+    "IOS_HINT": "Instalacija JellyGlancea: dodirnite Dijeli u Safariju, zatim Dodaj na početni zaslon.",
+    "INSTALL": "Instaliraj",
+    "NOT_NOW": "Ne sada"
   }
 }

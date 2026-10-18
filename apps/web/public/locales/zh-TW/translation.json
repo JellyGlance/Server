@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "切換選取列",
     "TOGGLE_SELECT_ALL": "切換全選",
     "MIN": "最小",
-    "MAX": "最大"
+    "MAX": "最大",
+    "NO_RESULTS": "找不到活動。",
+    "SWIPE_HINT": "左右滑動以查看更多欄位。"
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "第一頁",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} 則警示",
     "DELIVERED": "已送達",
     "TEST_NO_ACTIONS": "測試已記錄。新增動作即可將其傳送到其他地方。"
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "主要",
+    "MORE": "更多",
+    "MORE_HAS_UPDATES": "「更多」中有新項目",
+    "CLOSE": "關閉選單",
+    "BACK": "返回"
+  },
+  "PWA_INSTALL": {
+    "OPS": "安裝 JellyGlance，取得適合資訊站使用的首頁儀表板。",
+    "VIEWER": "安裝 JellyGlance。此帳號會從主畫面開啟 My Glance。",
+    "IOS_HINT": "安裝 JellyGlance：在 Safari 中點一下「分享」，再點「加入主畫面」。",
+    "INSTALL": "安裝",
+    "NOT_NOW": "稍後再說"
   }
 }

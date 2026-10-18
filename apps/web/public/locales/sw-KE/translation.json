@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Badilisha Uteuzi wa Safu",
     "TOGGLE_SELECT_ALL": "Badilisha Uteuzi wa Zote",
     "MIN": "Chini",
-    "MAX": "Juu"
+    "MAX": "Juu",
+    "NO_RESULTS": "Hakuna shughuli iliyopatikana.",
+    "SWIPE_HINT": "Telezesha kando ili kuona safu zaidi."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Kwanza",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "Tahadhari {{count}}",
     "DELIVERED": "imewasilishwa",
     "TEST_NO_ACTIONS": "Jaribio limerekodiwa. Ongeza kitendo ili kulituma popote."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Kuu",
+    "MORE": "Zaidi",
+    "MORE_HAS_UPDATES": "Vipengee vipya kwenye Zaidi",
+    "CLOSE": "Funga menyu",
+    "BACK": "Rudi"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Sakinisha JellyGlance upate dashibodi ya Mwanzo inayofaa kwa kioski.",
+    "VIEWER": "Sakinisha JellyGlance. Akaunti hii hufungua Glance Yangu kutoka skrini ya mwanzo.",
+    "IOS_HINT": "Sakinisha JellyGlance: gusa Shiriki kwenye Safari, kisha Ongeza kwenye Skrini ya Mwanzo.",
+    "INSTALL": "Sakinisha",
+    "NOT_NOW": "Si sasa"
   }
 }

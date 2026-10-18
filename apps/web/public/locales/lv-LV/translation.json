@@ -39,9 +39,9 @@
     "SIZE_SMALL": "Kompakts",
     "SIZE_MEDIUM": "Puse platuma",
     "SIZE_LARGE": "Pilns platums",
+    "OPERATIONS_MOVED_UP_zero": "{{section}} pārvietota augšup: {{count}} pieprasījumiem nepieciešama uzmanība.",
     "OPERATIONS_MOVED_UP_one": "{{section}} pārvietota augšup: {{count}} pieprasījumam nepieciešama uzmanība.",
     "OPERATIONS_MOVED_UP_other": "{{section}} pārvietota augšup: {{count}} pieprasījumiem nepieciešama uzmanība.",
-    "OPERATIONS_MOVED_UP_zero": "{{section}} pārvietota augšup: {{count}} pieprasījumiem nepieciešama uzmanība.",
     "SECTIONS": {
       "sessions": "Aktīvās sesijas",
       "streamCapacity": "Straumju kapacitāte",
@@ -152,7 +152,9 @@
     "TOGGLE_SELECT_ROW": "Pārslēgt rindas atlasi",
     "TOGGLE_SELECT_ALL": "Pārslēgt visu atlasi",
     "MIN": "Min.",
-    "MAX": "Maks."
+    "MAX": "Maks.",
+    "NO_RESULTS": "Darbības nav atrastas.",
+    "SWIPE_HINT": "Velciet uz sāniem, lai redzētu vairāk kolonnu."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Pirmā",
@@ -476,9 +478,9 @@
   },
   "TIMELINE_PAGE": {
     "TIMELINE": "Laika līnija",
+    "EPISODES_zero": "Epizodes",
     "EPISODES_one": "Epizode",
-    "EPISODES_other": "Epizodes",
-    "EPISODES_zero": "Epizodes"
+    "EPISODES_other": "Epizodes"
   },
   "SEARCH": "Meklēt",
   "TOTAL": "Kopā",
@@ -677,9 +679,9 @@
       "PEERS": "{{seeds}} devēji · {{peers}} vienaudži",
       "EMPTY": "Nav aktīvu lejupielāžu. Pievienojiet klientu sadaļā Iestatījumi > Integrācijas, tad sinhronizējiet rindu.",
       "CLIENTS": "Klienti",
+      "DOWNLOAD_COUNT_zero": "{{count}} lejupielādes",
       "DOWNLOAD_COUNT_one": "{{count}} lejupielāde",
       "DOWNLOAD_COUNT_other": "{{count}} lejupielādes",
-      "DOWNLOAD_COUNT_zero": "{{count}} lejupielādes",
       "NO_CLIENTS_YET": "Vēl nav pievienotu lejupielādes klientu.",
       "NEW_TORRENT": "Jauns torrents",
       "MAGNET_DOWNLOAD": "Magnētsaites lejupielāde",
@@ -786,9 +788,9 @@
       "LAST_SENT": "Pēdējoreiz nosūtīts {{date}}",
       "NEVER": "Nekad",
       "CAMPAIGN": "Kampaņa",
+      "RECIPIENTS_zero": "{{count}} adresāti",
       "RECIPIENTS_one": "{{count}} adresāts",
       "RECIPIENTS_other": "{{count}} adresāti",
-      "RECIPIENTS_zero": "{{count}} adresāti",
       "NO_SENDS": "Vēl nav kampaņu sūtījumu.",
       "EDIT_CAMPAIGN": "Rediģēt kampaņu",
       "NAME": "Nosaukums",
@@ -831,9 +833,9 @@
       "VERIFY_TLS": "Pārbaudīt TLS sertifikātus",
       "ENABLE_SMTP": "Iespējot kopīgo SMTP konfigurāciju",
       "LEGACY_RECIPIENTS": "Mantotie noklusējuma adresāti",
+      "LEGACY_HELP_zero": "{{count}} adresāti tiek izmantoti, ja kampaņai nav konfigurēts neviens.",
       "LEGACY_HELP_one": "{{count}} adresāts tiek izmantots, ja kampaņai nav konfigurēts neviens.",
       "LEGACY_HELP_other": "{{count}} adresāti tiek izmantoti, ja kampaņai nav konfigurēts neviens.",
-      "LEGACY_HELP_zero": "{{count}} adresāti tiek izmantoti, ja kampaņai nav konfigurēts neviens.",
       "SAVE_SMTP": "Saglabāt SMTP",
       "REFRESH": "Atsvaidzināt",
       "OPEN_TAB": "Atvērt cilnē",
@@ -1066,10 +1068,24 @@
     "TESTING": "Sūta…",
     "LAST_FIRED": "Pēdējoreiz aktivizēts {{when}}",
     "NEVER_FIRED": "Nekad nav aktivizēts",
+    "HISTORY_zero": "{{count}} brīdinājumi",
     "HISTORY_one": "{{count}} brīdinājums",
     "HISTORY_other": "{{count}} brīdinājumi",
-    "HISTORY_zero": "{{count}} brīdinājumi",
     "DELIVERED": "piegādāts",
     "TEST_NO_ACTIONS": "Tests reģistrēts. Pievienojiet darbību, lai to kaut kur nosūtītu."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Galvenā",
+    "MORE": "Vairāk",
+    "MORE_HAS_UPDATES": "Jauni vienumi sadaļā Vairāk",
+    "CLOSE": "Aizvērt izvēlni",
+    "BACK": "Atpakaļ"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Instalējiet JellyGlance, lai iegūtu kioskam piemērotu sākuma paneli.",
+    "VIEWER": "Instalējiet JellyGlance. Šis konts no sākuma ekrāna atver Mans Glance.",
+    "IOS_HINT": "JellyGlance instalēšana: Safari pieskarieties Kopīgot un pēc tam Pievienot sākuma ekrānam.",
+    "INSTALL": "Instalēt",
+    "NOT_NOW": "Ne tagad"
   }
 }

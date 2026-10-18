@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Markera/avmarkera rad",
     "TOGGLE_SELECT_ALL": "Markera/avmarkera alla",
     "MIN": "Min",
-    "MAX": "Max"
+    "MAX": "Max",
+    "NO_RESULTS": "Ingen aktivitet hittades.",
+    "SWIPE_HINT": "Svep åt sidan för fler kolumner."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Första",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} varningar",
     "DELIVERED": "levererad",
     "TEST_NO_ACTIONS": "Testet loggades. Lägg till en åtgärd för att skicka det någonstans."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Huvudmeny",
+    "MORE": "Mer",
+    "MORE_HAS_UPDATES": "Nytt under Mer",
+    "CLOSE": "Stäng menyn",
+    "BACK": "Tillbaka"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Installera JellyGlance för en kioskvänlig hemskärmspanel.",
+    "VIEWER": "Installera JellyGlance. Det här kontot öppnar Min Glance från hemskärmen.",
+    "IOS_HINT": "Installera JellyGlance: tryck på Dela i Safari och sedan på Lägg till på hemskärmen.",
+    "INSTALL": "Installera",
+    "NOT_NOW": "Inte nu"
   }
 }

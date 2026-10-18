@@ -152,7 +152,9 @@
     "TOGGLE_SELECT_ROW": "Comută selecția rândului",
     "TOGGLE_SELECT_ALL": "Comută selecția tuturor",
     "MIN": "Min",
-    "MAX": "Max"
+    "MAX": "Max",
+    "NO_RESULTS": "Nu s-a găsit nicio activitate.",
+    "SWIPE_HINT": "Glisează lateral pentru mai multe coloane."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Prima",
@@ -1071,5 +1073,19 @@
     "HISTORY_other": "{{count}} de alerte",
     "DELIVERED": "livrată",
     "TEST_NO_ACTIONS": "Test înregistrat. Adaugă o acțiune pentru a-l trimite undeva."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Principal",
+    "MORE": "Mai mult",
+    "MORE_HAS_UPDATES": "Elemente noi în Mai mult",
+    "CLOSE": "Închide meniul",
+    "BACK": "Înapoi"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Instalează JellyGlance pentru un panou Acasă potrivit pentru modul chioșc.",
+    "VIEWER": "Instalează JellyGlance. Acest cont deschide Glance-ul meu de pe ecranul principal.",
+    "IOS_HINT": "Instalează JellyGlance: atinge Partajează în Safari, apoi Adaugă pe ecranul principal.",
+    "INSTALL": "Instalează",
+    "NOT_NOW": "Nu acum"
   }
 }

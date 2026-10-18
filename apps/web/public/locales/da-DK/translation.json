@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Vælg/fravælg række",
     "TOGGLE_SELECT_ALL": "Vælg/fravælg alle",
     "MIN": "Min.",
-    "MAX": "Maks."
+    "MAX": "Maks.",
+    "NO_RESULTS": "Ingen aktivitet fundet.",
+    "SWIPE_HINT": "Stryg til siden for flere kolonner."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Første",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} alarmer",
     "DELIVERED": "leveret",
     "TEST_NO_ACTIONS": "Test logget. Tilføj en handling for at sende den et sted hen."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Primær",
+    "MORE": "Mere",
+    "MORE_HAS_UPDATES": "Nyt under Mere",
+    "CLOSE": "Luk menu",
+    "BACK": "Tilbage"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Installer JellyGlance for et kioskvenligt Hjem-dashboard.",
+    "VIEWER": "Installer JellyGlance. Denne konto åbner Mit Glance fra hjemmeskærmen.",
+    "IOS_HINT": "Installer JellyGlance: tryk på Del i Safari og derefter på Føj til hjemmeskærm.",
+    "INSTALL": "Installer",
+    "NOT_NOW": "Ikke nu"
   }
 }

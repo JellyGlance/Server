@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Rijselectie wisselen",
     "TOGGLE_SELECT_ALL": "Alles selecteren wisselen",
     "MIN": "Min",
-    "MAX": "Max"
+    "MAX": "Max",
+    "NO_RESULTS": "Geen activiteit gevonden.",
+    "SWIPE_HINT": "Veeg opzij voor meer kolommen."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Eerste",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} meldingen",
     "DELIVERED": "afgeleverd",
     "TEST_NO_ACTIONS": "Test gelogd. Voeg een actie toe om hem ergens heen te sturen."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Hoofdmenu",
+    "MORE": "Meer",
+    "MORE_HAS_UPDATES": "Nieuwe items in Meer",
+    "CLOSE": "Menu sluiten",
+    "BACK": "Terug"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Installeer JellyGlance voor een kioskvriendelijk Home-dashboard.",
+    "VIEWER": "Installeer JellyGlance. Dit account opent Mijn Glance vanaf het beginscherm.",
+    "IOS_HINT": "JellyGlance installeren: tik in Safari op Deel en daarna op Zet op beginscherm.",
+    "INSTALL": "Installeren",
+    "NOT_NOW": "Niet nu"
   }
 }

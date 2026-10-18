@@ -153,7 +153,9 @@
     "TOGGLE_SELECT_ROW": "Preklopi izbiro vrstice",
     "TOGGLE_SELECT_ALL": "Preklopi izbiro vseh",
     "MIN": "Najm.",
-    "MAX": "Najv."
+    "MAX": "Najv.",
+    "NO_RESULTS": "Ni najdenih dejavnosti.",
+    "SWIPE_HINT": "Podrsajte vstran za več stolpcev."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Prva",
@@ -1077,5 +1079,19 @@
     "HISTORY_other": "{{count}} opozoril",
     "DELIVERED": "dostavljeno",
     "TEST_NO_ACTIONS": "Test je zabeležen. Dodajte dejanje, da ga kam pošljete."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Glavno",
+    "MORE": "Več",
+    "MORE_HAS_UPDATES": "Novi elementi v meniju Več",
+    "CLOSE": "Zapri meni",
+    "BACK": "Nazaj"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Namestite JellyGlance za domačo nadzorno ploščo, primerno za kiosk.",
+    "VIEWER": "Namestite JellyGlance. Ta račun z domačega zaslona odpre My Glance.",
+    "IOS_HINT": "Namestitev JellyGlance: v Safariju tapnite Deli, nato Dodaj na domači zaslon.",
+    "INSTALL": "Namesti",
+    "NOT_NOW": "Ne zdaj"
   }
 }

@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Sətri seç",
     "TOGGLE_SELECT_ALL": "Hamısını seç",
     "MIN": "Min",
-    "MAX": "Maks"
+    "MAX": "Maks",
+    "NO_RESULTS": "Fəaliyyət tapılmadı.",
+    "SWIPE_HINT": "Daha çox sütun üçün yana sürüşdürün."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Birinci",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} xəbərdarlıq",
     "DELIVERED": "çatdırıldı",
     "TEST_NO_ACTIONS": "Sınaq qeydə alındı. Onu harasa göndərmək üçün əməliyyat əlavə edin."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Əsas",
+    "MORE": "Daha çox",
+    "MORE_HAS_UPDATES": "Daha çox bölməsində yeni elementlər",
+    "CLOSE": "Menyunu bağla",
+    "BACK": "Geri"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Kiosk üçün uyğun Əsas panel üçün JellyGlance-i quraşdırın.",
+    "VIEWER": "JellyGlance-i quraşdırın. Bu hesab əsas ekrandan Mənim Glance-i açır.",
+    "IOS_HINT": "JellyGlance-i quraşdırmaq üçün Safari-də Paylaş, sonra Əsas ekrana əlavə et düyməsinə toxunun.",
+    "INSTALL": "Quraşdır",
+    "NOT_NOW": "İndi yox"
   }
 }

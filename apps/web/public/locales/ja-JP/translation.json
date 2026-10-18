@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "行の選択を切り替え",
     "TOGGLE_SELECT_ALL": "すべての選択を切り替え",
     "MIN": "最小",
-    "MAX": "最大"
+    "MAX": "最大",
+    "NO_RESULTS": "アクティビティはありません。",
+    "SWIPE_HINT": "横にスワイプするとほかの列が表示されます。"
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "最初",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} 件のアラート",
     "DELIVERED": "配信済み",
     "TEST_NO_ACTIONS": "テストを記録しました。どこかに送信するにはアクションを追加してください。"
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "メイン",
+    "MORE": "その他",
+    "MORE_HAS_UPDATES": "「その他」に新しい項目があります",
+    "CLOSE": "メニューを閉じる",
+    "BACK": "戻る"
+  },
+  "PWA_INSTALL": {
+    "OPS": "JellyGlance をインストールすると、キオスク向けのホームダッシュボードとして使えます。",
+    "VIEWER": "JellyGlance をインストールします。このアカウントではホーム画面からマイグランスが開きます。",
+    "IOS_HINT": "JellyGlance をインストールするには、Safari で共有をタップし、「ホーム画面に追加」を選んでください。",
+    "INSTALL": "インストール",
+    "NOT_NOW": "後で"
   }
 }

@@ -40,9 +40,9 @@
     "SIZE_MEDIUM": "Pusė pločio",
     "SIZE_LARGE": "Visas plotis",
     "OPERATIONS_MOVED_UP_one": "{{section}} perkelta aukštyn: {{count}} užklausai reikia dėmesio.",
-    "OPERATIONS_MOVED_UP_other": "{{section}} perkelta aukštyn: {{count}} užklausų reikia dėmesio.",
     "OPERATIONS_MOVED_UP_few": "{{section}} perkelta aukštyn: {{count}} užklausoms reikia dėmesio.",
     "OPERATIONS_MOVED_UP_many": "{{section}} perkelta aukštyn: {{count}} užklausų reikia dėmesio.",
+    "OPERATIONS_MOVED_UP_other": "{{section}} perkelta aukštyn: {{count}} užklausų reikia dėmesio.",
     "SECTIONS": {
       "sessions": "Aktyvūs seansai",
       "streamCapacity": "Srautų pajėgumas",
@@ -153,7 +153,9 @@
     "TOGGLE_SELECT_ROW": "Perjungti eilutės žymėjimą",
     "TOGGLE_SELECT_ALL": "Perjungti visų žymėjimą",
     "MIN": "Min.",
-    "MAX": "Maks."
+    "MAX": "Maks.",
+    "NO_RESULTS": "Veiklos nerasta.",
+    "SWIPE_HINT": "Perbraukite į šoną, kad matytumėte daugiau stulpelių."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Pirmas",
@@ -478,9 +480,9 @@
   "TIMELINE_PAGE": {
     "TIMELINE": "Laiko juosta",
     "EPISODES_one": "Serija",
-    "EPISODES_other": "Serijų",
     "EPISODES_few": "Serijos",
-    "EPISODES_many": "Serijų"
+    "EPISODES_many": "Serijų",
+    "EPISODES_other": "Serijų"
   },
   "SEARCH": "Paieška",
   "TOTAL": "Iš viso",
@@ -680,9 +682,9 @@
       "EMPTY": "Aktyvių atsisiuntimų nėra. Pridėkite klientą skiltyje Nustatymai > Integracijos, tada sinchronizuokite eilę.",
       "CLIENTS": "Klientai",
       "DOWNLOAD_COUNT_one": "{{count}} atsisiuntimas",
-      "DOWNLOAD_COUNT_other": "{{count}} atsisiuntimų",
       "DOWNLOAD_COUNT_few": "{{count}} atsisiuntimai",
       "DOWNLOAD_COUNT_many": "{{count}} atsisiuntimų",
+      "DOWNLOAD_COUNT_other": "{{count}} atsisiuntimų",
       "NO_CLIENTS_YET": "Atsisiuntimo klientų dar nepridėta.",
       "NEW_TORRENT": "Naujas torrentas",
       "MAGNET_DOWNLOAD": "Magnetinis atsisiuntimas",
@@ -790,9 +792,9 @@
       "NEVER": "Niekada",
       "CAMPAIGN": "Kampanija",
       "RECIPIENTS_one": "{{count}} gavėjas",
-      "RECIPIENTS_other": "{{count}} gavėjų",
       "RECIPIENTS_few": "{{count}} gavėjai",
       "RECIPIENTS_many": "{{count}} gavėjų",
+      "RECIPIENTS_other": "{{count}} gavėjų",
       "NO_SENDS": "Kampanijų siuntimų dar nėra.",
       "EDIT_CAMPAIGN": "Redaguoti kampaniją",
       "NAME": "Pavadinimas",
@@ -836,9 +838,9 @@
       "ENABLE_SMTP": "Įjungti bendrą SMTP konfigūraciją",
       "LEGACY_RECIPIENTS": "Senieji numatytieji gavėjai",
       "LEGACY_HELP_one": "{{count}} gavėjas naudojamas, kai kampanijai nesukonfigūruota jokių.",
-      "LEGACY_HELP_other": "{{count}} gavėjų naudojama, kai kampanijai nesukonfigūruota jokių.",
       "LEGACY_HELP_few": "{{count}} gavėjai naudojami, kai kampanijai nesukonfigūruota jokių.",
       "LEGACY_HELP_many": "{{count}} gavėjų naudojama, kai kampanijai nesukonfigūruota jokių.",
+      "LEGACY_HELP_other": "{{count}} gavėjų naudojama, kai kampanijai nesukonfigūruota jokių.",
       "SAVE_SMTP": "Išsaugoti SMTP",
       "REFRESH": "Atnaujinti",
       "OPEN_TAB": "Atidaryti skirtuke",
@@ -1072,10 +1074,24 @@
     "LAST_FIRED": "Paskutinį kartą suveikė {{when}}",
     "NEVER_FIRED": "Niekada nesuveikė",
     "HISTORY_one": "{{count}} įspėjimas",
-    "HISTORY_other": "{{count}} įspėjimų",
     "HISTORY_few": "{{count}} įspėjimai",
     "HISTORY_many": "{{count}} įspėjimų",
+    "HISTORY_other": "{{count}} įspėjimų",
     "DELIVERED": "pristatyta",
     "TEST_NO_ACTIONS": "Testas užregistruotas. Pridėkite veiksmą, kad jį kur nors išsiųstumėte."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Pagrindinis",
+    "MORE": "Daugiau",
+    "MORE_HAS_UPDATES": "Nauji elementai skiltyje Daugiau",
+    "CLOSE": "Uždaryti meniu",
+    "BACK": "Atgal"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Įdiekite JellyGlance, kad turėtumėte kioskui tinkamą pradžios skydelį.",
+    "VIEWER": "Įdiekite JellyGlance. Ši paskyra iš pradžios ekrano atidaro Mano Glance.",
+    "IOS_HINT": "JellyGlance įdiegimas: Safari bakstelėkite Bendrinti, tada Įtraukti į pradžios ekraną.",
+    "INSTALL": "Įdiegti",
+    "NOT_NOW": "Ne dabar"
   }
 }

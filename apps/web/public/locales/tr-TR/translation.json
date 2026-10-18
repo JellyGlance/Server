@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Satırı Seç",
     "TOGGLE_SELECT_ALL": "Tümünü Seç",
     "MIN": "Min",
-    "MAX": "Maks"
+    "MAX": "Maks",
+    "NO_RESULTS": "Etkinlik bulunamadı.",
+    "SWIPE_HINT": "Daha fazla sütun için yana kaydırın."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "İlk",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} uyarı",
     "DELIVERED": "teslim edildi",
     "TEST_NO_ACTIONS": "Test kaydedildi. Bir yere göndermek için bir işlem ekleyin."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Ana",
+    "MORE": "Daha fazla",
+    "MORE_HAS_UPDATES": "Daha fazla bölümünde yeni öğeler",
+    "CLOSE": "Menüyü kapat",
+    "BACK": "Geri"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Kiosk dostu bir Ana Sayfa paneli için JellyGlance'i yükleyin.",
+    "VIEWER": "JellyGlance'i yükleyin. Bu hesap ana ekrandan Glance'ım sayfasını açar.",
+    "IOS_HINT": "JellyGlance'i yüklemek için Safari'de Paylaş'a, ardından Ana Ekrana Ekle'ye dokunun.",
+    "INSTALL": "Yükle",
+    "NOT_NOW": "Şimdi değil"
   }
 }

@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "تغییر انتخاب ردیف",
     "TOGGLE_SELECT_ALL": "تغییر انتخاب همه",
     "MIN": "حداقل",
-    "MAX": "حداکثر"
+    "MAX": "حداکثر",
+    "NO_RESULTS": "فعالیتی پیدا نشد.",
+    "SWIPE_HINT": "برای ستون‌های بیشتر به کنار بکشید."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "اول",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} هشدار",
     "DELIVERED": "تحویل شد",
     "TEST_NO_ACTIONS": "آزمایش ثبت شد. برای ارسال آن به هر جایی، یک اقدام اضافه کنید."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "اصلی",
+    "MORE": "بیشتر",
+    "MORE_HAS_UPDATES": "موارد تازه در بیشتر",
+    "CLOSE": "بستن منو",
+    "BACK": "بازگشت"
+  },
+  "PWA_INSTALL": {
+    "OPS": "JellyGlance را نصب کنید تا داشبورد خانهٔ مناسب کیوسک داشته باشید.",
+    "VIEWER": "JellyGlance را نصب کنید. این حساب My Glance را از صفحهٔ اصلی باز می‌کند.",
+    "IOS_HINT": "نصب JellyGlance: در Safari روی اشتراک‌گذاری بزنید، سپس افزودن به صفحهٔ اصلی را انتخاب کنید.",
+    "INSTALL": "نصب",
+    "NOT_NOW": "اکنون نه"
   }
 }

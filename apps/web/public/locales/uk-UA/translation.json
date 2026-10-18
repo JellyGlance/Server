@@ -40,6 +40,8 @@
     "SIZE_MEDIUM": "Половина ширини",
     "SIZE_LARGE": "На всю ширину",
     "OPERATIONS_MOVED_UP_one": "{{section}} піднято вище: {{count}} запит потребує уваги.",
+    "OPERATIONS_MOVED_UP_few": "{{section}} піднято вище: {{count}} запити потребують уваги.",
+    "OPERATIONS_MOVED_UP_many": "{{section}} піднято вище: {{count}} запитів потребують уваги.",
     "OPERATIONS_MOVED_UP_other": "{{section}} піднято вище: {{count}} запитів потребують уваги.",
     "SECTIONS": {
       "sessions": "Активні сеанси",
@@ -63,9 +65,7 @@
       "automation": "Стрічка автоматизації",
       "quickActions": "Швидкі дії",
       "operations": "Операції"
-    },
-    "OPERATIONS_MOVED_UP_few": "{{section}} піднято вище: {{count}} запити потребують уваги.",
-    "OPERATIONS_MOVED_UP_many": "{{section}} піднято вище: {{count}} запитів потребують уваги."
+    }
   },
   "SESSIONS": {
     "NO_SESSIONS": "Активних сеансів не знайдено",
@@ -153,7 +153,9 @@
     "TOGGLE_SELECT_ROW": "Вибрати рядок",
     "TOGGLE_SELECT_ALL": "Вибрати все",
     "MIN": "Мін.",
-    "MAX": "Макс."
+    "MAX": "Макс.",
+    "NO_RESULTS": "Активності не знайдено.",
+    "SWIPE_HINT": "Проведіть убік, щоб побачити більше стовпців."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Перша",
@@ -478,9 +480,9 @@
   "TIMELINE_PAGE": {
     "TIMELINE": "Хронологія",
     "EPISODES_one": "епізод",
-    "EPISODES_other": "епізодів",
     "EPISODES_few": "епізоди",
-    "EPISODES_many": "епізодів"
+    "EPISODES_many": "епізодів",
+    "EPISODES_other": "епізодів"
   },
   "SEARCH": "Пошук",
   "TOTAL": "Усього",
@@ -680,14 +682,14 @@
       "EMPTY": "Немає активних завантажень. Додайте клієнт у «Налаштування > Інтеграції», потім синхронізуйте чергу.",
       "CLIENTS": "Клієнти",
       "DOWNLOAD_COUNT_one": "{{count}} завантаження",
+      "DOWNLOAD_COUNT_few": "{{count}} завантаження",
+      "DOWNLOAD_COUNT_many": "{{count}} завантажень",
       "DOWNLOAD_COUNT_other": "{{count}} завантажень",
       "NO_CLIENTS_YET": "Клієнтів завантаження ще не додано.",
       "NEW_TORRENT": "Новий торрент",
       "MAGNET_DOWNLOAD": "Завантаження за magnet",
       "TORRENT_DOWNLOAD": "Завантаження торрента",
-      "QUEUED": "У черзі",
-      "DOWNLOAD_COUNT_few": "{{count}} завантаження",
-      "DOWNLOAD_COUNT_many": "{{count}} завантажень"
+      "QUEUED": "У черзі"
     },
     "MY_GLANCE": {
       "TITLE": "Мій Glance",
@@ -790,6 +792,8 @@
       "NEVER": "Ніколи",
       "CAMPAIGN": "Кампанія",
       "RECIPIENTS_one": "{{count}} одержувач",
+      "RECIPIENTS_few": "{{count}} одержувачі",
+      "RECIPIENTS_many": "{{count}} одержувачів",
       "RECIPIENTS_other": "{{count}} одержувачів",
       "NO_SENDS": "Надсилань кампаній ще немає.",
       "EDIT_CAMPAIGN": "Редагувати кампанію",
@@ -834,17 +838,15 @@
       "ENABLE_SMTP": "Увімкнути спільну конфігурацію SMTP",
       "LEGACY_RECIPIENTS": "Одержувачі за замовчуванням (попередні)",
       "LEGACY_HELP_one": "{{count}} одержувач використовується, якщо в кампанії не налаштовано одержувачів.",
+      "LEGACY_HELP_few": "{{count}} одержувачі використовуються, якщо в кампанії не налаштовано одержувачів.",
+      "LEGACY_HELP_many": "{{count}} одержувачів використовується, якщо в кампанії не налаштовано одержувачів.",
       "LEGACY_HELP_other": "{{count}} одержувачів використовується, якщо в кампанії не налаштовано одержувачів.",
       "SAVE_SMTP": "Зберегти SMTP",
       "REFRESH": "Оновити",
       "OPEN_TAB": "Відкрити у вкладці",
       "PREVIEW_SUBJECT": "Попередній перегляд розсилки",
       "GENERATED": "Створено {{date}}",
-      "PREVIEW_EMPTY": "Створіть попередній перегляд, щоб побачити розсилку.",
-      "RECIPIENTS_few": "{{count}} одержувачі",
-      "RECIPIENTS_many": "{{count}} одержувачів",
-      "LEGACY_HELP_few": "{{count}} одержувачі використовуються, якщо в кампанії не налаштовано одержувачів.",
-      "LEGACY_HELP_many": "{{count}} одержувачів використовується, якщо в кампанії не налаштовано одержувачів."
+      "PREVIEW_EMPTY": "Створіть попередній перегляд, щоб побачити розсилку."
     },
     "REQUESTS": {
       "TITLE": "Знайти або запросити медіа",
@@ -1072,10 +1074,24 @@
     "LAST_FIRED": "Останнє спрацювання {{when}}",
     "NEVER_FIRED": "Жодного разу не спрацьовувало",
     "HISTORY_one": "{{count}} сповіщення",
+    "HISTORY_few": "{{count}} сповіщення",
+    "HISTORY_many": "{{count}} сповіщень",
     "HISTORY_other": "{{count}} сповіщень",
     "DELIVERED": "доставлено",
-    "TEST_NO_ACTIONS": "Тест записано. Додайте дію, щоб надсилати його кудись.",
-    "HISTORY_few": "{{count}} сповіщення",
-    "HISTORY_many": "{{count}} сповіщень"
+    "TEST_NO_ACTIONS": "Тест записано. Додайте дію, щоб надсилати його кудись."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Основне",
+    "MORE": "Більше",
+    "MORE_HAS_UPDATES": "Нове в розділі «Більше»",
+    "CLOSE": "Закрити меню",
+    "BACK": "Назад"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Установіть JellyGlance, щоб мати головну панель для режиму кіоску.",
+    "VIEWER": "Установіть JellyGlance. Цей обліковий запис відкриває «Мій Glance» з головного екрана.",
+    "IOS_HINT": "Щоб установити JellyGlance, торкніться «Поширити» в Safari, а потім «На початковий екран».",
+    "INSTALL": "Установити",
+    "NOT_NOW": "Не зараз"
   }
 }

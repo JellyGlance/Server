@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Pilih Baris",
     "TOGGLE_SELECT_ALL": "Pilih Semua",
     "MIN": "Min",
-    "MAX": "Maks"
+    "MAX": "Maks",
+    "NO_RESULTS": "Tidak ada aktivitas.",
+    "SWIPE_HINT": "Geser ke samping untuk kolom lainnya."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Pertama",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} peringatan",
     "DELIVERED": "terkirim",
     "TEST_NO_ACTIONS": "Uji tercatat. Tambahkan tindakan untuk mengirimnya ke mana pun."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Utama",
+    "MORE": "Lainnya",
+    "MORE_HAS_UPDATES": "Item baru di Lainnya",
+    "CLOSE": "Tutup menu",
+    "BACK": "Kembali"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Instal JellyGlance untuk dasbor Beranda yang cocok untuk kios.",
+    "VIEWER": "Instal JellyGlance. Akun ini membuka Glance Saya dari layar utama.",
+    "IOS_HINT": "Instal JellyGlance: ketuk Bagikan di Safari, lalu Tambah ke Layar Utama.",
+    "INSTALL": "Instal",
+    "NOT_NOW": "Nanti saja"
   }
 }

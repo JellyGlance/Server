@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Valitse rivi / poista valinta",
     "TOGGLE_SELECT_ALL": "Valitse kaikki / poista valinnat",
     "MIN": "Min",
-    "MAX": "Maks"
+    "MAX": "Maks",
+    "NO_RESULTS": "Toimintaa ei löytynyt.",
+    "SWIPE_HINT": "Pyyhkäise sivulle nähdäksesi lisää sarakkeita."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Ensimmäinen",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} hälytystä",
     "DELIVERED": "toimitettu",
     "TEST_NO_ACTIONS": "Testi kirjattu. Lisää toiminto lähettääksesi sen johonkin."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Päävalikko",
+    "MORE": "Lisää",
+    "MORE_HAS_UPDATES": "Uutta kohdassa Lisää",
+    "CLOSE": "Sulje valikko",
+    "BACK": "Takaisin"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Asenna JellyGlance, niin saat kioskikäyttöön sopivan kotinäkymän.",
+    "VIEWER": "Asenna JellyGlance. Tämä tili avaa Oma Glance -näkymän aloitusnäytöltä.",
+    "IOS_HINT": "Asenna JellyGlance: napauta Safarissa Jaa ja sitten Lisää Koti-valikkoon.",
+    "INSTALL": "Asenna",
+    "NOT_NOW": "Ei nyt"
   }
 }

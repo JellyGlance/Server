@@ -40,6 +40,7 @@
     "SIZE_MEDIUM": "Пола ширине",
     "SIZE_LARGE": "Пуна ширина",
     "OPERATIONS_MOVED_UP_one": "{{section}} је померен горе: {{count}} захтев захтева пажњу.",
+    "OPERATIONS_MOVED_UP_few": "{{section}} је померен горе: {{count}} захтева захтевају пажњу.",
     "OPERATIONS_MOVED_UP_other": "{{section}} је померен горе: {{count}} захтева захтева пажњу.",
     "SECTIONS": {
       "sessions": "Активне сесије",
@@ -63,8 +64,7 @@
       "automation": "Ток аутоматизације",
       "quickActions": "Брзе радње",
       "operations": "Операције"
-    },
-    "OPERATIONS_MOVED_UP_few": "{{section}} је померен горе: {{count}} захтева захтевају пажњу."
+    }
   },
   "SESSIONS": {
     "NO_SESSIONS": "Нема активних сесија",
@@ -152,7 +152,9 @@
     "TOGGLE_SELECT_ROW": "Изабери ред",
     "TOGGLE_SELECT_ALL": "Изабери све",
     "MIN": "Мин.",
-    "MAX": "Макс."
+    "MAX": "Макс.",
+    "NO_RESULTS": "Није пронађена активност.",
+    "SWIPE_HINT": "Превуците у страну за више колона."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Прва",
@@ -477,8 +479,8 @@
   "TIMELINE_PAGE": {
     "TIMELINE": "Временска линија",
     "EPISODES_one": "епизода",
-    "EPISODES_other": "епизода",
-    "EPISODES_few": "епизоде"
+    "EPISODES_few": "епизоде",
+    "EPISODES_other": "епизода"
   },
   "SEARCH": "Претрага",
   "TOTAL": "Укупно",
@@ -678,13 +680,13 @@
       "EMPTY": "Нема активних преузимања. Додајте клијент у Подешавања > Интеграције, па синхронизујте ред.",
       "CLIENTS": "Клијенти",
       "DOWNLOAD_COUNT_one": "{{count}} преузимање",
+      "DOWNLOAD_COUNT_few": "{{count}} преузимања",
       "DOWNLOAD_COUNT_other": "{{count}} преузимања",
       "NO_CLIENTS_YET": "Још нема додатих клијената за преузимање.",
       "NEW_TORRENT": "Нови торент",
       "MAGNET_DOWNLOAD": "Магнет преузимање",
       "TORRENT_DOWNLOAD": "Торент преузимање",
-      "QUEUED": "У реду",
-      "DOWNLOAD_COUNT_few": "{{count}} преузимања"
+      "QUEUED": "У реду"
     },
     "MY_GLANCE": {
       "TITLE": "Мој Glance",
@@ -787,6 +789,7 @@
       "NEVER": "Никад",
       "CAMPAIGN": "Кампања",
       "RECIPIENTS_one": "{{count}} прималац",
+      "RECIPIENTS_few": "{{count}} примаоца",
       "RECIPIENTS_other": "{{count}} прималаца",
       "NO_SENDS": "Још нема слања кампања.",
       "EDIT_CAMPAIGN": "Уреди кампању",
@@ -831,15 +834,14 @@
       "ENABLE_SMTP": "Омогући заједничку SMTP конфигурацију",
       "LEGACY_RECIPIENTS": "Подразумевани примаоци (стари)",
       "LEGACY_HELP_one": "{{count}} прималац се користи када кампања нема подешене примаоце.",
+      "LEGACY_HELP_few": "{{count}} примаоца се користе када кампања нема подешене примаоце.",
       "LEGACY_HELP_other": "{{count}} прималаца се користи када кампања нема подешене примаоце.",
       "SAVE_SMTP": "Сачувај SMTP",
       "REFRESH": "Освежи",
       "OPEN_TAB": "Отвори у картици",
       "PREVIEW_SUBJECT": "Преглед билтена",
       "GENERATED": "Генерисано {{date}}",
-      "PREVIEW_EMPTY": "Генеришите преглед да видите билтен.",
-      "RECIPIENTS_few": "{{count}} примаоца",
-      "LEGACY_HELP_few": "{{count}} примаоца се користе када кампања нема подешене примаоце."
+      "PREVIEW_EMPTY": "Генеришите преглед да видите билтен."
     },
     "REQUESTS": {
       "TITLE": "Пронађите или затражите медије",
@@ -1067,9 +1069,23 @@
     "LAST_FIRED": "Последње окидање {{when}}",
     "NEVER_FIRED": "Никад окинуто",
     "HISTORY_one": "{{count}} упозорење",
+    "HISTORY_few": "{{count}} упозорења",
     "HISTORY_other": "{{count}} упозорења",
     "DELIVERED": "испоручено",
-    "TEST_NO_ACTIONS": "Тест је забележен. Додајте радњу да бисте га негде послали.",
-    "HISTORY_few": "{{count}} упозорења"
+    "TEST_NO_ACTIONS": "Тест је забележен. Додајте радњу да бисте га негде послали."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Главно",
+    "MORE": "Више",
+    "MORE_HAS_UPDATES": "Нове ставке у менију Више",
+    "CLOSE": "Затвори мени",
+    "BACK": "Назад"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Инсталирајте JellyGlance за почетну контролну таблу погодну за киоск.",
+    "VIEWER": "Инсталирајте JellyGlance. Овај налог са почетног екрана отвара Мој Glance.",
+    "IOS_HINT": "Инсталирање JellyGlance-а: додирните Дели у Safari-ју, затим Додај на почетни екран.",
+    "INSTALL": "Инсталирај",
+    "NOT_NOW": "Не сада"
   }
 }

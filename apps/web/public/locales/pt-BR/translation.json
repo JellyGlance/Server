@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Alternar seleção da linha",
     "TOGGLE_SELECT_ALL": "Alternar seleção de tudo",
     "MIN": "Mín",
-    "MAX": "Máx"
+    "MAX": "Máx",
+    "NO_RESULTS": "Nenhuma atividade encontrada.",
+    "SWIPE_HINT": "Deslize para o lado para ver mais colunas."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Primeira",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} alertas",
     "DELIVERED": "entregue",
     "TEST_NO_ACTIONS": "Teste registrado. Adicione uma ação para enviá-lo a algum lugar."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Principal",
+    "MORE": "Mais",
+    "MORE_HAS_UPDATES": "Novos itens em Mais",
+    "CLOSE": "Fechar menu",
+    "BACK": "Voltar"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Instale o JellyGlance para ter um painel inicial ideal para quiosque.",
+    "VIEWER": "Instale o JellyGlance. Esta conta abre o Meu Glance pela tela inicial.",
+    "IOS_HINT": "Para instalar o JellyGlance: toque em Compartilhar no Safari e depois em Adicionar à Tela de Início.",
+    "INSTALL": "Instalar",
+    "NOT_NOW": "Agora não"
   }
 }

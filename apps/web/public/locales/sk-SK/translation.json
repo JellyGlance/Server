@@ -40,9 +40,9 @@
     "SIZE_MEDIUM": "Polovičná šírka",
     "SIZE_LARGE": "Plná šírka",
     "OPERATIONS_MOVED_UP_one": "Sekcia {{section}} sa posunula nahor: {{count}} požiadavka vyžaduje pozornosť.",
-    "OPERATIONS_MOVED_UP_other": "Sekcia {{section}} sa posunula nahor: {{count}} požiadaviek vyžaduje pozornosť.",
     "OPERATIONS_MOVED_UP_few": "Sekcia {{section}} sa posunula nahor: {{count}} požiadavky vyžadujú pozornosť.",
     "OPERATIONS_MOVED_UP_many": "Sekcia {{section}} sa posunula nahor: {{count}} požiadavky vyžaduje pozornosť.",
+    "OPERATIONS_MOVED_UP_other": "Sekcia {{section}} sa posunula nahor: {{count}} požiadaviek vyžaduje pozornosť.",
     "SECTIONS": {
       "sessions": "Aktívne relácie",
       "streamCapacity": "Kapacita streamov",
@@ -153,7 +153,9 @@
     "TOGGLE_SELECT_ROW": "Prepnúť výber riadka",
     "TOGGLE_SELECT_ALL": "Prepnúť výber všetkých",
     "MIN": "Min.",
-    "MAX": "Max."
+    "MAX": "Max.",
+    "NO_RESULTS": "Nenašla sa žiadna aktivita.",
+    "SWIPE_HINT": "Potiahnite do strany pre ďalšie stĺpce."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Prvá",
@@ -478,9 +480,9 @@
   "TIMELINE_PAGE": {
     "TIMELINE": "Časová os",
     "EPISODES_one": "Epizóda",
-    "EPISODES_other": "Epizód",
     "EPISODES_few": "Epizódy",
-    "EPISODES_many": "Epizódy"
+    "EPISODES_many": "Epizódy",
+    "EPISODES_other": "Epizód"
   },
   "SEARCH": "Hľadať",
   "TOTAL": "Celkom",
@@ -680,9 +682,9 @@
       "EMPTY": "Žiadne aktívne sťahovania. Pridajte klienta v Nastavenia > Integrácie a potom synchronizujte front.",
       "CLIENTS": "Klienty",
       "DOWNLOAD_COUNT_one": "{{count}} sťahovanie",
-      "DOWNLOAD_COUNT_other": "{{count}} sťahovaní",
       "DOWNLOAD_COUNT_few": "{{count}} sťahovania",
       "DOWNLOAD_COUNT_many": "{{count}} sťahovania",
+      "DOWNLOAD_COUNT_other": "{{count}} sťahovaní",
       "NO_CLIENTS_YET": "Zatiaľ nie sú pridané žiadne klienty na sťahovanie.",
       "NEW_TORRENT": "Nový torrent",
       "MAGNET_DOWNLOAD": "Sťahovanie cez magnet",
@@ -790,9 +792,9 @@
       "NEVER": "Nikdy",
       "CAMPAIGN": "Kampaň",
       "RECIPIENTS_one": "{{count}} príjemca",
-      "RECIPIENTS_other": "{{count}} príjemcov",
       "RECIPIENTS_few": "{{count}} príjemcovia",
       "RECIPIENTS_many": "{{count}} príjemcu",
+      "RECIPIENTS_other": "{{count}} príjemcov",
       "NO_SENDS": "Zatiaľ neboli odoslané žiadne kampane.",
       "EDIT_CAMPAIGN": "Upraviť kampaň",
       "NAME": "Názov",
@@ -836,9 +838,9 @@
       "ENABLE_SMTP": "Povoliť spoločnú konfiguráciu SMTP",
       "LEGACY_RECIPIENTS": "Predvolení príjemcovia (starší spôsob)",
       "LEGACY_HELP_one": "{{count}} príjemca sa použije, keď kampaň nemá nastavených príjemcov.",
-      "LEGACY_HELP_other": "{{count}} príjemcov sa použije, keď kampaň nemá nastavených príjemcov.",
       "LEGACY_HELP_few": "{{count}} príjemcovia sa použijú, keď kampaň nemá nastavených príjemcov.",
       "LEGACY_HELP_many": "{{count}} príjemcu sa použije, keď kampaň nemá nastavených príjemcov.",
+      "LEGACY_HELP_other": "{{count}} príjemcov sa použije, keď kampaň nemá nastavených príjemcov.",
       "SAVE_SMTP": "Uložiť SMTP",
       "REFRESH": "Obnoviť",
       "OPEN_TAB": "Otvoriť na karte",
@@ -1072,10 +1074,24 @@
     "LAST_FIRED": "Naposledy spustené {{when}}",
     "NEVER_FIRED": "Nikdy nespustené",
     "HISTORY_one": "{{count}} upozornenie",
-    "HISTORY_other": "{{count}} upozornení",
     "HISTORY_few": "{{count}} upozornenia",
     "HISTORY_many": "{{count}} upozornenia",
+    "HISTORY_other": "{{count}} upozornení",
     "DELIVERED": "doručené",
     "TEST_NO_ACTIONS": "Test zaznamenaný. Pridajte akciu, ak ho chcete niekam odoslať."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Hlavné",
+    "MORE": "Viac",
+    "MORE_HAS_UPDATES": "Nové položky v ponuke Viac",
+    "CLOSE": "Zavrieť ponuku",
+    "BACK": "Späť"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Nainštalujte si JellyGlance pre domovský panel vhodný pre kiosk.",
+    "VIEWER": "Nainštalujte si JellyGlance. Tento účet otvára z plochy Môj Glance.",
+    "IOS_HINT": "Inštalácia JellyGlance: v Safari klepnite na Zdieľať a potom na Pridať na plochu.",
+    "INSTALL": "Inštalovať",
+    "NOT_NOW": "Teraz nie"
   }
 }

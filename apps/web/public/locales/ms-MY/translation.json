@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Togol Pilih Baris",
     "TOGGLE_SELECT_ALL": "Togol Pilih Semua",
     "MIN": "Min",
-    "MAX": "Maks"
+    "MAX": "Maks",
+    "NO_RESULTS": "Tiada aktiviti ditemui.",
+    "SWIPE_HINT": "Leret ke sisi untuk lebih banyak lajur."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Pertama",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} amaran",
     "DELIVERED": "dihantar",
     "TEST_NO_ACTIONS": "Ujian dilog. Tambah tindakan untuk menghantarnya ke mana-mana."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Utama",
+    "MORE": "Lagi",
+    "MORE_HAS_UPDATES": "Item baharu dalam Lagi",
+    "CLOSE": "Tutup menu",
+    "BACK": "Kembali"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Pasang JellyGlance untuk papan pemuka Laman Utama yang sesuai untuk kiosk.",
+    "VIEWER": "Pasang JellyGlance. Akaun ini membuka Glance Saya dari skrin utama.",
+    "IOS_HINT": "Pasang JellyGlance: ketik Kongsi dalam Safari, kemudian Tambah ke Skrin Utama.",
+    "INSTALL": "Pasang",
+    "NOT_NOW": "Bukan sekarang"
   }
 }

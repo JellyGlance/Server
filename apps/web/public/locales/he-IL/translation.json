@@ -40,6 +40,8 @@
     "SIZE_MEDIUM": "חצי רוחב",
     "SIZE_LARGE": "רוחב מלא",
     "OPERATIONS_MOVED_UP_one": "{{section}} הוזז למעלה: בקשה {{count}} דורשת טיפול.",
+    "OPERATIONS_MOVED_UP_two": "{{section}} הוזז למעלה: {{count}} בקשות דורשות טיפול.",
+    "OPERATIONS_MOVED_UP_many": "{{section}} הוזז למעלה: {{count}} בקשות דורשות טיפול.",
     "OPERATIONS_MOVED_UP_other": "{{section}} הוזז למעלה: {{count}} בקשות דורשות טיפול.",
     "SECTIONS": {
       "sessions": "הפעלות פעילות",
@@ -63,9 +65,7 @@
       "automation": "עדכוני אוטומציה",
       "quickActions": "פעולות מהירות",
       "operations": "תפעול"
-    },
-    "OPERATIONS_MOVED_UP_two": "{{section}} הוזז למעלה: {{count}} בקשות דורשות טיפול.",
-    "OPERATIONS_MOVED_UP_many": "{{section}} הוזז למעלה: {{count}} בקשות דורשות טיפול."
+    }
   },
   "SESSIONS": {
     "NO_SESSIONS": "לא נמצאו הפעלות פעילות",
@@ -153,7 +153,9 @@
     "TOGGLE_SELECT_ROW": "החלפת בחירת שורה",
     "TOGGLE_SELECT_ALL": "החלפת בחירת הכול",
     "MIN": "מינ׳",
-    "MAX": "מקס׳"
+    "MAX": "מקס׳",
+    "NO_RESULTS": "לא נמצאה פעילות.",
+    "SWIPE_HINT": "החליקו הצידה כדי לראות עוד עמודות."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "ראשון",
@@ -478,9 +480,9 @@
   "TIMELINE_PAGE": {
     "TIMELINE": "ציר זמן",
     "EPISODES_one": "פרק",
-    "EPISODES_other": "פרקים",
     "EPISODES_two": "פרקים",
-    "EPISODES_many": "פרקים"
+    "EPISODES_many": "פרקים",
+    "EPISODES_other": "פרקים"
   },
   "SEARCH": "חיפוש",
   "TOTAL": "סה״כ",
@@ -680,14 +682,14 @@
       "EMPTY": "אין הורדות פעילות. הוסיפו לקוח בהגדרות > שילובים, ולאחר מכן סנכרנו את התור.",
       "CLIENTS": "לקוחות",
       "DOWNLOAD_COUNT_one": "הורדה {{count}}",
+      "DOWNLOAD_COUNT_two": "{{count}} הורדות",
+      "DOWNLOAD_COUNT_many": "{{count}} הורדות",
       "DOWNLOAD_COUNT_other": "{{count}} הורדות",
       "NO_CLIENTS_YET": "עדיין לא נוספו לקוחות הורדה.",
       "NEW_TORRENT": "טורנט חדש",
       "MAGNET_DOWNLOAD": "הורדת מגנט",
       "TORRENT_DOWNLOAD": "הורדת טורנט",
-      "QUEUED": "בתור",
-      "DOWNLOAD_COUNT_two": "{{count}} הורדות",
-      "DOWNLOAD_COUNT_many": "{{count}} הורדות"
+      "QUEUED": "בתור"
     },
     "MY_GLANCE": {
       "TITLE": "My Glance",
@@ -790,6 +792,8 @@
       "NEVER": "אף פעם",
       "CAMPAIGN": "קמפיין",
       "RECIPIENTS_one": "נמען {{count}}",
+      "RECIPIENTS_two": "{{count}} נמענים",
+      "RECIPIENTS_many": "{{count}} נמענים",
       "RECIPIENTS_other": "{{count}} נמענים",
       "NO_SENDS": "אין עדיין שליחות של קמפיינים.",
       "EDIT_CAMPAIGN": "עריכת הקמפיין",
@@ -834,17 +838,15 @@
       "ENABLE_SMTP": "הפעלת הגדרת SMTP משותפת",
       "LEGACY_RECIPIENTS": "נמעני ברירת מחדל מדור קודם",
       "LEGACY_HELP_one": "נמען {{count}} שמשמש כשלא הוגדרו נמענים לקמפיין.",
+      "LEGACY_HELP_two": "{{count}} נמענים שמשמשים כשלא הוגדרו נמענים לקמפיין.",
+      "LEGACY_HELP_many": "{{count}} נמענים שמשמשים כשלא הוגדרו נמענים לקמפיין.",
       "LEGACY_HELP_other": "{{count}} נמענים שמשמשים כשלא הוגדרו נמענים לקמפיין.",
       "SAVE_SMTP": "שמירת SMTP",
       "REFRESH": "רענון",
       "OPEN_TAB": "פתיחה בכרטיסייה",
       "PREVIEW_SUBJECT": "תצוגה מקדימה של הניוזלטר",
       "GENERATED": "נוצר {{date}}",
-      "PREVIEW_EMPTY": "צרו תצוגה מקדימה כדי לראות את הניוזלטר.",
-      "RECIPIENTS_two": "{{count}} נמענים",
-      "RECIPIENTS_many": "{{count}} נמענים",
-      "LEGACY_HELP_two": "{{count}} נמענים שמשמשים כשלא הוגדרו נמענים לקמפיין.",
-      "LEGACY_HELP_many": "{{count}} נמענים שמשמשים כשלא הוגדרו נמענים לקמפיין."
+      "PREVIEW_EMPTY": "צרו תצוגה מקדימה כדי לראות את הניוזלטר."
     },
     "REQUESTS": {
       "TITLE": "חיפוש או בקשת מדיה",
@@ -1072,10 +1074,24 @@
     "LAST_FIRED": "הופעל לאחרונה {{when}}",
     "NEVER_FIRED": "לא הופעל אף פעם",
     "HISTORY_one": "התראה {{count}}",
+    "HISTORY_two": "{{count}} התראות",
+    "HISTORY_many": "{{count}} התראות",
     "HISTORY_other": "{{count}} התראות",
     "DELIVERED": "נמסר",
-    "TEST_NO_ACTIONS": "הבדיקה נרשמה. הוסיפו פעולה כדי לשלוח אותה לכל מקום.",
-    "HISTORY_two": "{{count}} התראות",
-    "HISTORY_many": "{{count}} התראות"
+    "TEST_NO_ACTIONS": "הבדיקה נרשמה. הוסיפו פעולה כדי לשלוח אותה לכל מקום."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "ראשי",
+    "MORE": "עוד",
+    "MORE_HAS_UPDATES": "פריטים חדשים בעוד",
+    "CLOSE": "סגירת התפריט",
+    "BACK": "חזרה"
+  },
+  "PWA_INSTALL": {
+    "OPS": "התקינו את JellyGlance כדי לקבל לוח בית שמתאים למצב קיוסק.",
+    "VIEWER": "התקינו את JellyGlance. החשבון הזה פותח את My Glance ממסך הבית.",
+    "IOS_HINT": "להתקנת JellyGlance: הקישו על שיתוף ב-Safari ואז על הוספה למסך הבית.",
+    "INSTALL": "התקנה",
+    "NOT_NOW": "לא עכשיו"
   }
 }

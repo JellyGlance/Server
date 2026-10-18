@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Chọn/bỏ chọn hàng",
     "TOGGLE_SELECT_ALL": "Chọn/bỏ chọn tất cả",
     "MIN": "Tối thiểu",
-    "MAX": "Tối đa"
+    "MAX": "Tối đa",
+    "NO_RESULTS": "Không có hoạt động nào.",
+    "SWIPE_HINT": "Vuốt ngang để xem thêm cột."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Đầu",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} cảnh báo",
     "DELIVERED": "đã gửi",
     "TEST_NO_ACTIONS": "Đã ghi nhận bản thử. Thêm một hành động để gửi đi."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Chính",
+    "MORE": "Thêm",
+    "MORE_HAS_UPDATES": "Có mục mới trong Thêm",
+    "CLOSE": "Đóng menu",
+    "BACK": "Quay lại"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Cài đặt JellyGlance để có bảng điều khiển Trang chủ phù hợp chế độ kiosk.",
+    "VIEWER": "Cài đặt JellyGlance. Tài khoản này mở Glance của tôi từ màn hình chính.",
+    "IOS_HINT": "Cài đặt JellyGlance: chạm vào Chia sẻ trong Safari, rồi chọn Thêm vào MH chính.",
+    "INSTALL": "Cài đặt",
+    "NOT_NOW": "Để sau"
   }
 }

@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Lülita rea valikut",
     "TOGGLE_SELECT_ALL": "Lülita kõigi valikut",
     "MIN": "Min",
-    "MAX": "Max"
+    "MAX": "Max",
+    "NO_RESULTS": "Tegevust ei leitud.",
+    "SWIPE_HINT": "Rohkemate veergude nägemiseks pühkige külgsuunas."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Esimene",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} hoiatust",
     "DELIVERED": "kohale toimetatud",
     "TEST_NO_ACTIONS": "Test logitud. Lisa toiming, et see kuhugi saata."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Peamine",
+    "MORE": "Veel",
+    "MORE_HAS_UPDATES": "Uued üksused jaotises Veel",
+    "CLOSE": "Sulge menüü",
+    "BACK": "Tagasi"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Installige JellyGlance, et saada kioskisõbralik avalehe juhtpaneel.",
+    "VIEWER": "Installige JellyGlance. See konto avab avakuvalt Minu Glance'i.",
+    "IOS_HINT": "JellyGlance'i installimine: puudutage Safaris Jaga ja seejärel Lisa avakuvale.",
+    "INSTALL": "Installi",
+    "NOT_NOW": "Mitte praegu"
   }
 }

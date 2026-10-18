@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "I-toggle ang Pagpili ng Row",
     "TOGGLE_SELECT_ALL": "I-toggle ang Pagpili ng Lahat",
     "MIN": "Min",
-    "MAX": "Max"
+    "MAX": "Max",
+    "NO_RESULTS": "Walang nakitang aktibidad.",
+    "SWIPE_HINT": "Mag-swipe patagilid para sa iba pang column."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Una",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} alerto",
     "DELIVERED": "naihatid",
     "TEST_NO_ACTIONS": "Na-log ang test. Magdagdag ng aksyon para maipadala ito kahit saan."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Pangunahin",
+    "MORE": "Higit pa",
+    "MORE_HAS_UPDATES": "May bagong item sa Higit pa",
+    "CLOSE": "Isara ang menu",
+    "BACK": "Bumalik"
+  },
+  "PWA_INSTALL": {
+    "OPS": "I-install ang JellyGlance para sa Home dashboard na angkop sa kiosk.",
+    "VIEWER": "I-install ang JellyGlance. Binubuksan ng account na ito ang Aking Glance mula sa home screen.",
+    "IOS_HINT": "I-install ang JellyGlance: i-tap ang Share sa Safari, pagkatapos ay Add to Home Screen.",
+    "INSTALL": "I-install",
+    "NOT_NOW": "Hindi muna"
   }
 }

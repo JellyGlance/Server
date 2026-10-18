@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Velg/fjern valg av rad",
     "TOGGLE_SELECT_ALL": "Velg/fjern valg av alle",
     "MIN": "Min.",
-    "MAX": "Maks."
+    "MAX": "Maks.",
+    "NO_RESULTS": "Ingen aktivitet funnet.",
+    "SWIPE_HINT": "Sveip til siden for flere kolonner."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Første",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} varsler",
     "DELIVERED": "levert",
     "TEST_NO_ACTIONS": "Testen ble logget. Legg til en handling for å sende den et sted."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Hovedmeny",
+    "MORE": "Mer",
+    "MORE_HAS_UPDATES": "Nytt under Mer",
+    "CLOSE": "Lukk menyen",
+    "BACK": "Tilbake"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Installer JellyGlance for et kioskvennlig Hjem-dashbord.",
+    "VIEWER": "Installer JellyGlance. Denne kontoen åpner Min Glance fra hjemskjermen.",
+    "IOS_HINT": "Installer JellyGlance: trykk på Del i Safari og deretter på Legg til på Hjem-skjerm.",
+    "INSTALL": "Installer",
+    "NOT_NOW": "Ikke nå"
   }
 }

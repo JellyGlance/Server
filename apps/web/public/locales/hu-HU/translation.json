@@ -151,7 +151,9 @@
     "TOGGLE_SELECT_ROW": "Sor kijelölésének váltása",
     "TOGGLE_SELECT_ALL": "Összes kijelölésének váltása",
     "MIN": "Min.",
-    "MAX": "Max."
+    "MAX": "Max.",
+    "NO_RESULTS": "Nem található tevékenység.",
+    "SWIPE_HINT": "Húzd oldalra a további oszlopokhoz."
   },
   "TABLE_NAV_BUTTONS": {
     "FIRST": "Első",
@@ -1065,5 +1067,19 @@
     "HISTORY_other": "{{count}} riasztás",
     "DELIVERED": "kézbesítve",
     "TEST_NO_ACTIONS": "Teszt naplózva. Adjon hozzá egy műveletet, hogy el is küldje valahová."
+  },
+  "MOBILE_NAV": {
+    "PRIMARY": "Fő",
+    "MORE": "Továbbiak",
+    "MORE_HAS_UPDATES": "Új elemek a Továbbiak között",
+    "CLOSE": "Menü bezárása",
+    "BACK": "Vissza"
+  },
+  "PWA_INSTALL": {
+    "OPS": "Telepítsd a JellyGlance-t egy kioszkbarát Kezdőlap irányítópulthoz.",
+    "VIEWER": "Telepítsd a JellyGlance-t. Ez a fiók a kezdőképernyőről a Saját Glance-t nyitja meg.",
+    "IOS_HINT": "A JellyGlance telepítése: koppints a Megosztás gombra a Safariban, majd a Főképernyőhöz adás lehetőségre.",
+    "INSTALL": "Telepítés",
+    "NOT_NOW": "Most nem"
   }
 }
