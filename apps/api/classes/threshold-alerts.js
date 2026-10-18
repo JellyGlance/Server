@@ -9,6 +9,8 @@ const configClass = require("./config");
 const { getIntegrations, getIntegrationData } = require("./integration-store");
 const { sendUpdate } = require("../ws");
 const alertRules = require("./alert-rules");
+const alertActions = require("./alert-actions");
+const { encryptSecret, decryptSecret } = require("./integration-store");
 
 const USER_AGENT = "JellyGlance";
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -57,11 +59,35 @@ async function getAlertSettings() {
   return normalize(settings.ThresholdAlerts);
 }
 
+// Settings as the browser sees them: action URLs and tokens are replaced by hints.
+function maskSettings(rules) {
+  return {
+    ...rules,
+    customRules: rules.customRules.map((rule) => ({ ...rule, actions: alertActions.maskActions(rule.actions, decryptSecret) })),
+  };
+}
+
+// Keeps saved action secrets when the form sends them back blank, and encrypts new ones.
+function withActionSecrets(nextRules = [], savedRules = []) {
+  const saved = new Map(savedRules.map((rule) => [rule.id, rule]));
+  return alertRules.normalizeRules(nextRules).map((rule) => ({
+    ...rule,
+    actions: alertActions.mergeActionSecrets(rule.actions, saved.get(rule.id)?.actions || [], encryptSecret),
+  }));
+}
+
 async function saveAlertSettings(next = {}) {
   const current = await getAlertSettings();
-  const saved = normalize({ ...current, ...next });
+  const merged = { ...current, ...next };
+  if (next.customRules) merged.customRules = withActionSecrets(next.customRules, current.customRules);
+  const saved = normalize(merged);
   await writeSettingsKey("ThresholdAlerts", saved);
   return saved;
+}
+
+async function getAlertState() {
+  const settings = await readSettings();
+  return settings.ThresholdAlertState || { seen: {} };
 }
 
 async function getAlertLog() {
@@ -77,13 +103,18 @@ function formatBytes(bytes = 0) {
   return `${(value / 1024 ** index).toFixed(index < 3 ? 0 : 1)} ${units[index]}`;
 }
 
-async function deliver(alerts) {
+async function deliver(alerts, { rules = [] } = {}) {
   if (!alerts.length) return;
   const WebhookManager = require("./webhook-manager");
   const manager = new WebhookManager();
   const log = await getAlertLog();
+  const rulesById = new Map(rules.map((rule) => [rule.id, rule]));
   for (const alert of alerts) {
     const entry = { ...alert, at: new Date().toISOString() };
+    const actions = alert.ruleId ? rulesById.get(alert.ruleId)?.actions || [] : [];
+    if (actions.length) {
+      entry.delivery = await Promise.all(actions.map((action) => alertActions.sendAction(action, entry, { decrypt: decryptSecret })));
+    }
     log.unshift(entry);
     sendUpdate("ThresholdAlert", { type: alert.severity === "critical" ? "Error" : "Warning", title: alert.title, message: alert.message, alertType: alert.alertType });
     await manager
@@ -184,7 +215,7 @@ async function checkFailedJobs() {
     }));
 }
 
-async function checkNewDevices(state) {
+async function queryNewDevices(state) {
   const since = state.lastDeviceCheck ? new Date(state.lastDeviceCheck) : new Date();
   const { rows } = await db.query(
     `SELECT "DeviceId" AS device_id, MAX("DeviceName") AS device, MAX("Client") AS client, MAX("UserName") AS user_name, MIN("ActivityDateInserted") AS first_seen
@@ -194,6 +225,11 @@ async function checkNewDevices(state) {
      HAVING MIN("ActivityDateInserted") > $1`,
     [since]
   );
+  return rows;
+}
+
+async function checkNewDevices(state) {
+  const rows = await queryNewDevices(state);
   return rows.map((row) => ({
     key: `device:${row.device_id}`,
     once: true,
@@ -204,16 +240,66 @@ async function checkNewDevices(state) {
   }));
 }
 
-async function checkCustomRules(rules) {
+// Event inputs for rule triggers. The first run only records what exists, so installing or
+// enabling a rule never fires for users, items or server state that were already there.
+async function collectEvents(needs, state) {
+  const API = require("./api-loader");
+  const events = {};
+  if (needs.has("users")) {
+    const users = await API.getUsers(true).catch(() => null);
+    if (Array.isArray(users)) {
+      const known = new Set(state.knownUserIds || []);
+      if (state.knownUserIds) events.newUsers = users.filter((user) => !known.has(user.Id)).map((user) => user.Name || user.Id);
+      state.knownUserIds = users.map((user) => user.Id);
+    }
+  }
+  if (needs.has("server")) {
+    let up = true;
+    let error = "";
+    try {
+      const info = await API.systemInfo();
+      if (!info) up = false;
+    } catch (requestError) {
+      up = false;
+      error = requestError?.response ? `HTTP ${requestError.response.status}` : requestError?.code || "no response";
+    }
+    if (typeof state.serverUp === "boolean") {
+      events.serverWentDown = state.serverUp && !up;
+      events.serverCameUp = !state.serverUp && up;
+      events.serverError = error;
+    }
+    state.serverUp = up;
+  }
+  if (needs.has("items")) {
+    const since = state.lastItemCheck;
+    state.lastItemCheck = new Date().toISOString();
+    if (since) {
+      const { rows } = await db.query(
+        `SELECT count(*) OVER ()::int AS total, "Name" FROM jf_library_items
+          WHERE archived = false AND "DateCreated" > $1 ORDER BY "DateCreated" DESC LIMIT 5`,
+        [since]
+      );
+      events.newItems = { count: rows[0]?.total || 0, names: rows.map((row) => row.Name).filter(Boolean) };
+    }
+  }
+  if (needs.has("devices")) {
+    const rows = await queryNewDevices(state).catch(() => []);
+    events.newDevices = rows.map((row) => [row.user_name, row.device || row.client].filter(Boolean).join(" on ") || "unknown device");
+  }
+  return events;
+}
+
+async function checkCustomRules(rules, state) {
   const needs = alertRules.neededInputs(rules.customRules);
   if (!needs.size) return [];
   const API = require("./api-loader");
-  const [sessions, disks, downloads] = await Promise.all([
+  const [sessions, disks, downloads, events] = await Promise.all([
     needs.has("sessions") ? API.getSessions().catch(() => undefined) : undefined,
     needs.has("disks") ? fetchDisks().catch(() => undefined) : undefined,
     needs.has("downloads") ? getIntegrationData().then((data) => data.downloads?.items).catch(() => undefined) : undefined,
+    collectEvents(needs, state).catch(() => ({})),
   ]);
-  return alertRules.evaluateRules(rules.customRules, alertRules.collectMetrics({ sessions, disks, downloads }));
+  return alertRules.evaluateRules(rules.customRules, alertRules.collectMetrics({ sessions, disks, downloads }), new Date(), events);
 }
 
 // ---- runner -------------------------------------------------------------
@@ -234,19 +320,25 @@ async function runChecks({ force = false } = {}) {
       rules.lowDisk ? checkLowDisk(rules).catch(() => []) : [],
       rules.failedJobs ? checkFailedJobs().catch(() => []) : [],
       rules.newDevices ? checkNewDevices(state).catch(() => []) : [],
-      rules.customRules.length ? checkCustomRules(rules).catch(() => []) : [],
+      rules.customRules.length ? checkCustomRules(rules, state).catch(() => []) : [],
     ]);
     const found = results.flat();
     const now = Date.now();
     const activeKeys = new Set(found.map((alert) => alert.key));
+    state.ruleLastFired = state.ruleLastFired || {};
     const toSend = found.filter((alert) => {
+      // Custom rules follow their own cooldown, whether the condition flaps or persists.
+      if (alert.ruleId) return alertRules.cooledDown(alert, state.ruleLastFired[alert.ruleId], now);
       const last = state.seen[alert.key];
       if (!last) return true;
       return !alert.once && now - last > REPEAT_AFTER_MS;
     });
     toSend.forEach((alert) => {
-      state.seen[alert.key] = now;
+      if (alert.ruleId) state.ruleLastFired[alert.ruleId] = now;
+      else state.seen[alert.key] = now;
     });
+    const ruleIds = new Set(rules.customRules.map((rule) => rule.id));
+    for (const id of Object.keys(state.ruleLastFired)) if (!ruleIds.has(id)) delete state.ruleLastFired[id];
     // Forget cleared conditions (so they alert again if they come back), and old one-off keys.
     for (const [key, at] of Object.entries(state.seen)) {
       const oneOff = key.startsWith("job:") || key.startsWith("device:");
@@ -255,7 +347,11 @@ async function runChecks({ force = false } = {}) {
     state.lastDeviceCheck = startedAt;
     state.lastRunAt = startedAt;
     await writeSettingsKey("ThresholdAlertState", state);
-    await deliver(toSend.map(({ key, once, ...alert }) => alert));
+    await deliver(
+      // eslint-disable-next-line no-unused-vars -- strip internal fields before logging
+      toSend.map(({ key, once, cooldownMs, ...alert }) => alert),
+      { rules: rules.customRules }
+    );
     return { checked: found.length, sent: toSend.length };
   } finally {
     running = false;
@@ -266,6 +362,28 @@ async function sendTestAlert() {
   await deliver([
     { alertType: "test", severity: "info", title: "Test alert", message: "Threshold alerts are working. You'll get messages like this for stuck downloads, low disk space, failed jobs and new devices." },
   ]);
+}
+
+// Sends a test through one rule's actions. The rule may be unsaved; blank action fields reuse
+// the saved secrets for the same rule and action ids. Returns one result per action.
+async function sendRuleTest(draft = {}) {
+  const current = await getAlertSettings();
+  const [rule] = withActionSecrets([draft], current.customRules);
+  const alert = {
+    ruleId: rule.id,
+    trigger: rule.trigger,
+    alertType: "test",
+    severity: rule.severity,
+    title: `Test: ${rule.name || "alert rule"}`,
+    message: `This is a test of the rule "${alertRules.describe(rule)}".`,
+    at: new Date().toISOString(),
+  };
+  const results = rule.actions.length ? await Promise.all(rule.actions.map((action) => alertActions.sendAction(action, alert, { decrypt: decryptSecret }))) : [];
+  const log = await getAlertLog();
+  log.unshift({ ...alert, delivery: results });
+  await writeSettingsKey("ThresholdAlertLog", log.slice(0, 60));
+  sendUpdate("ThresholdAlert", { type: "Warning", title: alert.title, message: alert.message, alertType: "test" });
+  return results;
 }
 
 function start() {
@@ -279,4 +397,4 @@ function stop() {
   timer = null;
 }
 
-module.exports = { start, stop, runChecks, sendTestAlert, getAlertSettings, saveAlertSettings, getAlertLog };
+module.exports = { start, stop, runChecks, sendTestAlert, sendRuleTest, getAlertSettings, saveAlertSettings, getAlertLog, getAlertState, maskSettings };
