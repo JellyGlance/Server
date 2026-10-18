@@ -93,3 +93,65 @@ test("neededInputs only asks for what enabled rules use", () => {
   ]);
   assert.deepEqual([...needs].sort(), ["disks", "sessions"]);
 });
+
+test("event triggers normalise with cooldowns and keep legacy rules on a daily repeat", () => {
+  const [legacy, eventRule, bad] = rules.normalizeRules([
+    { id: "old", metric: "transcodes", op: "gt", value: 2 },
+    { id: "new", trigger: "new_items", value: 3, cooldownMinutes: "30" },
+    { id: "bad", trigger: "nope", cooldownMinutes: 999999 },
+  ]);
+  assert.equal(legacy.trigger, "metric");
+  assert.equal(legacy.cooldownMinutes, 1440);
+  assert.equal(eventRule.trigger, "new_items");
+  assert.equal(eventRule.cooldownMinutes, 30);
+  assert.equal(bad.trigger, "metric");
+  assert.equal(bad.cooldownMinutes, 10080);
+  assert.deepEqual(legacy.actions, []);
+});
+
+test("event rules fire only when their event happened", () => {
+  const list = [
+    { id: "u", trigger: "new_user", severity: "info" },
+    { id: "d", trigger: "server_down", severity: "critical" },
+    { id: "up", trigger: "server_up" },
+    { id: "i", trigger: "new_items", value: 3 },
+    { id: "dev", trigger: "new_device" },
+  ];
+  assert.deepEqual(rules.evaluateRules(list, {}, at(12), {}), []);
+  const alerts = rules.evaluateRules(list, {}, at(12), {
+    newUsers: ["alice", "bob"],
+    serverWentDown: true,
+    serverError: "ECONNREFUSED",
+    newItems: { count: 4, names: ["Dune", "Alien"] },
+    newDevices: ["alice on Roku"],
+  });
+  assert.deepEqual(alerts.map((alert) => alert.ruleId), ["u", "d", "i", "dev"]);
+  assert.match(alerts[0].message, /alice, bob/);
+  assert.match(alerts[1].message, /ECONNREFUSED/);
+  assert.equal(alerts[1].severity, "critical");
+  assert.match(alerts[2].message, /4 new library items: Dune, Alien/);
+  assert.equal(rules.evaluateRules([{ id: "i", trigger: "new_items", value: 5 }], {}, at(12), { newItems: { count: 4 } }).length, 0);
+  assert.equal(rules.evaluateRules([{ id: "up", trigger: "server_up" }], {}, at(12), { serverCameUp: true }).length, 1);
+});
+
+test("event rules respect enable and time windows", () => {
+  const events = { newUsers: ["carol"] };
+  assert.equal(rules.evaluateRules([{ trigger: "new_user", enabled: false }], {}, at(12), events).length, 0);
+  assert.equal(rules.evaluateRules([{ trigger: "new_user", from: 1, to: 5 }], {}, at(12), events).length, 0);
+  assert.equal(rules.evaluateRules([{ trigger: "new_user", from: 1, to: 5 }], {}, at(2), events).length, 1);
+});
+
+test("cooldown blocks a rule until it has elapsed", () => {
+  const [alert] = rules.evaluateRules([{ id: "t", metric: "transcodes", op: "gt", value: 1, cooldownMinutes: 30 }], { transcodes: 3 }, at(12));
+  assert.equal(alert.cooldownMs, 30 * 60000);
+  const now = Date.now();
+  assert.equal(rules.cooledDown(alert, undefined, now), true);
+  assert.equal(rules.cooledDown(alert, now - 10 * 60000, now), false);
+  assert.equal(rules.cooledDown(alert, now - 31 * 60000, now), true);
+  assert.equal(rules.cooledDown({ cooldownMs: 0 }, now, now), true);
+});
+
+test("neededInputs covers event triggers", () => {
+  const needs = rules.neededInputs([{ trigger: "server_down" }, { trigger: "new_user" }, { trigger: "new_items" }, { metric: "transcodes" }, { trigger: "new_device", enabled: false }]);
+  assert.deepEqual([...needs].sort(), ["items", "server", "sessions", "users"]);
+});

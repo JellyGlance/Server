@@ -108,31 +108,31 @@ Connect these under **Settings > Integrations**. See the [integration directory]
 
 <table>
   <tr>
-    <td align="center" width="20%">
+    <td align="center" width="25%">
       <img src=".github/assets/icons/selfhst/jellyfin.svg" alt="Jellyfin" width="42"><br>
       <strong>Jellyfin</strong>
     </td>
-    <td align="center" width="20%">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/wizarr.png" alt="Wizarr" width="42"><br>
-      <strong>Wizarr</strong>
+    <td align="center" width="25%">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/emby.png" alt="Emby" width="42"><br>
+      <strong>Emby</strong>
     </td>
-    <td align="center" width="20%">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/tdarr.png" alt="Tdarr" width="42"><br>
-      <strong>Tdarr</strong>
+    <td align="center" width="25%">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/jellyseerr.png" alt="Jellyseerr" width="42"><br>
+      <strong>Jellyseerr</strong>
     </td>
-    <td align="center" width="20%">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/maintainerr.png" alt="Maintainerr" width="42"><br>
-      <strong>Maintainerr</strong>
-    </td>
-    <td align="center" width="20%">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/sickchill.png" alt="SickChill" width="42"><br>
-      <strong>SickChill</strong>
+    <td align="center" width="25%">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/overseerr.png" alt="Overseerr" width="42"><br>
+      <strong>Overseerr</strong>
     </td>
   </tr>
   <tr>
     <td align="center">
       <img src=".github/assets/icons/selfhst/sonarr.svg" alt="Sonarr" width="42"><br>
       <strong>Sonarr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/sickchill.png" alt="SickChill" width="42"><br>
+      <strong>SickChill</strong>
     </td>
     <td align="center">
       <img src=".github/assets/icons/selfhst/radarr.svg" alt="Radarr" width="42"><br>
@@ -142,24 +142,26 @@ Connect these under **Settings > Integrations**. See the [integration directory]
       <img src=".github/assets/icons/selfhst/lidarr.svg" alt="Lidarr" width="42"><br>
       <strong>Lidarr</strong>
     </td>
+  </tr>
+  <tr>
     <td align="center">
-      <img src=".github/assets/icons/selfhst/bazarr.svg" alt="Bazarr" width="42"><br>
-      <strong>Bazarr</strong>
+      <img src=".github/assets/icons/selfhst/readarr.svg" alt="Readarr" width="42"><br>
+      <strong>Readarr</strong>
     </td>
     <td align="center">
       <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/prowlarr.png" alt="Prowlarr" width="42"><br>
       <strong>Prowlarr</strong>
     </td>
+    <td align="center">
+      <img src=".github/assets/icons/selfhst/bazarr.svg" alt="Bazarr" width="42"><br>
+      <strong>Bazarr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/tdarr.png" alt="Tdarr" width="42"><br>
+      <strong>Tdarr</strong>
+    </td>
   </tr>
   <tr>
-    <td align="center">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/jellyseerr.png" alt="Jellyseerr" width="42"><br>
-      <strong>Jellyseerr</strong>
-    </td>
-    <td align="center">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/overseerr.png" alt="Overseerr" width="42"><br>
-      <strong>Overseerr</strong>
-    </td>
     <td align="center">
       <img src=".github/assets/icons/selfhst/qbittorrent.svg" alt="qBittorrent" width="42"><br>
       <strong>qBittorrent</strong>
@@ -172,6 +174,10 @@ Connect these under **Settings > Integrations**. See the [integration directory]
       <img src=".github/assets/icons/selfhst/deluge.svg" alt="Deluge" width="42"><br>
       <strong>Deluge</strong>
     </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/rutorrent.png" alt="rTorrent" width="42"><br>
+      <strong>rTorrent</strong>
+    </td>
   </tr>
   <tr>
     <td align="center">
@@ -183,12 +189,66 @@ Connect these under **Settings > Integrations**. See the [integration directory]
       <strong>NZBGet</strong>
     </td>
     <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/unpackerr.png" alt="Unpackerr" width="42"><br>
+      <strong>Unpackerr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/autobrr.png" alt="autobrr" width="42"><br>
+      <strong>autobrr</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/wizarr.png" alt="Wizarr" width="42"><br>
+      <strong>Wizarr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/maintainerr.png" alt="Maintainerr" width="42"><br>
+      <strong>Maintainerr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/kometa.png" alt="Kometa" width="42"><br>
+      <strong>Kometa</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/recyclarr.png" alt="Recyclarr" width="42"><br>
+      <strong>Recyclarr</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/notifiarr.png" alt="Notifiarr" width="42"><br>
+      <strong>Notifiarr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/audiobookshelf.png" alt="Audiobookshelf" width="42"><br>
+      <strong>Audiobookshelf</strong>
+    </td>
+    <td align="center">
       <img src=".github/assets/icons/selfhst/discord.svg" alt="Discord" width="42"><br>
       <strong>Discord</strong>
     </td>
     <td align="center">
       <img src=".github/assets/icons/selfhst/gotify.svg" alt="Gotify" width="42"><br>
       <strong>Gotify</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/ntfy.png" alt="ntfy" width="42"><br>
+      <strong>ntfy</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/telegram.png" alt="Telegram" width="42"><br>
+      <strong>Telegram</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/pushover.png" alt="Pushover" width="42"><br>
+      <strong>Pushover</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/webhook.png" alt="Webhook" width="42"><br>
+      <strong>Webhook</strong>
     </td>
   </tr>
 </table>

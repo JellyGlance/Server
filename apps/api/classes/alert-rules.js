@@ -1,5 +1,7 @@
-// Custom alert rules: "if <metric> <op> <value> [between hours] then alert".
-// Pure helpers only; threshold-alerts.js gathers the live metrics and delivers.
+// Custom alert rules: "when <trigger> [<op> <value>] [between hours] then alert, at most once per cooldown".
+// Triggers are either live metrics (streams, transcodes...) or events (new user, server down/up,
+// new library items). Pure helpers only; threshold-alerts.js gathers inputs and delivers.
+const { normalizeActions } = require("./alert-actions");
 
 const METRICS = {
   active_streams: { label: "Active streams", unit: "streams", needs: "sessions" },
@@ -9,6 +11,20 @@ const METRICS = {
   disk_free_percent: { label: "Lowest disk free space", unit: "%", needs: "disks" },
   download_queue: { label: "Downloads in queue", unit: "items", needs: "downloads" },
 };
+
+// Event triggers. `needs` names the input threshold-alerts.js must gather; `threshold` means the
+// rule's value is a minimum count. Add new triggers here and in collectEvents/eventAlert.
+const EVENTS = {
+  new_user: { label: "New user added", needs: "users", threshold: false },
+  server_down: { label: "Media server goes down", needs: "server", threshold: false },
+  server_up: { label: "Media server comes back up", needs: "server", threshold: false },
+  new_items: { label: "New library items", unit: "items", needs: "items", threshold: true },
+  new_device: { label: "Playback on a new device", needs: "devices", threshold: false },
+};
+
+const DEFAULT_COOLDOWN_MINUTES = 60;
+// Rules saved before cooldowns existed repeated once a day; keep that for them.
+const LEGACY_COOLDOWN_MINUTES = 1440;
 
 const OPERATORS = {
   gt: { label: "above", test: (a, b) => a > b },
@@ -26,7 +42,14 @@ function clampHour(value) {
   return Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : null;
 }
 
+function triggerOf(rule) {
+  if (rule.trigger && EVENTS[rule.trigger]) return rule.trigger;
+  return "metric";
+}
+
 function normalizeRule(rule = {}, index = 0) {
+  const trigger = triggerOf(rule);
+  const cooldown = Number.parseInt(rule.cooldownMinutes, 10);
   const metric = METRICS[rule.metric] ? rule.metric : "active_streams";
   const op = OPERATORS[rule.op] ? rule.op : "gt";
   const value = Number(rule.value);
@@ -43,6 +66,9 @@ function normalizeRule(rule = {}, index = 0) {
     from: hasWindow ? from : null,
     to: hasWindow ? to : null,
     severity: SEVERITIES.has(rule.severity) ? rule.severity : "warning",
+    trigger,
+    cooldownMinutes: Number.isInteger(cooldown) ? Math.max(0, Math.min(10080, cooldown)) : LEGACY_COOLDOWN_MINUTES,
+    actions: normalizeActions(rule.actions),
   };
 }
 
@@ -97,40 +123,96 @@ function collectMetrics({ sessions, disks, downloads } = {}) {
 }
 
 function describe(rule) {
-  const metric = METRICS[rule.metric];
   const window = rule.from !== null ? ` between ${String(rule.from).padStart(2, "0")}:00 and ${String(rule.to).padStart(2, "0")}:00` : "";
+  if (rule.trigger && rule.trigger !== "metric") {
+    const event = EVENTS[rule.trigger];
+    return `${event.label}${event.threshold ? ` (at least ${Math.max(1, rule.value)} ${event.unit})` : ""}${window}`;
+  }
+  const metric = METRICS[rule.metric];
   return `${metric.label} ${OPERATORS[rule.op].label} ${rule.value} ${metric.unit}${window}`;
 }
 
-function evaluateRules(rules, metrics, now = new Date()) {
+function listNames(names = [], max = 5) {
+  const shown = names.slice(0, max).join(", ");
+  return names.length > max ? `${shown} and ${names.length - max} more` : shown;
+}
+
+// One alert for an event rule, or null when the event did not happen this round.
+function eventAlert(rule, events = {}) {
+  switch (rule.trigger) {
+    case "new_user":
+      return events.newUsers?.length ? `New ${events.newUsers.length === 1 ? "user" : "users"}: ${listNames(events.newUsers)}.` : null;
+    case "server_down":
+      return events.serverWentDown ? `The media server stopped responding${events.serverError ? ` (${events.serverError})` : ""}.` : null;
+    case "server_up":
+      return events.serverCameUp ? "The media server is responding again." : null;
+    case "new_items": {
+      const count = Number(events.newItems?.count || 0);
+      if (count < Math.max(1, rule.value)) return null;
+      const sample = events.newItems?.names?.length ? `: ${listNames(events.newItems.names)}` : "";
+      return `${count} new library ${count === 1 ? "item" : "items"}${sample}.`;
+    }
+    case "new_device":
+      return events.newDevices?.length ? `Playback on a new device: ${listNames(events.newDevices)}.` : null;
+    default:
+      return null;
+  }
+}
+
+function ruleAlert(rule, title, message) {
+  return {
+    key: `rule:${rule.id}`,
+    ruleId: rule.id,
+    trigger: rule.trigger,
+    cooldownMs: rule.cooldownMinutes * 60000,
+    alertType: "custom_rule",
+    severity: rule.severity,
+    title,
+    message,
+  };
+}
+
+function evaluateRules(rules, metrics, now = new Date(), events = {}) {
   const alerts = [];
   for (const rule of normalizeRules(rules)) {
     if (!rule.enabled || !inWindow(rule, now)) continue;
+    if (rule.trigger !== "metric") {
+      const message = eventAlert(rule, events);
+      if (message) alerts.push(ruleAlert(rule, rule.name || EVENTS[rule.trigger].label, message));
+      continue;
+    }
     const actual = metrics[rule.metric];
     if (typeof actual !== "number" || !OPERATORS[rule.op].test(actual, rule.value)) continue;
     const metric = METRICS[rule.metric];
     const who = metrics[`${rule.metric}_who`];
-    alerts.push({
-      key: `rule:${rule.id}`,
-      alertType: "custom_rule",
-      severity: rule.severity,
-      title: rule.name || metric.label,
-      message: `${metric.label} is ${actual} ${metric.unit}${who ? ` (${who})` : ""}. Rule: ${describe(rule)}.`,
-    });
+    alerts.push(ruleAlert(rule, rule.name || metric.label, `${metric.label} is ${actual} ${metric.unit}${who ? ` (${who})` : ""}. Rule: ${describe(rule)}.`));
   }
   return alerts;
 }
 
 function neededInputs(rules) {
   const needs = new Set();
-  for (const rule of normalizeRules(rules)) if (rule.enabled) needs.add(METRICS[rule.metric].needs);
+  for (const rule of normalizeRules(rules)) {
+    if (!rule.enabled) continue;
+    needs.add(rule.trigger === "metric" ? METRICS[rule.metric].needs : EVENTS[rule.trigger].needs);
+  }
   return needs;
+}
+
+// Whether a rule may fire again, given when it last fired.
+function cooledDown(alert, lastFiredAt, now = Date.now()) {
+  if (!lastFiredAt) return true;
+  return now - lastFiredAt >= (alert.cooldownMs ?? LEGACY_COOLDOWN_MINUTES * 60000);
 }
 
 const CATALOG = {
   metrics: Object.entries(METRICS).map(([id, metric]) => ({ id, label: metric.label, unit: metric.unit })),
   operators: Object.entries(OPERATORS).map(([id, op]) => ({ id, label: op.label })),
+  events: Object.entries(EVENTS).map(([id, event]) => ({ id, label: event.label, unit: event.unit || "", threshold: event.threshold })),
+  actions: require("./alert-actions").ACTION_CATALOG,
+  maxActions: require("./alert-actions").MAX_ACTIONS,
+  defaultCooldownMinutes: DEFAULT_COOLDOWN_MINUTES,
   maxRules: MAX_RULES,
 };
 
-module.exports = { CATALOG, normalizeRules, collectMetrics, evaluateRules, neededInputs, inWindow, describe };
+module.exports = { CATALOG, EVENTS, normalizeRules, collectMetrics, evaluateRules, neededInputs, inWindow, describe, cooledDown };
