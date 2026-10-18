@@ -4926,8 +4926,7 @@
   transform: translateY(-1px);
 }
 
-.jellyfin-device-icon,
-.jellyfin-plugin-icon {
+.jellyfin-device-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4957,8 +4956,7 @@
   min-width: 0;
 }
 
-.jellyfin-device-row span,
-.jellyfin-plugin-top span {
+.jellyfin-device-row span {
   color: var(--primary-light-color);
   font-size: 11px;
   font-weight: 760;
@@ -4966,8 +4964,7 @@
   text-transform: uppercase;
 }
 
-.jellyfin-device-row strong,
-.jellyfin-plugin-body > strong {
+.jellyfin-device-row strong {
   display: block;
   margin-top: 2px;
   overflow: hidden;
@@ -4979,8 +4976,7 @@
   white-space: nowrap;
 }
 
-.jellyfin-device-row p,
-.jellyfin-plugin-card p {
+.jellyfin-device-row p {
   display: -webkit-box;
   margin: 4px 0 0;
   overflow: hidden;
@@ -5011,107 +5007,538 @@
   font-size: 13px;
 }
 
-.jellyfin-plugin-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: 10px;
+.jellyfin-admin-settings {
+  /* status tokens (page scoped; theme independent on purpose so a
+     status never changes meaning when the user picks another preset) */
+  --jg-plugin-ok: #34d399;
+  --jg-plugin-ok-rgb: 52, 211, 153;
+  --jg-plugin-warn: #fbbf24;
+  --jg-plugin-warn-rgb: 251, 191, 36;
+  --jg-plugin-danger: #f87171;
+  --jg-plugin-danger-rgb: 248, 113, 113;
+  --jg-plugin-unsup: #fb923c;
+  --jg-plugin-unsup-rgb: 251, 146, 60;
+  --jg-plugin-super: #a5b4fc;
+  --jg-plugin-super-rgb: 165, 180, 252;
+  --jg-plugin-muted: #94a3b8;
+  --jg-plugin-muted-rgb: 148, 163, 184;
+  --jg-plugin-placeholder: #7f8da3;
+  --jg-plugin-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --jg-plugin-focus: 0 0 0 2px var(--background-color), 0 0 0 4px var(--primary-light-color);
 }
 
-.jellyfin-plugin-card {
+/* ---------- section heading summary ---------- */
+.jellyfin-plugin-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 6px;
+  color: #9aa7bb;
+  font-size: 13px;
+  font-weight: 560;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.jellyfin-plugin-summary b {
+  color: #f8fafc;
+  font-weight: 760;
+}
+.jellyfin-plugin-summary .is-warn b {
+  color: var(--jg-plugin-warn);
+}
+
+/* ---------- toolbar ---------- */
+.jellyfin-plugin-toolbar {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  gap: 10px;
-  height: 150px;
-  min-height: 150px;
-  padding: 12px;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  grid-template-areas: "search sort" "chips chips";
+  gap: 12px;
+  align-items: end;
+}
+.jellyfin-plugin-search {
+  grid-area: search;
+}
+.jellyfin-plugin-sort {
+  grid-area: sort;
+}
+.jellyfin-plugin-filters {
+  grid-area: chips;
+}
+
+.jellyfin-plugin-search,
+.jellyfin-plugin-sort {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: #d5deeb;
+  font-size: 12px;
+  font-weight: 760;
+}
+.jellyfin-plugin-search > div {
+  position: relative;
+}
+.jellyfin-plugin-search svg {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: #7f8da3;
+  pointer-events: none;
+}
+.jellyfin-plugin-search input,
+.jellyfin-plugin-sort select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(5, 8, 13, 0.72);
+  color: #f8fafc;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color-scheme: dark;
+}
+.jellyfin-plugin-search input {
+  padding-left: 34px;
+}
+.jellyfin-plugin-search input::placeholder {
+  color: #7f8da3;
+  font-weight: 600;
+}
+.jellyfin-plugin-search input:focus-visible,
+.jellyfin-plugin-sort select:focus-visible {
+  outline: none;
+  border-color: rgba(var(--primary-light-rgb), 0.6);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.28);
+}
+
+.jellyfin-plugin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+}
+.jellyfin-plugin-filters button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 8px 0 12px;
   border: 1px solid var(--surface-border-color);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.045);
+  color: #cbd5e1;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 720;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease;
+}
+.jellyfin-plugin-filters button .count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #d5deeb;
+  font-family: var(--jg-plugin-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.jellyfin-plugin-filters button:hover {
+  border-color: rgba(var(--primary-light-rgb), 0.34);
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+.jellyfin-plugin-filters button[aria-pressed="true"] {
+  border-color: rgba(var(--primary-light-rgb), 0.55);
+  background: rgba(var(--primary-rgb), 0.22);
+  color: #fff;
+}
+.jellyfin-plugin-filters button[aria-pressed="true"] .count {
+  background: var(--primary-color);
+  color: #fff;
+}
+.jellyfin-plugin-filters button.is-zero:not([aria-pressed="true"]) {
+  color: #7f8da3;
+}
+.jellyfin-plugin-filters button.is-zero:not([aria-pressed="true"]) .count {
+  color: #7f8da3;
+  background: rgba(255, 255, 255, 0.04);
+}
+.jellyfin-plugin-filters button:focus-visible,
+.jellyfin-plugin-empty .btn:focus-visible {
+  outline: none;
+  box-shadow: var(--jg-plugin-focus);
 }
 
+.jellyfin-plugin-results {
+  margin: -2px 0 0;
+  color: #7f8da3;
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: lining-nums;
+}
+
+/* ---------- grid ---------- */
+.jellyfin-plugin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 12px;
+}
+
+/* ---------- card ---------- */
+.jellyfin-plugin-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  min-width: 0;
+  min-height: 176px;
+  padding: 14px;
+  border: 1px solid var(--surface-border-color);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(var(--primary-rgb), 0.07), rgba(255, 255, 255, 0.02)), rgba(255, 255, 255, 0.035);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+.jellyfin-plugin-card:hover,
+.jellyfin-plugin-card:focus-within {
+  border-color: rgba(var(--primary-light-rgb), 0.36);
+  background:
+    linear-gradient(145deg, rgba(var(--primary-rgb), 0.12), rgba(255, 255, 255, 0.03)), rgba(255, 255, 255, 0.045);
+  transform: translateY(-1px);
+}
+.jellyfin-plugin-card.is-disabled {
+  opacity: 0.72;
+}
+.jellyfin-plugin-card.is-disabled:hover {
+  opacity: 1;
+}
+.jellyfin-plugin-card.is-issue {
+  border-color: rgba(var(--jg-plugin-danger-rgb), 0.38);
+}
+.jellyfin-plugin-card.is-restart,
+.jellyfin-plugin-card.has-duplicates {
+  border-color: rgba(var(--jg-plugin-warn-rgb), 0.34);
+}
+
+/* icon tile */
 .jellyfin-plugin-art {
   position: relative;
   display: grid;
-  width: 88px;
-  height: 58px;
   place-items: center;
-  align-self: start;
+  width: 48px;
+  height: 48px;
   overflow: hidden;
-  border: 1px solid rgba(var(--primary-light-rgb), 0.18);
-  border-radius: 8px;
-  background:
-    linear-gradient(145deg, rgba(var(--primary-rgb), 0.18), rgba(255, 255, 255, 0.04)),
-    rgba(7, 10, 16, 0.76);
-  color: var(--primary-light-color);
+  border: 1px solid rgba(var(--primary-light-rgb), 0.22);
+  border-radius: 10px;
+  background: #1e1e1e;
 }
-
-.jellyfin-plugin-art.is-empty {
-  border-color: transparent;
-  background: transparent;
-}
-
 .jellyfin-plugin-art img {
-  position: relative;
-  z-index: 1;
-  width: auto;
-  height: auto;
-  max-width: calc(100% - 10px);
-  max-height: calc(100% - 10px);
-  border-radius: 5px;
-  object-fit: contain;
-  image-rendering: auto;
-}
-
-.jellyfin-plugin-body {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  align-content: stretch;
-  gap: 8px;
+  width: 100%;
   height: 100%;
-  min-width: 0;
+  object-fit: cover;
+  object-position: center;
 }
-
-.jellyfin-plugin-card.is-enabled {
-  border-color: rgba(52, 211, 153, 0.26);
-}
-
-.jellyfin-plugin-card.is-disabled {
-  opacity: 0.68;
-}
-
-.jellyfin-plugin-top {
-  display: flex;
-  min-width: 0;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.jellyfin-plugin-icon {
-  gap: 6px;
-  flex: 0 1 auto;
-  width: fit-content;
-  max-width: 100%;
-  min-height: 30px;
-  padding: 0 9px;
-  border: 1px solid rgba(var(--primary-light-rgb), 0.18);
-  border-radius: 8px;
-  background: rgba(var(--primary-rgb), 0.12);
-}
-
-.jellyfin-plugin-icon svg {
-  flex: 0 0 auto;
+.jellyfin-plugin-art.is-fallback {
+  background: linear-gradient(160deg, rgba(var(--primary-rgb), 0.16), rgba(var(--primary-rgb), 0) 60%), #1e1e1e;
+  box-shadow: inset 0 -2px 0 var(--primary-color);
   color: var(--primary-light-color);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.jellyfin-plugin-art.is-fallback svg {
+  width: 22px;
+  height: 22px;
 }
 
-.jellyfin-plugin-top em,
-.jellyfin-plugin-card small {
+/* head: name + badges */
+.jellyfin-plugin-head {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+}
+.jellyfin-plugin-name {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 760;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.jellyfin-plugin-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* status pill system */
+.jellyfin-plugin-status {
+  --c: var(--jg-plugin-muted);
+  --c-rgb: var(--jg-plugin-muted-rgb);
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px 0 8px;
+  border: 1px solid rgba(var(--c-rgb), 0.4);
+  border-radius: 999px;
+  background: rgba(var(--c-rgb), 0.12);
+  color: var(--c);
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.jellyfin-plugin-status::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.jellyfin-plugin-status.is-active {
+  --c: var(--jg-plugin-ok);
+  --c-rgb: var(--jg-plugin-ok-rgb);
+}
+.jellyfin-plugin-status.is-restart {
+  --c: var(--jg-plugin-warn);
+  --c-rgb: var(--jg-plugin-warn-rgb);
+}
+.jellyfin-plugin-status.is-malfunctioned {
+  --c: var(--jg-plugin-danger);
+  --c-rgb: var(--jg-plugin-danger-rgb);
+}
+.jellyfin-plugin-status.is-notsupported {
+  --c: var(--jg-plugin-unsup);
+  --c-rgb: var(--jg-plugin-unsup-rgb);
+}
+.jellyfin-plugin-status.is-superceded {
+  --c: var(--jg-plugin-super);
+  --c-rgb: var(--jg-plugin-super-rgb);
+}
+.jellyfin-plugin-status.is-disabled {
+  --c: var(--jg-plugin-muted);
+  --c-rgb: var(--jg-plugin-muted-rgb);
+}
+.jellyfin-plugin-status.is-disabled::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.jellyfin-plugin-status.is-deleted {
+  --c: var(--jg-plugin-muted);
+  --c-rgb: var(--jg-plugin-muted-rgb);
+  border-style: dashed;
+}
+.jellyfin-plugin-status.is-deleted::before {
+  border-radius: 1px;
+  height: 2px;
+  width: 7px;
+}
+/* duplicate flag reuses the pill geometry */
+.jellyfin-plugin-status.is-duplicate {
+  --c: var(--jg-plugin-warn);
+  --c-rgb: var(--jg-plugin-warn-rgb);
+}
+.jellyfin-plugin-status.is-duplicate::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow:
+    inset 0 0 0 1.5px currentColor,
+    2px -2px 0 -0.5px currentColor;
+}
+
+/* description */
+.jellyfin-plugin-desc {
+  grid-column: 1 / -1;
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: #9aa7bb;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.jellyfin-plugin-desc.is-placeholder {
+  color: var(--jg-plugin-placeholder);
+  font-style: italic;
+}
+
+/* footer */
+.jellyfin-plugin-footer {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.jellyfin-plugin-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.jellyfin-plugin-version {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #d5deeb;
+  font-family: var(--jg-plugin-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.jellyfin-plugin-version.is-older {
+  border-color: rgba(var(--jg-plugin-warn-rgb), 0.3);
+  background: rgba(var(--jg-plugin-warn-rgb), 0.08);
+  color: #d6b25e;
+}
+.jellyfin-plugin-meta {
   overflow: hidden;
   color: #7f8da3;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 650;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.jellyfin-plugin-meta.is-bundled {
+  text-transform: uppercase;
+}
+.jellyfin-plugin-meta:not(.is-bundled) {
+  max-width: 55%;
+  letter-spacing: 0.01em;
+  font-weight: 650;
+}
+
+/* empty / loading */
+.jellyfin-plugin-empty {
+  grid-column: 1 / -1;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 36px 16px;
+  border: 1px dashed var(--surface-border-color);
+  border-radius: 8px;
+  color: #9aa7bb;
+  font-size: 13px;
+  text-align: center;
+}
+.jellyfin-plugin-empty svg {
+  width: 30px;
+  height: 30px;
+  color: var(--primary-light-color);
+}
+.jellyfin-plugin-empty strong {
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 760;
+}
+.jellyfin-plugin-empty p {
+  margin: 0;
+  max-width: 42ch;
+}
+.jellyfin-plugin-empty .btn {
+  margin-top: 6px;
+}
+
+.jellyfin-plugin-card.is-skeleton {
+  pointer-events: none;
+}
+.jellyfin-plugin-card.is-skeleton > * {
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jellyfin-plugin-card,
+  .jellyfin-plugin-filters button {
+    transition: none;
+  }
+  .jellyfin-plugin-card:hover,
+  .jellyfin-plugin-card:focus-within {
+    transform: none;
+  }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 720px) {
+  .jellyfin-plugin-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "search" "sort" "chips";
+  }
+  .jellyfin-plugin-sort {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+  }
+}
+@media (max-width: 560px) {
+  .jellyfin-plugin-section {
+    padding: 12px;
+  }
+  /* chips become a single swipeable row */
+  .jellyfin-plugin-filters {
+    flex-wrap: nowrap;
+    margin: 0 -12px;
+    padding: 2px 12px 4px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+  }
+  .jellyfin-plugin-filters::-webkit-scrollbar {
+    display: none;
+  }
+  .jellyfin-plugin-filters button {
+    scroll-snap-align: start;
+    min-height: 36px;
+  }
+  .jellyfin-plugin-card {
+    min-height: 0;
+  }
 }
 
 .jellyfin-admin-empty {
@@ -5139,10 +5566,6 @@
   .server-management-grid {
     grid-template-columns: 1fr;
   }
-
-  .jellyfin-plugin-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  }
 }
 
 @media (max-width: 720px) {
@@ -5163,21 +5586,8 @@
     flex-direction: column;
   }
 
-  .jellyfin-plugin-grid {
-    grid-template-columns: 1fr;
-  }
-
   .jellyfin-device-row {
     min-height: 158px;
-  }
-
-  .jellyfin-plugin-card {
-    grid-template-columns: 70px minmax(0, 1fr);
-  }
-
-  .jellyfin-plugin-art {
-    width: 70px;
-    height: 48px;
   }
 }
 

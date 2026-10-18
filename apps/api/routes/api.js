@@ -27,6 +27,7 @@ const { buildOpsDigest, buildLibraryStorage, rememberDevices, pingThirdParty } =
 const { sendConfiguredMail, validateEmail } = require("../classes/smtp-mailer");
 const { createConnectionTestHandler } = require("../classes/connection-test");
 const { getBackupDir } = require("../utils/storage-paths");
+const { buildJellyfinPluginsResponse } = require("../utils/jellyfin-plugins");
 const {
   getIntegrations,
   saveIntegrations,
@@ -3999,37 +4000,6 @@ function normalizeJellyfinDevice(device = {}) {
     dateLastActivity: device.DateLastActivity || device.LastActivityDate || null,
     capabilities: device.Capabilities || null,
   };
-}
-
-function normalizeJellyfinPlugin(plugin = {}) {
-  const status = plugin.Status || plugin.State || (plugin.Enabled === false ? "Disabled" : "Enabled");
-  const id = plugin.Id || plugin.Guid || plugin.Name;
-  return {
-    id,
-    name: plugin.Name || plugin.AssemblyFileName || "Unknown plugin",
-    version: plugin.Version || plugin.Versions?.[0]?.version || "",
-    description: plugin.Description || plugin.Overview || "",
-    category: plugin.Category || "",
-    status,
-    enabled: plugin.Enabled !== false && !String(status).toLowerCase().includes("disabled"),
-    canUninstall: plugin.CanUninstall === true,
-    configurationFileName: plugin.ConfigurationFileName || "",
-    imageUrl: plugin.imageUrl || plugin.ImageUrl || "",
-  };
-}
-
-function matchJellyfinPluginPackage(plugin, packages = []) {
-  const pluginId = String(plugin.Id || plugin.Guid || plugin.id || "").toLowerCase();
-  const pluginName = String(plugin.Name || plugin.name || "").trim().toLowerCase();
-  return packages.find((entry) => {
-    const packageId = String(entry.guid || entry.Guid || entry.id || "").toLowerCase();
-    const packageName = String(entry.name || entry.Name || "").trim().toLowerCase();
-    return (pluginId && packageId && pluginId === packageId) || (pluginName && packageName && pluginName === packageName);
-  });
-}
-
-function buildPluginImageProxyUrl(imageUrl) {
-  return imageUrl ? `/proxy/Plugins/Images/?url=${encodeURIComponent(imageUrl)}` : "";
 }
 
 async function buildServerManagementStatus() {
@@ -8067,17 +8037,8 @@ router.get("/jellyfin/plugins", async (req, res) => {
       : Array.isArray(packagesResponse.data?.Items)
         ? packagesResponse.data.Items
         : [];
-    const normalizedPlugins = plugins.map((plugin) => {
-      const packageInfo = matchJellyfinPluginPackage(plugin, packages);
-      return normalizeJellyfinPlugin({
-        ...plugin,
-        imageUrl: buildPluginImageProxyUrl(packageInfo?.imageUrl || packageInfo?.ImageUrl || plugin.ImageUrl || plugin.imageUrl),
-      });
-    });
     res.send({
-      plugins: normalizedPlugins.sort((a, b) => a.name.localeCompare(b.name)),
-      total: plugins.length,
-      enabled: normalizedPlugins.filter((plugin) => plugin.enabled).length,
+      ...buildJellyfinPluginsResponse(plugins, packages),
       syncedAt: new Date().toISOString(),
     });
   } catch (error) {

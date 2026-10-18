@@ -6,6 +6,7 @@ const configClass = require("../classes/config");
 const API = require("../classes/api-loader");
 const { getIntegrations } = require("../classes/integration-store");
 const { joinSafeHttpUrl, sendSafeError, toSafeHttpUrl, safeHttpGet} = require("../utils/security");
+const { pluginImageCandidates } = require("../utils/jellyfin-plugins");
 
 const router = express.Router();
 const SAFE_DEVICE_NAME = /^[A-Za-z0-9._-]{1,64}$/;
@@ -306,7 +307,7 @@ router.get("/Users/Images/Primary/", async (req, res) => {
 });
 
 router.get("/Plugins/Images/", async (req, res) => {
-  const { id, url: imageUrl } = req.query;
+  const { id, version, url: imageUrl } = req.query;
   const config = await new configClass().getConfig();
 
   if (config.error) {
@@ -319,12 +320,7 @@ router.get("/Plugins/Images/", async (req, res) => {
     return;
   }
 
-  const encodedId = id ? encodeURIComponent(id) : undefined;
-  const candidates = imageUrl ? [imageUrl] : [
-    `${config.JF_HOST}/Plugins/${encodedId}/Image`,
-    `${config.JF_HOST}/Plugins/${encodedId}/Images/Primary`,
-    `${config.JF_HOST}/Plugins/${encodedId}/Thumb`,
-  ];
+  const candidates = imageUrl ? [imageUrl] : pluginImageCandidates(config.JF_HOST, id, version);
 
   for (const url of candidates) {
     try {
