@@ -5,6 +5,7 @@ const configClass = require('./config');
 const { addWebhookDelivery, getSettings, mergeSettings } = require('./admin-history');
 const { enrichDiscordPayload, enrichGotifyPayload, postDiscordWebhook } = require('./discord-webhook-media');
 const { hostnameEquals, sanitizeForLog } = require('../utils/security');
+const { createPlaybackEventGate } = require('../utils/playback-notify');
 
 function parseClockMinutes(value, fallback) {
     const match = String(value || fallback).match(/^(\d{1,2}):(\d{2})$/);
@@ -465,33 +466,10 @@ class WebhookManager {
     }
 
     shouldEmitPlaybackWebhook(eventType, data = {}) {
-        if (eventType !== "playback_started" && eventType !== "playback_ended") {
-            return true;
+        if (!this.playbackEventGate) {
+            this.playbackEventGate = createPlaybackEventGate();
         }
-
-        if (!this.recentPlaybackEvents) {
-            this.recentPlaybackEvents = new Map();
-        }
-
-        const key = String(data.userData?.userId || data.UserId || data.userData?.username || data.UserName || "unknown");
-        const now = Date.now();
-        const previous = this.recentPlaybackEvents.get(key) || {};
-        const itemId = String(data.mediaInfo?.episodeId || data.mediaInfo?.itemId || data.ItemId || "");
-        const sameItem = Boolean(previous.itemId && itemId && previous.itemId === itemId);
-
-        if (eventType === "playback_started") {
-            if (data.sessionInfo?.isPaused || data.IsPaused) return false;
-            if (sameItem && previous.lastStart && now - previous.lastStart < 4 * 60 * 60 * 1000) return false;
-            if (previous.lastStart && now - previous.lastStart < 45000) return false;
-            if (previous.state === "playing" && sameItem) return false;
-            this.recentPlaybackEvents.set(key, { state: "playing", itemId, lastEventAt: now, lastStart: now });
-            return true;
-        }
-
-        if (previous.state !== "playing") return false;
-        if (previous.lastStart && now - previous.lastStart < 20000) return false;
-        this.recentPlaybackEvents.set(key, { state: "idle", itemId, lastEventAt: now, lastEnd: now, lastStart: previous.lastStart });
-        return true;
+        return this.playbackEventGate.shouldEmit(eventType, data);
     }
 
     shouldCoalesceWebhook(webhook, eventType) {

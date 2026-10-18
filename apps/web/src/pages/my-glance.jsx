@@ -164,9 +164,10 @@ function Rail({ title, subtitle, items = [], empty, actions = [], onAction }) {
   );
 }
 
-function LiveNow({ session }) {
+function LiveNow({ sessions }) {
   const { t } = useTranslation();
-  if (!session?.NowPlayingItem) {
+  const playing = (sessions || []).filter((session) => session?.NowPlayingItem);
+  if (!playing.length) {
     return (
       <section className="my-glance-live is-idle">
         <p>{t("FEATURES.MY_GLANCE.NOW_PLAYING")}</p>
@@ -176,6 +177,19 @@ function LiveNow({ session }) {
     );
   }
 
+  if (playing.length === 1) return <LiveSession session={playing[0]} />;
+
+  return (
+    <div className="my-glance-live-list">
+      {playing.map((session) => (
+        <LiveSession key={session.Id} session={session} />
+      ))}
+    </div>
+  );
+}
+
+function LiveSession({ session }) {
+  const { t } = useTranslation();
   const nowPlaying = session.NowPlayingItem;
   const playState = session.PlayState || {};
   const title = nowPlaying.Type === "Episode" && nowPlaying.SeriesName ? nowPlaying.SeriesName : nowPlaying.Name;
@@ -356,16 +370,12 @@ export default function MyGlance() {
     }
   }
 
-  const liveSession = useMemo(
-    () =>
-      (Array.isArray(liveSessions) ? liveSessions : []).find(
-        (session) => session?.NowPlayingItem && String(session.UserId || "") === String(jellyfinUserId || "")
-      ) ||
-      (Array.isArray(liveSessions) ? liveSessions : []).find(
-        (session) => session?.NowPlayingItem && String(session.UserName || "").toLowerCase() === String(displayName).toLowerCase()
-      ),
-    [displayName, jellyfinUserId, liveSessions]
-  );
+  const myLiveSessions = useMemo(() => {
+    const playing = (Array.isArray(liveSessions) ? liveSessions : []).filter((session) => session?.NowPlayingItem);
+    const byId = playing.filter((session) => String(session.UserId || "") === String(jellyfinUserId || ""));
+    if (byId.length) return byId;
+    return playing.filter((session) => String(session.UserName || "").toLowerCase() === String(displayName).toLowerCase());
+  }, [displayName, jellyfinUserId, liveSessions]);
 
   const userKeys = useMemo(() => collectUserKeys(lists || {}, requests), [lists, requests]);
 
@@ -535,7 +545,7 @@ export default function MyGlance() {
         </div>
       </header>
 
-      <LiveNow session={liveSession} />
+      <LiveNow sessions={myLiveSessions} />
 
       <div className="my-glance-stats">
         {stats.map((stat) => (
