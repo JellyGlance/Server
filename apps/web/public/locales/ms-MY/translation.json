@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Pasang JellyGlance: ketik Kongsi dalam Safari, kemudian Tambah ke Skrin Utama.",
     "INSTALL": "Pasang",
     "NOT_NOW": "Bukan sekarang"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Teruskan menonton",
+    "CONTINUE_WATCHING_SUBTITLE": "Media Jellyfin yang sedang ditonton oleh pengguna ini.",
+    "RECENTLY_WATCHED": "Ditonton baru-baru ini",
+    "RECENTLY_WATCHED_SUBTITLE": "10 main balik terakhir yang disegerakkan bagi pengguna ini.",
+    "FAVOURITES": "Kegemaran",
+    "FAVOURITES_SUBTITLE": "Kegemaran Jellyfin pengguna ini.",
+    "WATCHLIST_MOVIES": "Filem dalam senarai tontonan",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filem yang diambil daripada senarai tontonan Jellyfin.",
+    "WATCHLIST_SHOWS": "Rancangan dalam senarai tontonan",
+    "WATCHLIST_SHOWS_SUBTITLE": "Rancangan yang diambil daripada senarai tontonan Jellyfin.",
+    "NEXT_EPISODES": "Episod seterusnya",
+    "NEXT_EPISODES_SUBTITLE": "Episod seterusnya yang belum ditonton daripada rancangan profil ini.",
+    "RECOMMENDED": "Disyorkan",
+    "RECOMMENDED_SUBTITLE": "Cadangan berdasarkan genre dalam senarai tontonan.",
+    "SHARED_FAVOURITES": "Kegemaran bersama",
+    "SHARED_FAVOURITES_SUBTITLE": "Item yang dikongsi oleh pengguna ini dengan orang lain.",
+    "FAMILY_WATCHLIST": "Senarai tontonan keluarga",
+    "FAMILY_WATCHLIST_SUBTITLE": "Gabungan senarai tontonan isi rumah, dikumpulkan mengikut populariti.",
+    "STALE_WATCHLIST": "Senarai tontonan terbiar",
+    "STALE_WATCHLIST_SUBTITLE": "Sudah 30+ hari dalam senarai dan belum ditonton.",
+    "LIBRARY_GAPS": "Jurang pustaka",
+    "LIBRARY_GAPS_SUBTITLE": "Rancangan dalam senarai tontonan dengan episod seterusnya yang belum ditonton untuk dikejar."
+  },
+  "WIZARR": {
+    "USED_BY": "Digunakan oleh {{user}}",
+    "COPY_INVITE": "Salin pautan jemputan {{code}}",
+    "OPEN_INVITE": "Buka jemputan {{code}}",
+    "DELETE_INVITE": "Padam jemputan {{code}}"
   }
 }

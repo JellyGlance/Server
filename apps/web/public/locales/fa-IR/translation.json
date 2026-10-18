@@ -1098,5 +1098,35 @@
     "IOS_HINT": "نصب JellyGlance: در Safari روی اشتراک‌گذاری بزنید، سپس افزودن به صفحهٔ اصلی را انتخاب کنید.",
     "INSTALL": "نصب",
     "NOT_NOW": "اکنون نه"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "ادامهٔ تماشا",
+    "CONTINUE_WATCHING_SUBTITLE": "رسانه‌های نیمه‌تمام Jellyfin این کاربر.",
+    "RECENTLY_WATCHED": "اخیراً تماشا‌شده",
+    "RECENTLY_WATCHED_SUBTITLE": "۱۰ پخش همگام‌شدهٔ آخر این کاربر.",
+    "FAVOURITES": "علاقه‌مندی‌ها",
+    "FAVOURITES_SUBTITLE": "علاقه‌مندی‌های Jellyfin این کاربر.",
+    "WATCHLIST_MOVIES": "فیلم‌های فهرست تماشا",
+    "WATCHLIST_MOVIES_SUBTITLE": "فیلم‌هایی که از فهرست تماشای Jellyfin آمده‌اند.",
+    "WATCHLIST_SHOWS": "سریال‌های فهرست تماشا",
+    "WATCHLIST_SHOWS_SUBTITLE": "سریال‌هایی که از فهرست تماشای Jellyfin آمده‌اند.",
+    "NEXT_EPISODES": "قسمت‌های بعدی",
+    "NEXT_EPISODES_SUBTITLE": "قسمت‌های بعدی تماشانشده از سریال‌های این نمایه.",
+    "RECOMMENDED": "پیشنهادی",
+    "RECOMMENDED_SUBTITLE": "پیشنهادها بر اساس ژانرهای فهرست تماشا.",
+    "SHARED_FAVOURITES": "علاقه‌مندی‌های مشترک",
+    "SHARED_FAVOURITES_SUBTITLE": "مواردی که این کاربر با دیگران مشترک دارد.",
+    "FAMILY_WATCHLIST": "فهرست تماشای خانواده",
+    "FAMILY_WATCHLIST_SUBTITLE": "فهرست تماشای مشترک خانه، گروه‌بندی‌شده بر اساس محبوبیت.",
+    "STALE_WATCHLIST": "فهرست تماشای فراموش‌شده",
+    "STALE_WATCHLIST_SUBTITLE": "بیش از ۳۰ روز در فهرست و هنوز تماشا نشده.",
+    "LIBRARY_GAPS": "کمبودهای کتابخانه",
+    "LIBRARY_GAPS_SUBTITLE": "سریال‌های فهرست تماشا با قسمت بعدی تماشانشده برای رسیدن به روز."
+  },
+  "WIZARR": {
+    "USED_BY": "استفاده‌شده توسط {{user}}",
+    "COPY_INVITE": "کپی پیوند دعوت {{code}}",
+    "OPEN_INVITE": "باز کردن دعوت {{code}}",
+    "DELETE_INVITE": "حذف دعوت {{code}}"
   }
 }

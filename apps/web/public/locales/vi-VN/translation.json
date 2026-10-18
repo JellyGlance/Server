@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Cài đặt JellyGlance: chạm vào Chia sẻ trong Safari, rồi chọn Thêm vào MH chính.",
     "INSTALL": "Cài đặt",
     "NOT_NOW": "Để sau"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Xem tiếp",
+    "CONTINUE_WATCHING_SUBTITLE": "Nội dung Jellyfin đang xem dở của người dùng này.",
+    "RECENTLY_WATCHED": "Đã xem gần đây",
+    "RECENTLY_WATCHED_SUBTITLE": "10 lượt phát đã đồng bộ gần nhất của người dùng này.",
+    "FAVOURITES": "Yêu thích",
+    "FAVOURITES_SUBTITLE": "Mục yêu thích trên Jellyfin của người dùng này.",
+    "WATCHLIST_MOVIES": "Phim trong danh sách xem",
+    "WATCHLIST_MOVIES_SUBTITLE": "Phim lấy từ danh sách xem của Jellyfin.",
+    "WATCHLIST_SHOWS": "Chương trình trong danh sách xem",
+    "WATCHLIST_SHOWS_SUBTITLE": "Chương trình lấy từ danh sách xem của Jellyfin.",
+    "NEXT_EPISODES": "Tập tiếp theo",
+    "NEXT_EPISODES_SUBTITLE": "Các tập tiếp theo chưa xem từ chương trình của hồ sơ này.",
+    "RECOMMENDED": "Đề xuất",
+    "RECOMMENDED_SUBTITLE": "Gợi ý dựa trên thể loại trong danh sách xem.",
+    "SHARED_FAVOURITES": "Yêu thích chung",
+    "SHARED_FAVOURITES_SUBTITLE": "Các mục người dùng này có chung với người khác.",
+    "FAMILY_WATCHLIST": "Danh sách xem gia đình",
+    "FAMILY_WATCHLIST_SUBTITLE": "Danh sách xem chung của cả nhà, nhóm theo mức độ phổ biến.",
+    "STALE_WATCHLIST": "Danh sách xem bị bỏ quên",
+    "STALE_WATCHLIST_SUBTITLE": "Nằm trong danh sách hơn 30 ngày mà vẫn chưa xem.",
+    "LIBRARY_GAPS": "Khoảng trống thư viện",
+    "LIBRARY_GAPS_SUBTITLE": "Chương trình trong danh sách xem còn tập tiếp theo chưa xem để theo kịp."
+  },
+  "WIZARR": {
+    "USED_BY": "Được dùng bởi {{user}}",
+    "COPY_INVITE": "Sao chép liên kết mời {{code}}",
+    "OPEN_INVITE": "Mở lời mời {{code}}",
+    "DELETE_INVITE": "Xóa lời mời {{code}}"
   }
 }

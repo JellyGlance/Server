@@ -1110,5 +1110,35 @@
     "IOS_HINT": "Щоб установити JellyGlance, торкніться «Поширити» в Safari, а потім «На початковий екран».",
     "INSTALL": "Установити",
     "NOT_NOW": "Не зараз"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Продовжити перегляд",
+    "CONTINUE_WATCHING_SUBTITLE": "Розпочаті медіа Jellyfin цього користувача.",
+    "RECENTLY_WATCHED": "Нещодавно переглянуте",
+    "RECENTLY_WATCHED_SUBTITLE": "Останні 10 синхронізованих відтворень цього користувача.",
+    "FAVOURITES": "Обране",
+    "FAVOURITES_SUBTITLE": "Обране Jellyfin цього користувача.",
+    "WATCHLIST_MOVIES": "Фільми зі списку",
+    "WATCHLIST_MOVIES_SUBTITLE": "Фільми зі списку перегляду Jellyfin.",
+    "WATCHLIST_SHOWS": "Серіали зі списку",
+    "WATCHLIST_SHOWS_SUBTITLE": "Серіали зі списку перегляду Jellyfin.",
+    "NEXT_EPISODES": "Наступні епізоди",
+    "NEXT_EPISODES_SUBTITLE": "Наступні непереглянуті епізоди серіалів цього профілю.",
+    "RECOMMENDED": "Рекомендоване",
+    "RECOMMENDED_SUBTITLE": "Добірка за жанрами зі списку перегляду.",
+    "SHARED_FAVOURITES": "Спільне обране",
+    "SHARED_FAVOURITES_SUBTITLE": "Елементи, що збігаються в цього користувача та інших.",
+    "FAMILY_WATCHLIST": "Сімейний список",
+    "FAMILY_WATCHLIST_SUBTITLE": "Спільний список перегляду родини, за популярністю.",
+    "STALE_WATCHLIST": "Застарілий список",
+    "STALE_WATCHLIST_SUBTITLE": "У списку понад 30 днів і досі не переглянуто.",
+    "LIBRARY_GAPS": "Прогалини в бібліотеці",
+    "LIBRARY_GAPS_SUBTITLE": "Серіали зі списку з непереглянутим наступним епізодом, які варто наздогнати."
+  },
+  "WIZARR": {
+    "USED_BY": "Використав {{user}}",
+    "COPY_INVITE": "Скопіювати посилання запрошення {{code}}",
+    "OPEN_INVITE": "Відкрити запрошення {{code}}",
+    "DELETE_INVITE": "Видалити запрошення {{code}}"
   }
 }

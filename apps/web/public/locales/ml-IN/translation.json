@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance ഇൻസ്റ്റാൾ ചെയ്യാൻ: Safari-യിൽ പങ്കിടുക ടാപ്പ് ചെയ്യുക, തുടർന്ന് ഹോം സ്ക്രീനിലേക്ക് ചേർക്കുക തിരഞ്ഞെടുക്കുക.",
     "INSTALL": "ഇൻസ്റ്റാൾ ചെയ്യുക",
     "NOT_NOW": "ഇപ്പോൾ വേണ്ട"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "കാണൽ തുടരുക",
+    "CONTINUE_WATCHING_SUBTITLE": "ഈ ഉപയോക്താവ് പകുതി കണ്ട Jellyfin മീഡിയ.",
+    "RECENTLY_WATCHED": "അടുത്തിടെ കണ്ടവ",
+    "RECENTLY_WATCHED_SUBTITLE": "ഈ ഉപയോക്താവിന്റെ സമന്വയിപ്പിച്ച അവസാന 10 പ്ലേകൾ.",
+    "FAVOURITES": "പ്രിയപ്പെട്ടവ",
+    "FAVOURITES_SUBTITLE": "ഈ ഉപയോക്താവിന്റെ Jellyfin പ്രിയപ്പെട്ടവ.",
+    "WATCHLIST_MOVIES": "വാച്ച്‌ലിസ്റ്റിലെ സിനിമകൾ",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin വാച്ച്‌ലിസ്റ്റിൽ നിന്നുള്ള സിനിമകൾ.",
+    "WATCHLIST_SHOWS": "വാച്ച്‌ലിസ്റ്റിലെ ഷോകൾ",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin വാച്ച്‌ലിസ്റ്റിൽ നിന്നുള്ള ഷോകൾ.",
+    "NEXT_EPISODES": "അടുത്ത എപ്പിസോഡുകൾ",
+    "NEXT_EPISODES_SUBTITLE": "ഈ പ്രൊഫൈലിലെ ഷോകളിൽ കാണാത്ത അടുത്ത എപ്പിസോഡുകൾ.",
+    "RECOMMENDED": "ശുപാർശ ചെയ്‌തവ",
+    "RECOMMENDED_SUBTITLE": "വാച്ച്‌ലിസ്റ്റിലെ വിഭാഗങ്ങളെ അടിസ്ഥാനമാക്കിയ നിർദ്ദേശങ്ങൾ.",
+    "SHARED_FAVOURITES": "പങ്കിട്ട പ്രിയപ്പെട്ടവ",
+    "SHARED_FAVOURITES_SUBTITLE": "ഈ ഉപയോക്താവിനും മറ്റുള്ളവർക്കും പൊതുവായ ഇനങ്ങൾ.",
+    "FAMILY_WATCHLIST": "കുടുംബ വാച്ച്‌ലിസ്റ്റ്",
+    "FAMILY_WATCHLIST_SUBTITLE": "വീട്ടിലെ എല്ലാവരുടെയും ചേർത്ത വാച്ച്‌ലിസ്റ്റ്, ജനപ്രീതി അനുസരിച്ച് ഗ്രൂപ്പ് ചെയ്‌തത്.",
+    "STALE_WATCHLIST": "പഴയ വാച്ച്‌ലിസ്റ്റ്",
+    "STALE_WATCHLIST_SUBTITLE": "30+ ദിവസമായി വാച്ച്‌ലിസ്റ്റിലുണ്ട്, ഇതുവരെ കണ്ടിട്ടില്ല.",
+    "LIBRARY_GAPS": "ലൈബ്രറിയിലെ വിടവുകൾ",
+    "LIBRARY_GAPS_SUBTITLE": "അടുത്ത എപ്പിസോഡ് ഇനിയും കാണാനുള്ള വാച്ച്‌ലിസ്റ്റ് ഷോകൾ."
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} ഉപയോഗിച്ചു",
+    "COPY_INVITE": "ക്ഷണ ലിങ്ക് {{code}} പകർത്തുക",
+    "OPEN_INVITE": "ക്ഷണം {{code}} തുറക്കുക",
+    "DELETE_INVITE": "ക്ഷണം {{code}} ഇല്ലാതാക്കുക"
   }
 }

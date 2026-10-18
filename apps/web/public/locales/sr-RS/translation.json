@@ -1104,5 +1104,35 @@
     "IOS_HINT": "Инсталирање JellyGlance-а: додирните Дели у Safari-ју, затим Додај на почетни екран.",
     "INSTALL": "Инсталирај",
     "NOT_NOW": "Не сада"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Настави гледање",
+    "CONTINUE_WATCHING_SUBTITLE": "Започет Jellyfin садржај овог корисника.",
+    "RECENTLY_WATCHED": "Недавно гледано",
+    "RECENTLY_WATCHED_SUBTITLE": "Последњих 10 синхронизованих репродукција овог корисника.",
+    "FAVOURITES": "Омиљено",
+    "FAVOURITES_SUBTITLE": "Jellyfin омиљене ставке овог корисника.",
+    "WATCHLIST_MOVIES": "Филмови са листе за гледање",
+    "WATCHLIST_MOVIES_SUBTITLE": "Филмови преузети са Jellyfin листе за гледање.",
+    "WATCHLIST_SHOWS": "Серије са листе за гледање",
+    "WATCHLIST_SHOWS_SUBTITLE": "Серије преузете са Jellyfin листе за гледање.",
+    "NEXT_EPISODES": "Следеће епизоде",
+    "NEXT_EPISODES_SUBTITLE": "Следеће неодгледане епизоде серија са овог профила.",
+    "RECOMMENDED": "Препоручено",
+    "RECOMMENDED_SUBTITLE": "Предлози на основу жанрова са листе за гледање.",
+    "SHARED_FAVOURITES": "Заједничко омиљено",
+    "SHARED_FAVOURITES_SUBTITLE": "Ставке које овај корисник дели са другима.",
+    "FAMILY_WATCHLIST": "Породична листа за гледање",
+    "FAMILY_WATCHLIST_SUBTITLE": "Заједничка листа домаћинства, груписана по популарности.",
+    "STALE_WATCHLIST": "Заборављена листа",
+    "STALE_WATCHLIST_SUBTITLE": "На листи више од 30 дана и још није одгледано.",
+    "LIBRARY_GAPS": "Празнине у библиотеци",
+    "LIBRARY_GAPS_SUBTITLE": "Серије са листе са следећом неодгледаном епизодом коју треба сустићи."
+  },
+  "WIZARR": {
+    "USED_BY": "Користио {{user}}",
+    "COPY_INVITE": "Копирај везу позивнице {{code}}",
+    "OPEN_INVITE": "Отвори позивницу {{code}}",
+    "DELETE_INVITE": "Избриши позивницу {{code}}"
   }
 }

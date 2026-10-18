@@ -1098,5 +1098,35 @@
     "IOS_HINT": "I-install ang JellyGlance: i-tap ang Share sa Safari, pagkatapos ay Add to Home Screen.",
     "INSTALL": "I-install",
     "NOT_NOW": "Hindi muna"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Ituloy ang panonood",
+    "CONTINUE_WATCHING_SUBTITLE": "Mga Jellyfin media na kasalukuyang pinapanood ng user na ito.",
+    "RECENTLY_WATCHED": "Kamakailang napanood",
+    "RECENTLY_WATCHED_SUBTITLE": "Huling 10 naka-sync na play ng user na ito.",
+    "FAVOURITES": "Mga paborito",
+    "FAVOURITES_SUBTITLE": "Mga paborito sa Jellyfin ng user na ito.",
+    "WATCHLIST_MOVIES": "Mga pelikula sa watchlist",
+    "WATCHLIST_MOVIES_SUBTITLE": "Mga pelikulang kinuha mula sa Jellyfin watchlist.",
+    "WATCHLIST_SHOWS": "Mga palabas sa watchlist",
+    "WATCHLIST_SHOWS_SUBTITLE": "Mga palabas na kinuha mula sa Jellyfin watchlist.",
+    "NEXT_EPISODES": "Mga susunod na episode",
+    "NEXT_EPISODES_SUBTITLE": "Mga susunod na hindi pa napapanood na episode mula sa mga palabas ng profile na ito.",
+    "RECOMMENDED": "Inirerekomenda",
+    "RECOMMENDED_SUBTITLE": "Mga mungkahi batay sa mga genre sa watchlist.",
+    "SHARED_FAVOURITES": "Magkaparehong paborito",
+    "SHARED_FAVOURITES_SUBTITLE": "Mga item na pareho sa user na ito at sa iba.",
+    "FAMILY_WATCHLIST": "Watchlist ng pamilya",
+    "FAMILY_WATCHLIST_SUBTITLE": "Pinagsamang watchlist ng buong bahay, naka-grupo ayon sa kasikatan.",
+    "STALE_WATCHLIST": "Lumang watchlist",
+    "STALE_WATCHLIST_SUBTITLE": "Nasa watchlist nang 30+ araw at hindi pa napapanood.",
+    "LIBRARY_GAPS": "Mga puwang sa library",
+    "LIBRARY_GAPS_SUBTITLE": "Mga palabas sa watchlist na may susunod na episode na hindi pa napapanood."
+  },
+  "WIZARR": {
+    "USED_BY": "Ginamit ni {{user}}",
+    "COPY_INVITE": "Kopyahin ang invite link {{code}}",
+    "OPEN_INVITE": "Buksan ang invite {{code}}",
+    "DELETE_INVITE": "Burahin ang invite {{code}}"
   }
 }

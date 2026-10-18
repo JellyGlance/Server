@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance-i quraşdırmaq üçün Safari-də Paylaş, sonra Əsas ekrana əlavə et düyməsinə toxunun.",
     "INSTALL": "Quraşdır",
     "NOT_NOW": "İndi yox"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "İzləməyə davam et",
+    "CONTINUE_WATCHING_SUBTITLE": "Bu istifadəçinin yarımçıq qalan Jellyfin mediası.",
+    "RECENTLY_WATCHED": "Son baxılanlar",
+    "RECENTLY_WATCHED_SUBTITLE": "Bu istifadəçinin sinxronlaşdırılmış son 10 oxutması.",
+    "FAVOURITES": "Sevimlilər",
+    "FAVOURITES_SUBTITLE": "Bu istifadəçinin Jellyfin sevimliləri.",
+    "WATCHLIST_MOVIES": "İzləmə siyahısındakı filmlər",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin izləmə siyahısından götürülən filmlər.",
+    "WATCHLIST_SHOWS": "İzləmə siyahısındakı seriallar",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin izləmə siyahısından götürülən seriallar.",
+    "NEXT_EPISODES": "Növbəti epizodlar",
+    "NEXT_EPISODES_SUBTITLE": "Bu profilin seriallarından baxılmamış növbəti epizodlar.",
+    "RECOMMENDED": "Tövsiyə olunanlar",
+    "RECOMMENDED_SUBTITLE": "İzləmə siyahısının janrlarına əsaslanan təkliflər.",
+    "SHARED_FAVOURITES": "Ortaq sevimlilər",
+    "SHARED_FAVOURITES_SUBTITLE": "Bu istifadəçinin başqaları ilə ortaq olduğu elementlər.",
+    "FAMILY_WATCHLIST": "Ailə izləmə siyahısı",
+    "FAMILY_WATCHLIST_SUBTITLE": "Bütün ev təsərrüfatının birləşmiş siyahısı, populyarlığa görə qruplaşdırılıb.",
+    "STALE_WATCHLIST": "Unudulmuş izləmə siyahısı",
+    "STALE_WATCHLIST_SUBTITLE": "30 gündən çox siyahıdadır və hələ baxılmayıb.",
+    "LIBRARY_GAPS": "Kitabxanadakı boşluqlar",
+    "LIBRARY_GAPS_SUBTITLE": "Növbəti epizoduna hələ baxılmamış izləmə siyahısı serialları."
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} istifadə edib",
+    "COPY_INVITE": "{{code}} dəvət keçidini kopyala",
+    "OPEN_INVITE": "{{code}} dəvətini aç",
+    "DELETE_INVITE": "{{code}} dəvətini sil"
   }
 }

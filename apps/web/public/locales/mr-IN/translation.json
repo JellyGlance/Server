@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance इंस्टॉल करण्यासाठी: Safari मध्ये शेअर वर टॅप करा, नंतर होम स्क्रीनवर जोडा निवडा.",
     "INSTALL": "इंस्टॉल करा",
     "NOT_NOW": "आता नाही"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "पाहणे सुरू ठेवा",
+    "CONTINUE_WATCHING_SUBTITLE": "या वापरकर्त्याचा अर्धवट राहिलेला Jellyfin मीडिया.",
+    "RECENTLY_WATCHED": "अलीकडे पाहिलेले",
+    "RECENTLY_WATCHED_SUBTITLE": "या वापरकर्त्याचे शेवटचे 10 सिंक केलेले प्ले.",
+    "FAVOURITES": "आवडते",
+    "FAVOURITES_SUBTITLE": "या वापरकर्त्याचे Jellyfin आवडते.",
+    "WATCHLIST_MOVIES": "वॉचलिस्टमधील चित्रपट",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin वॉचलिस्टमधून घेतलेले चित्रपट.",
+    "WATCHLIST_SHOWS": "वॉचलिस्टमधील शो",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin वॉचलिस्टमधून घेतलेले शो.",
+    "NEXT_EPISODES": "पुढील भाग",
+    "NEXT_EPISODES_SUBTITLE": "या प्रोफाइलच्या शोमधील न पाहिलेले पुढील भाग.",
+    "RECOMMENDED": "शिफारस केलेले",
+    "RECOMMENDED_SUBTITLE": "वॉचलिस्टमधील प्रकारांवर आधारित सूचना.",
+    "SHARED_FAVOURITES": "सामायिक आवडते",
+    "SHARED_FAVOURITES_SUBTITLE": "या वापरकर्त्याचे इतरांशी जुळणारे आयटम.",
+    "FAMILY_WATCHLIST": "कुटुंबाची वॉचलिस्ट",
+    "FAMILY_WATCHLIST_SUBTITLE": "संपूर्ण घराची एकत्रित वॉचलिस्ट, लोकप्रियतेनुसार गटबद्ध.",
+    "STALE_WATCHLIST": "जुनी वॉचलिस्ट",
+    "STALE_WATCHLIST_SUBTITLE": "30+ दिवस वॉचलिस्टमध्ये आणि अजून पाहिलेले नाही.",
+    "LIBRARY_GAPS": "लायब्ररीतील उणिवा",
+    "LIBRARY_GAPS_SUBTITLE": "पुढील भाग अजून पाहायचा बाकी असलेले वॉचलिस्टमधील शो."
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} यांनी वापरले",
+    "COPY_INVITE": "आमंत्रण दुवा {{code}} कॉपी करा",
+    "OPEN_INVITE": "आमंत्रण {{code}} उघडा",
+    "DELETE_INVITE": "आमंत्रण {{code}} हटवा"
   }
 }

@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance انسٹال کریں: Safari میں شیئر پر ٹیپ کریں، پھر ہوم اسکرین میں شامل کریں۔",
     "INSTALL": "انسٹال کریں",
     "NOT_NOW": "ابھی نہیں"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "دیکھنا جاری رکھیں",
+    "CONTINUE_WATCHING_SUBTITLE": "اس صارف کا زیرِ تماشا Jellyfin میڈیا۔",
+    "RECENTLY_WATCHED": "حال ہی میں دیکھا گیا",
+    "RECENTLY_WATCHED_SUBTITLE": "اس صارف کے آخری 10 سنک شدہ پلے۔",
+    "FAVOURITES": "پسندیدہ",
+    "FAVOURITES_SUBTITLE": "اس صارف کے Jellyfin پسندیدہ۔",
+    "WATCHLIST_MOVIES": "واچ لسٹ کی فلمیں",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin واچ لسٹ سے لی گئی فلمیں۔",
+    "WATCHLIST_SHOWS": "واچ لسٹ کے شوز",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin واچ لسٹ سے لیے گئے شوز۔",
+    "NEXT_EPISODES": "اگلی اقساط",
+    "NEXT_EPISODES_SUBTITLE": "اس پروفائل کے شوز کی اگلی ان دیکھی اقساط۔",
+    "RECOMMENDED": "تجویز کردہ",
+    "RECOMMENDED_SUBTITLE": "واچ لسٹ کی اصناف کی بنیاد پر تجاویز۔",
+    "SHARED_FAVOURITES": "مشترکہ پسندیدہ",
+    "SHARED_FAVOURITES_SUBTITLE": "وہ آئٹمز جو اس صارف اور دوسروں میں مشترک ہیں۔",
+    "FAMILY_WATCHLIST": "خاندانی واچ لسٹ",
+    "FAMILY_WATCHLIST_SUBTITLE": "پورے گھر کی مشترکہ واچ لسٹ، مقبولیت کے لحاظ سے گروپ شدہ۔",
+    "STALE_WATCHLIST": "پرانی واچ لسٹ",
+    "STALE_WATCHLIST_SUBTITLE": "30 سے زیادہ دنوں سے واچ لسٹ میں اور ابھی تک نہیں دیکھے گئے۔",
+    "LIBRARY_GAPS": "لائبریری میں خلا",
+    "LIBRARY_GAPS_SUBTITLE": "واچ لسٹ کے وہ شوز جن کی اگلی قسط ابھی دیکھنی باقی ہے۔"
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} نے استعمال کیا",
+    "COPY_INVITE": "دعوتی لنک {{code}} کاپی کریں",
+    "OPEN_INVITE": "دعوت {{code}} کھولیں",
+    "DELETE_INVITE": "دعوت {{code}} حذف کریں"
   }
 }

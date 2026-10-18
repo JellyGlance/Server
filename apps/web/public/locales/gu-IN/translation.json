@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance ઇન્સ્ટોલ કરવા: Safariમાં શેર પર ટૅપ કરો, પછી હોમ સ્ક્રીન પર ઉમેરો પસંદ કરો.",
     "INSTALL": "ઇન્સ્ટોલ કરો",
     "NOT_NOW": "હમણાં નહીં"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "જોવાનું ચાલુ રાખો",
+    "CONTINUE_WATCHING_SUBTITLE": "આ વપરાશકર્તાનું અધૂરું Jellyfin મીડિયા.",
+    "RECENTLY_WATCHED": "તાજેતરમાં જોયેલું",
+    "RECENTLY_WATCHED_SUBTITLE": "આ વપરાશકર્તાના છેલ્લા 10 સિંક કરેલા પ્લે.",
+    "FAVOURITES": "મનપસંદ",
+    "FAVOURITES_SUBTITLE": "આ વપરાશકર્તાના Jellyfin મનપસંદ.",
+    "WATCHLIST_MOVIES": "વૉચલિસ્ટની ફિલ્મો",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin વૉચલિસ્ટમાંથી લીધેલી ફિલ્મો.",
+    "WATCHLIST_SHOWS": "વૉચલિસ્ટના શો",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin વૉચલિસ્ટમાંથી લીધેલા શો.",
+    "NEXT_EPISODES": "આગળના એપિસોડ",
+    "NEXT_EPISODES_SUBTITLE": "આ પ્રોફાઇલના શોમાંથી ન જોયેલા આગળના એપિસોડ.",
+    "RECOMMENDED": "ભલામણ કરેલ",
+    "RECOMMENDED_SUBTITLE": "વૉચલિસ્ટની શૈલીઓ પર આધારિત સૂચનો.",
+    "SHARED_FAVOURITES": "સહિયારા મનપસંદ",
+    "SHARED_FAVOURITES_SUBTITLE": "આ વપરાશકર્તા અને અન્ય લોકોમાં સમાન આઇટમ.",
+    "FAMILY_WATCHLIST": "પરિવારની વૉચલિસ્ટ",
+    "FAMILY_WATCHLIST_SUBTITLE": "આખા ઘરની સંયુક્ત વૉચલિસ્ટ, લોકપ્રિયતા પ્રમાણે જૂથબદ્ધ.",
+    "STALE_WATCHLIST": "જૂની વૉચલિસ્ટ",
+    "STALE_WATCHLIST_SUBTITLE": "30+ દિવસથી વૉચલિસ્ટમાં અને હજુ જોયેલું નથી.",
+    "LIBRARY_GAPS": "લાઇબ્રેરીમાં ખામીઓ",
+    "LIBRARY_GAPS_SUBTITLE": "આગળનો એપિસોડ હજુ જોવાનો બાકી હોય તેવા વૉચલિસ્ટ શો."
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} દ્વારા વપરાયેલ",
+    "COPY_INVITE": "આમંત્રણ લિંક {{code}} કૉપિ કરો",
+    "OPEN_INVITE": "આમંત્રણ {{code}} ખોલો",
+    "DELETE_INVITE": "આમંત્રણ {{code}} કાઢી નાખો"
   }
 }

@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Asenna JellyGlance: napauta Safarissa Jaa ja sitten Lisää Koti-valikkoon.",
     "INSTALL": "Asenna",
     "NOT_NOW": "Ei nyt"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Jatka katsomista",
+    "CONTINUE_WATCHING_SUBTITLE": "Tämän käyttäjän keskeneräiset Jellyfin-mediat.",
+    "RECENTLY_WATCHED": "Äskettäin katsotut",
+    "RECENTLY_WATCHED_SUBTITLE": "Tämän käyttäjän 10 viimeisintä synkronoitua toistoa.",
+    "FAVOURITES": "Suosikit",
+    "FAVOURITES_SUBTITLE": "Tämän käyttäjän Jellyfin-suosikit.",
+    "WATCHLIST_MOVIES": "Katselulistan elokuvat",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfinin katselulistalta haetut elokuvat.",
+    "WATCHLIST_SHOWS": "Katselulistan sarjat",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfinin katselulistalta haetut sarjat.",
+    "NEXT_EPISODES": "Seuraavat jaksot",
+    "NEXT_EPISODES_SUBTITLE": "Tämän profiilin sarjojen seuraavat katsomattomat jaksot.",
+    "RECOMMENDED": "Suositellut",
+    "RECOMMENDED_SUBTITLE": "Ehdotuksia katselulistan lajityyppien perusteella.",
+    "SHARED_FAVOURITES": "Yhteiset suosikit",
+    "SHARED_FAVOURITES_SUBTITLE": "Kohteet, jotka tämä käyttäjä jakaa muiden kanssa.",
+    "FAMILY_WATCHLIST": "Perheen katselulista",
+    "FAMILY_WATCHLIST_SUBTITLE": "Koko kotitalouden yhdistetty katselulista suosion mukaan ryhmiteltynä.",
+    "STALE_WATCHLIST": "Unohtunut katselulista",
+    "STALE_WATCHLIST_SUBTITLE": "Ollut listalla yli 30 päivää eikä vielä katsottu.",
+    "LIBRARY_GAPS": "Aukot kirjastossa",
+    "LIBRARY_GAPS_SUBTITLE": "Katselulistan sarjat, joissa on katsomaton seuraava jakso kirittäväksi."
+  },
+  "WIZARR": {
+    "USED_BY": "Käyttänyt {{user}}",
+    "COPY_INVITE": "Kopioi kutsulinkki {{code}}",
+    "OPEN_INVITE": "Avaa kutsu {{code}}",
+    "DELETE_INVITE": "Poista kutsu {{code}}"
   }
 }

@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Para instalar o JellyGlance: toque em Compartilhar no Safari e depois em Adicionar à Tela de Início.",
     "INSTALL": "Instalar",
     "NOT_NOW": "Agora não"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Continuar assistindo",
+    "CONTINUE_WATCHING_SUBTITLE": "Mídia do Jellyfin em andamento para este usuário.",
+    "RECENTLY_WATCHED": "Assistidos recentemente",
+    "RECENTLY_WATCHED_SUBTITLE": "As 10 últimas reproduções sincronizadas deste usuário.",
+    "FAVOURITES": "Favoritos",
+    "FAVOURITES_SUBTITLE": "Favoritos do Jellyfin deste usuário.",
+    "WATCHLIST_MOVIES": "Filmes da lista",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filmes vindos da lista para assistir do Jellyfin.",
+    "WATCHLIST_SHOWS": "Séries da lista",
+    "WATCHLIST_SHOWS_SUBTITLE": "Séries vindas da lista para assistir do Jellyfin.",
+    "NEXT_EPISODES": "Próximos episódios",
+    "NEXT_EPISODES_SUBTITLE": "Próximos episódios não assistidos das séries deste perfil.",
+    "RECOMMENDED": "Recomendados",
+    "RECOMMENDED_SUBTITLE": "Sugestões com base nos gêneros da lista.",
+    "SHARED_FAVOURITES": "Favoritos em comum",
+    "SHARED_FAVOURITES_SUBTITLE": "Itens que este usuário tem em comum com outros.",
+    "FAMILY_WATCHLIST": "Lista da família",
+    "FAMILY_WATCHLIST_SUBTITLE": "Lista combinada da casa, agrupada por popularidade.",
+    "STALE_WATCHLIST": "Lista parada",
+    "STALE_WATCHLIST_SUBTITLE": "Na lista há mais de 30 dias e ainda não assistidos.",
+    "LIBRARY_GAPS": "Lacunas na biblioteca",
+    "LIBRARY_GAPS_SUBTITLE": "Séries da lista com um próximo episódio não assistido para colocar em dia."
+  },
+  "WIZARR": {
+    "USED_BY": "Usado por {{user}}",
+    "COPY_INVITE": "Copiar link do convite {{code}}",
+    "OPEN_INVITE": "Abrir convite {{code}}",
+    "DELETE_INVITE": "Excluir convite {{code}}"
   }
 }

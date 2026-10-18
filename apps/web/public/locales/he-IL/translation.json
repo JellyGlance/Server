@@ -1110,5 +1110,35 @@
     "IOS_HINT": "להתקנת JellyGlance: הקישו על שיתוף ב-Safari ואז על הוספה למסך הבית.",
     "INSTALL": "התקנה",
     "NOT_NOW": "לא עכשיו"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "המשך צפייה",
+    "CONTINUE_WATCHING_SUBTITLE": "מדיה ב-Jellyfin שהמשתמש הזה באמצע הצפייה בה.",
+    "RECENTLY_WATCHED": "נצפו לאחרונה",
+    "RECENTLY_WATCHED_SUBTITLE": "10 ההפעלות המסונכרנות האחרונות של המשתמש הזה.",
+    "FAVOURITES": "מועדפים",
+    "FAVOURITES_SUBTITLE": "המועדפים של המשתמש הזה ב-Jellyfin.",
+    "WATCHLIST_MOVIES": "סרטים ברשימת הצפייה",
+    "WATCHLIST_MOVIES_SUBTITLE": "סרטים מרשימת הצפייה של Jellyfin.",
+    "WATCHLIST_SHOWS": "סדרות ברשימת הצפייה",
+    "WATCHLIST_SHOWS_SUBTITLE": "סדרות מרשימת הצפייה של Jellyfin.",
+    "NEXT_EPISODES": "הפרקים הבאים",
+    "NEXT_EPISODES_SUBTITLE": "הפרקים הבאים שטרם נצפו מהסדרות של הפרופיל הזה.",
+    "RECOMMENDED": "מומלצים",
+    "RECOMMENDED_SUBTITLE": "הצעות לפי הז'אנרים ברשימת הצפייה.",
+    "SHARED_FAVOURITES": "מועדפים משותפים",
+    "SHARED_FAVOURITES_SUBTITLE": "פריטים שמשותפים למשתמש הזה ולאחרים.",
+    "FAMILY_WATCHLIST": "רשימת הצפייה של המשפחה",
+    "FAMILY_WATCHLIST_SUBTITLE": "רשימת הצפייה המשותפת של הבית, מקובצת לפי פופולריות.",
+    "STALE_WATCHLIST": "רשימת צפייה נשכחת",
+    "STALE_WATCHLIST_SUBTITLE": "ברשימה יותר מ-30 יום ועדיין לא נצפו.",
+    "LIBRARY_GAPS": "פערים בספרייה",
+    "LIBRARY_GAPS_SUBTITLE": "סדרות ברשימת הצפייה עם פרק הבא שטרם נצפה, כדי להשלים."
+  },
+  "WIZARR": {
+    "USED_BY": "בשימוש של {{user}}",
+    "COPY_INVITE": "העתקת קישור ההזמנה {{code}}",
+    "OPEN_INVITE": "פתיחת ההזמנה {{code}}",
+    "DELETE_INVITE": "מחיקת ההזמנה {{code}}"
   }
 }

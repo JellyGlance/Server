@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance installeren: tik in Safari op Deel en daarna op Zet op beginscherm.",
     "INSTALL": "Installeren",
     "NOT_NOW": "Niet nu"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Verder kijken",
+    "CONTINUE_WATCHING_SUBTITLE": "Jellyfin-media die deze gebruiker aan het kijken is.",
+    "RECENTLY_WATCHED": "Onlangs bekeken",
+    "RECENTLY_WATCHED_SUBTITLE": "De laatste 10 gesynchroniseerde weergaven van deze gebruiker.",
+    "FAVOURITES": "Favorieten",
+    "FAVOURITES_SUBTITLE": "Jellyfin-favorieten van deze gebruiker.",
+    "WATCHLIST_MOVIES": "Films op de kijklijst",
+    "WATCHLIST_MOVIES_SUBTITLE": "Films uit de Jellyfin-kijklijst.",
+    "WATCHLIST_SHOWS": "Series op de kijklijst",
+    "WATCHLIST_SHOWS_SUBTITLE": "Series uit de Jellyfin-kijklijst.",
+    "NEXT_EPISODES": "Volgende afleveringen",
+    "NEXT_EPISODES_SUBTITLE": "Volgende ongeziene afleveringen van de series in dit profiel.",
+    "RECOMMENDED": "Aanbevolen",
+    "RECOMMENDED_SUBTITLE": "Suggesties op basis van genres op de kijklijst.",
+    "SHARED_FAVOURITES": "Gedeelde favorieten",
+    "SHARED_FAVOURITES_SUBTITLE": "Items die deze gebruiker met anderen gemeen heeft.",
+    "FAMILY_WATCHLIST": "Gezinskijklijst",
+    "FAMILY_WATCHLIST_SUBTITLE": "Gecombineerde kijklijst van het huishouden, gegroepeerd op populariteit.",
+    "STALE_WATCHLIST": "Verouderde kijklijst",
+    "STALE_WATCHLIST_SUBTITLE": "Al 30+ dagen op de kijklijst en nog niet bekeken.",
+    "LIBRARY_GAPS": "Gaten in de bibliotheek",
+    "LIBRARY_GAPS_SUBTITLE": "Series op de kijklijst met een ongeziene volgende aflevering om bij te werken."
+  },
+  "WIZARR": {
+    "USED_BY": "Gebruikt door {{user}}",
+    "COPY_INVITE": "Uitnodigingslink {{code}} kopiëren",
+    "OPEN_INVITE": "Uitnodiging {{code}} openen",
+    "DELETE_INVITE": "Uitnodiging {{code}} verwijderen"
   }
 }

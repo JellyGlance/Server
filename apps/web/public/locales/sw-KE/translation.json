@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Sakinisha JellyGlance: gusa Shiriki kwenye Safari, kisha Ongeza kwenye Skrini ya Mwanzo.",
     "INSTALL": "Sakinisha",
     "NOT_NOW": "Si sasa"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Endelea kutazama",
+    "CONTINUE_WATCHING_SUBTITLE": "Maudhui ya Jellyfin ambayo mtumiaji huyu anaendelea kutazama.",
+    "RECENTLY_WATCHED": "Yaliyotazamwa hivi karibuni",
+    "RECENTLY_WATCHED_SUBTITLE": "Uchezaji 10 wa mwisho uliosawazishwa wa mtumiaji huyu.",
+    "FAVOURITES": "Vipendwa",
+    "FAVOURITES_SUBTITLE": "Vipendwa vya Jellyfin vya mtumiaji huyu.",
+    "WATCHLIST_MOVIES": "Filamu za orodha ya kutazama",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filamu zilizotolewa kwenye orodha ya kutazama ya Jellyfin.",
+    "WATCHLIST_SHOWS": "Vipindi vya orodha ya kutazama",
+    "WATCHLIST_SHOWS_SUBTITLE": "Vipindi vilivyotolewa kwenye orodha ya kutazama ya Jellyfin.",
+    "NEXT_EPISODES": "Vipindi vinavyofuata",
+    "NEXT_EPISODES_SUBTITLE": "Vipindi vinavyofuata ambavyo havijatazamwa kutoka kwa maonyesho ya wasifu huu.",
+    "RECOMMENDED": "Vinavyopendekezwa",
+    "RECOMMENDED_SUBTITLE": "Mapendekezo kulingana na aina katika orodha ya kutazama.",
+    "SHARED_FAVOURITES": "Vipendwa vya pamoja",
+    "SHARED_FAVOURITES_SUBTITLE": "Vipengee ambavyo mtumiaji huyu anashiriki na wengine.",
+    "FAMILY_WATCHLIST": "Orodha ya kutazama ya familia",
+    "FAMILY_WATCHLIST_SUBTITLE": "Orodha ya pamoja ya nyumba nzima, iliyopangwa kwa umaarufu.",
+    "STALE_WATCHLIST": "Orodha ya kutazama iliyosahaulika",
+    "STALE_WATCHLIST_SUBTITLE": "Imekaa kwenye orodha zaidi ya siku 30 na bado haijatazamwa.",
+    "LIBRARY_GAPS": "Mapengo ya maktaba",
+    "LIBRARY_GAPS_SUBTITLE": "Maonyesho ya orodha yenye kipindi kinachofuata ambacho hakijatazamwa."
+  },
+  "WIZARR": {
+    "USED_BY": "Imetumiwa na {{user}}",
+    "COPY_INVITE": "Nakili kiungo cha mwaliko {{code}}",
+    "OPEN_INVITE": "Fungua mwaliko {{code}}",
+    "DELETE_INVITE": "Futa mwaliko {{code}}"
   }
 }

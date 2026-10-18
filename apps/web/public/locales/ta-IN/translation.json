@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance-ஐ நிறுவ: Safari-இல் பகிர் என்பதைத் தட்டி, பின் முகப்புத் திரையில் சேர் என்பதைத் தட்டவும்.",
     "INSTALL": "நிறுவு",
     "NOT_NOW": "இப்போது வேண்டாம்"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "தொடர்ந்து பார்க்க",
+    "CONTINUE_WATCHING_SUBTITLE": "இந்தப் பயனர் பாதியில் பார்த்துக்கொண்டிருக்கும் Jellyfin மீடியா.",
+    "RECENTLY_WATCHED": "சமீபத்தில் பார்த்தவை",
+    "RECENTLY_WATCHED_SUBTITLE": "இந்தப் பயனரின் கடைசி 10 ஒத்திசைக்கப்பட்ட இயக்கங்கள்.",
+    "FAVOURITES": "பிடித்தவை",
+    "FAVOURITES_SUBTITLE": "இந்தப் பயனரின் Jellyfin பிடித்தவை.",
+    "WATCHLIST_MOVIES": "பார்வைப் பட்டியல் திரைப்படங்கள்",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin பார்வைப் பட்டியலிலிருந்து எடுத்த திரைப்படங்கள்.",
+    "WATCHLIST_SHOWS": "பார்வைப் பட்டியல் நிகழ்ச்சிகள்",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin பார்வைப் பட்டியலிலிருந்து எடுத்த நிகழ்ச்சிகள்.",
+    "NEXT_EPISODES": "அடுத்த எபிசோடுகள்",
+    "NEXT_EPISODES_SUBTITLE": "இந்தச் சுயவிவரத்தின் நிகழ்ச்சிகளில் பார்க்காத அடுத்த எபிசோடுகள்.",
+    "RECOMMENDED": "பரிந்துரைக்கப்பட்டவை",
+    "RECOMMENDED_SUBTITLE": "பார்வைப் பட்டியல் வகைகளின் அடிப்படையில் பரிந்துரைகள்.",
+    "SHARED_FAVOURITES": "பகிர்ந்த பிடித்தவை",
+    "SHARED_FAVOURITES_SUBTITLE": "இந்தப் பயனருக்கும் மற்றவர்களுக்கும் பொதுவான உருப்படிகள்.",
+    "FAMILY_WATCHLIST": "குடும்பப் பார்வைப் பட்டியல்",
+    "FAMILY_WATCHLIST_SUBTITLE": "வீட்டின் ஒருங்கிணைந்த பார்வைப் பட்டியல், பிரபலத்தின்படி குழுவாக்கப்பட்டது.",
+    "STALE_WATCHLIST": "பழைய பார்வைப் பட்டியல்",
+    "STALE_WATCHLIST_SUBTITLE": "30+ நாட்களாகப் பட்டியலில் உள்ளன, இன்னும் பார்க்கப்படவில்லை.",
+    "LIBRARY_GAPS": "நூலக இடைவெளிகள்",
+    "LIBRARY_GAPS_SUBTITLE": "அடுத்த எபிசோடு இன்னும் பார்க்கப்படாத பார்வைப் பட்டியல் நிகழ்ச்சிகள்."
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} பயன்படுத்தினார்",
+    "COPY_INVITE": "அழைப்பு இணைப்பு {{code}}-ஐ நகலெடு",
+    "OPEN_INVITE": "அழைப்பு {{code}}-ஐத் திற",
+    "DELETE_INVITE": "அழைப்பு {{code}}-ஐ நீக்கு"
   }
 }

@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance 설치: Safari에서 공유를 탭한 다음 홈 화면에 추가를 선택하세요.",
     "INSTALL": "설치",
     "NOT_NOW": "나중에"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "이어서 보기",
+    "CONTINUE_WATCHING_SUBTITLE": "이 사용자가 Jellyfin에서 보고 있는 미디어입니다.",
+    "RECENTLY_WATCHED": "최근 시청",
+    "RECENTLY_WATCHED_SUBTITLE": "이 사용자의 최근 동기화된 재생 10개입니다.",
+    "FAVOURITES": "즐겨찾기",
+    "FAVOURITES_SUBTITLE": "이 사용자의 Jellyfin 즐겨찾기입니다.",
+    "WATCHLIST_MOVIES": "보관함 영화",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin 보관함에서 가져온 영화입니다.",
+    "WATCHLIST_SHOWS": "보관함 프로그램",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin 보관함에서 가져온 프로그램입니다.",
+    "NEXT_EPISODES": "다음 에피소드",
+    "NEXT_EPISODES_SUBTITLE": "이 프로필의 프로그램에서 아직 보지 않은 다음 에피소드입니다.",
+    "RECOMMENDED": "추천",
+    "RECOMMENDED_SUBTITLE": "보관함 장르를 바탕으로 한 추천입니다.",
+    "SHARED_FAVOURITES": "공통 즐겨찾기",
+    "SHARED_FAVOURITES_SUBTITLE": "이 사용자와 다른 사용자가 함께 좋아하는 항목입니다.",
+    "FAMILY_WATCHLIST": "가족 보관함",
+    "FAMILY_WATCHLIST_SUBTITLE": "가구 전체의 보관함을 인기순으로 묶었습니다.",
+    "STALE_WATCHLIST": "오래된 보관함",
+    "STALE_WATCHLIST_SUBTITLE": "30일 넘게 보관함에 있고 아직 보지 않은 항목입니다.",
+    "LIBRARY_GAPS": "라이브러리 공백",
+    "LIBRARY_GAPS_SUBTITLE": "다음 에피소드를 아직 보지 않아 따라잡아야 할 보관함 프로그램입니다."
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} 님이 사용함",
+    "COPY_INVITE": "초대 링크 {{code}} 복사",
+    "OPEN_INVITE": "초대 {{code}} 열기",
+    "DELETE_INVITE": "초대 {{code}} 삭제"
   }
 }

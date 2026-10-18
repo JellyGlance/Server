@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance‌ను ఇన్‌స్టాల్ చేయడానికి: Safariలో షేర్‌ను నొక్కి, ఆపై హోమ్ స్క్రీన్‌కు జోడించుని నొక్కండి.",
     "INSTALL": "ఇన్‌స్టాల్ చేయండి",
     "NOT_NOW": "ఇప్పుడు కాదు"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "చూడటం కొనసాగించండి",
+    "CONTINUE_WATCHING_SUBTITLE": "ఈ వినియోగదారు సగంలో ఉన్న Jellyfin మీడియా.",
+    "RECENTLY_WATCHED": "ఇటీవల చూసినవి",
+    "RECENTLY_WATCHED_SUBTITLE": "ఈ వినియోగదారు చివరి 10 సింక్ చేసిన ప్లేలు.",
+    "FAVOURITES": "ఇష్టమైనవి",
+    "FAVOURITES_SUBTITLE": "ఈ వినియోగదారు Jellyfin ఇష్టమైనవి.",
+    "WATCHLIST_MOVIES": "వాచ్‌లిస్ట్ సినిమాలు",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin వాచ్‌లిస్ట్ నుండి తీసుకున్న సినిమాలు.",
+    "WATCHLIST_SHOWS": "వాచ్‌లిస్ట్ షోలు",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin వాచ్‌లిస్ట్ నుండి తీసుకున్న షోలు.",
+    "NEXT_EPISODES": "తదుపరి ఎపిసోడ్‌లు",
+    "NEXT_EPISODES_SUBTITLE": "ఈ ప్రొఫైల్ షోల నుండి చూడని తదుపరి ఎపిసోడ్‌లు.",
+    "RECOMMENDED": "సిఫార్సు చేసినవి",
+    "RECOMMENDED_SUBTITLE": "వాచ్‌లిస్ట్ జానర్‌ల ఆధారంగా సూచనలు.",
+    "SHARED_FAVOURITES": "ఉమ్మడి ఇష్టమైనవి",
+    "SHARED_FAVOURITES_SUBTITLE": "ఈ వినియోగదారుకు మరియు ఇతరులకు ఉమ్మడిగా ఉన్న అంశాలు.",
+    "FAMILY_WATCHLIST": "కుటుంబ వాచ్‌లిస్ట్",
+    "FAMILY_WATCHLIST_SUBTITLE": "ఇంటి మొత్తం కలిపిన వాచ్‌లిస్ట్, ప్రజాదరణ ప్రకారం సమూహం చేయబడింది.",
+    "STALE_WATCHLIST": "పాత వాచ్‌లిస్ట్",
+    "STALE_WATCHLIST_SUBTITLE": "30+ రోజులుగా వాచ్‌లిస్ట్‌లో ఉండి ఇంకా చూడనివి.",
+    "LIBRARY_GAPS": "లైబ్రరీ ఖాళీలు",
+    "LIBRARY_GAPS_SUBTITLE": "తదుపరి ఎపిసోడ్ ఇంకా చూడని వాచ్‌లిస్ట్ షోలు."
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} ఉపయోగించారు",
+    "COPY_INVITE": "ఆహ్వాన లింక్ {{code}}ను కాపీ చేయండి",
+    "OPEN_INVITE": "ఆహ్వానం {{code}}ను తెరవండి",
+    "DELETE_INVITE": "ఆహ్వానం {{code}}ను తొలగించండి"
   }
 }

@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Instal JellyGlance: ketuk Bagikan di Safari, lalu Tambah ke Layar Utama.",
     "INSTALL": "Instal",
     "NOT_NOW": "Nanti saja"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Lanjutkan menonton",
+    "CONTINUE_WATCHING_SUBTITLE": "Media Jellyfin yang sedang ditonton pengguna ini.",
+    "RECENTLY_WATCHED": "Baru ditonton",
+    "RECENTLY_WATCHED_SUBTITLE": "10 pemutaran tersinkron terakhir pengguna ini.",
+    "FAVOURITES": "Favorit",
+    "FAVOURITES_SUBTITLE": "Favorit Jellyfin pengguna ini.",
+    "WATCHLIST_MOVIES": "Film di daftar tonton",
+    "WATCHLIST_MOVIES_SUBTITLE": "Film yang diambil dari daftar tonton Jellyfin.",
+    "WATCHLIST_SHOWS": "Acara di daftar tonton",
+    "WATCHLIST_SHOWS_SUBTITLE": "Acara yang diambil dari daftar tonton Jellyfin.",
+    "NEXT_EPISODES": "Episode berikutnya",
+    "NEXT_EPISODES_SUBTITLE": "Episode berikutnya yang belum ditonton dari acara profil ini.",
+    "RECOMMENDED": "Rekomendasi",
+    "RECOMMENDED_SUBTITLE": "Saran berdasarkan genre di daftar tonton.",
+    "SHARED_FAVOURITES": "Favorit bersama",
+    "SHARED_FAVOURITES_SUBTITLE": "Item yang sama-sama disukai pengguna ini dan orang lain.",
+    "FAMILY_WATCHLIST": "Daftar tonton keluarga",
+    "FAMILY_WATCHLIST_SUBTITLE": "Gabungan daftar tonton rumah tangga, dikelompokkan menurut popularitas.",
+    "STALE_WATCHLIST": "Daftar tonton terbengkalai",
+    "STALE_WATCHLIST_SUBTITLE": "Sudah 30+ hari di daftar tonton dan belum ditonton.",
+    "LIBRARY_GAPS": "Celah pustaka",
+    "LIBRARY_GAPS_SUBTITLE": "Acara di daftar tonton dengan episode berikutnya yang belum ditonton untuk dikejar."
+  },
+  "WIZARR": {
+    "USED_BY": "Dipakai oleh {{user}}",
+    "COPY_INVITE": "Salin tautan undangan {{code}}",
+    "OPEN_INVITE": "Buka undangan {{code}}",
+    "DELETE_INVITE": "Hapus undangan {{code}}"
   }
 }

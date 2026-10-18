@@ -1098,5 +1098,35 @@
     "IOS_HINT": "A JellyGlance telepítése: koppints a Megosztás gombra a Safariban, majd a Főképernyőhöz adás lehetőségre.",
     "INSTALL": "Telepítés",
     "NOT_NOW": "Most nem"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Megtekintés folytatása",
+    "CONTINUE_WATCHING_SUBTITLE": "A felhasználó félbehagyott Jellyfin-médiái.",
+    "RECENTLY_WATCHED": "Nemrég megtekintett",
+    "RECENTLY_WATCHED_SUBTITLE": "A felhasználó utolsó 10 szinkronizált lejátszása.",
+    "FAVOURITES": "Kedvencek",
+    "FAVOURITES_SUBTITLE": "A felhasználó Jellyfin-kedvencei.",
+    "WATCHLIST_MOVIES": "Filmek a figyelőlistán",
+    "WATCHLIST_MOVIES_SUBTITLE": "A Jellyfin figyelőlistájáról származó filmek.",
+    "WATCHLIST_SHOWS": "Sorozatok a figyelőlistán",
+    "WATCHLIST_SHOWS_SUBTITLE": "A Jellyfin figyelőlistájáról származó sorozatok.",
+    "NEXT_EPISODES": "Következő epizódok",
+    "NEXT_EPISODES_SUBTITLE": "A profil sorozatainak következő, még meg nem nézett epizódjai.",
+    "RECOMMENDED": "Ajánlott",
+    "RECOMMENDED_SUBTITLE": "Javaslatok a figyelőlista műfajai alapján.",
+    "SHARED_FAVOURITES": "Közös kedvencek",
+    "SHARED_FAVOURITES_SUBTITLE": "Elemek, amelyekben a felhasználó és mások osztoznak.",
+    "FAMILY_WATCHLIST": "Családi figyelőlista",
+    "FAMILY_WATCHLIST_SUBTITLE": "A háztartás összesített figyelőlistája népszerűség szerint csoportosítva.",
+    "STALE_WATCHLIST": "Elavult figyelőlista",
+    "STALE_WATCHLIST_SUBTITLE": "Több mint 30 napja a listán, és még nincs megnézve.",
+    "LIBRARY_GAPS": "Hiányok a könyvtárban",
+    "LIBRARY_GAPS_SUBTITLE": "Figyelőlistás sorozatok, amelyeknek a következő epizódja még nincs megnézve."
+  },
+  "WIZARR": {
+    "USED_BY": "Felhasználta: {{user}}",
+    "COPY_INVITE": "{{code}} meghívólink másolása",
+    "OPEN_INVITE": "{{code}} meghívó megnyitása",
+    "DELETE_INVITE": "{{code}} meghívó törlése"
   }
 }

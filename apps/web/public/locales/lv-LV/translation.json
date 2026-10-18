@@ -1104,5 +1104,35 @@
     "IOS_HINT": "JellyGlance instalēšana: Safari pieskarieties Kopīgot un pēc tam Pievienot sākuma ekrānam.",
     "INSTALL": "Instalēt",
     "NOT_NOW": "Ne tagad"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Turpināt skatīties",
+    "CONTINUE_WATCHING_SUBTITLE": "Šī lietotāja iesāktie Jellyfin multivides vienumi.",
+    "RECENTLY_WATCHED": "Nesen skatīts",
+    "RECENTLY_WATCHED_SUBTITLE": "Šī lietotāja pēdējie 10 sinhronizētie atskaņojumi.",
+    "FAVOURITES": "Izlase",
+    "FAVOURITES_SUBTITLE": "Šī lietotāja Jellyfin izlase.",
+    "WATCHLIST_MOVIES": "Filmas no skatīšanās saraksta",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filmas no Jellyfin skatīšanās saraksta.",
+    "WATCHLIST_SHOWS": "Seriāli no skatīšanās saraksta",
+    "WATCHLIST_SHOWS_SUBTITLE": "Seriāli no Jellyfin skatīšanās saraksta.",
+    "NEXT_EPISODES": "Nākamās sērijas",
+    "NEXT_EPISODES_SUBTITLE": "Nākamās neskatītās sērijas no šī profila seriāliem.",
+    "RECOMMENDED": "Ieteikumi",
+    "RECOMMENDED_SUBTITLE": "Ieteikumi, balstoties uz skatīšanās saraksta žanriem.",
+    "SHARED_FAVOURITES": "Kopīgā izlase",
+    "SHARED_FAVOURITES_SUBTITLE": "Vienumi, kas šim lietotājam ir kopīgi ar citiem.",
+    "FAMILY_WATCHLIST": "Ģimenes skatīšanās saraksts",
+    "FAMILY_WATCHLIST_SUBTITLE": "Visas mājsaimniecības kopējais saraksts, grupēts pēc popularitātes.",
+    "STALE_WATCHLIST": "Aizmirsts saraksts",
+    "STALE_WATCHLIST_SUBTITLE": "Sarakstā vairāk nekā 30 dienas un vēl nav noskatīts.",
+    "LIBRARY_GAPS": "Robi bibliotēkā",
+    "LIBRARY_GAPS_SUBTITLE": "Saraksta seriāli ar neskatītu nākamo sēriju, ko panākt."
+  },
+  "WIZARR": {
+    "USED_BY": "Izmantoja {{user}}",
+    "COPY_INVITE": "Kopēt ielūguma saiti {{code}}",
+    "OPEN_INVITE": "Atvērt ielūgumu {{code}}",
+    "DELETE_INVITE": "Dzēst ielūgumu {{code}}"
   }
 }

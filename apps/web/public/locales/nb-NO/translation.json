@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Installer JellyGlance: trykk på Del i Safari og deretter på Legg til på Hjem-skjerm.",
     "INSTALL": "Installer",
     "NOT_NOW": "Ikke nå"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Se videre",
+    "CONTINUE_WATCHING_SUBTITLE": "Påbegynte Jellyfin-medier for denne brukeren.",
+    "RECENTLY_WATCHED": "Nylig sett",
+    "RECENTLY_WATCHED_SUBTITLE": "De siste 10 synkroniserte avspillingene for denne brukeren.",
+    "FAVOURITES": "Favoritter",
+    "FAVOURITES_SUBTITLE": "Jellyfin-favoritter for denne brukeren.",
+    "WATCHLIST_MOVIES": "Filmer på ønskelisten",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filmer hentet fra Jellyfin-ønskelisten.",
+    "WATCHLIST_SHOWS": "Serier på ønskelisten",
+    "WATCHLIST_SHOWS_SUBTITLE": "Serier hentet fra Jellyfin-ønskelisten.",
+    "NEXT_EPISODES": "Neste episoder",
+    "NEXT_EPISODES_SUBTITLE": "Neste usette episoder fra profilens serier.",
+    "RECOMMENDED": "Anbefalt",
+    "RECOMMENDED_SUBTITLE": "Forslag basert på sjangrene i ønskelisten.",
+    "SHARED_FAVOURITES": "Felles favoritter",
+    "SHARED_FAVOURITES_SUBTITLE": "Elementer denne brukeren har felles med andre.",
+    "FAMILY_WATCHLIST": "Familiens ønskeliste",
+    "FAMILY_WATCHLIST_SUBTITLE": "Husstandens samlede ønskeliste, gruppert etter popularitet.",
+    "STALE_WATCHLIST": "Gammel ønskeliste",
+    "STALE_WATCHLIST_SUBTITLE": "På listen i over 30 dager og ikke sett ennå.",
+    "LIBRARY_GAPS": "Hull i biblioteket",
+    "LIBRARY_GAPS_SUBTITLE": "Serier på ønskelisten med en usett neste episode å ta igjen."
+  },
+  "WIZARR": {
+    "USED_BY": "Brukt av {{user}}",
+    "COPY_INVITE": "Kopier invitasjonslenke {{code}}",
+    "OPEN_INVITE": "Åpne invitasjon {{code}}",
+    "DELETE_INVITE": "Slett invitasjon {{code}}"
   }
 }

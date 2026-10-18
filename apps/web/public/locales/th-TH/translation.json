@@ -1098,5 +1098,35 @@
     "IOS_HINT": "ติดตั้ง JellyGlance: แตะแชร์ใน Safari แล้วเลือกเพิ่มไปยังหน้าจอโฮม",
     "INSTALL": "ติดตั้ง",
     "NOT_NOW": "ไว้ทีหลัง"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "ดูต่อ",
+    "CONTINUE_WATCHING_SUBTITLE": "สื่อ Jellyfin ที่ผู้ใช้นี้ดูค้างไว้",
+    "RECENTLY_WATCHED": "ดูล่าสุด",
+    "RECENTLY_WATCHED_SUBTITLE": "การเล่นที่ซิงค์ล่าสุด 10 รายการของผู้ใช้นี้",
+    "FAVOURITES": "รายการโปรด",
+    "FAVOURITES_SUBTITLE": "รายการโปรดใน Jellyfin ของผู้ใช้นี้",
+    "WATCHLIST_MOVIES": "ภาพยนตร์ในรายการที่จะดู",
+    "WATCHLIST_MOVIES_SUBTITLE": "ภาพยนตร์จากรายการที่จะดูของ Jellyfin",
+    "WATCHLIST_SHOWS": "รายการทีวีในรายการที่จะดู",
+    "WATCHLIST_SHOWS_SUBTITLE": "รายการทีวีจากรายการที่จะดูของ Jellyfin",
+    "NEXT_EPISODES": "ตอนถัดไป",
+    "NEXT_EPISODES_SUBTITLE": "ตอนถัดไปที่ยังไม่ได้ดูจากรายการของโปรไฟล์นี้",
+    "RECOMMENDED": "แนะนำ",
+    "RECOMMENDED_SUBTITLE": "คำแนะนำตามประเภทในรายการที่จะดู",
+    "SHARED_FAVOURITES": "รายการโปรดร่วมกัน",
+    "SHARED_FAVOURITES_SUBTITLE": "รายการที่ผู้ใช้นี้และคนอื่นชอบเหมือนกัน",
+    "FAMILY_WATCHLIST": "รายการที่จะดูของครอบครัว",
+    "FAMILY_WATCHLIST_SUBTITLE": "รายการที่จะดูรวมของทั้งบ้าน จัดกลุ่มตามความนิยม",
+    "STALE_WATCHLIST": "รายการที่จะดูที่ค้างนาน",
+    "STALE_WATCHLIST_SUBTITLE": "อยู่ในรายการเกิน 30 วันและยังไม่ได้ดู",
+    "LIBRARY_GAPS": "ช่องว่างในคลัง",
+    "LIBRARY_GAPS_SUBTITLE": "รายการทีวีในรายการที่จะดูที่ยังมีตอนถัดไปให้ตามดู"
+  },
+  "WIZARR": {
+    "USED_BY": "ใช้โดย {{user}}",
+    "COPY_INVITE": "คัดลอกลิงก์คำเชิญ {{code}}",
+    "OPEN_INVITE": "เปิดคำเชิญ {{code}}",
+    "DELETE_INVITE": "ลบคำเชิญ {{code}}"
   }
 }

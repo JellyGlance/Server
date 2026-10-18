@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Εγκατάσταση JellyGlance: πατήστε Κοινοποίηση στο Safari και μετά Προσθήκη στην οθόνη Αφετηρίας.",
     "INSTALL": "Εγκατάσταση",
     "NOT_NOW": "Όχι τώρα"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Συνέχεια παρακολούθησης",
+    "CONTINUE_WATCHING_SUBTITLE": "Μέσα Jellyfin σε εξέλιξη για αυτόν τον χρήστη.",
+    "RECENTLY_WATCHED": "Είδατε πρόσφατα",
+    "RECENTLY_WATCHED_SUBTITLE": "Οι τελευταίες 10 συγχρονισμένες αναπαραγωγές αυτού του χρήστη.",
+    "FAVOURITES": "Αγαπημένα",
+    "FAVOURITES_SUBTITLE": "Αγαπημένα Jellyfin αυτού του χρήστη.",
+    "WATCHLIST_MOVIES": "Ταινίες στη λίστα",
+    "WATCHLIST_MOVIES_SUBTITLE": "Ταινίες από τη λίστα παρακολούθησης του Jellyfin.",
+    "WATCHLIST_SHOWS": "Σειρές στη λίστα",
+    "WATCHLIST_SHOWS_SUBTITLE": "Σειρές από τη λίστα παρακολούθησης του Jellyfin.",
+    "NEXT_EPISODES": "Επόμενα επεισόδια",
+    "NEXT_EPISODES_SUBTITLE": "Επόμενα επεισόδια που δεν έχουν προβληθεί από τις σειρές αυτού του προφίλ.",
+    "RECOMMENDED": "Προτεινόμενα",
+    "RECOMMENDED_SUBTITLE": "Προτάσεις με βάση τα είδη της λίστας παρακολούθησης.",
+    "SHARED_FAVOURITES": "Κοινά αγαπημένα",
+    "SHARED_FAVOURITES_SUBTITLE": "Στοιχεία που αυτός ο χρήστης έχει κοινά με άλλους.",
+    "FAMILY_WATCHLIST": "Οικογενειακή λίστα",
+    "FAMILY_WATCHLIST_SUBTITLE": "Η συνδυασμένη λίστα του νοικοκυριού, ομαδοποιημένη κατά δημοτικότητα.",
+    "STALE_WATCHLIST": "Παλιά λίστα",
+    "STALE_WATCHLIST_SUBTITLE": "Στη λίστα πάνω από 30 ημέρες και δεν έχουν προβληθεί ακόμη.",
+    "LIBRARY_GAPS": "Κενά βιβλιοθήκης",
+    "LIBRARY_GAPS_SUBTITLE": "Σειρές της λίστας με επόμενο επεισόδιο που δεν έχει προβληθεί, για να τις προλάβετε."
+  },
+  "WIZARR": {
+    "USED_BY": "Χρησιμοποιήθηκε από {{user}}",
+    "COPY_INVITE": "Αντιγραφή συνδέσμου πρόσκλησης {{code}}",
+    "OPEN_INVITE": "Άνοιγμα πρόσκλησης {{code}}",
+    "DELETE_INVITE": "Διαγραφή πρόσκλησης {{code}}"
   }
 }

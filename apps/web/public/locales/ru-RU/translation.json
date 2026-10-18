@@ -1110,5 +1110,35 @@
     "IOS_HINT": "Чтобы установить JellyGlance, нажмите «Поделиться» в Safari, затем «На экран „Домой“».",
     "INSTALL": "Установить",
     "NOT_NOW": "Не сейчас"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Продолжить просмотр",
+    "CONTINUE_WATCHING_SUBTITLE": "Начатые медиа Jellyfin этого пользователя.",
+    "RECENTLY_WATCHED": "Недавно просмотренное",
+    "RECENTLY_WATCHED_SUBTITLE": "Последние 10 синхронизированных воспроизведений этого пользователя.",
+    "FAVOURITES": "Избранное",
+    "FAVOURITES_SUBTITLE": "Избранное Jellyfin этого пользователя.",
+    "WATCHLIST_MOVIES": "Фильмы из списка",
+    "WATCHLIST_MOVIES_SUBTITLE": "Фильмы из списка просмотра Jellyfin.",
+    "WATCHLIST_SHOWS": "Сериалы из списка",
+    "WATCHLIST_SHOWS_SUBTITLE": "Сериалы из списка просмотра Jellyfin.",
+    "NEXT_EPISODES": "Следующие эпизоды",
+    "NEXT_EPISODES_SUBTITLE": "Следующие непросмотренные эпизоды сериалов этого профиля.",
+    "RECOMMENDED": "Рекомендуем",
+    "RECOMMENDED_SUBTITLE": "Подборка по жанрам из списка просмотра.",
+    "SHARED_FAVOURITES": "Общее избранное",
+    "SHARED_FAVOURITES_SUBTITLE": "Элементы, которые совпадают у этого пользователя и других.",
+    "FAMILY_WATCHLIST": "Семейный список",
+    "FAMILY_WATCHLIST_SUBTITLE": "Общий список просмотра семьи, по популярности.",
+    "STALE_WATCHLIST": "Залежавшийся список",
+    "STALE_WATCHLIST_SUBTITLE": "В списке больше 30 дней и до сих пор не просмотрено.",
+    "LIBRARY_GAPS": "Пробелы в библиотеке",
+    "LIBRARY_GAPS_SUBTITLE": "Сериалы из списка с непросмотренным следующим эпизодом, которые стоит догнать."
+  },
+  "WIZARR": {
+    "USED_BY": "Использовал {{user}}",
+    "COPY_INVITE": "Скопировать ссылку приглашения {{code}}",
+    "OPEN_INVITE": "Открыть приглашение {{code}}",
+    "DELETE_INVITE": "Удалить приглашение {{code}}"
   }
 }

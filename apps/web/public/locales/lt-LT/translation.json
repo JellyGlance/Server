@@ -1110,5 +1110,35 @@
     "IOS_HINT": "JellyGlance įdiegimas: Safari bakstelėkite Bendrinti, tada Įtraukti į pradžios ekraną.",
     "INSTALL": "Įdiegti",
     "NOT_NOW": "Ne dabar"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Tęsti žiūrėjimą",
+    "CONTINUE_WATCHING_SUBTITLE": "Pradėta žiūrėti šio naudotojo Jellyfin medija.",
+    "RECENTLY_WATCHED": "Neseniai žiūrėta",
+    "RECENTLY_WATCHED_SUBTITLE": "Paskutiniai 10 sinchronizuotų šio naudotojo paleidimų.",
+    "FAVOURITES": "Mėgstami",
+    "FAVOURITES_SUBTITLE": "Šio naudotojo Jellyfin mėgstami.",
+    "WATCHLIST_MOVIES": "Filmai iš žiūrėjimo sąrašo",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filmai iš Jellyfin žiūrėjimo sąrašo.",
+    "WATCHLIST_SHOWS": "Serialai iš žiūrėjimo sąrašo",
+    "WATCHLIST_SHOWS_SUBTITLE": "Serialai iš Jellyfin žiūrėjimo sąrašo.",
+    "NEXT_EPISODES": "Kitos serijos",
+    "NEXT_EPISODES_SUBTITLE": "Kitos nežiūrėtos šio profilio serialų serijos.",
+    "RECOMMENDED": "Rekomenduojama",
+    "RECOMMENDED_SUBTITLE": "Pasiūlymai pagal žiūrėjimo sąrašo žanrus.",
+    "SHARED_FAVOURITES": "Bendri mėgstami",
+    "SHARED_FAVOURITES_SUBTITLE": "Elementai, kuriuos šis naudotojas turi bendrus su kitais.",
+    "FAMILY_WATCHLIST": "Šeimos žiūrėjimo sąrašas",
+    "FAMILY_WATCHLIST_SUBTITLE": "Bendras namų ūkio žiūrėjimo sąrašas, sugrupuotas pagal populiarumą.",
+    "STALE_WATCHLIST": "Pamirštas sąrašas",
+    "STALE_WATCHLIST_SUBTITLE": "Sąraše ilgiau nei 30 dienų ir dar nežiūrėta.",
+    "LIBRARY_GAPS": "Spragos bibliotekoje",
+    "LIBRARY_GAPS_SUBTITLE": "Sąrašo serialai su nežiūrėta kita serija, kurią verta pasivyti."
+  },
+  "WIZARR": {
+    "USED_BY": "Naudojo {{user}}",
+    "COPY_INVITE": "Kopijuoti kvietimo nuorodą {{code}}",
+    "OPEN_INVITE": "Atidaryti kvietimą {{code}}",
+    "DELETE_INVITE": "Ištrinti kvietimą {{code}}"
   }
 }

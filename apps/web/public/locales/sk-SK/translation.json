@@ -1110,5 +1110,35 @@
     "IOS_HINT": "Inštalácia JellyGlance: v Safari klepnite na Zdieľať a potom na Pridať na plochu.",
     "INSTALL": "Inštalovať",
     "NOT_NOW": "Teraz nie"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Pokračovať v sledovaní",
+    "CONTINUE_WATCHING_SUBTITLE": "Rozpozerané médiá Jellyfin tohto používateľa.",
+    "RECENTLY_WATCHED": "Nedávno pozerané",
+    "RECENTLY_WATCHED_SUBTITLE": "Posledných 10 synchronizovaných prehratí tohto používateľa.",
+    "FAVOURITES": "Obľúbené",
+    "FAVOURITES_SUBTITLE": "Obľúbené položky Jellyfin tohto používateľa.",
+    "WATCHLIST_MOVIES": "Filmy zo zoznamu na pozretie",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filmy zo zoznamu na pozretie v Jellyfin.",
+    "WATCHLIST_SHOWS": "Seriály zo zoznamu na pozretie",
+    "WATCHLIST_SHOWS_SUBTITLE": "Seriály zo zoznamu na pozretie v Jellyfin.",
+    "NEXT_EPISODES": "Ďalšie epizódy",
+    "NEXT_EPISODES_SUBTITLE": "Ďalšie nepozreté epizódy zo seriálov tohto profilu.",
+    "RECOMMENDED": "Odporúčané",
+    "RECOMMENDED_SUBTITLE": "Návrhy podľa žánrov zo zoznamu na pozretie.",
+    "SHARED_FAVOURITES": "Spoločné obľúbené",
+    "SHARED_FAVOURITES_SUBTITLE": "Položky, ktoré má tento používateľ spoločné s ostatnými.",
+    "FAMILY_WATCHLIST": "Rodinný zoznam na pozretie",
+    "FAMILY_WATCHLIST_SUBTITLE": "Spoločný zoznam domácnosti zoskupený podľa obľúbenosti.",
+    "STALE_WATCHLIST": "Zabudnutý zoznam",
+    "STALE_WATCHLIST_SUBTITLE": "V zozname viac ako 30 dní a stále nepozreté.",
+    "LIBRARY_GAPS": "Medzery v knižnici",
+    "LIBRARY_GAPS_SUBTITLE": "Seriály zo zoznamu s nepozretou ďalšou epizódou, ktorú treba dohnať."
+  },
+  "WIZARR": {
+    "USED_BY": "Použil {{user}}",
+    "COPY_INVITE": "Kopírovať odkaz pozvánky {{code}}",
+    "OPEN_INVITE": "Otvoriť pozvánku {{code}}",
+    "DELETE_INVITE": "Odstrániť pozvánku {{code}}"
   }
 }

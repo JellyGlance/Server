@@ -1098,5 +1098,35 @@
     "IOS_HINT": "安裝 JellyGlance：在 Safari 中點一下「分享」，再點「加入主畫面」。",
     "INSTALL": "安裝",
     "NOT_NOW": "稍後再說"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "繼續觀看",
+    "CONTINUE_WATCHING_SUBTITLE": "此使用者在 Jellyfin 中觀看到一半的媒體。",
+    "RECENTLY_WATCHED": "最近觀看",
+    "RECENTLY_WATCHED_SUBTITLE": "此使用者最近 10 筆已同步的播放。",
+    "FAVOURITES": "我的最愛",
+    "FAVOURITES_SUBTITLE": "此使用者的 Jellyfin 最愛。",
+    "WATCHLIST_MOVIES": "待看清單電影",
+    "WATCHLIST_MOVIES_SUBTITLE": "從 Jellyfin 待看清單取得的電影。",
+    "WATCHLIST_SHOWS": "待看清單節目",
+    "WATCHLIST_SHOWS_SUBTITLE": "從 Jellyfin 待看清單取得的節目。",
+    "NEXT_EPISODES": "下一集",
+    "NEXT_EPISODES_SUBTITLE": "此設定檔節目中尚未觀看的下一集。",
+    "RECOMMENDED": "推薦",
+    "RECOMMENDED_SUBTITLE": "根據待看清單類型提供的建議。",
+    "SHARED_FAVOURITES": "共同最愛",
+    "SHARED_FAVOURITES_SUBTITLE": "此使用者與其他人重疊的項目。",
+    "FAMILY_WATCHLIST": "家庭待看清單",
+    "FAMILY_WATCHLIST_SUBTITLE": "全家合併的待看清單，依熱門程度分組。",
+    "STALE_WATCHLIST": "擱置的待看清單",
+    "STALE_WATCHLIST_SUBTITLE": "已在清單中超過 30 天且尚未看完。",
+    "LIBRARY_GAPS": "媒體庫缺漏",
+    "LIBRARY_GAPS_SUBTITLE": "待看清單中下一集尚未觀看、需要追上的節目。"
+  },
+  "WIZARR": {
+    "USED_BY": "由 {{user}} 使用",
+    "COPY_INVITE": "複製邀請連結 {{code}}",
+    "OPEN_INVITE": "開啟邀請 {{code}}",
+    "DELETE_INVITE": "刪除邀請 {{code}}"
   }
 }

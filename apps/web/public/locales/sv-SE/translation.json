@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Installera JellyGlance: tryck på Dela i Safari och sedan på Lägg till på hemskärmen.",
     "INSTALL": "Installera",
     "NOT_NOW": "Inte nu"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Fortsätt titta",
+    "CONTINUE_WATCHING_SUBTITLE": "Påbörjad Jellyfin-media för den här användaren.",
+    "RECENTLY_WATCHED": "Nyligen sett",
+    "RECENTLY_WATCHED_SUBTITLE": "De senaste 10 synkade uppspelningarna för den här användaren.",
+    "FAVOURITES": "Favoriter",
+    "FAVOURITES_SUBTITLE": "Jellyfin-favoriter för den här användaren.",
+    "WATCHLIST_MOVIES": "Filmer på bevakningslistan",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filmer hämtade från Jellyfins bevakningslista.",
+    "WATCHLIST_SHOWS": "Serier på bevakningslistan",
+    "WATCHLIST_SHOWS_SUBTITLE": "Serier hämtade från Jellyfins bevakningslista.",
+    "NEXT_EPISODES": "Nästa avsnitt",
+    "NEXT_EPISODES_SUBTITLE": "Nästa osedda avsnitt från profilens serier.",
+    "RECOMMENDED": "Rekommenderat",
+    "RECOMMENDED_SUBTITLE": "Förslag baserade på genrer i bevakningslistan.",
+    "SHARED_FAVOURITES": "Gemensamma favoriter",
+    "SHARED_FAVOURITES_SUBTITLE": "Objekt som den här användaren har gemensamt med andra.",
+    "FAMILY_WATCHLIST": "Familjens bevakningslista",
+    "FAMILY_WATCHLIST_SUBTITLE": "Hushållets samlade bevakningslista, grupperad efter popularitet.",
+    "STALE_WATCHLIST": "Gammal bevakningslista",
+    "STALE_WATCHLIST_SUBTITLE": "På listan i över 30 dagar och ännu inte sett.",
+    "LIBRARY_GAPS": "Luckor i biblioteket",
+    "LIBRARY_GAPS_SUBTITLE": "Serier på bevakningslistan med ett osett nästa avsnitt att komma ikapp med."
+  },
+  "WIZARR": {
+    "USED_BY": "Används av {{user}}",
+    "COPY_INVITE": "Kopiera inbjudningslänk {{code}}",
+    "OPEN_INVITE": "Öppna inbjudan {{code}}",
+    "DELETE_INVITE": "Ta bort inbjudan {{code}}"
   }
 }

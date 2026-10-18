@@ -1104,5 +1104,35 @@
     "IOS_HINT": "Instalează JellyGlance: atinge Partajează în Safari, apoi Adaugă pe ecranul principal.",
     "INSTALL": "Instalează",
     "NOT_NOW": "Nu acum"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Continuă vizionarea",
+    "CONTINUE_WATCHING_SUBTITLE": "Conținut Jellyfin început de acest utilizator.",
+    "RECENTLY_WATCHED": "Vizionate recent",
+    "RECENTLY_WATCHED_SUBTITLE": "Ultimele 10 redări sincronizate ale acestui utilizator.",
+    "FAVOURITES": "Favorite",
+    "FAVOURITES_SUBTITLE": "Favoritele Jellyfin ale acestui utilizator.",
+    "WATCHLIST_MOVIES": "Filme din listă",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filme preluate din lista de vizionare Jellyfin.",
+    "WATCHLIST_SHOWS": "Seriale din listă",
+    "WATCHLIST_SHOWS_SUBTITLE": "Seriale preluate din lista de vizionare Jellyfin.",
+    "NEXT_EPISODES": "Episoadele următoare",
+    "NEXT_EPISODES_SUBTITLE": "Următoarele episoade nevizionate din serialele acestui profil.",
+    "RECOMMENDED": "Recomandate",
+    "RECOMMENDED_SUBTITLE": "Sugestii pe baza genurilor din lista de vizionare.",
+    "SHARED_FAVOURITES": "Favorite comune",
+    "SHARED_FAVOURITES_SUBTITLE": "Elemente pe care acest utilizator le are în comun cu alții.",
+    "FAMILY_WATCHLIST": "Lista familiei",
+    "FAMILY_WATCHLIST_SUBTITLE": "Lista de vizionare comună a gospodăriei, grupată după popularitate.",
+    "STALE_WATCHLIST": "Listă uitată",
+    "STALE_WATCHLIST_SUBTITLE": "În listă de peste 30 de zile și încă nevizionate.",
+    "LIBRARY_GAPS": "Goluri în bibliotecă",
+    "LIBRARY_GAPS_SUBTITLE": "Seriale din listă cu un episod următor nevizionat de recuperat."
+  },
+  "WIZARR": {
+    "USED_BY": "Folosit de {{user}}",
+    "COPY_INVITE": "Copiază linkul invitației {{code}}",
+    "OPEN_INVITE": "Deschide invitația {{code}}",
+    "DELETE_INVITE": "Șterge invitația {{code}}"
   }
 }

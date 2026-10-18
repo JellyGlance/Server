@@ -1110,5 +1110,35 @@
     "IOS_HINT": "Namestitev JellyGlance: v Safariju tapnite Deli, nato Dodaj na domači zaslon.",
     "INSTALL": "Namesti",
     "NOT_NOW": "Ne zdaj"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Nadaljuj z ogledom",
+    "CONTINUE_WATCHING_SUBTITLE": "Začeti mediji Jellyfin tega uporabnika.",
+    "RECENTLY_WATCHED": "Nedavno ogledano",
+    "RECENTLY_WATCHED_SUBTITLE": "Zadnjih 10 sinhroniziranih predvajanj tega uporabnika.",
+    "FAVOURITES": "Priljubljene",
+    "FAVOURITES_SUBTITLE": "Priljubljene v Jellyfin tega uporabnika.",
+    "WATCHLIST_MOVIES": "Filmi s seznama za ogled",
+    "WATCHLIST_MOVIES_SUBTITLE": "Filmi s seznama za ogled v Jellyfin.",
+    "WATCHLIST_SHOWS": "Serije s seznama za ogled",
+    "WATCHLIST_SHOWS_SUBTITLE": "Serije s seznama za ogled v Jellyfin.",
+    "NEXT_EPISODES": "Naslednje epizode",
+    "NEXT_EPISODES_SUBTITLE": "Naslednje neogledane epizode serij tega profila.",
+    "RECOMMENDED": "Priporočeno",
+    "RECOMMENDED_SUBTITLE": "Predlogi glede na žanre s seznama za ogled.",
+    "SHARED_FAVOURITES": "Skupne priljubljene",
+    "SHARED_FAVOURITES_SUBTITLE": "Elementi, ki jih ima ta uporabnik skupne z drugimi.",
+    "FAMILY_WATCHLIST": "Družinski seznam za ogled",
+    "FAMILY_WATCHLIST_SUBTITLE": "Skupni seznam gospodinjstva, razvrščen po priljubljenosti.",
+    "STALE_WATCHLIST": "Pozabljen seznam",
+    "STALE_WATCHLIST_SUBTITLE": "Na seznamu več kot 30 dni in še neogledano.",
+    "LIBRARY_GAPS": "Vrzeli v knjižnici",
+    "LIBRARY_GAPS_SUBTITLE": "Serije s seznama z neogledano naslednjo epizodo, ki jo je treba dohiteti."
+  },
+  "WIZARR": {
+    "USED_BY": "Uporabil {{user}}",
+    "COPY_INVITE": "Kopiraj povezavo vabila {{code}}",
+    "OPEN_INVITE": "Odpri vabilo {{code}}",
+    "DELETE_INVITE": "Izbriši vabilo {{code}}"
   }
 }

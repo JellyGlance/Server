@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance ಸ್ಥಾಪಿಸಲು: Safari ಯಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ ಟ್ಯಾಪ್ ಮಾಡಿ, ನಂತರ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ ಆಯ್ಕೆಮಾಡಿ.",
     "INSTALL": "ಸ್ಥಾಪಿಸಿ",
     "NOT_NOW": "ಈಗ ಬೇಡ"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "ವೀಕ್ಷಣೆ ಮುಂದುವರಿಸಿ",
+    "CONTINUE_WATCHING_SUBTITLE": "ಈ ಬಳಕೆದಾರರ ಅರ್ಧ ವೀಕ್ಷಿಸಿದ Jellyfin ಮೀಡಿಯಾ.",
+    "RECENTLY_WATCHED": "ಇತ್ತೀಚೆಗೆ ವೀಕ್ಷಿಸಿದವು",
+    "RECENTLY_WATCHED_SUBTITLE": "ಈ ಬಳಕೆದಾರರ ಕೊನೆಯ 10 ಸಿಂಕ್ ಮಾಡಿದ ಪ್ಲೇಗಳು.",
+    "FAVOURITES": "ಮೆಚ್ಚಿನವು",
+    "FAVOURITES_SUBTITLE": "ಈ ಬಳಕೆದಾರರ Jellyfin ಮೆಚ್ಚಿನವು.",
+    "WATCHLIST_MOVIES": "ವೀಕ್ಷಣಾ ಪಟ್ಟಿಯ ಚಲನಚಿತ್ರಗಳು",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin ವೀಕ್ಷಣಾ ಪಟ್ಟಿಯಿಂದ ತೆಗೆದ ಚಲನಚಿತ್ರಗಳು.",
+    "WATCHLIST_SHOWS": "ವೀಕ್ಷಣಾ ಪಟ್ಟಿಯ ಶೋಗಳು",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin ವೀಕ್ಷಣಾ ಪಟ್ಟಿಯಿಂದ ತೆಗೆದ ಶೋಗಳು.",
+    "NEXT_EPISODES": "ಮುಂದಿನ ಎಪಿಸೋಡ್‌ಗಳು",
+    "NEXT_EPISODES_SUBTITLE": "ಈ ಪ್ರೊಫೈಲ್‌ನ ಶೋಗಳಿಂದ ವೀಕ್ಷಿಸದ ಮುಂದಿನ ಎಪಿಸೋಡ್‌ಗಳು.",
+    "RECOMMENDED": "ಶಿಫಾರಸು ಮಾಡಿದವು",
+    "RECOMMENDED_SUBTITLE": "ವೀಕ್ಷಣಾ ಪಟ್ಟಿಯ ಪ್ರಕಾರಗಳನ್ನು ಆಧರಿಸಿದ ಸಲಹೆಗಳು.",
+    "SHARED_FAVOURITES": "ಹಂಚಿಕೊಂಡ ಮೆಚ್ಚಿನವು",
+    "SHARED_FAVOURITES_SUBTITLE": "ಈ ಬಳಕೆದಾರರು ಮತ್ತು ಇತರರ ನಡುವೆ ಸಾಮಾನ್ಯವಾಗಿರುವ ಐಟಂಗಳು.",
+    "FAMILY_WATCHLIST": "ಕುಟುಂಬದ ವೀಕ್ಷಣಾ ಪಟ್ಟಿ",
+    "FAMILY_WATCHLIST_SUBTITLE": "ಮನೆಯ ಒಟ್ಟು ವೀಕ್ಷಣಾ ಪಟ್ಟಿ, ಜನಪ್ರಿಯತೆಯ ಪ್ರಕಾರ ಗುಂಪು ಮಾಡಲಾಗಿದೆ.",
+    "STALE_WATCHLIST": "ಹಳೆಯ ವೀಕ್ಷಣಾ ಪಟ್ಟಿ",
+    "STALE_WATCHLIST_SUBTITLE": "30+ ದಿನಗಳಿಂದ ಪಟ್ಟಿಯಲ್ಲಿದ್ದು ಇನ್ನೂ ವೀಕ್ಷಿಸಿಲ್ಲ.",
+    "LIBRARY_GAPS": "ಲೈಬ್ರರಿ ಅಂತರಗಳು",
+    "LIBRARY_GAPS_SUBTITLE": "ಮುಂದಿನ ಎಪಿಸೋಡ್ ಇನ್ನೂ ವೀಕ್ಷಿಸದ ವೀಕ್ಷಣಾ ಪಟ್ಟಿಯ ಶೋಗಳು."
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} ಬಳಸಿದ್ದಾರೆ",
+    "COPY_INVITE": "ಆಹ್ವಾನ ಲಿಂಕ್ {{code}} ನಕಲಿಸಿ",
+    "OPEN_INVITE": "ಆಹ್ವಾನ {{code}} ತೆರೆಯಿರಿ",
+    "DELETE_INVITE": "ಆಹ್ವಾನ {{code}} ಅಳಿಸಿ"
   }
 }

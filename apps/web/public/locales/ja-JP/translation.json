@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance をインストールするには、Safari で共有をタップし、「ホーム画面に追加」を選んでください。",
     "INSTALL": "インストール",
     "NOT_NOW": "後で"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "視聴を続ける",
+    "CONTINUE_WATCHING_SUBTITLE": "このユーザーの Jellyfin で視聴途中のメディア。",
+    "RECENTLY_WATCHED": "最近視聴",
+    "RECENTLY_WATCHED_SUBTITLE": "このユーザーの直近 10 件の同期済み再生。",
+    "FAVOURITES": "お気に入り",
+    "FAVOURITES_SUBTITLE": "このユーザーの Jellyfin のお気に入り。",
+    "WATCHLIST_MOVIES": "ウォッチリストの映画",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin のウォッチリストから取得した映画。",
+    "WATCHLIST_SHOWS": "ウォッチリストの番組",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin のウォッチリストから取得した番組。",
+    "NEXT_EPISODES": "次のエピソード",
+    "NEXT_EPISODES_SUBTITLE": "このプロフィールの番組の未視聴の次のエピソード。",
+    "RECOMMENDED": "おすすめ",
+    "RECOMMENDED_SUBTITLE": "ウォッチリストのジャンルにもとづくおすすめ。",
+    "SHARED_FAVOURITES": "共通のお気に入り",
+    "SHARED_FAVOURITES_SUBTITLE": "このユーザーとほかのユーザーで重なっているアイテム。",
+    "FAMILY_WATCHLIST": "家族のウォッチリスト",
+    "FAMILY_WATCHLIST_SUBTITLE": "世帯全体のウォッチリストを人気順にまとめたもの。",
+    "STALE_WATCHLIST": "放置されたウォッチリスト",
+    "STALE_WATCHLIST_SUBTITLE": "30 日以上ウォッチリストに入ったまま、まだ視聴されていないもの。",
+    "LIBRARY_GAPS": "ライブラリの欠落",
+    "LIBRARY_GAPS_SUBTITLE": "次のエピソードが未視聴で、追いつく必要があるウォッチリストの番組。"
+  },
+  "WIZARR": {
+    "USED_BY": "使用者: {{user}}",
+    "COPY_INVITE": "招待リンク {{code}} をコピー",
+    "OPEN_INVITE": "招待 {{code}} を開く",
+    "DELETE_INVITE": "招待 {{code}} を削除"
   }
 }

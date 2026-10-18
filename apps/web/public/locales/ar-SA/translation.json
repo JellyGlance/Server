@@ -1122,5 +1122,35 @@
     "IOS_HINT": "لتثبيت JellyGlance: اضغط «مشاركة» في Safari، ثم «إضافة إلى الشاشة الرئيسية».",
     "INSTALL": "تثبيت",
     "NOT_NOW": "ليس الآن"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "متابعة المشاهدة",
+    "CONTINUE_WATCHING_SUBTITLE": "وسائط Jellyfin قيد المشاهدة لهذا المستخدم.",
+    "RECENTLY_WATCHED": "شوهد مؤخرًا",
+    "RECENTLY_WATCHED_SUBTITLE": "آخر 10 مرات تشغيل متزامنة لهذا المستخدم.",
+    "FAVOURITES": "المفضلة",
+    "FAVOURITES_SUBTITLE": "مفضلات Jellyfin لهذا المستخدم.",
+    "WATCHLIST_MOVIES": "أفلام قائمة المشاهدة",
+    "WATCHLIST_MOVIES_SUBTITLE": "أفلام مأخوذة من قائمة مشاهدة Jellyfin.",
+    "WATCHLIST_SHOWS": "عروض قائمة المشاهدة",
+    "WATCHLIST_SHOWS_SUBTITLE": "عروض مأخوذة من قائمة مشاهدة Jellyfin.",
+    "NEXT_EPISODES": "الحلقات التالية",
+    "NEXT_EPISODES_SUBTITLE": "الحلقات التالية غير المشاهدة من عروض هذا الملف الشخصي.",
+    "RECOMMENDED": "موصى به",
+    "RECOMMENDED_SUBTITLE": "اقتراحات بناءً على أنواع قائمة المشاهدة.",
+    "SHARED_FAVOURITES": "مفضلات مشتركة",
+    "SHARED_FAVOURITES_SUBTITLE": "عناصر يشترك فيها هذا المستخدم مع غيره.",
+    "FAMILY_WATCHLIST": "قائمة مشاهدة العائلة",
+    "FAMILY_WATCHLIST_SUBTITLE": "قائمة مشاهدة المنزل المجمّعة، مرتبة حسب الشعبية.",
+    "STALE_WATCHLIST": "قائمة مشاهدة راكدة",
+    "STALE_WATCHLIST_SUBTITLE": "في قائمة المشاهدة منذ أكثر من 30 يومًا ولم تُشاهد بعد.",
+    "LIBRARY_GAPS": "فجوات المكتبة",
+    "LIBRARY_GAPS_SUBTITLE": "عروض في قائمة المشاهدة لها حلقة تالية غير مشاهدة للّحاق بها."
+  },
+  "WIZARR": {
+    "USED_BY": "استخدمه {{user}}",
+    "COPY_INVITE": "نسخ رابط الدعوة {{code}}",
+    "OPEN_INVITE": "فتح الدعوة {{code}}",
+    "DELETE_INVITE": "حذف الدعوة {{code}}"
   }
 }

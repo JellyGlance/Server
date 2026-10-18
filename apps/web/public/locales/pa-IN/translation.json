@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance ਇੰਸਟਾਲ ਕਰਨ ਲਈ: Safari ਵਿੱਚ ਸਾਂਝਾ ਕਰੋ 'ਤੇ ਟੈਪ ਕਰੋ, ਫਿਰ ਹੋਮ ਸਕ੍ਰੀਨ 'ਤੇ ਸ਼ਾਮਲ ਕਰੋ ਚੁਣੋ।",
     "INSTALL": "ਇੰਸਟਾਲ ਕਰੋ",
     "NOT_NOW": "ਹੁਣ ਨਹੀਂ"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "ਦੇਖਣਾ ਜਾਰੀ ਰੱਖੋ",
+    "CONTINUE_WATCHING_SUBTITLE": "ਇਸ ਵਰਤੋਂਕਾਰ ਦਾ ਅਧੂਰਾ Jellyfin ਮੀਡੀਆ।",
+    "RECENTLY_WATCHED": "ਹਾਲ ਹੀ ਵਿੱਚ ਦੇਖਿਆ",
+    "RECENTLY_WATCHED_SUBTITLE": "ਇਸ ਵਰਤੋਂਕਾਰ ਦੇ ਆਖਰੀ 10 ਸਿੰਕ ਕੀਤੇ ਪਲੇ।",
+    "FAVOURITES": "ਮਨਪਸੰਦ",
+    "FAVOURITES_SUBTITLE": "ਇਸ ਵਰਤੋਂਕਾਰ ਦੇ Jellyfin ਮਨਪਸੰਦ।",
+    "WATCHLIST_MOVIES": "ਵਾਚਲਿਸਟ ਦੀਆਂ ਫ਼ਿਲਮਾਂ",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfin ਵਾਚਲਿਸਟ ਤੋਂ ਲਈਆਂ ਫ਼ਿਲਮਾਂ।",
+    "WATCHLIST_SHOWS": "ਵਾਚਲਿਸਟ ਦੇ ਸ਼ੋਅ",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfin ਵਾਚਲਿਸਟ ਤੋਂ ਲਏ ਸ਼ੋਅ।",
+    "NEXT_EPISODES": "ਅਗਲੇ ਐਪੀਸੋਡ",
+    "NEXT_EPISODES_SUBTITLE": "ਇਸ ਪ੍ਰੋਫਾਈਲ ਦੇ ਸ਼ੋਆਂ ਦੇ ਅਣਦੇਖੇ ਅਗਲੇ ਐਪੀਸੋਡ।",
+    "RECOMMENDED": "ਸਿਫ਼ਾਰਸ਼ੀ",
+    "RECOMMENDED_SUBTITLE": "ਵਾਚਲਿਸਟ ਦੀਆਂ ਸ਼ੈਲੀਆਂ ਦੇ ਅਧਾਰ 'ਤੇ ਸੁਝਾਅ।",
+    "SHARED_FAVOURITES": "ਸਾਂਝੇ ਮਨਪਸੰਦ",
+    "SHARED_FAVOURITES_SUBTITLE": "ਉਹ ਆਈਟਮਾਂ ਜੋ ਇਸ ਵਰਤੋਂਕਾਰ ਅਤੇ ਹੋਰਾਂ ਵਿੱਚ ਸਾਂਝੀਆਂ ਹਨ।",
+    "FAMILY_WATCHLIST": "ਪਰਿਵਾਰ ਦੀ ਵਾਚਲਿਸਟ",
+    "FAMILY_WATCHLIST_SUBTITLE": "ਪੂਰੇ ਘਰ ਦੀ ਸਾਂਝੀ ਵਾਚਲਿਸਟ, ਪ੍ਰਸਿੱਧੀ ਅਨੁਸਾਰ ਸਮੂਹਬੱਧ।",
+    "STALE_WATCHLIST": "ਪੁਰਾਣੀ ਵਾਚਲਿਸਟ",
+    "STALE_WATCHLIST_SUBTITLE": "30+ ਦਿਨਾਂ ਤੋਂ ਵਾਚਲਿਸਟ ਵਿੱਚ ਅਤੇ ਅਜੇ ਦੇਖੀ ਨਹੀਂ ਗਈ।",
+    "LIBRARY_GAPS": "ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਖੱਪੇ",
+    "LIBRARY_GAPS_SUBTITLE": "ਵਾਚਲਿਸਟ ਦੇ ਉਹ ਸ਼ੋਅ ਜਿਨ੍ਹਾਂ ਦਾ ਅਗਲਾ ਐਪੀਸੋਡ ਦੇਖਣਾ ਬਾਕੀ ਹੈ।"
+  },
+  "WIZARR": {
+    "USED_BY": "{{user}} ਨੇ ਵਰਤਿਆ",
+    "COPY_INVITE": "ਸੱਦਾ ਲਿੰਕ {{code}} ਕਾਪੀ ਕਰੋ",
+    "OPEN_INVITE": "ਸੱਦਾ {{code}} ਖੋਲ੍ਹੋ",
+    "DELETE_INVITE": "ਸੱਦਾ {{code}} ਮਿਟਾਓ"
   }
 }

@@ -1098,5 +1098,35 @@
     "IOS_HINT": "JellyGlance'i installimine: puudutage Safaris Jaga ja seejärel Lisa avakuvale.",
     "INSTALL": "Installi",
     "NOT_NOW": "Mitte praegu"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Jätka vaatamist",
+    "CONTINUE_WATCHING_SUBTITLE": "Selle kasutaja pooleli Jellyfini meedia.",
+    "RECENTLY_WATCHED": "Hiljuti vaadatud",
+    "RECENTLY_WATCHED_SUBTITLE": "Selle kasutaja viimased 10 sünkroonitud esitust.",
+    "FAVOURITES": "Lemmikud",
+    "FAVOURITES_SUBTITLE": "Selle kasutaja Jellyfini lemmikud.",
+    "WATCHLIST_MOVIES": "Vaatamisloendi filmid",
+    "WATCHLIST_MOVIES_SUBTITLE": "Jellyfini vaatamisloendist võetud filmid.",
+    "WATCHLIST_SHOWS": "Vaatamisloendi sarjad",
+    "WATCHLIST_SHOWS_SUBTITLE": "Jellyfini vaatamisloendist võetud sarjad.",
+    "NEXT_EPISODES": "Järgmised osad",
+    "NEXT_EPISODES_SUBTITLE": "Selle profiili sarjade järgmised vaatamata osad.",
+    "RECOMMENDED": "Soovitatud",
+    "RECOMMENDED_SUBTITLE": "Soovitused vaatamisloendi žanrite põhjal.",
+    "SHARED_FAVOURITES": "Ühised lemmikud",
+    "SHARED_FAVOURITES_SUBTITLE": "Üksused, mis on sellel kasutajal ja teistel ühised.",
+    "FAMILY_WATCHLIST": "Pere vaatamisloend",
+    "FAMILY_WATCHLIST_SUBTITLE": "Kogu leibkonna ühine vaatamisloend, rühmitatud populaarsuse järgi.",
+    "STALE_WATCHLIST": "Unustatud vaatamisloend",
+    "STALE_WATCHLIST_SUBTITLE": "Loendis üle 30 päeva ja veel vaatamata.",
+    "LIBRARY_GAPS": "Lüngad kogus",
+    "LIBRARY_GAPS_SUBTITLE": "Vaatamisloendi sarjad, mille järgmine osa on veel järele vaatamata."
+  },
+  "WIZARR": {
+    "USED_BY": "Kasutas {{user}}",
+    "COPY_INVITE": "Kopeeri kutse link {{code}}",
+    "OPEN_INVITE": "Ava kutse {{code}}",
+    "DELETE_INVITE": "Kustuta kutse {{code}}"
   }
 }
