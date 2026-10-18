@@ -2200,3 +2200,37 @@
     min-height: 34px;
   }
 }
+
+/* ---------- Phone and tablet pass ---------- */
+@media (min-width: 600px) and (max-width: 900px) {
+  .home-hero-grid,
+  .home-week-grid,
+  .home-integration-stat-grid,
+  .home-secondary-grid,
+  .home-catalog-grid,
+  .home-trend-grid,
+  .home-ops-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .home-hero-grid,
+  .home-integration-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 339px) {
+  .home-hero-grid,
+  .home-integration-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (pointer: coarse) {
+  .home-order-list button {
+    width: var(--jg-touch-min, 44px);
+    min-height: var(--jg-touch-min, 44px);
+  }
+}

@@ -63,6 +63,7 @@ const { normalizeApiKeyScope } = require("./classes/api-key-scope");
 const { setupWebSocketServer } = require("./ws");
 const writeEnvVariables = require("./classes/env");
 const { buildEnvContent } = require("./classes/env");
+const { buildAppManifest } = require("./utils/app-manifest");
 
 process.env.POSTGRES_USER = process.env.POSTGRES_USER ?? "postgres";
 process.env.POSTGRES_ROLE = process.env.POSTGRES_ROLE ?? process.env.POSTGRES_USER;
@@ -84,34 +85,6 @@ const LISTEN_IP = process.env.JS_LISTEN_IP || "0.0.0.0";
 const JWT_SECRET = process.env.JWT_SECRET;
 const BASE_NAME = process.env.JS_BASE_URL ? ensureSlashes(process.env.JS_BASE_URL) : "";
 
-// Installable-app manifest, served from the real origin (Android won't install from a blob: manifest).
-function buildAppManifest(start) {
-  const base = BASE_NAME || "";
-  const startUrl = `${base}${start}`;
-  return {
-    short_name: "JellyGlance",
-    name: "JellyGlance",
-    id: startUrl,
-    description: "Jellyfin command center for sessions, requests, downloads, and ops.",
-    icons: [
-      { src: `${base}/icon-b-192.png`, type: "image/png", sizes: "192x192", purpose: "any" },
-      { src: `${base}/icon-b-512.png`, type: "image/png", sizes: "512x512", purpose: "any" },
-      { src: `${base}/icon-b-512.png`, type: "image/png", sizes: "512x512", purpose: "maskable" },
-    ],
-    start_url: startUrl,
-    scope: `${base}/`,
-    display: "standalone",
-    display_override: ["standalone", "minimal-ui"],
-    orientation: "any",
-    theme_color: "#0b1117",
-    background_color: "#0b1117",
-    shortcuts: [
-      { name: "My Glance", url: `${base}/me` },
-      { name: "Requests", url: `${base}/requests` },
-      { name: "Activity", url: `${base}/activity` },
-    ],
-  };
-}
 const DEFAULT_ALLOWED_ORIGINS = [
   `http://localhost:${PORT}`,
   `http://127.0.0.1:${PORT}`,
@@ -357,7 +330,7 @@ app.use((req, res, next) => {
   if (pathname === "/app.webmanifest" || (BASE_NAME && pathname === `${BASE_NAME}/app.webmanifest`)) {
     const requested = new URL(req.url, "http://localhost").searchParams.get("start");
     res.set("Cache-Control", "no-store");
-    return res.type("application/manifest+json").send(JSON.stringify(buildAppManifest(requested === "/me" ? "/me" : "/")));
+    return res.type("application/manifest+json").send(JSON.stringify(buildAppManifest(requested === "/me" ? "/me" : "/", BASE_NAME)));
   }
 
   const translationFilePath = getTranslationFilePath(req);

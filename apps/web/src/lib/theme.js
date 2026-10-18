@@ -246,4 +246,6 @@ export function applyTheme(theme = getStoredTheme()) {
   root.style.setProperty("--secondary-background-color", nextTheme.surface);
   root.style.setProperty("--tertiary-background-color", darkenHex(nextTheme.surface, -0.18));
   root.style.setProperty("--surface-color", `rgba(${r}, ${g}, ${b}, 0.86)`);
+  // Keep the browser / installed-app title bar in step with the user's theme background.
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", nextTheme.background);
 }

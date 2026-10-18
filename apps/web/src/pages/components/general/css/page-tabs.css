@@ -4,3 +4,4 @@
 .page-tabs button:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
 .page-tabs button.is-active { color: #fff; background: rgba(var(--primary-rgb, 139, 92, 246), 0.28); box-shadow: inset 0 0 0 1px rgba(var(--primary-light-rgb, 139, 92, 246), 0.35); }
 @media (max-width: 640px) { .page-tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; } .page-tabs button { white-space: nowrap; } }
+@media (max-width: 900px) { .page-tabs button { min-height: var(--jg-touch-min, 44px); } }

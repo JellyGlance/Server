@@ -1,50 +1,33 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useInstallPrompt } from "../../../lib/pwa-install";
 
 const DISMISS_KEY = "jellyglance_pwa_install_dismissed";
 
+// One shared install prompt (lib/pwa-install) so the banner and the "Install app" menu button never fight over the event.
 export default function PwaInstallBanner({ enabled = true, viewerStart = false }) {
-  const [promptEvent, setPromptEvent] = useState(null);
+  const { t } = useTranslation();
+  const { canInstall, iosManual, install } = useInstallPrompt();
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(DISMISS_KEY) === "true");
 
-  useEffect(() => {
-    if (!enabled) return undefined;
-    function handlePrompt(event) {
-      event.preventDefault();
-      setPromptEvent(event);
-    }
-    window.addEventListener("beforeinstallprompt", handlePrompt);
-    return () => window.removeEventListener("beforeinstallprompt", handlePrompt);
-  }, [enabled]);
+  if (!enabled || dismissed || (!canInstall && !iosManual)) return null;
 
-  if (!enabled || dismissed || !promptEvent) return null;
+  const dismiss = () => {
+    localStorage.setItem(DISMISS_KEY, "true");
+    setDismissed(true);
+  };
 
   return (
     <div className="pwa-install-banner" role="status">
-      <span>
-        {viewerStart
-          ? "Install JellyGlance. This account opens My Glance from the home screen."
-          : "Install JellyGlance for a kiosk-friendly Home dashboard."}
-      </span>
+      <span>{iosManual ? t("PWA_INSTALL.IOS_HINT") : viewerStart ? t("PWA_INSTALL.VIEWER") : t("PWA_INSTALL.OPS")}</span>
       <div>
-        <button
-          type="button"
-          onClick={async () => {
-            promptEvent.prompt();
-            await promptEvent.userChoice;
-            setPromptEvent(null);
-          }}
-        >
-          Install
-        </button>
-        <button
-          type="button"
-          className="is-quiet"
-          onClick={() => {
-            localStorage.setItem(DISMISS_KEY, "true");
-            setDismissed(true);
-          }}
-        >
-          Not now
+        {canInstall ? (
+          <button type="button" onClick={() => install()}>
+            {t("PWA_INSTALL.INSTALL")}
+          </button>
+        ) : null}
+        <button type="button" className="is-quiet" onClick={dismiss}>
+          {t("PWA_INSTALL.NOT_NOW")}
         </button>
       </div>
     </div>
