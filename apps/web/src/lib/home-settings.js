@@ -176,11 +176,38 @@ export const HOME_WIDGET_SIZE_LABELS = {
   large: "Full width",
 };
 
-export function normalizeHomeOrder(order) {
+function insertAtDefaultPosition(order, sectionId) {
+  const curatedIndex = CURATED_DEFAULT_HOME_ORDER.indexOf(sectionId);
+  for (let index = curatedIndex - 1; index >= 0; index -= 1) {
+    const position = order.indexOf(CURATED_DEFAULT_HOME_ORDER[index]);
+    if (position >= 0) {
+      order.splice(position + 1, 0, sectionId);
+      return;
+    }
+  }
+  for (let index = curatedIndex + 1; index < CURATED_DEFAULT_HOME_ORDER.length; index += 1) {
+    const position = order.indexOf(CURATED_DEFAULT_HOME_ORDER[index]);
+    if (position >= 0) {
+      order.splice(position, 0, sectionId);
+      return;
+    }
+  }
+  order.push(sectionId);
+}
+
+function savedSectionIds(order) {
   const knownSections = new Set(DEFAULT_HOME_ORDER);
-  const savedOrder = Array.isArray(order) ? order.filter((sectionId) => knownSections.has(sectionId)) : [];
-  const missingSections = DEFAULT_HOME_ORDER.filter((sectionId) => !savedOrder.includes(sectionId));
-  return [...savedOrder, ...missingSections];
+  return Array.isArray(order) ? [...new Set(order.filter((sectionId) => knownSections.has(sectionId)))] : [];
+}
+
+// Keeps the saved order as-is and slots any widget the layout has never seen
+// (one added in a newer release) next to its neighbour in the default layout.
+export function normalizeHomeOrder(order) {
+  const savedOrder = savedSectionIds(order);
+  if (!savedOrder.length) return [...DEFAULT_HOME_ORDER];
+  const nextOrder = [...savedOrder];
+  CURATED_DEFAULT_HOME_ORDER.filter((sectionId) => !nextOrder.includes(sectionId)).forEach((sectionId) => insertAtDefaultPosition(nextOrder, sectionId));
+  return nextOrder;
 }
 
 export function getHomeTokenPayload() {
@@ -200,14 +227,30 @@ export function getHomeSettingsStorageKey(scope = "user") {
   return `${HOME_SETTINGS_STORAGE_PREFIX}:${payload.sub || payload.userid || payload.username || payload.name || "user"}`;
 }
 
+function isUntouchedDefinitionOrder(order) {
+  const savedOrder = savedSectionIds(order);
+  if (!savedOrder.length) return false;
+  const savedSet = new Set(savedOrder);
+  return JSON.stringify(savedOrder) === JSON.stringify(DEFAULT_HOME_ORDER.filter((sectionId) => savedSet.has(sectionId)));
+}
+
 export function normalizeHomeSettings(settings) {
-  const normalized = { ...DEFAULT_HOME_SETTINGS, ...(settings || {}) };
+  const source = settings || {};
+  const normalized = { ...DEFAULT_HOME_SETTINGS, ...source };
   const knownSections = new Set(DEFAULT_HOME_ORDER);
-  normalized.order = normalizeHomeOrder(normalized.order);
+  const savedVersion = Number(normalized.version || 0);
+  const savedOrder = savedSectionIds(source.order);
+  const newSectionIds = savedOrder.length ? DEFAULT_HOME_ORDER.filter((sectionId) => !savedOrder.includes(sectionId)) : [];
+
+  // Layouts from before the curated default still carry the old definition
+  // order. Move those onto the curated order once, but keep everything else
+  // the user picked (pin, visibility, sizes, theme and so on).
+  const upgradeOrder = savedVersion < HOME_LAYOUT_VERSION && (!source.preset || source.preset === "custom") && isUntouchedDefinitionOrder(source.order);
+  normalized.order = upgradeOrder ? [...CURATED_DEFAULT_HOME_ORDER] : normalizeHomeOrder(normalized.order);
   normalized.hidden = Array.isArray(normalized.hidden) ? [...new Set(normalized.hidden.filter((sectionId) => knownSections.has(sectionId)))] : [];
-  if (Number(normalized.version || 0) < HOME_LAYOUT_VERSION) {
-    normalized.hidden = [...new Set([...normalized.hidden, ...DEFAULT_HIDDEN_SECTION_IDS])];
-  }
+  // Only widgets this layout has never seen pick up their default visibility;
+  // anything the user already showed or hid stays that way.
+  normalized.hidden = [...new Set([...normalized.hidden, ...newSectionIds.filter((sectionId) => DEFAULT_HIDDEN_SECTION_IDS.includes(sectionId))])];
   normalized.pinned = knownSections.has(normalized.pinned) ? normalized.pinned : "";
   normalized.density = normalized.density === "compact" ? "compact" : "comfortable";
   normalized.autoRotate = Boolean(normalized.autoRotate);
@@ -220,8 +263,23 @@ export function normalizeHomeSettings(settings) {
   };
   normalized.dismissedAlerts = normalized.dismissedAlerts && typeof normalized.dismissedAlerts === "object" ? normalized.dismissedAlerts : {};
   normalized.sizes = normalized.sizes && typeof normalized.sizes === "object" ? { ...DEFAULT_HOME_SETTINGS.sizes, ...normalized.sizes } : DEFAULT_HOME_SETTINGS.sizes;
-  normalized.version = Number(normalized.version || 0);
+  normalized.version = Math.max(savedVersion, HOME_LAYOUT_VERSION);
   return normalized;
+}
+
+// The order Home renders in. The pinned widget always leads; Operations is
+// lifted while requests need attention, but only for display. The saved order
+// is never rewritten by this.
+export function getHomeDisplayOrder(settings, { promoteOperations = false } = {}) {
+  const hidden = new Set(settings?.hidden || []);
+  const pinned = settings?.pinned || "";
+  let ordered = normalizeHomeOrder(settings?.order).filter((sectionId) => !hidden.has(sectionId));
+  const lift = (sectionId) => {
+    if (sectionId && ordered.includes(sectionId)) ordered = [sectionId, ...ordered.filter((id) => id !== sectionId)];
+  };
+  if (promoteOperations && pinned !== "operations") lift("operations");
+  lift(pinned);
+  return ordered;
 }
 
 export function getRoleDefaultHomeSettings() {
@@ -243,8 +301,7 @@ export function loadHomeSettings(scope = "user") {
       if (scope === "kiosk" && normalized.preset === "kiosk") {
         return normalizeHomeSettings({ ...DEFAULT_HOME_SETTINGS, ...HOME_PRESETS.kiosk, sizes: HOME_PRESETS.kiosk.sizes, preset: "kiosk", autoRotate: false, title: normalized.title || "JellyGlance Kiosk", theme: normalized.theme });
       }
-      const stillOldDefault = normalized.version < HOME_LAYOUT_VERSION && (!parsed.preset || parsed.preset === "custom") && JSON.stringify(normalizeHomeOrder(parsed.order)) === JSON.stringify(DEFAULT_HOME_ORDER);
-      return stillOldDefault ? normalizeHomeSettings(DEFAULT_HOME_SETTINGS) : normalized;
+      return normalized;
     }
 
     if (scope !== "kiosk") {
