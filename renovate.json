@@ -37,6 +37,13 @@
       "pinDigests": true
     },
     {
+      "description": "Look up aquasecurity/trivy-action tags over plain Git. The aquasecurity org has a GitHub IP allow list that rejects GitHub App tokens on the API, so the default github-tags lookup returns no result.",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["aquasecurity/trivy-action"],
+      "overrideDatasource": "git-tags",
+      "overridePackageName": "https://github.com/aquasecurity/trivy-action"
+    },
+    {
       "description": "Keep the node-arm (linux/arm/v7) Dockerfile stage on Node 22: node:24+ images publish no linux/arm/v7 variant. Digest updates are still allowed.",
       "matchManagers": ["dockerfile"],
       "matchPackageNames": ["node"],
