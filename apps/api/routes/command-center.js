@@ -58,6 +58,7 @@ const {
   refreshWidgetItem,
   getJellyfinStatus,
 } = require("../classes/command-center");
+const { canViewAllUsers } = require("../classes/stats-access");
 
 function canUseWidgetWrite(req) {
   if (req.apiKeyScope === "widgets-write" || req.apiKeyScope === "full") return true;
@@ -284,9 +285,16 @@ router.post("/widgets/repair/refresh", async (req, res) => {
   }
 });
 
+// These widgets list named users and what they watched, so signed-in non-admins can't read them.
+// API keys keep working, because the auth middleware gives them the Users permission.
+const PER_USER_WIDGETS = new Set(["users", "activity", "statistics"]);
+
 for (const [slug, builder, summary] of extraWidgetRoutes) {
-  router.get(`/widgets/${slug}`, async (_req, res) => {
+  router.get(`/widgets/${slug}`, async (req, res) => {
     /* #swagger.tags = ['Widgets'] */
+    if (PER_USER_WIDGETS.has(slug) && !canViewAllUsers(req)) {
+      return res.status(403).send({ error: "This widget is only available to admins" });
+    }
     try {
       res.send(await builder());
     } catch (error) {

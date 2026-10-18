@@ -183,6 +183,7 @@ test("non-admin gets 403 for another user's id on every user endpoint", async ()
       responses.map((response) => response.status),
       [403, 403, 403, 403, 403, 403]
     );
+    for (const response of responses) assert.equal(response.json?.error, "You can only view your own activity");
     // Only the profile lookup itself sees the other id; none of their stats are queried.
     const statsCalls = calls.filter((entry) => !entry.sql.includes("ranked_users"));
     assert.equal(statsCalls.some((entry) => (entry.params || []).includes(ALICE)), false, "no stats query ran for the other user");
@@ -219,6 +220,7 @@ test("OIDC viewer is scoped to their linked media-server user", async () => {
     assert.deepEqual(json.map((user) => user.UserId), [BOB]);
     const other = await call("POST", "/getUserLastPlayed", { userid: ALICE });
     assert.equal(other.status, 403);
+    assert.equal(other.json.error, "You can only view your own activity");
   });
 });
 

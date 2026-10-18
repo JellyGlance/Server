@@ -1152,5 +1152,11 @@
     "STALE_WATCHLIST_SUBTITLE": "Watchlisted for 30+ days and not cleared yet.",
     "LIBRARY_GAPS": "Library Gaps",
     "LIBRARY_GAPS_SUBTITLE": "Watchlisted shows with an unwatched next episode to catch up on."
+  },
+  "WIZARR": {
+    "USED_BY": "Used by {{user}}",
+    "COPY_INVITE": "Copy invite link {{code}}",
+    "OPEN_INVITE": "Open invite {{code}}",
+    "DELETE_INVITE": "Delete invite {{code}}"
   }
 }
