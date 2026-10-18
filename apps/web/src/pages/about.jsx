@@ -460,7 +460,7 @@ export default function SettingsAbout() {
               <RadarLineIcon />
               Website
             </a>
-            <a href="https://github.com/JellyGlance/Documentation" target="_blank" rel="noreferrer">
+            <a href="https://docs.jellyglance.com/" target="_blank" rel="noreferrer">
               <CodeSSlashLineIcon />
               Documentation
             </a>
