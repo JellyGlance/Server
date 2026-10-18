@@ -6432,3 +6432,251 @@
   font-size: 12px;
   color: rgba(199, 211, 230, 0.62);
 }
+
+/* Media server connection card: form and connection status side by side. */
+.integrations-page.is-embedded .jellyfin-integration-card.is-compact.has-connection-layout,
+.jellyfin-integration-card.has-connection-layout {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+  padding: 18px;
+}
+
+.jf-connection-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (min-width: 992px) {
+  .jf-connection-layout.has-results {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+}
+
+.jf-connection-form {
+  display: grid;
+  gap: 14px;
+  margin: 0 !important;
+  max-width: 640px;
+}
+
+.jf-connection-layout.has-results .jf-connection-form {
+  max-width: none;
+}
+
+.jf-field {
+  display: grid;
+  gap: 6px;
+}
+
+.jf-field .form-label {
+  margin: 0;
+  color: #d6deea;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.jf-field .form-text {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.jf-key-group .jf-key-toggle,
+.jf-key-group .jf-key-toggle:focus {
+  display: inline-flex;
+  align-items: center;
+  border-color: var(--bs-border-color, #3a3a3a) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #aebbd0 !important;
+}
+
+.jf-key-group .jf-key-toggle:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+.jf-connection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.jf-connection-actions .btn {
+  min-width: 140px;
+}
+
+.jf-connection-actions .btn-outline-secondary {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #e8edf5;
+}
+
+.jf-connection-actions .btn-outline-secondary:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.jf-connection-results {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: #1e1e1e;
+}
+
+.jf-connection-results-head {
+  display: grid;
+  gap: 2px;
+}
+
+.jf-connection-results-head strong {
+  color: #fff;
+}
+
+.jf-connection-results-head span,
+.jf-connection-tested-url {
+  color: #9aa6b8;
+  font-size: 0.8rem;
+}
+
+.jf-connection-summary {
+  --jf-state: #9aa6b8;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--jf-state) 45%, transparent);
+  border-left-width: 4px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--jf-state) 10%, transparent);
+  color: #e8edf5;
+  font-weight: 700;
+}
+
+.jf-connection-summary svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--jf-state);
+  fill: currentColor;
+}
+
+.jf-connection-summary.is-pass,
+.jf-connection-check.is-pass {
+  --jf-state: #3fb950;
+}
+
+.jf-connection-summary.is-warn,
+.jf-connection-check.is-warn {
+  --jf-state: #e3a008;
+}
+
+.jf-connection-summary.is-fail,
+.jf-connection-check.is-fail {
+  --jf-state: #ff4d4d;
+}
+
+.jf-connection-summary.is-running {
+  --jf-state: #6ea8fe;
+}
+
+.jf-connection-check.is-skip {
+  --jf-state: #7d8796;
+}
+
+.jf-spin {
+  animation: jf-spin 0.9s linear infinite;
+}
+
+@keyframes jf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jf-spin {
+    animation: none;
+  }
+}
+
+.jf-connection-checks {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.jf-connection-check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.jf-connection-check:first-child {
+  border-top: 0;
+}
+
+.jf-connection-check-icon {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--jf-state);
+  fill: currentColor;
+}
+
+.jf-connection-check-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.jf-connection-check-line strong {
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.jf-connection-check-badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--jf-state) 16%, transparent);
+  color: var(--jf-state);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.jf-connection-check-message {
+  color: #d6deea;
+  font-size: 0.85rem;
+}
+
+.jf-connection-check.is-skip .jf-connection-check-message {
+  color: #9aa6b8;
+}
+
+.jf-connection-check-hint {
+  margin-top: 4px;
+  color: #9aa6b8;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 576px) {
+  .jellyfin-integration-card.has-connection-layout {
+    padding: 14px;
+  }
+
+  .jf-connection-actions .btn {
+    flex: 1 1 100%;
+  }
+}
