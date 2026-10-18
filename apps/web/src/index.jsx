@@ -19,7 +19,7 @@ import { initReactI18next } from "react-i18next";
 import Loading from "./pages/components/general/loading.jsx";
 import baseUrl from "./lib/baseurl.jsx";
 import { FIRST_RUN_EXTRAS_KEY } from "./lib/first-run";
-import { languages } from "./lib/languages.jsx";
+import { languages, languageDirection } from "./lib/languages.js";
 import { DEFAULT_THEME, applyTheme } from "./lib/theme";
 import { initPwaInstall } from "./lib/pwa-install";
 import { isEmby } from "./lib/media-server";
@@ -38,6 +38,15 @@ const mediaServerNamePostProcessor = {
   name: "mediaServerName",
   process: (value) => (typeof value === "string" && isEmby() ? value.replace(/Jellyfin/g, "Emby") : value),
 };
+
+// Keep <html lang> and dir in step with the UI language so right-to-left languages lay out correctly.
+function applyDocumentLanguage(languageCode) {
+  if (!languageCode) return;
+  document.documentElement.lang = languageCode;
+  document.documentElement.dir = languageDirection(languageCode);
+}
+
+i18n.on("languageChanged", applyDocumentLanguage);
 
 i18n
   .use(Backend)
@@ -65,6 +74,7 @@ i18n
     },
   })
   .then(() => {
+    applyDocumentLanguage(i18n.resolvedLanguage || i18n.language);
     createRoot(document.getElementById("root")).render(
       <React.StrictMode>
         <Suspense fallback={<Loading />}>
