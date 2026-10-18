@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 import axios from "../lib/axios_instance";
+import { formatDate as formatLocaleDate } from "../lib/format-date";
 import { cachedGet } from "../lib/api-cache";
 import Config from "../lib/config";
 import { useTranslation } from "react-i18next";
@@ -80,13 +81,12 @@ function formatNumber(value) {
 }
 
 function formatDate(value) {
-  if (!value) return "Unknown";
-  return new Intl.DateTimeFormat("en-GB", {
+  return formatLocaleDate(value, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }, { fallback: "Unknown" });
 }
 
 function formatBytes(bytes) {
