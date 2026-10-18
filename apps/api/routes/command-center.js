@@ -1,6 +1,14 @@
 const express = require("express");
 const API = require("../classes/api-loader");
-const { getAuditLog, mergeSettings, addAuditEntry } = require("../classes/admin-history");
+const { getAuditLog, mergeSettings, addAuditEntry, getSettings } = require("../classes/admin-history");
+const {
+  clampRetentionDays,
+  resolveRetention,
+  rollupStatus,
+  MIN_RETENTION_DAYS,
+  MAX_RETENTION_DAYS,
+} = require("../classes/playback-rollups");
+const db = require("../db");
 const { getUserPreferences, saveUserTheme } = require("../classes/user-preferences");
 const Config = require("../classes/config");
 const {
@@ -306,6 +314,40 @@ router.post("/admin-audit/retention", async (req, res) => {
     res.send({ ok: true, retention });
   } catch (error) {
     res.status(500).send({ error: "Unable to save retention" });
+  }
+});
+
+// Raw playback retention. Off unless an admin turns it on; pruning is irreversible.
+router.get("/playback-retention", async (req, res) => {
+  try {
+    const settings = await getSettings();
+    const retention = resolveRetention(settings);
+    const status = await rollupStatus(db.pool).catch(() => null);
+    res.send({
+      days: retention.days,
+      source: retention.source,
+      min_days: MIN_RETENTION_DAYS,
+      max_days: MAX_RETENTION_DAYS,
+      rollups: status,
+    });
+  } catch (error) {
+    res.status(503).send({ error: "Unable to load playback retention" });
+  }
+});
+
+router.post("/playback-retention", async (req, res) => {
+  try {
+    const days = clampRetentionDays(req.body?.days);
+    // Turning pruning on deletes history for good, so it has to be confirmed explicitly.
+    if (days > 0 && req.body?.confirm !== true) {
+      return res.status(400).send({ error: "Confirm that old raw playback history will be deleted permanently." });
+    }
+    await mergeSettings({ PlaybackRetentionDays: days });
+    await addAuditEntry(req, "playback-retention.update", { days });
+    const effective = resolveRetention({ PlaybackRetentionDays: days });
+    res.send({ ok: true, days, effective_days: effective.days, source: effective.source });
+  } catch (error) {
+    res.status(500).send({ error: "Unable to save playback retention" });
   }
 });
 

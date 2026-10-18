@@ -5,6 +5,7 @@ import ErrorWarningLineIcon from "remixicon-react/ErrorWarningLineIcon";
 import HeartPulseLineIcon from "remixicon-react/HeartPulseLineIcon";
 import HistoryLineIcon from "remixicon-react/HistoryLineIcon";
 import Notification3LineIcon from "remixicon-react/Notification3LineIcon";
+import DatabaseLineIcon from "remixicon-react/Database2LineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
 import { Button, Spinner } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
@@ -40,6 +41,11 @@ export default function HealthSettings() {
   const [loading, setLoading] = useState(true);
   const [retention, setRetention] = useState(100);
   const [retryingId, setRetryingId] = useState("");
+  const [playbackRetention, setPlaybackRetention] = useState(null);
+  const [playbackEnabled, setPlaybackEnabled] = useState(false);
+  const [playbackDays, setPlaybackDays] = useState(365);
+  const [playbackConfirmed, setPlaybackConfirmed] = useState(false);
+  const [playbackMessage, setPlaybackMessage] = useState("");
 
   const recentFailures = useMemo(() => deliveries.filter((delivery) => !delivery.ok).slice(0, 5), [deliveries]);
 
@@ -56,8 +62,31 @@ export default function HealthSettings() {
       setDeliveries(deliveryResponse.data || []);
       setAudit(auditResponse.data || []);
       setRetention(Number(configResponse.data?.settings?.AdminAuditRetention || 100));
+      await loadPlaybackRetention();
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadPlaybackRetention() {
+    const response = await axios.get("/api/playback-retention", { headers: headers() }).catch(() => null);
+    if (!response?.data) return;
+    setPlaybackRetention(response.data);
+    const days = Number(response.data.days || 0);
+    setPlaybackEnabled(days > 0);
+    if (days > 0) setPlaybackDays(days);
+  }
+
+  async function savePlaybackRetention() {
+    setPlaybackMessage("");
+    try {
+      const days = playbackEnabled ? Number(playbackDays) : 0;
+      await axios.post("/api/playback-retention", { days, confirm: playbackEnabled && playbackConfirmed }, { headers: headers() });
+      setPlaybackConfirmed(false);
+      setPlaybackMessage(days > 0 ? `Saved. Raw playback older than ${days} days will be pruned on the next stats refresh.` : "Saved. Raw playback history is kept forever.");
+      await loadPlaybackRetention();
+    } catch (error) {
+      setPlaybackMessage(error?.response?.data?.error || "Unable to save playback retention.");
     }
   }
 
@@ -157,6 +186,77 @@ export default function HealthSettings() {
           {!deliveries.length ? <div className="health-empty">No webhook deliveries recorded yet.</div> : null}
         </div>
         {recentFailures.length ? <p className="health-warning">{recentFailures.length} recent webhook delivery failure{recentFailures.length === 1 ? "" : "s"}.</p> : null}
+      </section>
+
+      <section className="health-panel playback-retention-panel">
+        <div className="health-panel-title">
+          <DatabaseLineIcon size={20} />
+          <h2>Playback History Retention</h2>
+        </div>
+        <p className="playback-retention-intro">
+          Stats charts read from daily and monthly rollups, so they keep their totals even after old raw rows are gone. Pruning is off by default and
+          JellyGlance keeps every play unless you turn it on.
+        </p>
+        <div className="playback-retention-warning" role="alert">
+          <ErrorWarningLineIcon size={18} />
+          <div>
+            <strong>Pruning permanently deletes raw playback history.</strong>
+            <span>
+              Rows older than the limit are removed from the database and can&apos;t be brought back. Per-play detail is lost for those days: the
+              History and Activity lists, per-item and per-user history, the hour-of-day chart, Wrapped and anything else that reads individual plays. Only
+              days that are already in the rollups are pruned. Take a backup first (Settings &gt; Backup).
+            </span>
+          </div>
+        </div>
+        <div className="health-retention-row">
+          <label className="playback-retention-toggle">
+            <input
+              type="checkbox"
+              checked={playbackEnabled}
+              disabled={playbackRetention?.source === "env"}
+              onChange={(event) => {
+                setPlaybackEnabled(event.target.checked);
+                setPlaybackConfirmed(false);
+              }}
+            />
+            Prune raw playback older than
+          </label>
+          <label>
+            <input
+              type="number"
+              min={playbackRetention?.min_days || 30}
+              max={playbackRetention?.max_days || 36500}
+              value={playbackDays}
+              disabled={!playbackEnabled || playbackRetention?.source === "env"}
+              onChange={(event) => setPlaybackDays(Number(event.target.value))}
+            />
+            days
+          </label>
+          <Button
+            type="button"
+            size="sm"
+            variant={playbackEnabled ? "danger" : "primary"}
+            disabled={playbackRetention?.source === "env" || (playbackEnabled && !playbackConfirmed)}
+            onClick={savePlaybackRetention}
+          >
+            Save retention
+          </Button>
+        </div>
+        {playbackEnabled && playbackRetention?.source !== "env" ? (
+          <label className="playback-retention-confirm">
+            <input type="checkbox" checked={playbackConfirmed} onChange={(event) => setPlaybackConfirmed(event.target.checked)} />
+            I have a backup and understand that raw playback older than {playbackDays || 0} days will be deleted for good.
+          </label>
+        ) : null}
+        {playbackRetention?.source === "env" ? (
+          <p className="health-warning">Set by JS_PLAYBACK_RETENTION_DAYS ({playbackRetention.days ? `${playbackRetention.days} days` : "off"}). Change it in the environment.</p>
+        ) : null}
+        <div className="playback-retention-status">
+          <span>Status: {playbackRetention?.days ? `pruning after ${playbackRetention.days} days` : "off, keeping everything"}</span>
+          <span>Rolled up until {playbackRetention?.rollups?.rolled_up_through || "not yet"}</span>
+          <span>{playbackRetention?.rollups?.pruned_before ? `Raw rows pruned before ${playbackRetention.rollups.pruned_before}` : "Nothing pruned"}</span>
+        </div>
+        {playbackMessage ? <p className="playback-retention-message">{playbackMessage}</p> : null}
       </section>
 
       <section className="health-panel">
