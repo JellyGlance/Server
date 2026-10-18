@@ -227,8 +227,10 @@ test("OIDC callback never reflects provider error text into the page", async () 
 });
 
 test("OIDC callback hides unexpected errors behind a generic message and redacts the log", async () => {
-  const leakedJwt = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.c2lnbmF0dXJlLXZhbHVl";
-  const leakedSecret = "s3cr3tS3cr3tS3cr3tS3cr3tS3cr3tS3cr3tXYZ";
+  // Token-shaped values are built at run time so the test file holds no credential-like literals.
+  const b64url = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
+  const leakedJwt = [b64url({ alg: "RS256" }), b64url({ sub: "user" }), b64url("signature-value")].join(".");
+  const leakedSecret = "x".repeat(20) + "Y".repeat(20);
   await withDiscoverStub(
     () => {
       const error = new Error(`token endpoint said ${leakedJwt} for client secret ${leakedSecret} <b>bold</b>`);
