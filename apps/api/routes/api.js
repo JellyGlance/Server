@@ -56,6 +56,7 @@ const {
   mergeRolePermissionMap,
 } = require("../classes/role-permissions");
 const { normalizeApiKeyScope } = require("../classes/api-key-scope");
+const { normalizeUserId, resolveActivityScope, resolveStatsUser, restrictQueryToUser, sendForbidden } = require("../classes/stats-access");
 const {
   assertSafeObjectKey,
   hashPassword,
@@ -6363,6 +6364,11 @@ router.post("/getUserDetails", async (req, res) => {
       return;
     }
 
+    // Non-admins can only look up their own user.
+    const scope = resolveStatsUser(req, userid);
+    if (scope.forbidden) return sendForbidden(res);
+    if (!scope.admin && !scope.userId) return sendForbidden(res);
+
     const { rows } = await db.query(`select * from jf_users where "Id"=$1`, [userid]);
     res.send(rows[0]);
   } catch (error) {
@@ -6764,6 +6770,13 @@ router.get("/getHistory", async (req, res) => {
     }
   }
 
+  // Non-admins only see their own plays on the Activity page.
+  const scope = resolveActivityScope(req, { filters: filtersArray });
+  if (scope.forbidden) return sendForbidden(res);
+  if (!scope.admin && !scope.userId) {
+    return res.send({ current_page: page, pages: 0, size: size, sort: sort, desc: desc, results: [], scope: "self" });
+  }
+
   const sortField = groupedSortMap.find((item) => item.field === sort)?.column || "a.ActivityDateInserted";
 
   const values = [];
@@ -6862,13 +6875,22 @@ router.get("/getHistory", async (req, res) => {
     }
 
     dbHelper.buildFilterList(query, filtersArray, filterFields);
+    if (!scope.admin) restrictQueryToUser(query, scope.userId);
     const result = await dbHelper.query(query);
 
     result.results = result.results.map((item) => ({
       ...item,
       PlaybackDuration: item.TotalDuration ? item.TotalDuration : item.PlaybackDuration,
     }));
-    const response = { current_page: page, pages: result.pages, size: size, sort: sort, desc: desc, results: result.results };
+    const response = {
+      current_page: page,
+      pages: result.pages,
+      size: size,
+      sort: sort,
+      desc: desc,
+      results: result.results,
+      scope: scope.admin ? "all" : "self",
+    };
     if (search && search.length > 0) {
       response.search = search;
     }
@@ -6940,6 +6962,12 @@ router.post("/getLibraryHistory", async (req, res) => {
       res.status(400);
       res.send("No Library ID provided");
       return;
+    }
+
+    const scope = resolveActivityScope(req, { filters: filtersArray });
+    if (scope.forbidden) return sendForbidden(res);
+    if (!scope.admin && !scope.userId) {
+      return res.send({ current_page: page, pages: 0, size: size, sort: sort, desc: desc, results: [], scope: "self" });
     }
 
     const sortField = groupedSortMap.find((item) => item.field === sort)?.column || "a.ActivityDateInserted";
@@ -7029,6 +7057,7 @@ router.post("/getLibraryHistory", async (req, res) => {
     query.values = values;
 
     dbHelper.buildFilterList(query, filtersArray, filterFields);
+    if (!scope.admin) restrictQueryToUser(query, scope.userId);
 
     const result = await dbHelper.query(query);
 
@@ -7037,7 +7066,15 @@ router.post("/getLibraryHistory", async (req, res) => {
       PlaybackDuration: item.TotalDuration ? item.TotalDuration : item.PlaybackDuration,
     }));
 
-    const response = { current_page: page, pages: result.pages, size: size, sort: sort, desc: desc, results: result.results };
+    const response = {
+      current_page: page,
+      pages: result.pages,
+      size: size,
+      sort: sort,
+      desc: desc,
+      results: result.results,
+      scope: scope.admin ? "all" : "self",
+    };
     if (search && search.length > 0) {
       response.search = search;
     }
@@ -7112,6 +7149,12 @@ router.post("/getItemHistory", async (req, res) => {
       }
     }
 
+    const scope = resolveActivityScope(req, { filters: filtersArray });
+    if (scope.forbidden) return sendForbidden(res);
+    if (!scope.admin && !scope.userId) {
+      return res.send({ current_page: page, pages: 0, size: size, sort: sort, desc: desc, results: [], scope: "self" });
+    }
+
     const sortField = unGroupedSortMap.find((item) => item.field === sort)?.column || "a.ActivityDateInserted";
     const values = [];
     const query = {
@@ -7147,26 +7190,34 @@ router.post("/getItemHistory", async (req, res) => {
     values.push(itemid);
 
     if (search && search.length > 0) {
-      query.where = [
-        {
-          field: `LOWER(
+      // Add to the item/user condition rather than replacing it.
+      query.where.push({
+        field: `LOWER(
           CASE 
             WHEN a."SeriesName" is null THEN a."NowPlayingItemName"
             ELSE CONCAT(a."SeriesName" , ' : S' , a."SeasonNumber" , 'E' , a."EpisodeNumber" , ' - ' , a."NowPlayingItemName")
           END 
           )`,
-          operator: "LIKE",
-          value: `$${values.length + 1}`,
-        },
-      ];
+        operator: "LIKE",
+        value: `$${values.length + 1}`,
+      });
       values.push(`%${search.toLowerCase()}%`);
     }
 
     query.values = values;
     dbHelper.buildFilterList(query, filtersArray, filterFields);
+    if (!scope.admin) restrictQueryToUser(query, scope.userId);
     const result = await dbHelper.query(query);
 
-    const response = { current_page: page, pages: result.pages, size: size, sort: sort, desc: desc, results: result.results };
+    const response = {
+      current_page: page,
+      pages: result.pages,
+      size: size,
+      sort: sort,
+      desc: desc,
+      results: result.results,
+      scope: scope.admin ? "all" : "self",
+    };
     if (search && search.length > 0) {
       response.search = search;
     }
@@ -7243,6 +7294,10 @@ router.post("/getUserHistory", async (req, res) => {
       return;
     }
 
+    const scope = resolveActivityScope(req, { userId: userid, filters: filtersArray });
+    if (scope.forbidden) return sendForbidden(res);
+    if (!scope.admin && !scope.userId) return sendForbidden(res);
+
     const sortField = unGroupedSortMap.find((item) => item.field === sort)?.column || "a.ActivityDateInserted";
 
     const values = [];
@@ -7271,24 +7326,24 @@ router.post("/getUserHistory", async (req, res) => {
     values.push(userid);
 
     if (search && search.length > 0) {
-      query.where = [
-        {
-          field: `LOWER(
+      // Add to the item/user condition rather than replacing it.
+      query.where.push({
+        field: `LOWER(
           CASE 
             WHEN a."SeriesName" is null THEN a."NowPlayingItemName"
             ELSE CONCAT(a."SeriesName" , ' : S' , a."SeasonNumber" , 'E' , a."EpisodeNumber" , ' - ' , a."NowPlayingItemName")
           END 
           )`,
-          operator: "LIKE",
-          value: `$${values.length + 1}`,
-        },
-      ];
+        operator: "LIKE",
+        value: `$${values.length + 1}`,
+      });
       values.push(`%${search.toLowerCase()}%`);
     }
 
     query.values = values;
 
     dbHelper.buildFilterList(query, filtersArray, filterFields);
+    if (!scope.admin) restrictQueryToUser(query, scope.userId);
 
     const result = await dbHelper.query(query);
 
@@ -7331,7 +7386,14 @@ router.post("/deletePlaybackActivity", async (req, res) => {
 
 router.get("/getTimelineUsers", async (req, res) => {
   try {
-    const { rows } = await db.query(`SELECT "Id" AS "UserId", "Name" AS "UserName" FROM jf_users ORDER BY "Name"`);
+    // Non-admins only get themselves in the Timeline user picker.
+    const scope = resolveActivityScope(req);
+    if (!scope.admin && !scope.userId) return res.send([]);
+    const { rows } = scope.admin
+      ? await db.query(`SELECT "Id" AS "UserId", "Name" AS "UserName" FROM jf_users ORDER BY "Name"`)
+      : await db.query(`SELECT "Id" AS "UserId", "Name" AS "UserName" FROM jf_users WHERE replace(lower("Id"), '-', '') = $1 ORDER BY "Name"`, [
+          normalizeUserId(scope.userId),
+        ]);
     res.send(rows);
   } catch (error) {
     console.log(error);
@@ -7356,12 +7418,17 @@ router.post("/getActivityTimeLine", async (req, res) => {
       return;
     }
 
+    const scope = resolveStatsUser(req, userId);
+    if (scope.forbidden) return sendForbidden(res);
+    if (!scope.admin && !scope.userId) return sendForbidden(res);
+
+    const effectiveId = scope.admin ? userId : scope.userId;
     const libraryIds = Array.isArray(libraries) ? libraries : [];
     const limit = Math.min(Math.max(Number(req.body.limit) || 40, 1), 100);
     const offset = Math.max(Number(req.body.offset) || 0, 0);
 
     const { rows } = await db.query(`SELECT * FROM fs_get_user_activity($1, $2::text[]) LIMIT $3 OFFSET $4`, [
-      userId,
+      effectiveId,
       libraryIds,
       limit + 1,
       offset,

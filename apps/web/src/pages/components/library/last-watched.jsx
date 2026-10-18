@@ -53,7 +53,7 @@ function LibraryLastWatched(props) {
   }, [data,config, props.LibraryId]);
 
 
-  if (!data || !config) {
+  if (!data || !config || !Array.isArray(data) || data.length === 0) {
     return <></>;
   }
 
