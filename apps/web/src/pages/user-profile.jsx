@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import axios from "../lib/axios_instance";
 import Config from "../lib/config";
 import { slugifyUserName } from "../lib/userProfile";
@@ -102,6 +103,7 @@ function UserMediaRail({ title, subtitle, items = [], onAction, actions = [], va
 }
 
 export default function UserProfilePage() {
+  const { t } = useTranslation();
   const { UserId: userKey = "" } = useParams();
   const [profileUser, setProfileUser] = useState(null);
   const [profileRank, setProfileRank] = useState(0);
@@ -326,38 +328,38 @@ export default function UserProfilePage() {
           {activeProfileSection === "media" ? (
             <>
               <UserMediaRail
-                title="Continue Watching"
-                subtitle={`In-progress ${mediaServerName()} media for this user.`}
+                title={t("USER_PROFILE.CONTINUE_WATCHING")}
+                subtitle={t("USER_PROFILE.CONTINUE_WATCHING_SUBTITLE")}
                 items={filterMedia(mediaLists.continueWatching || [])}
                 onAction={runMediaAction}
                 actions={[{ label: "Watched", action: "markWatched" }]}
               />
-              <UserMediaRail title="Recently Watched" subtitle="Last 10 synced plays for this user." items={filterMedia(mediaLists.recentlyWatched || [])} />
+              <UserMediaRail title={t("USER_PROFILE.RECENTLY_WATCHED")} subtitle={t("USER_PROFILE.RECENTLY_WATCHED_SUBTITLE")} items={filterMedia(mediaLists.recentlyWatched || [])} />
               <UserMediaRail
-                title="Favourites"
-                subtitle={`${mediaServerName()} favourites for this user.`}
+                title={t("USER_PROFILE.FAVOURITES")}
+                subtitle={t("USER_PROFILE.FAVOURITES_SUBTITLE")}
                 items={filterMedia(mediaLists.favourites || [])}
                 onAction={runMediaAction}
                 actions={[{ label: "Unfavourite", action: "unfavourite" }, { label: "Watched", action: "markWatched" }]}
               />
               <UserMediaRail
-                title="Watchlist Movies"
-                subtitle={`Movies pulled from ${mediaServerName()} Watchlist.`}
+                title={t("USER_PROFILE.WATCHLIST_MOVIES")}
+                subtitle={t("USER_PROFILE.WATCHLIST_MOVIES_SUBTITLE")}
                 items={filterMedia(mediaLists.watchlistByType?.movies || [])}
                 onAction={runMediaAction}
                 actions={[{ label: "Remove", action: "removeWatchlist" }, { label: "Favourite", action: "favourite" }, { label: "Watched", action: "markWatched" }]}
                 variant="featured"
               />
               <UserMediaRail
-                title="Watchlist Shows"
-                subtitle={`Shows pulled from ${mediaServerName()} Watchlist.`}
+                title={t("USER_PROFILE.WATCHLIST_SHOWS")}
+                subtitle={t("USER_PROFILE.WATCHLIST_SHOWS_SUBTITLE")}
                 items={filterMedia(mediaLists.watchlistByType?.shows || [])}
                 onAction={runMediaAction}
                 actions={[{ label: "Remove", action: "removeWatchlist" }, { label: "Favourite", action: "favourite" }]}
                 variant="featured"
               />
-              <UserMediaRail title="Next Episodes" subtitle="Next unwatched episodes from this profile's shows." items={filterMedia(mediaLists.nextEpisodes || [])} onAction={runMediaAction} actions={[{ label: "Watched", action: "markWatched" }]} />
-              <UserMediaRail title="Recommended" subtitle="Suggestions based on watchlist genres." items={filterMedia(mediaLists.recommendations || [])} onAction={runMediaAction} actions={[{ label: "Watchlist", action: "addWatchlist" }, { label: "Favourite", action: "favourite" }]} />
+              <UserMediaRail title={t("USER_PROFILE.NEXT_EPISODES")} subtitle={t("USER_PROFILE.NEXT_EPISODES_SUBTITLE")} items={filterMedia(mediaLists.nextEpisodes || [])} onAction={runMediaAction} actions={[{ label: "Watched", action: "markWatched" }]} />
+              <UserMediaRail title={t("USER_PROFILE.RECOMMENDED")} subtitle={t("USER_PROFILE.RECOMMENDED_SUBTITLE")} items={filterMedia(mediaLists.recommendations || [])} onAction={runMediaAction} actions={[{ label: "Watchlist", action: "addWatchlist" }, { label: "Favourite", action: "favourite" }]} />
             </>
           ) : null}
 
@@ -373,13 +375,13 @@ export default function UserProfilePage() {
               {(mediaLists.taste?.studios || []).slice(0, 6).map((item) => <span key={`studio-${item.name}`}>{item.name} · {item.count}</span>)}
             </div>
             </section>
-            <UserMediaRail title="Shared Favourites" subtitle="Items this user and others overlap on." items={filterMedia(mediaLists.sharedFavourites || [])} />
+            <UserMediaRail title={t("USER_PROFILE.SHARED_FAVOURITES")} subtitle={t("USER_PROFILE.SHARED_FAVOURITES_SUBTITLE")} items={filterMedia(mediaLists.sharedFavourites || [])} />
           </> : null}
 
           {activeProfileSection === "household" ? <>
-            <UserMediaRail title="Family Watchlist" subtitle="Combined household watchlist, grouped by popularity." items={filterMedia([...(mediaLists.familyWatchlist?.movies || []), ...(mediaLists.familyWatchlist?.shows || [])])} />
-            <UserMediaRail title="Stale Watchlist" subtitle="Watchlisted for 30+ days and not cleared yet." items={filterMedia(mediaLists.staleWatchlist || [])} onAction={runMediaAction} actions={[{ label: "Remove", action: "removeWatchlist" }]} />
-            <UserMediaRail title="Library Gaps" subtitle="Watchlisted shows with an unwatched next episode to catch up on." items={filterMedia(mediaLists.libraryGaps || [])} />
+            <UserMediaRail title={t("USER_PROFILE.FAMILY_WATCHLIST")} subtitle={t("USER_PROFILE.FAMILY_WATCHLIST_SUBTITLE")} items={filterMedia([...(mediaLists.familyWatchlist?.movies || []), ...(mediaLists.familyWatchlist?.shows || [])])} />
+            <UserMediaRail title={t("USER_PROFILE.STALE_WATCHLIST")} subtitle={t("USER_PROFILE.STALE_WATCHLIST_SUBTITLE")} items={filterMedia(mediaLists.staleWatchlist || [])} onAction={runMediaAction} actions={[{ label: "Remove", action: "removeWatchlist" }]} />
+            <UserMediaRail title={t("USER_PROFILE.LIBRARY_GAPS")} subtitle={t("USER_PROFILE.LIBRARY_GAPS_SUBTITLE")} items={filterMedia(mediaLists.libraryGaps || [])} />
           </> : null}
         </div>
       </div>

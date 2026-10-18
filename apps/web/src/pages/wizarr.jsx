@@ -9,6 +9,7 @@ import SearchLineIcon from "remixicon-react/SearchLineIcon";
 import UserAddLineIcon from "remixicon-react/UserAddLineIcon";
 import { useTranslation } from "react-i18next";
 import axios from "../lib/axios_instance";
+import { formatDate as formatLocaleDate } from "../lib/format-date";
 import "./css/integrations.css";
 
 const emptyForm = {
@@ -27,14 +28,13 @@ const emptyForm = {
 };
 
 function formatDate(value) {
-  if (!value) return "Never";
-  return new Intl.DateTimeFormat("en-GB", {
+  return formatLocaleDate(value, {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }, { fallback: "Never" });
 }
 
 function statusLabel(invite) {
