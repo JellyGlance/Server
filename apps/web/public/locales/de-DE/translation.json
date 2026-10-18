@@ -1098,5 +1098,35 @@
     "IOS_HINT": "Install JellyGlance: tap Share in Safari, then Add to Home Screen.",
     "INSTALL": "Install",
     "NOT_NOW": "Not now"
+  },
+  "USER_PROFILE": {
+    "CONTINUE_WATCHING": "Continue Watching",
+    "CONTINUE_WATCHING_SUBTITLE": "In-progress Jellyfin media for this user.",
+    "RECENTLY_WATCHED": "Recently Watched",
+    "RECENTLY_WATCHED_SUBTITLE": "Last 10 synced plays for this user.",
+    "FAVOURITES": "Favourites",
+    "FAVOURITES_SUBTITLE": "Jellyfin favourites for this user.",
+    "WATCHLIST_MOVIES": "Watchlist Movies",
+    "WATCHLIST_MOVIES_SUBTITLE": "Movies pulled from Jellyfin Watchlist.",
+    "WATCHLIST_SHOWS": "Watchlist Shows",
+    "WATCHLIST_SHOWS_SUBTITLE": "Shows pulled from Jellyfin Watchlist.",
+    "NEXT_EPISODES": "Next Episodes",
+    "NEXT_EPISODES_SUBTITLE": "Next unwatched episodes from this profile's shows.",
+    "RECOMMENDED": "Recommended",
+    "RECOMMENDED_SUBTITLE": "Suggestions based on watchlist genres.",
+    "SHARED_FAVOURITES": "Shared Favourites",
+    "SHARED_FAVOURITES_SUBTITLE": "Items this user and others overlap on.",
+    "FAMILY_WATCHLIST": "Family Watchlist",
+    "FAMILY_WATCHLIST_SUBTITLE": "Combined household watchlist, grouped by popularity.",
+    "STALE_WATCHLIST": "Stale Watchlist",
+    "STALE_WATCHLIST_SUBTITLE": "Watchlisted for 30+ days and not cleared yet.",
+    "LIBRARY_GAPS": "Library Gaps",
+    "LIBRARY_GAPS_SUBTITLE": "Watchlisted shows with an unwatched next episode to catch up on."
+  },
+  "WIZARR": {
+    "USED_BY": "Used by {{user}}",
+    "COPY_INVITE": "Copy invite link {{code}}",
+    "OPEN_INVITE": "Open invite {{code}}",
+    "DELETE_INVITE": "Delete invite {{code}}"
   }
 }

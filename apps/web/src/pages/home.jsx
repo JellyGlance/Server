@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 import axios from "../lib/axios_instance";
+import { formatDate as formatLocaleDate } from "../lib/format-date";
 import { cachedGet } from "../lib/api-cache";
 import Config from "../lib/config";
 import { useTranslation } from "react-i18next";
@@ -80,13 +81,12 @@ function formatNumber(value) {
 }
 
 function formatDate(value) {
-  if (!value) return "Unknown";
-  return new Intl.DateTimeFormat("en-GB", {
+  return formatLocaleDate(value, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }, { fallback: "Unknown" });
 }
 
 function formatBytes(bytes) {
@@ -561,6 +561,8 @@ export default function Home({ kioskMode = false }) {
   const topItem = weekPulse.topItem;
   const activeViewer = weekPulse.mostActiveViewer;
   const quietUsers = weekPulse.quietUsers || [];
+  // Accounts that can't see every user get their own week instead of the leaderboards.
+  const ownActivityOnly = dashboard?.scope === "self";
   const trendDelta = dashboard?.trends?.delta || {};
   const todayTrend = dashboard?.trends?.today || {};
   const libraryIssues = dashboard?.libraryIssues || {};
@@ -1175,7 +1177,7 @@ export default function Home({ kioskMode = false }) {
         </article>
       </section> : null}
 
-      {shouldRenderSection("hall") ? <section className={getHomeSectionClass("hall", "home-hall-section")} style={getHomeSectionStyle("hall")}>
+      {shouldRenderSection("hall") && !ownActivityOnly ? <section className={getHomeSectionClass("hall", "home-hall-section")} style={getHomeSectionStyle("hall")}>
         <div className="home-section-title">
           <TrophyLineIcon size={20} />
           <h2>Hall of Fame</h2>
@@ -1316,22 +1318,32 @@ export default function Home({ kioskMode = false }) {
           <FireLineIcon size={20} />
           <h2>This Week</h2>
         </div>
-        <div className="home-week-grid">
+        <div className={`home-week-grid${ownActivityOnly ? " is-own-week" : ""}`}>
           <article className="home-week-feature">
             <span>Top item</span>
             <strong className={!dashboard ? "home-value-skeleton" : ""}>{dashboard ? topItem?.name || "No plays yet" : ""}</strong>
             {dashboard ? <small>{topItem ? `${formatNumber(topItem.plays)} plays · ${formatDuration(topItem.watchSeconds)}` : "Waiting for this week's viewing history."}</small> : <small className="home-detail-skeleton" />}
           </article>
-          <article>
-            <span>Most active</span>
-            <strong className={!dashboard ? "home-value-skeleton" : ""}>{dashboard ? activeViewer?.userName || "Nobody yet" : ""}</strong>
-            {dashboard ? <small>{activeViewer ? `${formatNumber(activeViewer.plays)} plays this week` : "No weekly activity found."}</small> : <small className="home-detail-skeleton" />}
-          </article>
-          <article>
-            <span>Quiet users</span>
-            <strong className={!dashboard ? "home-value-skeleton" : ""}>{dashboard ? formatNumber(quietUsers.length) : ""}</strong>
-            {dashboard ? <small>{quietUsers.length ? quietUsers.map((user) => user.userName).join(", ") : "Everyone has checked in recently."}</small> : <small className="home-detail-skeleton" />}
-          </article>
+          {ownActivityOnly ? (
+            <article>
+              <span>Your week</span>
+              <strong>{formatNumber(activeViewer?.plays || 0)} plays</strong>
+              <small>{activeViewer ? `${formatDuration(activeViewer.watchSeconds)} watched this week` : "No plays this week yet."}</small>
+            </article>
+          ) : (
+            <>
+              <article>
+                <span>Most active</span>
+                <strong className={!dashboard ? "home-value-skeleton" : ""}>{dashboard ? activeViewer?.userName || "Nobody yet" : ""}</strong>
+                {dashboard ? <small>{activeViewer ? `${formatNumber(activeViewer.plays)} plays this week` : "No weekly activity found."}</small> : <small className="home-detail-skeleton" />}
+              </article>
+              <article>
+                <span>Quiet users</span>
+                <strong className={!dashboard ? "home-value-skeleton" : ""}>{dashboard ? formatNumber(quietUsers.length) : ""}</strong>
+                {dashboard ? <small>{quietUsers.length ? quietUsers.map((user) => user.userName).join(", ") : "Everyone has checked in recently."}</small> : <small className="home-detail-skeleton" />}
+              </article>
+            </>
+          )}
         </div>
       </section> : null}
 

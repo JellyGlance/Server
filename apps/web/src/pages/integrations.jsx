@@ -14,6 +14,8 @@ import Settings3LineIcon from "remixicon-react/Settings3LineIcon";
 import UploadCloud2LineIcon from "remixicon-react/UploadCloud2LineIcon";
 import UserAddLineIcon from "remixicon-react/UserAddLineIcon";
 import axios from "../lib/axios_instance";
+import { useTranslation } from "react-i18next";
+import { formatDate as formatLocaleDate } from "../lib/format-date";
 import { loadSavedIntegrations, saveSavedIntegrations } from "../lib/integrations-storage";
 import JellyfinIntegrationSettings from "./components/settings/JellyfinIntegrationSettings";
 import "./css/integrations.css";
@@ -211,13 +213,12 @@ function AppIcon({ app }) {
 }
 
 function formatHealthDate(value) {
-  if (!value) return "Never";
-  return new Intl.DateTimeFormat("en-GB", {
+  return formatLocaleDate(value, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }, { fallback: "Never" });
 }
 
 function summarizeHealth(entries = []) {
@@ -354,6 +355,8 @@ function IntegrationCard({ app, type, onChange, onRemove, onSave, onTest, onCopy
 }
 
 export default function Integrations({ embedded = false, firstRun = false, activeTab: controlledActiveTab = "", onTabChange, actions = null }) {
+  // Re-render dates and numbers in the new locale when the language changes.
+  useTranslation();
   const fileInputRef = useRef(null);
   const firstRunDefaultTab = firstRun ? "automation" : "media-server";
   const availableTabItems = firstRun ? integrationTabItems.filter(([key]) => key !== "media-server") : integrationTabItems;
