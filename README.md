@@ -321,8 +321,18 @@ These are the main environment variables. The full list is in the [configuration
 | `REJECT_SELF_SIGNED_CERTIFICATES` | `true` | Set to `false` to allow self-signed HTTPS on your media server and apps |
 | `JF_USE_WEBSOCKETS` | `true` | Set to `false` to poll for sessions instead of using WebSockets |
 | `JS_GEOLITE_ACCOUNT_ID`, `JS_GEOLITE_LICENSE_KEY` | | Optional MaxMind GeoLite credentials to show where client IPs are |
+| `JS_PLAYBACK_RETENTION_DAYS` | off | Prune raw playback rows older than this many days (minimum `30`, `0` turns it off). Overrides **Settings > Health**. **Pruning is permanent**, see [Stats rollups and playback retention](#stats-rollups-and-playback-retention). |
 | `GITHUB_TOKEN` | | Optional token for the update check and the About page, to avoid GitHub rate limits |
 | `CONFIG_DIR`, `BACKUP_DIR` | `/app/config`, `/app/backups` | Where config and backups are stored |
+
+### Stats rollups and playback retention
+
+The stats charts (views over time and popular days of the week) read from daily and monthly rollup tables instead of scanning every play, so they stay fast on big libraries. The **Refresh Dashboard Stats** task fills the rollups: its first run after updating backfills all existing history, and later runs only redo the last few days plus any older day whose plays changed (after an import, for example). Today is always read live. Until that first run finishes, the charts read the raw history exactly as before. Each play is counted on its own, so two streams of the same title by the same person count as two plays.
+
+Raw playback retention is **off by default**, and JellyGlance keeps every play unless you turn it on in **Settings > Health > Playback History Retention** or set `JS_PLAYBACK_RETENTION_DAYS`. When it's on, raw rows older than the limit are deleted on the next stats refresh, but only for days that are already in the rollups.
+
+> [!WARNING]
+> Pruning can't be undone. The deleted rows are gone from the database, and with them the per-play detail for those days: History and Activity lists, per-item and per-user history, the hour-of-day chart, Wrapped, and anything else that reads individual plays. The daily and monthly totals stay. **Take a backup (Settings > Backup) before you turn it on.**
 
 ## Updating
 
