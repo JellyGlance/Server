@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { isBotContributor, humanContributors, createContributorsSource } = require("../utils/github-contributors");
+const { isBotContributor, humanContributors, mergeContributors, createContributorsSource } = require("../utils/github-contributors");
 
 const API_LIST = [
   { login: "Nerdy-Technician", type: "User", contributions: 330 },
@@ -105,4 +105,21 @@ test("a list with only automation accounts never replaces the good cache", async
   const result = await source();
   assert.equal(result.contributors.length, 3);
   assert.equal(JSON.parse(fs.readFileSync(cacheFile, "utf8")).data.contributors.length, API_LIST.length);
+});
+
+test("merged pull request authors missing from /contributors are added once", () => {
+  const merged = mergeContributors(
+    [{ login: "Nerdy-Technician", type: "User", contributions: 362 }, { login: "mcgarrah", type: "User", contributions: 1 }],
+    [
+      { login: "roondar", type: "User" },
+      { login: "After-Shock", type: "User" },
+      { login: "After-Shock", type: "User" },
+      { login: "MCGARRAH", type: "User" },
+      { login: "dependabot[bot]", type: "Bot" },
+    ]
+  );
+  assert.deepEqual(
+    humanContributors(merged).map((c) => [c.login, c.contributions]),
+    [["Nerdy-Technician", 362], ["mcgarrah", 1], ["roondar", 1], ["After-Shock", 2]]
+  );
 });

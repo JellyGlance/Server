@@ -78,6 +78,29 @@ function humanContributors(list) {
   return (Array.isArray(list) ? list : []).filter((contributor) => !isBotContributor(contributor)).map(normalizeContributor);
 }
 
+// Squash merges are committed by the maintainer, so a PR author whose commit
+// email isn't linked to their GitHub account never shows up in /contributors.
+// Merge in merged-PR authors (counting one contribution per PR) and dedupe by login.
+function mergeContributors(commitContributors, pullRequestAuthors) {
+  const byLogin = new Map();
+  for (const contributor of Array.isArray(commitContributors) ? commitContributors : []) {
+    const key = String(contributor?.login || "").toLowerCase();
+    if (!key) continue;
+    const existing = byLogin.get(key);
+    if (existing) existing.contributions = Number(existing.contributions || 0) + Number(contributor.contributions || 0);
+    else byLogin.set(key, { ...contributor });
+  }
+  const prCounts = new Map();
+  for (const author of Array.isArray(pullRequestAuthors) ? pullRequestAuthors : []) {
+    const key = String(author?.login || "").toLowerCase();
+    if (!key || byLogin.has(key)) continue;
+    const entry = prCounts.get(key) || { ...author, contributions: 0 };
+    entry.contributions += 1;
+    prCounts.set(key, entry);
+  }
+  return [...byLogin.values(), ...prCounts.values()];
+}
+
 function readJson(file) {
   try {
     if (!fs.existsSync(file)) return null;
@@ -142,4 +165,4 @@ function createContributorsSource({ fetchList, cacheFile, snapshotFile = SNAPSHO
   };
 }
 
-module.exports = { EXCLUDED_LOGINS, CACHE_TTL_MS, isBotContributor, humanContributors, normalizeContributor, createContributorsSource };
+module.exports = { EXCLUDED_LOGINS, CACHE_TTL_MS, isBotContributor, humanContributors, normalizeContributor, mergeContributors, createContributorsSource };
