@@ -457,6 +457,23 @@
       "KEY_SAVED_HINT": "Atslēga ir saglabāta un paslēpta. Ielīmējiet to vēlreiz vai jaunu, kad atjaunināt savienojumu.",
       "SHOW_KEY": "Rādīt API atslēgu",
       "HIDE_KEY": "Paslēpt API atslēgu"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Publisks klients (bez noslēpuma, tikai PKCE). Noņem saglabāto noslēpumu.",
+      "SCOPES": "Tvērumi",
+      "GROUPS_CLAIM": "Grupu prasība",
+      "ROLE_MAPPING": "Grupu kartēšana uz lomām",
+      "ROLE_MAPPING_HINT": "Viens group=Role katrā rindā. Tiek piemērota augstākā atbilstošā loma. Atstājiet tukšu, lai saglabātu lomas, kas iestatītas lapā Lietotāji.",
+      "LINK_POLICY": "Saistīt pierakstīšanās ar lietotājiem",
+      "LINK_VERIFIED_EMAIL": "Tikai pēc verificētas e-pasta adreses, kas atbilst lietotājam (ieteicams)",
+      "LINK_USERNAME": "Pēc lietotājvārda (uzticēties nodrošinātāja lietotājvārdiem)",
+      "LINK_MANUAL": "Nekad automātiski (tikai esošās saites)",
+      "LINK_USERNAME_WARNING": "Izmantojiet šo tikai tad, ja pie jūsu nodrošinātāja neviens nevar pats izvēlēties savu lietotājvārdu, citādi kāds varētu pierakstīties kā cits lietotājs.",
+      "DEFAULT_ROLE": "Noklusējuma loma",
+      "AUTO_PROVISION": "Izveidot JellyGlance kontu pierakstīšanās reizēm, kas neatbilst nevienam lietotājam",
+      "BREAK_GLASS": "Lokālie konti un pierakstīšanās ar vides mainīgajiem JS_USER / JS_PASSWORD turpina darboties, tāpēc varēsiet piekļūt arī tad, ja vienotā pierakstīšanās sabojājas.",
+      "USE_LOCAL": "Pierakstīties ar lokālu kontu",
+      "USE_SSO": "Atpakaļ uz vienoto pierakstīšanos"
     }
   },
   "TASK_TYPE": {

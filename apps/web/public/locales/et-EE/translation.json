@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Võti on salvestatud ja peidetud. Kleebi see või uus võti uuesti, kui ühendust uuendad.",
       "SHOW_KEY": "Näita API-võtit",
       "HIDE_KEY": "Peida API-võti"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Avalik klient (saladuseta, ainult PKCE). Eemaldab salvestatud saladuse.",
+      "SCOPES": "Ulatused",
+      "GROUPS_CLAIM": "Gruppide väide",
+      "ROLE_MAPPING": "Gruppide vastendamine rollidega",
+      "ROLE_MAPPING_HINT": "Üks group=Role rea kohta. Kehtib kõrgeim sobiv roll. Jätke tühjaks, et säilitada lehel Kasutajad määratud rollid.",
+      "LINK_POLICY": "Seo sisselogimised kasutajatega",
+      "LINK_VERIFIED_EMAIL": "Ainult kasutajaga sobiva kinnitatud e-posti aadressi korral (soovitatav)",
+      "LINK_USERNAME": "Kasutajanime järgi (usalda teenusepakkuja kasutajanimesid)",
+      "LINK_MANUAL": "Mitte kunagi automaatselt (ainult olemasolevad seosed)",
+      "LINK_USERNAME_WARNING": "Kasutage seda ainult siis, kui teie teenusepakkuja juures ei saa keegi oma kasutajanime ise valida, muidu võib keegi sisse logida teise kasutajana.",
+      "DEFAULT_ROLE": "Vaikeroll",
+      "AUTO_PROVISION": "Loo JellyGlance'i konto sisselogimistele, mis ei sobi ühegi kasutajaga",
+      "BREAK_GLASS": "Kohalikud kontod ja keskkonnamuutujatega JS_USER / JS_PASSWORD sisselogimine töötavad edasi, nii et pääsete sisse ka siis, kui ühekordne sisselogimine katki läheb.",
+      "USE_LOCAL": "Logi hoopis sisse kohaliku kontoga",
+      "USE_SSO": "Tagasi ühekordse sisselogimise juurde"
     }
   },
   "TASK_TYPE": {

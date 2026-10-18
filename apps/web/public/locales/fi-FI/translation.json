@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Avain on tallennettu ja piilotettu. Liitä se uudelleen tai uusi avain, kun päivität yhteyden.",
       "SHOW_KEY": "Näytä API-avain",
       "HIDE_KEY": "Piilota API-avain"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Julkinen asiakas (ei salaisuutta, vain PKCE). Poistaa tallennetun salaisuuden.",
+      "SCOPES": "Laajuudet",
+      "GROUPS_CLAIM": "Ryhmäväite",
+      "ROLE_MAPPING": "Ryhmien ja roolien vastaavuus",
+      "ROLE_MAPPING_HINT": "Yksi group=Role riviä kohden. Korkein vastaava rooli on voimassa. Jätä tyhjäksi, jos haluat säilyttää Käyttäjät-sivulla asetetut roolit.",
+      "LINK_POLICY": "Yhdistä kirjautumiset käyttäjiin",
+      "LINK_VERIFIED_EMAIL": "Vain käyttäjää vastaavalla vahvistetulla sähköpostiosoitteella (suositus)",
+      "LINK_USERNAME": "Käyttäjänimen perusteella (luota palveluntarjoajan käyttäjänimiin)",
+      "LINK_MANUAL": "Ei koskaan automaattisesti (vain olemassa olevat yhteydet)",
+      "LINK_USERNAME_WARNING": "Käytä tätä vain, jos kukaan ei voi valita omaa käyttäjänimeään palveluntarjoajallasi, muuten joku voisi kirjautua toisena käyttäjänä.",
+      "DEFAULT_ROLE": "Oletusrooli",
+      "AUTO_PROVISION": "Luo JellyGlance-tili kirjautumisille, jotka eivät vastaa yhtäkään käyttäjää",
+      "BREAK_GLASS": "Paikalliset tilit ja kirjautuminen ympäristömuuttujilla JS_USER / JS_PASSWORD toimivat edelleen, joten pääset sisään, vaikka kertakirjautuminen lakkaisi toimimasta.",
+      "USE_LOCAL": "Kirjaudu sen sijaan paikallisella tilillä",
+      "USE_SSO": "Takaisin kertakirjautumiseen"
     }
   },
   "TASK_TYPE": {

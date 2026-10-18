@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Kunci telah disimpan dan disembunyikan. Tampalkannya semula, atau kunci baharu, apabila anda mengemas kini sambungan.",
       "SHOW_KEY": "Tunjukkan kunci API",
       "HIDE_KEY": "Sembunyikan kunci API"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Klien awam (tiada rahsia, PKCE sahaja). Membuang rahsia yang disimpan.",
+      "SCOPES": "Skop",
+      "GROUPS_CLAIM": "Tuntutan kumpulan",
+      "ROLE_MAPPING": "Pemetaan kumpulan kepada peranan",
+      "ROLE_MAPPING_HINT": "Satu group=Role bagi setiap baris. Peranan tertinggi yang sepadan akan digunakan. Biarkan kosong untuk mengekalkan peranan yang ditetapkan di halaman Pengguna.",
+      "LINK_POLICY": "Pautkan log masuk kepada pengguna",
+      "LINK_VERIFIED_EMAIL": "Hanya pada e-mel yang disahkan dan sepadan dengan pengguna (disyorkan)",
+      "LINK_USERNAME": "Mengikut nama pengguna (percayai nama pengguna pembekal)",
+      "LINK_MANUAL": "Jangan sekali-kali secara automatik (pautan sedia ada sahaja)",
+      "LINK_USERNAME_WARNING": "Gunakan ini hanya jika tiada sesiapa boleh memilih nama pengguna sendiri di pembekal anda, jika tidak mereka boleh log masuk sebagai pengguna lain.",
+      "DEFAULT_ROLE": "Peranan lalai",
+      "AUTO_PROVISION": "Cipta akaun JellyGlance untuk log masuk yang tidak sepadan dengan mana-mana pengguna",
+      "BREAK_GLASS": "Akaun setempat dan log masuk pemboleh ubah persekitaran JS_USER / JS_PASSWORD terus berfungsi, jadi anda masih boleh masuk jika log masuk tunggal rosak.",
+      "USE_LOCAL": "Log masuk dengan akaun setempat",
+      "USE_SSO": "Kembali ke log masuk tunggal"
     }
   },
   "TASK_TYPE": {

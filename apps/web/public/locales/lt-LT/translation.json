@@ -458,6 +458,23 @@
       "KEY_SAVED_HINT": "Raktas išsaugotas ir paslėptas. Įklijuokite jį dar kartą arba naują, kai atnaujinsite ryšį.",
       "SHOW_KEY": "Rodyti API raktą",
       "HIDE_KEY": "Slėpti API raktą"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Viešasis klientas (be paslapties, tik PKCE). Pašalina išsaugotą paslaptį.",
+      "SCOPES": "Apimtys",
+      "GROUPS_CLAIM": "Grupių teiginys",
+      "ROLE_MAPPING": "Grupių susiejimas su vaidmenimis",
+      "ROLE_MAPPING_HINT": "Po vieną group=Role eilutėje. Galioja aukščiausias atitinkantis vaidmuo. Palikite tuščią, kad liktų vaidmenys, nustatyti puslapyje Naudotojai.",
+      "LINK_POLICY": "Susieti prisijungimus su naudotojais",
+      "LINK_VERIFIED_EMAIL": "Tik pagal patvirtintą el. paštą, atitinkantį naudotoją (rekomenduojama)",
+      "LINK_USERNAME": "Pagal naudotojo vardą (pasitikėti teikėjo naudotojų vardais)",
+      "LINK_MANUAL": "Niekada automatiškai (tik esami susiejimai)",
+      "LINK_USERNAME_WARNING": "Naudokite tai tik tada, jei pas jūsų teikėją niekas negali pats pasirinkti naudotojo vardo, kitaip kas nors galėtų prisijungti kaip kitas naudotojas.",
+      "DEFAULT_ROLE": "Numatytasis vaidmuo",
+      "AUTO_PROVISION": "Sukurti JellyGlance paskyrą prisijungimams, kurie neatitinka jokio naudotojo",
+      "BREAK_GLASS": "Vietinės paskyros ir prisijungimas per aplinkos kintamuosius JS_USER / JS_PASSWORD toliau veikia, todėl galėsite prisijungti, net jei sugestų bendrasis prisijungimas.",
+      "USE_LOCAL": "Prisijungti vietine paskyra",
+      "USE_SSO": "Grįžti į bendrąjį prisijungimą"
     }
   },
   "TASK_TYPE": {

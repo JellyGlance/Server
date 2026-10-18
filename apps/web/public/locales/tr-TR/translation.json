@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Bir anahtar kayıtlı ve gizli tutuluyor. Bağlantıyı güncellerken onu veya yeni bir anahtarı tekrar yapıştırın.",
       "SHOW_KEY": "API anahtarını göster",
       "HIDE_KEY": "API anahtarını gizle"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Herkese açık istemci (gizli anahtar yok, yalnızca PKCE). Kayıtlı gizli anahtarı kaldırır.",
+      "SCOPES": "Kapsamlar",
+      "GROUPS_CLAIM": "Grup talebi",
+      "ROLE_MAPPING": "Gruptan role eşleme",
+      "ROLE_MAPPING_HINT": "Her satıra bir group=Role. Eşleşen en yüksek rol geçerli olur. Kullanıcılar sayfasında ayarlanan rolleri korumak için boş bırakın.",
+      "LINK_POLICY": "Oturum açmaları kullanıcılara bağla",
+      "LINK_VERIFIED_EMAIL": "Yalnızca bir kullanıcıyla eşleşen doğrulanmış e-postada (önerilir)",
+      "LINK_USERNAME": "Kullanıcı adına göre (sağlayıcının kullanıcı adlarına güven)",
+      "LINK_MANUAL": "Asla otomatik değil (yalnızca mevcut bağlantılar)",
+      "LINK_USERNAME_WARNING": "Bunu yalnızca sağlayıcınızda kimse kendi kullanıcı adını seçemiyorsa kullanın; aksi halde başka bir kullanıcı olarak oturum açabilirler.",
+      "DEFAULT_ROLE": "Varsayılan rol",
+      "AUTO_PROVISION": "Hiçbir kullanıcıyla eşleşmeyen oturum açmalar için JellyGlance hesabı oluştur",
+      "BREAK_GLASS": "Yerel hesaplar ve JS_USER / JS_PASSWORD ortam değişkeniyle giriş çalışmaya devam eder, böylece çoklu oturum açma bozulsa bile içeri girebilirsiniz.",
+      "USE_LOCAL": "Bunun yerine yerel hesapla oturum aç",
+      "USE_SSO": "Çoklu oturum açmaya dön"
     }
   },
   "TASK_TYPE": {

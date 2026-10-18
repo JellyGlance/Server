@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Kunci tersimpan dan disembunyikan. Tempel lagi, atau kunci baru, saat Anda memperbarui koneksi.",
       "SHOW_KEY": "Tampilkan kunci API",
       "HIDE_KEY": "Sembunyikan kunci API"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Klien publik (tanpa secret, hanya PKCE). Menghapus secret yang tersimpan.",
+      "SCOPES": "Cakupan",
+      "GROUPS_CLAIM": "Klaim grup",
+      "ROLE_MAPPING": "Pemetaan grup ke peran",
+      "ROLE_MAPPING_HINT": "Satu group=Role per baris. Peran tertinggi yang cocok yang berlaku. Biarkan kosong untuk mempertahankan peran yang diatur di halaman Pengguna.",
+      "LINK_POLICY": "Tautkan login ke pengguna",
+      "LINK_VERIFIED_EMAIL": "Hanya pada email terverifikasi yang cocok dengan pengguna (disarankan)",
+      "LINK_USERNAME": "Berdasarkan nama pengguna (percayai nama pengguna dari penyedia)",
+      "LINK_MANUAL": "Jangan pernah otomatis (hanya tautan yang sudah ada)",
+      "LINK_USERNAME_WARNING": "Gunakan ini hanya jika tidak ada yang bisa memilih nama penggunanya sendiri di penyedia Anda, jika tidak mereka bisa masuk sebagai pengguna lain.",
+      "DEFAULT_ROLE": "Peran default",
+      "AUTO_PROVISION": "Buat akun JellyGlance untuk login yang tidak cocok dengan pengguna mana pun",
+      "BREAK_GLASS": "Akun lokal dan login variabel lingkungan JS_USER / JS_PASSWORD tetap berfungsi, jadi Anda tetap bisa masuk jika single sign-on bermasalah.",
+      "USE_LOCAL": "Masuk dengan akun lokal saja",
+      "USE_SSO": "Kembali ke single sign-on"
     }
   },
   "TASK_TYPE": {

@@ -458,6 +458,23 @@
       "KEY_SAVED_HINT": "Kľúč je uložený a skrytý. Pri aktualizácii pripojenia ho vložte znova alebo zadajte nový.",
       "SHOW_KEY": "Zobraziť kľúč API",
       "HIDE_KEY": "Skryť kľúč API"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Verejný klient (bez tajomstva, iba PKCE). Odstráni uložené tajomstvo.",
+      "SCOPES": "Rozsahy",
+      "GROUPS_CLAIM": "Claim skupín",
+      "ROLE_MAPPING": "Priradenie skupín k rolám",
+      "ROLE_MAPPING_HINT": "Jeden group=Role na riadok. Platí najvyššia zhodná rola. Nechajte prázdne, ak chcete zachovať roly nastavené na stránke Používatelia.",
+      "LINK_POLICY": "Prepájať prihlásenia s používateľmi",
+      "LINK_VERIFIED_EMAIL": "Iba pri overenom e-maile, ktorý sa zhoduje s používateľom (odporúčané)",
+      "LINK_USERNAME": "Podľa používateľského mena (dôverovať používateľským menám poskytovateľa)",
+      "LINK_MANUAL": "Nikdy automaticky (iba existujúce prepojenia)",
+      "LINK_USERNAME_WARNING": "Použite to iba vtedy, ak si u vášho poskytovateľa nikto nemôže sám zvoliť používateľské meno, inak by sa niekto mohol prihlásiť ako iný používateľ.",
+      "DEFAULT_ROLE": "Predvolená rola",
+      "AUTO_PROVISION": "Vytvoriť účet JellyGlance pre prihlásenia, ktoré sa nezhodujú so žiadnym používateľom",
+      "BREAK_GLASS": "Lokálne účty a prihlásenie cez premenné prostredia JS_USER / JS_PASSWORD fungujú aj naďalej, takže sa prihlásite, aj keď jednotné prihlásenie prestane fungovať.",
+      "USE_LOCAL": "Prihlásiť sa lokálnym účtom",
+      "USE_SSO": "Späť na jednotné prihlásenie"
     }
   },
   "TASK_TYPE": {

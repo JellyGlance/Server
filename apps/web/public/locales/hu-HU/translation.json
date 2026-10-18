@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Egy kulcs el van mentve és rejtve van. A kapcsolat frissítésekor illessze be újra, vagy adjon meg újat.",
       "SHOW_KEY": "API-kulcs megjelenítése",
       "HIDE_KEY": "API-kulcs elrejtése"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Nyilvános kliens (titkos kulcs nélkül, csak PKCE). Törli a mentett titkos kulcsot.",
+      "SCOPES": "Hatókörök",
+      "GROUPS_CLAIM": "Csoport-claim",
+      "ROLE_MAPPING": "Csoportok és szerepkörök megfeleltetése",
+      "ROLE_MAPPING_HINT": "Soronként egy group=Role. A legmagasabb egyező szerepkör érvényes. Hagyd üresen, ha a Felhasználók oldalon beállított szerepköröket szeretnéd megtartani.",
+      "LINK_POLICY": "Bejelentkezések összekapcsolása felhasználókkal",
+      "LINK_VERIFIED_EMAIL": "Csak felhasználóval egyező, ellenőrzött e-mail-cím esetén (ajánlott)",
+      "LINK_USERNAME": "Felhasználónév alapján (a szolgáltató felhasználóneveinek elfogadása)",
+      "LINK_MANUAL": "Soha automatikusan (csak a meglévő kapcsolatok)",
+      "LINK_USERNAME_WARNING": "Csak akkor használd, ha a szolgáltatódnál senki sem választhatja meg a saját felhasználónevét, különben valaki más felhasználóként is bejelentkezhet.",
+      "DEFAULT_ROLE": "Alapértelmezett szerepkör",
+      "AUTO_PROVISION": "JellyGlance-fiók létrehozása olyan bejelentkezésekhez, amelyek egyetlen felhasználóval sem egyeznek",
+      "BREAK_GLASS": "A helyi fiókok és a JS_USER / JS_PASSWORD környezeti változós bejelentkezés továbbra is működik, így akkor is be tudsz lépni, ha az egyszeri bejelentkezés elromlik.",
+      "USE_LOCAL": "Bejelentkezés helyi fiókkal",
+      "USE_SSO": "Vissza az egyszeri bejelentkezéshez"
     }
   },
   "TASK_TYPE": {

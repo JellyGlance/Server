@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "En nøkkel er lagret og holdes skjult. Lim den inn igjen, eller en ny, når du oppdaterer tilkoblingen.",
       "SHOW_KEY": "Vis API-nøkkel",
       "HIDE_KEY": "Skjul API-nøkkel"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Offentlig klient (ingen hemmelighet, bare PKCE). Fjerner den lagrede hemmeligheten.",
+      "SCOPES": "Omfang",
+      "GROUPS_CLAIM": "Gruppekrav",
+      "ROLE_MAPPING": "Kobling fra gruppe til rolle",
+      "ROLE_MAPPING_HINT": "Én group=Role per linje. Den høyeste rollen som passer, gjelder. La feltet stå tomt for å beholde rollene som er satt på Brukere-siden.",
+      "LINK_POLICY": "Koble pålogginger til brukere",
+      "LINK_VERIFIED_EMAIL": "Bare ved en bekreftet e-postadresse som passer med en bruker (anbefalt)",
+      "LINK_USERNAME": "Etter brukernavn (stol på leverandørens brukernavn)",
+      "LINK_MANUAL": "Aldri automatisk (bare eksisterende koblinger)",
+      "LINK_USERNAME_WARNING": "Bruk dette bare hvis ingen kan velge sitt eget brukernavn hos leverandøren din, ellers kan noen logge på som en annen bruker.",
+      "DEFAULT_ROLE": "Standardrolle",
+      "AUTO_PROVISION": "Opprett en JellyGlance-konto for pålogginger som ikke passer med noen bruker",
+      "BREAK_GLASS": "Lokale kontoer og pålogging via miljøvariablene JS_USER / JS_PASSWORD fungerer fortsatt, så du kommer deg inn selv om enkel pålogging slutter å virke.",
+      "USE_LOCAL": "Logg på med en lokal konto i stedet",
+      "USE_SSO": "Tilbake til enkel pålogging"
     }
   },
   "TASK_TYPE": {

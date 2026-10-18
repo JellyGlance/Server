@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "已儲存一組金鑰並設為隱藏。更新連線時，請再次貼上原金鑰或新金鑰。",
       "SHOW_KEY": "顯示 API 金鑰",
       "HIDE_KEY": "隱藏 API 金鑰"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "公開用戶端（無密鑰，僅 PKCE）。會移除已儲存的密鑰。",
+      "SCOPES": "範圍",
+      "GROUPS_CLAIM": "群組宣告",
+      "ROLE_MAPPING": "群組與角色對應",
+      "ROLE_MAPPING_HINT": "每行一個 group=Role。以符合的最高角色為準。留白則保留「使用者」頁面設定的角色。",
+      "LINK_POLICY": "將登入連結到使用者",
+      "LINK_VERIFIED_EMAIL": "僅限與使用者相符的已驗證電子郵件（建議）",
+      "LINK_USERNAME": "依使用者名稱（信任提供者的使用者名稱）",
+      "LINK_MANUAL": "永不自動連結（僅保留現有連結）",
+      "LINK_USERNAME_WARNING": "只有在您的提供者不允許任何人自行選擇使用者名稱時才使用，否則有人可能以其他使用者身分登入。",
+      "DEFAULT_ROLE": "預設角色",
+      "AUTO_PROVISION": "為不符合任何使用者的登入建立 JellyGlance 帳號",
+      "BREAK_GLASS": "本機帳號與 JS_USER / JS_PASSWORD 環境變數登入仍可使用，因此即使單一登入故障，您仍能進入。",
+      "USE_LOCAL": "改用本機帳號登入",
+      "USE_SSO": "返回單一登入"
     }
   },
   "TASK_TYPE": {

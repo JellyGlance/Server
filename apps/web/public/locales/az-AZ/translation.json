@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Açar saxlanılıb və gizli saxlanılır. Bağlantını yeniləyərkən onu və ya yenisini yenidən yapışdırın.",
       "SHOW_KEY": "API açarını göstər",
       "HIDE_KEY": "API açarını gizlət"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "İctimai klient (sirr yoxdur, yalnız PKCE). Saxlanılmış sirri silir.",
+      "SCOPES": "Əhatə dairələri",
+      "GROUPS_CLAIM": "Qrup iddiası",
+      "ROLE_MAPPING": "Qrupların rollara uyğunlaşdırılması",
+      "ROLE_MAPPING_HINT": "Hər sətirdə bir group=Role. Uyğun gələn ən yüksək rol tətbiq olunur. İstifadəçilər səhifəsində təyin edilmiş rolları saxlamaq üçün boş buraxın.",
+      "LINK_POLICY": "Girişləri istifadəçilərlə əlaqələndir",
+      "LINK_VERIFIED_EMAIL": "Yalnız istifadəçiyə uyğun gələn təsdiqlənmiş e-poçtda (tövsiyə olunur)",
+      "LINK_USERNAME": "İstifadəçi adına görə (provayderin istifadəçi adlarına etibar et)",
+      "LINK_MANUAL": "Heç vaxt avtomatik deyil (yalnız mövcud əlaqələr)",
+      "LINK_USERNAME_WARNING": "Bunu yalnız provayderinizdə heç kim öz istifadəçi adını özü seçə bilmirsə istifadə edin, əks halda kimsə başqa istifadəçi kimi daxil ola bilər.",
+      "DEFAULT_ROLE": "Defolt rol",
+      "AUTO_PROVISION": "Heç bir istifadəçiyə uyğun gəlməyən girişlər üçün JellyGlance hesabı yarat",
+      "BREAK_GLASS": "Lokal hesablar və JS_USER / JS_PASSWORD mühit dəyişənləri ilə giriş işləməyə davam edir, ona görə vahid giriş sıradan çıxsa belə daxil ola bilərsiniz.",
+      "USE_LOCAL": "Bunun əvəzinə lokal hesabla daxil olun",
+      "USE_SSO": "Vahid girişə qayıt"
     }
   },
   "TASK_TYPE": {

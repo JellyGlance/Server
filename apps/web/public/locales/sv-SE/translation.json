@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "En nyckel är sparad och dold. Klistra in den igen, eller en ny, när du uppdaterar anslutningen.",
       "SHOW_KEY": "Visa API-nyckel",
       "HIDE_KEY": "Dölj API-nyckel"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Offentlig klient (ingen hemlighet, endast PKCE). Tar bort den sparade hemligheten.",
+      "SCOPES": "Omfång",
+      "GROUPS_CLAIM": "Gruppanspråk",
+      "ROLE_MAPPING": "Mappning från grupp till roll",
+      "ROLE_MAPPING_HINT": "En group=Role per rad. Den högsta matchande rollen gäller. Lämna tomt för att behålla rollerna som är satta på sidan Användare.",
+      "LINK_POLICY": "Koppla inloggningar till användare",
+      "LINK_VERIFIED_EMAIL": "Endast vid en verifierad e-postadress som matchar en användare (rekommenderas)",
+      "LINK_USERNAME": "Via användarnamn (lita på leverantörens användarnamn)",
+      "LINK_MANUAL": "Aldrig automatiskt (endast befintliga kopplingar)",
+      "LINK_USERNAME_WARNING": "Använd bara detta om ingen kan välja sitt eget användarnamn hos din leverantör, annars kan någon logga in som en annan användare.",
+      "DEFAULT_ROLE": "Standardroll",
+      "AUTO_PROVISION": "Skapa ett JellyGlance-konto för inloggningar som inte matchar någon användare",
+      "BREAK_GLASS": "Lokala konton och inloggningen via miljövariablerna JS_USER / JS_PASSWORD fortsätter att fungera, så du kommer fortfarande in om enkel inloggning slutar fungera.",
+      "USE_LOCAL": "Logga in med ett lokalt konto i stället",
+      "USE_SSO": "Tillbaka till enkel inloggning"
     }
   },
   "TASK_TYPE": {

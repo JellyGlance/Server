@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "키가 저장되어 숨겨져 있습니다. 연결을 업데이트할 때 기존 키나 새 키를 다시 붙여넣으세요.",
       "SHOW_KEY": "API 키 표시",
       "HIDE_KEY": "API 키 숨기기"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "공개 클라이언트(시크릿 없음, PKCE만 사용). 저장된 시크릿이 삭제됩니다.",
+      "SCOPES": "범위",
+      "GROUPS_CLAIM": "그룹 클레임",
+      "ROLE_MAPPING": "그룹-역할 매핑",
+      "ROLE_MAPPING_HINT": "한 줄에 하나씩 group=Role 형식으로 입력합니다. 일치하는 역할 중 가장 높은 역할이 적용됩니다. 비워 두면 사용자 페이지에서 설정한 역할이 유지됩니다.",
+      "LINK_POLICY": "로그인과 사용자 연결",
+      "LINK_VERIFIED_EMAIL": "사용자와 일치하는 인증된 이메일인 경우에만(권장)",
+      "LINK_USERNAME": "사용자 이름으로(제공자의 사용자 이름을 신뢰)",
+      "LINK_MANUAL": "자동으로 연결하지 않음(기존 연결만)",
+      "LINK_USERNAME_WARNING": "제공자에서 아무도 자신의 사용자 이름을 직접 정할 수 없는 경우에만 사용하세요. 그렇지 않으면 다른 사용자로 로그인할 수 있습니다.",
+      "DEFAULT_ROLE": "기본 역할",
+      "AUTO_PROVISION": "어떤 사용자와도 일치하지 않는 로그인에 대해 JellyGlance 계정 만들기",
+      "BREAK_GLASS": "로컬 계정과 JS_USER / JS_PASSWORD 환경 변수 로그인은 계속 작동하므로 SSO가 고장 나도 접속할 수 있습니다.",
+      "USE_LOCAL": "대신 로컬 계정으로 로그인",
+      "USE_SSO": "SSO로 돌아가기"
     }
   },
   "TASK_TYPE": {

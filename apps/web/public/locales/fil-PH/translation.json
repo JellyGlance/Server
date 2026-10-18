@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "May naka-save na key at nakatago ito. I-paste ito muli, o ang bago, kapag in-update mo ang koneksyon.",
       "SHOW_KEY": "Ipakita ang API key",
       "HIDE_KEY": "Itago ang API key"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Pampublikong client (walang secret, PKCE lang). Tinatanggal ang naka-save na secret.",
+      "SCOPES": "Mga scope",
+      "GROUPS_CLAIM": "Claim ng grupo",
+      "ROLE_MAPPING": "Pagtutugma ng grupo sa role",
+      "ROLE_MAPPING_HINT": "Isang group=Role bawat linya. Ang pinakamataas na tumugmang role ang masusunod. Iwanang blangko para panatilihin ang mga role na nakatakda sa page ng Mga User.",
+      "LINK_POLICY": "I-link ang mga sign-in sa mga user",
+      "LINK_VERIFIED_EMAIL": "Sa beripikadong email lang na tumutugma sa isang user (inirerekomenda)",
+      "LINK_USERNAME": "Ayon sa username (pagkatiwalaan ang mga username ng provider)",
+      "LINK_MANUAL": "Hindi kailanman awtomatiko (mga kasalukuyang link lang)",
+      "LINK_USERNAME_WARNING": "Gamitin lang ito kung walang sinumang makakapili ng sariling username sa iyong provider, kung hindi ay maaari silang mag-sign in bilang ibang user.",
+      "DEFAULT_ROLE": "Default na role",
+      "AUTO_PROVISION": "Gumawa ng JellyGlance account para sa mga sign-in na walang katugmang user",
+      "BREAK_GLASS": "Gumagana pa rin ang mga lokal na account at ang login gamit ang environment variable na JS_USER / JS_PASSWORD, kaya makakapasok ka pa rin kahit masira ang single sign-on.",
+      "USE_LOCAL": "Mag-sign in na lang gamit ang lokal na account",
+      "USE_SSO": "Bumalik sa single sign-on"
     }
   },
   "TASK_TYPE": {

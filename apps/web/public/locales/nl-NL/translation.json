@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Er is een sleutel opgeslagen en verborgen. Plak deze opnieuw, of een nieuwe, wanneer je de verbinding bijwerkt.",
       "SHOW_KEY": "API-sleutel tonen",
       "HIDE_KEY": "API-sleutel verbergen"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Openbare client (geen secret, alleen PKCE). Verwijdert het opgeslagen secret.",
+      "SCOPES": "Scopes",
+      "GROUPS_CLAIM": "Groepsclaim",
+      "ROLE_MAPPING": "Koppeling van groep aan rol",
+      "ROLE_MAPPING_HINT": "Eén group=Role per regel. De hoogste overeenkomende rol geldt. Laat leeg om de rollen van de pagina Gebruikers te behouden.",
+      "LINK_POLICY": "Aanmeldingen aan gebruikers koppelen",
+      "LINK_VERIFIED_EMAIL": "Alleen bij een geverifieerd e-mailadres dat bij een gebruiker hoort (aanbevolen)",
+      "LINK_USERNAME": "Op gebruikersnaam (gebruikersnamen van de provider vertrouwen)",
+      "LINK_MANUAL": "Nooit automatisch (alleen bestaande koppelingen)",
+      "LINK_USERNAME_WARNING": "Gebruik dit alleen als niemand bij je provider zelf een gebruikersnaam kan kiezen, anders kan iemand zich als een andere gebruiker aanmelden.",
+      "DEFAULT_ROLE": "Standaardrol",
+      "AUTO_PROVISION": "Een JellyGlance-account aanmaken voor aanmeldingen die bij geen enkele gebruiker horen",
+      "BREAK_GLASS": "Lokale accounts en de aanmelding via de omgevingsvariabelen JS_USER / JS_PASSWORD blijven werken, zodat je er nog in kunt als single sign-on stuk gaat.",
+      "USE_LOCAL": "Aanmelden met een lokaal account",
+      "USE_SSO": "Terug naar single sign-on"
     }
   },
   "TASK_TYPE": {

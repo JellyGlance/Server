@@ -458,6 +458,23 @@
       "KEY_SAVED_HINT": "Ključ je shranjen in skrit. Ob posodobitvi povezave ga prilepite znova ali vnesite novega.",
       "SHOW_KEY": "Prikaži ključ API",
       "HIDE_KEY": "Skrij ključ API"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Javni odjemalec (brez skrivnosti, samo PKCE). Odstrani shranjeno skrivnost.",
+      "SCOPES": "Obsegi",
+      "GROUPS_CLAIM": "Claim skupin",
+      "ROLE_MAPPING": "Preslikava skupin v vloge",
+      "ROLE_MAPPING_HINT": "En group=Role na vrstico. Velja najvišja ujemajoča se vloga. Pustite prazno, da ohranite vloge, nastavljene na strani Uporabniki.",
+      "LINK_POLICY": "Poveži prijave z uporabniki",
+      "LINK_VERIFIED_EMAIL": "Samo pri preverjenem e-poštnem naslovu, ki se ujema z uporabnikom (priporočeno)",
+      "LINK_USERNAME": "Po uporabniškem imenu (zaupaj uporabniškim imenom ponudnika)",
+      "LINK_MANUAL": "Nikoli samodejno (samo obstoječe povezave)",
+      "LINK_USERNAME_WARNING": "To uporabite samo, če pri vašem ponudniku nihče ne more sam izbrati uporabniškega imena, sicer bi se lahko kdo prijavil kot drug uporabnik.",
+      "DEFAULT_ROLE": "Privzeta vloga",
+      "AUTO_PROVISION": "Ustvari račun JellyGlance za prijave, ki se ne ujemajo z nobenim uporabnikom",
+      "BREAK_GLASS": "Lokalni računi in prijava prek okoljskih spremenljivk JS_USER / JS_PASSWORD še naprej delujejo, zato se lahko prijavite, tudi če enotna prijava odpove.",
+      "USE_LOCAL": "Prijava z lokalnim računom",
+      "USE_SSO": "Nazaj na enotno prijavo"
     }
   },
   "TASK_TYPE": {

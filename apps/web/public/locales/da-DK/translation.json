@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "En nøgle er gemt og skjult. Indsæt den igen, eller en ny, når du opdaterer forbindelsen.",
       "SHOW_KEY": "Vis API-nøgle",
       "HIDE_KEY": "Skjul API-nøgle"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Offentlig klient (ingen hemmelighed, kun PKCE). Fjerner den gemte hemmelighed.",
+      "SCOPES": "Scopes",
+      "GROUPS_CLAIM": "Gruppe-claim",
+      "ROLE_MAPPING": "Tilknytning af grupper til roller",
+      "ROLE_MAPPING_HINT": "Én group=Role pr. linje. Den højeste matchende rolle gælder. Lad feltet være tomt for at beholde rollerne fra siden Brugere.",
+      "LINK_POLICY": "Knyt logins til brugere",
+      "LINK_VERIFIED_EMAIL": "Kun ved en bekræftet e-mail, der matcher en bruger (anbefalet)",
+      "LINK_USERNAME": "Efter brugernavn (stol på udbyderens brugernavne)",
+      "LINK_MANUAL": "Aldrig automatisk (kun eksisterende tilknytninger)",
+      "LINK_USERNAME_WARNING": "Brug kun dette, hvis ingen selv kan vælge deres brugernavn hos din udbyder, ellers kan de logge ind som en anden bruger.",
+      "DEFAULT_ROLE": "Standardrolle",
+      "AUTO_PROVISION": "Opret en JellyGlance-konto til logins, der ikke matcher nogen bruger",
+      "BREAK_GLASS": "Lokale konti og login via miljøvariablerne JS_USER / JS_PASSWORD virker stadig, så du kan stadig komme ind, hvis single sign-on går i stykker.",
+      "USE_LOCAL": "Log ind med en lokal konto i stedet",
+      "USE_SSO": "Tilbage til single sign-on"
     }
   },
   "TASK_TYPE": {

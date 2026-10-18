@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Uma chave está guardada e oculta. Cole-a novamente, ou uma nova, ao atualizar a ligação.",
       "SHOW_KEY": "Mostrar chave de API",
       "HIDE_KEY": "Ocultar chave de API"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Cliente público (sem segredo, apenas PKCE). Remove o segredo guardado.",
+      "SCOPES": "Âmbitos",
+      "GROUPS_CLAIM": "Claim de grupos",
+      "ROLE_MAPPING": "Correspondência de grupo para função",
+      "ROLE_MAPPING_HINT": "Um group=Role por linha. Prevalece a função mais elevada que corresponder. Deixe em branco para manter as funções definidas na página Utilizadores.",
+      "LINK_POLICY": "Associar inícios de sessão a utilizadores",
+      "LINK_VERIFIED_EMAIL": "Apenas com um e-mail verificado que corresponda a um utilizador (recomendado)",
+      "LINK_USERNAME": "Pelo nome de utilizador (confiar nos nomes de utilizador do fornecedor)",
+      "LINK_MANUAL": "Nunca automaticamente (apenas associações existentes)",
+      "LINK_USERNAME_WARNING": "Utilize esta opção apenas se ninguém puder escolher o próprio nome de utilizador no seu fornecedor; caso contrário, alguém poderá iniciar sessão como outro utilizador.",
+      "DEFAULT_ROLE": "Função predefinida",
+      "AUTO_PROVISION": "Criar uma conta JellyGlance para inícios de sessão que não correspondam a nenhum utilizador",
+      "BREAK_GLASS": "As contas locais e o início de sessão pelas variáveis de ambiente JS_USER / JS_PASSWORD continuam a funcionar, por isso consegue entrar mesmo que o início de sessão único falhe.",
+      "USE_LOCAL": "Iniciar sessão com uma conta local",
+      "USE_SSO": "Voltar ao início de sessão único"
     }
   },
   "TASK_TYPE": {

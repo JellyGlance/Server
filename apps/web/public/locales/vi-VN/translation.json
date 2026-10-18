@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Một khóa đã được lưu và ẩn. Dán lại khóa đó hoặc khóa mới khi cập nhật kết nối.",
       "SHOW_KEY": "Hiện khóa API",
       "HIDE_KEY": "Ẩn khóa API"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Client công khai (không có secret, chỉ PKCE). Xóa secret đã lưu.",
+      "SCOPES": "Phạm vi",
+      "GROUPS_CLAIM": "Claim nhóm",
+      "ROLE_MAPPING": "Ánh xạ nhóm sang vai trò",
+      "ROLE_MAPPING_HINT": "Mỗi dòng một group=Role. Vai trò cao nhất khớp sẽ được áp dụng. Để trống để giữ các vai trò đã đặt trên trang Người dùng.",
+      "LINK_POLICY": "Liên kết đăng nhập với người dùng",
+      "LINK_VERIFIED_EMAIL": "Chỉ khi email đã xác minh khớp với một người dùng (khuyên dùng)",
+      "LINK_USERNAME": "Theo tên người dùng (tin tưởng tên người dùng của nhà cung cấp)",
+      "LINK_MANUAL": "Không bao giờ tự động (chỉ các liên kết hiện có)",
+      "LINK_USERNAME_WARNING": "Chỉ dùng tùy chọn này nếu không ai có thể tự chọn tên người dùng tại nhà cung cấp của bạn, nếu không họ có thể đăng nhập như một người dùng khác.",
+      "DEFAULT_ROLE": "Vai trò mặc định",
+      "AUTO_PROVISION": "Tạo tài khoản JellyGlance cho các lần đăng nhập không khớp với người dùng nào",
+      "BREAK_GLASS": "Tài khoản cục bộ và đăng nhập bằng biến môi trường JS_USER / JS_PASSWORD vẫn hoạt động, nên bạn vẫn vào được nếu đăng nhập một lần bị lỗi.",
+      "USE_LOCAL": "Đăng nhập bằng tài khoản cục bộ",
+      "USE_SSO": "Quay lại đăng nhập một lần"
     }
   },
   "TASK_TYPE": {

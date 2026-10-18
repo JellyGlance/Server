@@ -457,6 +457,23 @@
       "KEY_SAVED_HINT": "Ključ je spremljen i skriven. Zalijepite ga ponovno, ili novi, kada ažurirate vezu.",
       "SHOW_KEY": "Prikaži API ključ",
       "HIDE_KEY": "Sakrij API ključ"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Javni klijent (bez tajne, samo PKCE). Uklanja spremljenu tajnu.",
+      "SCOPES": "Opsezi",
+      "GROUPS_CLAIM": "Claim grupa",
+      "ROLE_MAPPING": "Mapiranje grupa na uloge",
+      "ROLE_MAPPING_HINT": "Jedan group=Role po retku. Vrijedi najviša odgovarajuća uloga. Ostavite prazno kako biste zadržali uloge postavljene na stranici Korisnici.",
+      "LINK_POLICY": "Poveži prijave s korisnicima",
+      "LINK_VERIFIED_EMAIL": "Samo uz potvrđenu e-poštu koja odgovara korisniku (preporučeno)",
+      "LINK_USERNAME": "Prema korisničkom imenu (vjeruj korisničkim imenima pružatelja)",
+      "LINK_MANUAL": "Nikad automatski (samo postojeće veze)",
+      "LINK_USERNAME_WARNING": "Koristite ovo samo ako nitko kod vašeg pružatelja ne može sam odabrati korisničko ime, inače bi se netko mogao prijaviti kao drugi korisnik.",
+      "DEFAULT_ROLE": "Zadana uloga",
+      "AUTO_PROVISION": "Stvori JellyGlance račun za prijave koje ne odgovaraju nijednom korisniku",
+      "BREAK_GLASS": "Lokalni računi i prijava putem varijabli okruženja JS_USER / JS_PASSWORD i dalje rade, pa možete ući čak i ako jedinstvena prijava zakaže.",
+      "USE_LOCAL": "Prijavi se lokalnim računom",
+      "USE_SSO": "Natrag na jedinstvenu prijavu"
     }
   },
   "TASK_TYPE": {

@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Uma chave está salva e oculta. Cole-a novamente, ou uma nova, ao atualizar a conexão.",
       "SHOW_KEY": "Mostrar chave de API",
       "HIDE_KEY": "Ocultar chave de API"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Cliente público (sem segredo, apenas PKCE). Remove o segredo salvo.",
+      "SCOPES": "Escopos",
+      "GROUPS_CLAIM": "Claim de grupos",
+      "ROLE_MAPPING": "Mapeamento de grupo para função",
+      "ROLE_MAPPING_HINT": "Um group=Role por linha. Vale a função mais alta que corresponder. Deixe em branco para manter as funções definidas na página Usuários.",
+      "LINK_POLICY": "Vincular logins a usuários",
+      "LINK_VERIFIED_EMAIL": "Somente com um e-mail verificado que corresponda a um usuário (recomendado)",
+      "LINK_USERNAME": "Pelo nome de usuário (confiar nos nomes de usuário do provedor)",
+      "LINK_MANUAL": "Nunca automaticamente (somente vínculos existentes)",
+      "LINK_USERNAME_WARNING": "Use isto somente se ninguém puder escolher o próprio nome de usuário no seu provedor; caso contrário, alguém poderia entrar como outro usuário.",
+      "DEFAULT_ROLE": "Função padrão",
+      "AUTO_PROVISION": "Criar uma conta JellyGlance para logins que não correspondem a nenhum usuário",
+      "BREAK_GLASS": "As contas locais e o login pelas variáveis de ambiente JS_USER / JS_PASSWORD continuam funcionando, então você ainda consegue entrar se o login único falhar.",
+      "USE_LOCAL": "Entrar com uma conta local",
+      "USE_SSO": "Voltar ao login único"
     }
   },
   "TASK_TYPE": {

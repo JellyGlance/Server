@@ -456,6 +456,23 @@
       "KEY_SAVED_HINT": "Ufunguo umehifadhiwa na umefichwa. Ubandike tena, au mpya, unaposasisha muunganisho.",
       "SHOW_KEY": "Onyesha ufunguo wa API",
       "HIDE_KEY": "Ficha ufunguo wa API"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Mteja wa umma (hakuna siri, PKCE pekee). Huondoa siri iliyohifadhiwa.",
+      "SCOPES": "Mawanda",
+      "GROUPS_CLAIM": "Dai la vikundi",
+      "ROLE_MAPPING": "Kuoanisha vikundi na majukumu",
+      "ROLE_MAPPING_HINT": "group=Role moja kwa kila mstari. Jukumu la juu zaidi linalolingana ndilo hutumika. Acha tupu ili kubakiza majukumu yaliyowekwa kwenye ukurasa wa Watumiaji.",
+      "LINK_POLICY": "Unganisha kuingia na watumiaji",
+      "LINK_VERIFIED_EMAIL": "Kwa barua pepe iliyothibitishwa inayolingana na mtumiaji tu (inapendekezwa)",
+      "LINK_USERNAME": "Kwa jina la mtumiaji (amini majina ya watumiaji ya mtoa huduma)",
+      "LINK_MANUAL": "Kamwe kiotomatiki (viungo vilivyopo tu)",
+      "LINK_USERNAME_WARNING": "Tumia hii tu ikiwa hakuna anayeweza kuchagua jina lake la mtumiaji kwa mtoa huduma wako, la sivyo wanaweza kuingia kama mtumiaji mwingine.",
+      "DEFAULT_ROLE": "Jukumu chaguomsingi",
+      "AUTO_PROVISION": "Unda akaunti ya JellyGlance kwa kuingia kusikolingana na mtumiaji yeyote",
+      "BREAK_GLASS": "Akaunti za ndani na kuingia kwa vigezo vya mazingira JS_USER / JS_PASSWORD vinaendelea kufanya kazi, kwa hivyo bado unaweza kuingia hata kuingia kwa mara moja kukiharibika.",
+      "USE_LOCAL": "Ingia kwa akaunti ya ndani badala yake",
+      "USE_SSO": "Rudi kwenye kuingia kwa mara moja"
     }
   },
   "TASK_TYPE": {

@@ -457,6 +457,23 @@
       "KEY_SAVED_HINT": "O cheie este salvată și ascunsă. Lipește-o din nou, sau una nouă, când actualizezi conexiunea.",
       "SHOW_KEY": "Afișează cheia API",
       "HIDE_KEY": "Ascunde cheia API"
+    },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Client public (fără secret, doar PKCE). Elimină secretul salvat.",
+      "SCOPES": "Domenii de acces",
+      "GROUPS_CLAIM": "Claim pentru grupuri",
+      "ROLE_MAPPING": "Asociere grup–rol",
+      "ROLE_MAPPING_HINT": "Câte un group=Role pe linie. Se aplică rolul cel mai înalt care se potrivește. Lasă gol pentru a păstra rolurile setate în pagina Utilizatori.",
+      "LINK_POLICY": "Asociază autentificările cu utilizatorii",
+      "LINK_VERIFIED_EMAIL": "Doar pe baza unui e-mail verificat care se potrivește cu un utilizator (recomandat)",
+      "LINK_USERNAME": "După numele de utilizator (ai încredere în numele de utilizator ale furnizorului)",
+      "LINK_MANUAL": "Niciodată automat (doar asocierile existente)",
+      "LINK_USERNAME_WARNING": "Folosește această opțiune doar dacă nimeni nu își poate alege singur numele de utilizator la furnizorul tău, altfel s-ar putea autentifica drept alt utilizator.",
+      "DEFAULT_ROLE": "Rol implicit",
+      "AUTO_PROVISION": "Creează un cont JellyGlance pentru autentificările care nu se potrivesc cu niciun utilizator",
+      "BREAK_GLASS": "Conturile locale și autentificarea prin variabilele de mediu JS_USER / JS_PASSWORD continuă să funcționeze, așa că poți intra chiar dacă autentificarea unică nu mai merge.",
+      "USE_LOCAL": "Autentifică-te cu un cont local",
+      "USE_SSO": "Înapoi la autentificarea unică"
     }
   },
   "TASK_TYPE": {
