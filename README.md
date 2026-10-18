@@ -52,7 +52,7 @@
   ·
   <a href="https://demo.jellyglance.com/"><strong>Live demo</strong></a>
   ·
-  <a href="https://github.com/JellyGlance/Documentation"><strong>Documentation</strong></a>
+  <a href="https://docs.jellyglance.com/"><strong>Documentation</strong></a>
   ·
   <a href="https://discord.gg/dMGhv8j2kx"><strong>Discord</strong></a>
 </p>
@@ -104,7 +104,7 @@ It runs as a single Docker container next to PostgreSQL. It's free, with no ads,
 
 ## Integrations
 
-Connect these under **Settings > Integrations**. See the [integration directory](https://github.com/JellyGlance/Documentation/blob/main/docs/integrations.md) for setup details.
+Connect these under **Settings > Integrations**. See the [integration directory](https://docs.jellyglance.com/integrations/) for setup details.
 
 <table>
   <tr>
@@ -357,7 +357,7 @@ To restore a backup, put the JSON file in `./backups` or upload it from the Back
 
 ## Configuration
 
-These are the main environment variables. The full list is in the [configuration reference](https://github.com/JellyGlance/Documentation/blob/main/docs/reference/configuration.md).
+These are the main environment variables. The full list is in the [configuration reference](https://docs.jellyglance.com/reference/configuration/).
 
 | Variable | Default | What it does |
 | --- | --- | --- |
@@ -395,14 +395,14 @@ Settings, history and your database are kept. **What's New** in the app shows th
 
 ## Documentation
 
-Guides live in **[JellyGlance/Documentation](https://github.com/JellyGlance/Documentation)**:
+Guides live at **[docs.jellyglance.com](https://docs.jellyglance.com/)** (source in [JellyGlance/Documentation](https://github.com/JellyGlance/Documentation)):
 
-- [Installation and first setup](https://github.com/JellyGlance/Documentation/blob/main/docs/guide/getting-started.md)
-- [Integration directory](https://github.com/JellyGlance/Documentation/blob/main/docs/integrations.md)
-- [Reverse proxy: Nginx, Caddy, Nginx Proxy Manager and Traefik](https://github.com/JellyGlance/Documentation/blob/main/docs/operations/reverse-proxy.md)
-- [Configuration reference](https://github.com/JellyGlance/Documentation/blob/main/docs/reference/configuration.md)
-- [Backup and restore](https://github.com/JellyGlance/Documentation/blob/main/docs/operations/backup-restore.md)
-- [Troubleshooting](https://github.com/JellyGlance/Documentation/blob/main/docs/guide/troubleshooting.md)
+- [Installation and first setup](https://docs.jellyglance.com/guide/getting-started/)
+- [Integration directory](https://docs.jellyglance.com/integrations/)
+- [Reverse proxy: Nginx, Caddy, Nginx Proxy Manager and Traefik](https://docs.jellyglance.com/operations/reverse-proxy/)
+- [Configuration reference](https://docs.jellyglance.com/reference/configuration/)
+- [Backup and restore](https://docs.jellyglance.com/operations/backup-restore/)
+- [Troubleshooting](https://docs.jellyglance.com/guide/troubleshooting/)
 
 Spotted a docs problem? [Open a docs issue](https://github.com/JellyGlance/Documentation/issues/new/choose).
 

@@ -5,7 +5,7 @@ const packageJson = require("./package.json");
 const { compareVersions } = require("compare-versions");
 const memoizee = require("memoizee");
 const { getConfigDir } = require("./utils/storage-paths");
-const { createContributorsSource } = require("./utils/github-contributors");
+const { createContributorsSource, mergeContributors } = require("./utils/github-contributors");
 
 const REPO_OWNER = process.env.JS_REPO_OWNER || "JellyGlance";
 const REPO_NAME = process.env.JS_REPO_NAME || "Server";
@@ -448,20 +448,38 @@ async function fetchReleaseNotes() {
   }
 }
 
+const GITHUB_HEADERS = () => ({
+  Accept: "application/vnd.github+json",
+  "User-Agent": `JellyGlance/${packageJson.version}`,
+  ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+});
+const CONTRIBUTOR_MAX_PAGES = 10;
+
+async function fetchAllPages(url, params, pick = (data) => data) {
+  const items = [];
+  for (let page = 1; page <= CONTRIBUTOR_MAX_PAGES; page++) {
+    const response = await axios.get(url, { headers: GITHUB_HEADERS(), params: { ...params, per_page: 100, page }, timeout: 10000 });
+    const batch = pick(response.data) || [];
+    items.push(...batch);
+    if (batch.length < 100) break;
+  }
+  return items;
+}
+
 async function fetchContributorList() {
-  const response = await axios.get(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contributors`, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": `JellyGlance/${packageJson.version}`,
-      ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
-    },
-    params: {
-      per_page: 100,
-      anon: "false",
-    },
-    timeout: 10000,
-  });
-  return response.data || [];
+  const commitContributors = await fetchAllPages(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contributors`, { anon: "false" });
+  let pullRequestAuthors = [];
+  try {
+    const pulls = await fetchAllPages(
+      "https://api.github.com/search/issues",
+      { q: `repo:${REPO_OWNER}/${REPO_NAME} is:pr is:merged` },
+      (data) => data?.items
+    );
+    pullRequestAuthors = pulls.map((pull) => pull.user).filter(Boolean);
+  } catch (error) {
+    console.warn(`Unable to load merged pull request authors: ${error.message}`);
+  }
+  return mergeContributors(commitContributors, pullRequestAuthors);
 }
 
 const fetchGithubContributors = createContributorsSource({

@@ -44,6 +44,7 @@ import {
   HOME_PRESETS,
   HOME_SECTION_DEFINITIONS,
   HOME_WIDGET_SIZE_LABELS,
+  getHomeDisplayOrder,
   getHomeSettingsStorageKey,
   loadHomeSettings,
   normalizeHomeOrder,
@@ -779,23 +780,10 @@ export default function Home({ kioskMode = false }) {
   }
 
   const sectionLabels = HOME_SECTION_DEFINITIONS.reduce((labels, section) => ({ ...labels, [section.id]: t(`HOME_PAGE.SECTIONS.${section.id}`, { defaultValue: section.label }) }), {});
-  const orderedSectionIds = useMemo(() => {
-    const hidden = new Set(homeSettings.hidden);
-    let ordered = normalizeHomeOrder(homeSettings.order).filter((sectionId) => !hidden.has(sectionId));
-
-    if (homeSettings.pinned && ordered.includes(homeSettings.pinned)) {
-      ordered = [homeSettings.pinned, ...ordered.filter((sectionId) => sectionId !== homeSettings.pinned)];
-    }
-
-    if (requestUrgency > 0 && ordered.includes("operations") && homeSettings.pinned !== "operations") {
-      ordered = ["operations", ...ordered.filter((sectionId) => sectionId !== "operations")];
-      if (homeSettings.pinned && ordered.includes(homeSettings.pinned)) {
-        ordered = [homeSettings.pinned, ...ordered.filter((sectionId) => sectionId !== homeSettings.pinned)];
-      }
-    }
-
-    return ordered;
-  }, [homeSettings.hidden, homeSettings.order, homeSettings.pinned, requestUrgency]);
+  const orderedSectionIds = useMemo(
+    () => getHomeDisplayOrder(homeSettings, { promoteOperations: requestUrgency > 0 }),
+    [homeSettings.hidden, homeSettings.order, homeSettings.pinned, requestUrgency]
+  );
   useEffect(() => {
     if (!kioskMode) return undefined;
     const refreshSessions = () => {
@@ -1070,7 +1058,7 @@ export default function Home({ kioskMode = false }) {
             </label>
             <button type="button" onClick={() => updateHomeSettings((current) => ({ ...current, dismissedAlerts: {}, preset: "custom" }))}>Restore alerts</button>
           </div>
-          {requestUrgency > 0 ? <p className="home-order-note">{formatNumber(requestUrgency)} request issue{requestUrgency === 1 ? "" : "s"} detected, so Operations is bubbling up.</p> : null}
+          {requestUrgency > 0 ? <p className="home-order-note">{t("HOME_PAGE.OPERATIONS_MOVED_UP", { count: requestUrgency, section: sectionLabels.operations })}</p> : null}
           <div className="home-order-list">
             {normalizeHomeOrder(homeSettings.order).map((sectionId, index) => {
               const isHidden = homeSettings.hidden.includes(sectionId);

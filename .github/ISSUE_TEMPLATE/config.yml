@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: JellyGlance documentation
-    url: https://github.com/JellyGlance/Documentation
+    url: https://docs.jellyglance.com/
     about: Browse installation, integrations, reverse proxy, and operations guides.
   - name: Documentation errors and requests
     url: https://github.com/JellyGlance/Documentation/issues/new/choose

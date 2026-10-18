@@ -15,6 +15,7 @@ const API = require("../classes/api-loader");
 const TaskManager = require("../classes/task-manager-singleton");
 const TaskScheduler = require("../classes/task-scheduler-singleton");
 const { sendSafeError } = require("../utils/security");
+const { filterLibraryItems } = require("../classes/library-types");
 
 const router = express.Router();
 
@@ -668,7 +669,7 @@ async function scanSingleLibrary(library) {
       ParentId: library.Id,
     }));
 
-    let library_items = libraryItemsWithParent.filter((item) => ["Movie", "Audio", "Series"].includes(item.Type));
+    let library_items = filterLibraryItems(libraryItemsWithParent);
     let seasons = libraryItemsWithParent.filter((item) => ["Season"].includes(item.Type));
     let episodes = libraryItemsWithParent.filter((item) => ["Episode"].includes(item.Type));
 
@@ -806,7 +807,7 @@ async function fullSync(triggertype) {
           ...{ ParentId: item.Id },
         }));
 
-        let library_items = libraryItemsWithParent.filter((item) => ["Movie", "Audio", "Series"].includes(item.Type));
+        let library_items = filterLibraryItems(libraryItemsWithParent);
 
         let seasons = libraryItemsWithParent.filter((item) => ["Season"].includes(item.Type));
         let episodes = libraryItemsWithParent.filter((item) => ["Episode"].includes(item.Type));
@@ -1032,7 +1033,7 @@ async function partialSync(triggertype) {
           ...{ ParentId: library.Id },
         }));
 
-        let library_items = libraryItemsWithParent.filter((item) => ["Movie", "Audio", "Series"].includes(item.Type));
+        let library_items = filterLibraryItems(libraryItemsWithParent);
 
         let seasons = libraryItemsWithParent.filter((item) => ["Season"].includes(item.Type));
         let episodes = libraryItemsWithParent.filter((item) => ["Episode"].includes(item.Type));

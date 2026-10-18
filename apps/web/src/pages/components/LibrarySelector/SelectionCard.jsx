@@ -4,35 +4,20 @@ import "../../css/library/library-card.css";
 
 import { Form, Card, Row, Col } from "react-bootstrap";
 
-import TvLineIcon from "remixicon-react/TvLineIcon";
-import FilmLineIcon from "remixicon-react/FilmLineIcon";
-import FileMusicLineIcon from "remixicon-react/FileMusicLineIcon";
-import CheckboxMultipleBlankLineIcon from "remixicon-react/CheckboxMultipleBlankLineIcon";
 import { Trans } from "react-i18next";
 import baseUrl from "../../../lib/baseurl";
+import { libraryTypeMeta } from "../../../lib/library-types";
 
 function SelectionCard(props) {
   const [imageLoaded, setImageLoaded] = useState(true);
   const [checked, setChecked] = useState(props.data.Tracked);
-  const SeriesIcon = <TvLineIcon size={"50%"} color="white" />;
-  const MovieIcon = <FilmLineIcon size={"50%"} color="white" />;
-  const MusicIcon = <FileMusicLineIcon size={"50%"} color="white" />;
-  const MixedIcon = <CheckboxMultipleBlankLineIcon size={"50%"} color="white" />;
   const token = localStorage.getItem("token");
-
-  const libraryType =
-    props.data.CollectionType === "tvshows" ? (
-      <Trans i18nKey="SERIES" />
-    ) : props.data.CollectionType === "movies" ? (
-      <Trans i18nKey="MOVIES" />
-    ) : props.data.CollectionType === "music" ? (
-      <Trans i18nKey="MUSIC" />
-    ) : (
-      "Mixed"
-    );
+  const libraryMeta = libraryTypeMeta(props.data.CollectionType);
+  const TypeIcon = libraryMeta.icon;
+  const libraryType = libraryMeta.name;
   const default_image = (
     <div className="default_library_image-inv d-flex justify-content-center align-items-center">
-      {props.data.CollectionType === "tvshows" ? SeriesIcon : props.data.CollectionType === "movies" ? MovieIcon : props.data.CollectionType === "music" ? MusicIcon : MixedIcon}{" "}
+      <TypeIcon size={"50%"} color="white" />{" "}
     </div>
   );
 
