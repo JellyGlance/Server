@@ -6,6 +6,7 @@ const configClass = require("../classes/config");
 const API = require("../classes/api-loader");
 const { getIntegrations } = require("../classes/integration-store");
 const { joinSafeHttpUrl, sendSafeError, toSafeHttpUrl, safeHttpGet} = require("../utils/security");
+const { isValidPluginId, pluginImageRequests, shouldTryNextPluginImage } = require("../utils/jellyfin-plugins");
 
 const router = express.Router();
 const SAFE_DEVICE_NAME = /^[A-Za-z0-9._-]{1,64}$/;
@@ -94,45 +95,6 @@ function getJellyfinAuthHeaders(config) {
 function toUnsignedInt(value, fallback) {
   const parsed = Number.parseInt(String(value || ""), 10);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
-}
-
-function getJellyfinOrigin(config) {
-  if (!config?.JF_HOST) {
-    return null;
-  }
-
-  try {
-    const hostUrl = new URL(config.JF_HOST);
-    return `${hostUrl.protocol}//${hostUrl.host}`;
-  } catch {
-    return null;
-  }
-}
-
-function isAllowedPluginImageUrl(url, config) {
-  try {
-    const parsed = new URL(url);
-    if (!/^https?:$/.test(parsed.protocol)) {
-      return false;
-    }
-
-    const jellyfinOrigin = getJellyfinOrigin(config);
-    if (!jellyfinOrigin) {
-      return false;
-    }
-
-    if (parsed.origin === jellyfinOrigin) {
-      return true;
-    }
-
-    if (config.IS_JELLYFIN == false && parsed.hostname === "raw.githubusercontent.com") {
-      return parsed.pathname.startsWith("/MediaBrowser/Emby.Resources/");
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
 }
 
 router.get("/web/assets/img/devices/", async (req, res) => {
@@ -306,7 +268,7 @@ router.get("/Users/Images/Primary/", async (req, res) => {
 });
 
 router.get("/Plugins/Images/", async (req, res) => {
-  const { id, url: imageUrl } = req.query;
+  const { id, version, url: imageUrl } = req.query;
   const config = await new configClass().getConfig();
 
   if (config.error) {
@@ -319,25 +281,26 @@ router.get("/Plugins/Images/", async (req, res) => {
     return;
   }
 
-  const encodedId = id ? encodeURIComponent(id) : undefined;
-  const candidates = imageUrl ? [imageUrl] : [
-    `${config.JF_HOST}/Plugins/${encodedId}/Image`,
-    `${config.JF_HOST}/Plugins/${encodedId}/Images/Primary`,
-    `${config.JF_HOST}/Plugins/${encodedId}/Thumb`,
-  ];
+  if (!imageUrl && !isValidPluginId(id)) {
+    res.status(400).send("Invalid plugin id");
+    return;
+  }
 
-  for (const url of candidates) {
+  const requests = pluginImageRequests(
+    config,
+    { id, version, url: imageUrl },
+    mediaServerAuthHeaders(config.JF_API_KEY),
+  );
+
+  for (const { url, headers } of requests) {
     try {
-      if (!/^https?:\/\//i.test(url) || !isAllowedPluginImageUrl(url, config)) {
-        continue;
-      }
-
       const response = await safeHttpGet(url, "", {
         responseType: "arraybuffer",
         headers: {
-          ...(imageUrl ? {} : mediaServerAuthHeaders(config.JF_API_KEY)),
+          ...headers,
           "User-Agent": "JellyGlance/1.0.6",
         },
+        timeout: 5000,
       });
 
       const contentType = response.headers["content-type"] || "image/png";
@@ -347,8 +310,10 @@ router.get("/Plugins/Images/", async (req, res) => {
       res.set("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
       res.status(200).send(response.data);
       return;
-    } catch {
-      // Try the next Jellyfin plugin image endpoint.
+    } catch (error) {
+      // An HTTP error (e.g. 404) means try the next endpoint; a timeout or
+      // network error means Jellyfin is unreachable, so stop here.
+      if (!shouldTryNextPluginImage(error)) break;
     }
   }
 
