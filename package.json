@@ -43,7 +43,7 @@
     "widgets:check": "node scripts/widget-files.mjs --check",
     "widgets:sync": "node scripts/widget-files.mjs",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test -w @jellyglance/api",
+    "test": "npm run test -w @jellyglance/api && npm run test -w @jellyglance/web",
     "bundle:budget": "node scripts/check-bundle-budget.cjs",
     "bundle:budget:update": "npm run build && node scripts/check-bundle-budget.cjs --update",
     "start": "npm run start -w @jellyglance/api"
