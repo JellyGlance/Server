@@ -28,11 +28,14 @@ function Login() {
   const [quickConnect, setQuickConnect] = useState(null);
   const [quickConnectStatus, setQuickConnectStatus] = useState("");
   const [oidcStatus, setOidcStatus] = useState("");
+  // Break-glass: local accounts still sign in when single sign-on is set up but broken.
+  const [useLocalLogin, setUseLocalLogin] = useState(false);
   // Emby has no Quick Connect, so its "quick-connect" mode signs in with the Emby username and password.
   const embyServer = setupInfo?.serverType === "emby";
   const canQuickConnect = setupInfo?.auth?.mode === "quick-connect" && !embyServer;
   const canMediaPassword = setupInfo?.auth?.mode === "quick-connect" && embyServer;
-  const canOidc = setupInfo?.auth?.mode === "oidc";
+  const oidcConfigured = setupInfo?.auth?.mode === "oidc";
+  const canOidc = oidcConfigured && !useLocalLogin;
   const canUseQuickConnect = canQuickConnect || canOidc;
 
   function handleFormChange(event) {
@@ -402,6 +405,11 @@ function Login() {
                   : submitButtonText}
             </Button>
           )}
+          {oidcConfigured ? (
+            <Button type="button" variant="link" className="login-local-toggle" onClick={() => setUseLocalLogin(!useLocalLogin)}>
+              {useLocalLogin ? i18next.t("SETTINGS_PAGE.OIDC.USE_SSO") : i18next.t("SETTINGS_PAGE.OIDC.USE_LOCAL")}
+            </Button>
+          ) : null}
         </Form>
       </div>
     </section>

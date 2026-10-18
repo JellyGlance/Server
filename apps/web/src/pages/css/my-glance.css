@@ -193,6 +193,13 @@
     rgba(8, 11, 17, 0.92);
 }
 
+.my-glance-live-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .my-glance-live.is-idle {
   color: #9cabbe;
 }

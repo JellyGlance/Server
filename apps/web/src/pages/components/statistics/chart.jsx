@@ -1,6 +1,8 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import { useCompactChart } from "../../../lib/breakpoints";
 
 function Chart({ stats, libraries, viewName }) {
+  const compact = useCompactChart();
   const colors = [
     "var(--primary-light-color)",
     "var(--primary-color)",
@@ -67,7 +69,7 @@ function Chart({ stats, libraries, viewName }) {
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={flattenedStats} margin={{ top: 12, right: 24, left: 0, bottom: 8 }}>
+      <AreaChart data={flattenedStats} margin={compact ? { top: 8, right: 8, left: -12, bottom: 0 } : { top: 12, right: 24, left: 0, bottom: 8 }}>
         <defs>
           {libraries.map((library, index) => (
             <linearGradient key={library.Id} id={library.Id} x1="0" y1="0" x2="0" y2="1">
@@ -76,10 +78,19 @@ function Chart({ stats, libraries, viewName }) {
             </linearGradient>
           ))}
         </defs>
-        <XAxis dataKey="Key" interval={0} angle={-42} textAnchor="end" height={86} stroke="#64748b" tick={{ fill: "#9aa7bb", fontSize: 11, fontWeight: 700 }} />
-        <YAxis domain={[0, max]} stroke="#64748b" tick={{ fill: "#9aa7bb", fontSize: 11, fontWeight: 700 }} />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend verticalAlign="bottom" wrapperStyle={{ color: "#cbd5e1", fontSize: 12, fontWeight: 800 }} />
+        <XAxis
+          dataKey="Key"
+          interval={compact ? "preserveStartEnd" : 0}
+          minTickGap={compact ? 28 : 5}
+          angle={compact ? 0 : -42}
+          textAnchor={compact ? "middle" : "end"}
+          height={compact ? 28 : 86}
+          stroke="#64748b"
+          tick={{ fill: "#9aa7bb", fontSize: compact ? 10.5 : 11, fontWeight: 700 }}
+        />
+        <YAxis domain={[0, max]} width={compact ? 34 : 60} allowDecimals={false} stroke="#64748b" tick={{ fill: "#9aa7bb", fontSize: compact ? 10 : 11, fontWeight: 700 }} />
+        <Tooltip content={<CustomTooltip />} wrapperStyle={{ pointerEvents: "none" }} />
+        {compact ? null : <Legend verticalAlign="bottom" wrapperStyle={{ color: "#cbd5e1", fontSize: 12, fontWeight: 800 }} />}
         {libraries.map((library, index) => (
           <Area
             key={library.Id}

@@ -718,8 +718,9 @@
   min-height: 72px;
 }
 
+/* No 180px floor here: it used to override the narrow rules above and push the KPIs off-screen at 768. */
 .stats-overview-kpis {
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .stats-overview-kpis article,
@@ -959,5 +960,62 @@ a.stats-rank-row:hover {
   .stats-chart-intro {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+/* ---------- Phone and tablet pass ---------- */
+@media (max-width: 900px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
+  /* The mobile top bar is sticky at top: 0 too, so a sticky header would slide underneath it. */
+  .stats-page-header {
+    position: static;
+  }
+}
+
+@media (max-width: 1179px) {
+  .graph {
+    height: 320px;
+  }
+}
+
+@media (max-width: 900px) {
+  .stats-overview-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stats-presets button,
+  .stats-apply-button,
+  .stats-tab-nav .nav-link {
+    min-height: var(--jg-touch-min);
+  }
+
+  .stats-rank-row {
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 599px) {
+  .stats-overview-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-overview-kpis article {
+    min-height: 84px;
+    padding: 12px;
+  }
+
+  .stats-overview-kpis strong {
+    font-size: clamp(20px, 5.6vw, 26px);
+  }
+
+  .graph {
+    height: clamp(220px, 58vw, 300px);
+    padding: 10px 8px 4px;
+  }
+}
+
+@media (max-width: 339px) {
+  .stats-overview-kpis {
+    grid-template-columns: 1fr;
   }
 }

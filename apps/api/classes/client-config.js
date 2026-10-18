@@ -3,6 +3,7 @@
 
 // Server-only settings. Each has its own admin-only endpoint.
 const CLIENT_HIDDEN_SETTINGS = [
+  "oidcLinks",
   "UserPreferences",
   "Integrations",
   "IntegrationData",

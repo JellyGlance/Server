@@ -47,14 +47,14 @@
   align-self: start;
 }
 
-@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+@media (max-width: 900px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
   .App > .d-flex {
     flex-direction: column !important;
   }
 
   .app-shell-main {
     min-height: 100dvh;
-    padding: 10px 10px calc(88px + env(safe-area-inset-bottom, 0px));
+    padding: 10px max(10px, env(safe-area-inset-right, 0px)) calc(var(--jg-tabbar-h, 64px) + var(--jg-safe-bottom, 0px) + 24px) max(10px, env(safe-area-inset-left, 0px));
     overflow-x: hidden;
   }
 }
@@ -546,4 +546,11 @@ select option:hover {
 .pwa-install-banner button.is-quiet {
   background: transparent;
   color: #9cabbe;
+}
+
+@media (pointer: coarse) {
+  .pwa-install-banner button {
+    min-height: var(--jg-touch-min, 44px);
+    padding: 0 16px;
+  }
 }

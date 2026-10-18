@@ -1,7 +1,7 @@
 const express = require("express");
 const { mediaServerAuthHeaders, chooseServerType, withServerType, saveServerType, serverLabel } = require("../classes/server-type");
 const { publicAuth } = require("../classes/client-config");
-const { createHash, randomBytes, randomUUID } = require("crypto");
+const { createHash, randomUUID } = require("crypto");
 const db = require("../db");
 const jwt = require("jsonwebtoken");
 const configClass = require("../classes/config");
@@ -18,13 +18,14 @@ const {
   isEmptyPassword,
   isQuickConnectSecret,
   joinSafeHttpUrl,
-  safeHttpGet,
   sanitizeForLog,
   stripTrailingSlashes,
   timingSafeEqualString,
   toSafeHttpUrl,
   verifyPassword,
 } = require("../utils/security");
+const oidc = require("../classes/oidc");
+const { encryptSecret, decryptSecret } = require("../classes/integration-store");
 
 const router = express.Router();
 router.use(authRateLimit);
@@ -60,18 +61,6 @@ function signAuthToken(user) {
       }
     });
   });
-}
-
-function base64Url(value) {
-  return Buffer.from(value).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
-
-function createOidcVerifier() {
-  return base64Url(randomBytes(32));
-}
-
-function createOidcChallenge(verifier) {
-  return base64Url(createHash("sha256").update(verifier).digest());
 }
 
 function signOidcState(payload) {
@@ -207,61 +196,98 @@ function getOidcRedirectUri(req, auth) {
 }
 
 function getOidcDisplayName(claims) {
-  return claims?.username || claims?.preferred_username || claims?.name || claims?.email || claims?.sub || "oidc-user";
+  return claims?.preferred_username || claims?.name || claims?.email || claims?.sub || "oidc-user";
 }
 
-function getOidcSubject(claims) {
-  return claims?.sub || claims?.email || claims?.preferred_username;
+const OIDC_BINDING_COOKIE = "jg_oidc_binding";
+
+function readCookie(req, name) {
+  const header = req.headers?.cookie || "";
+  for (const part of header.split(";")) {
+    const [key, ...rest] = part.trim().split("=");
+    if (key !== name) continue;
+    try {
+      return decodeURIComponent(rest.join("="));
+    } catch {
+      // A malformed cookie is treated as missing rather than failing the request.
+      return "";
+    }
+  }
+  return "";
 }
 
-function normalizeAccountName(value) {
-  return value?.toString().trim().toLowerCase();
+function hashBinding(value) {
+  return createHash("sha256").update(String(value)).digest("hex");
 }
 
-function getOidcJellyfinMatchCandidates(claims) {
-  const candidates = [
-    claims?.jellyfin_username,
-    claims?.jellyfin_user,
-    claims?.username,
-    claims?.preferred_username,
-    claims?.nickname,
-    claims?.name,
-    claims?.email,
-    claims?.email?.split("@")[0],
+// Checks that a verified state token belongs to an OIDC login started in this browser.
+// Every comparison runs on every callback; nothing taken from the request can skip one.
+function isValidOidcCallbackState(statePayload, binding) {
+  const payload = statePayload && typeof statePayload === "object" ? statePayload : {};
+  const checks = [
+    payload.type === "oidc",
+    typeof payload.verifier === "string" && payload.verifier.length > 0,
+    typeof payload.nonce === "string" && payload.nonce.length > 0,
+    typeof payload.binding === "string" && payload.binding.length > 0,
+    typeof binding === "string" && binding.length > 0,
+    oidc.safeEqual(hashBinding(binding ?? ""), payload.binding),
   ];
-
-  return [...new Set(candidates.map(normalizeAccountName).filter(Boolean))];
+  return checks.every(Boolean);
 }
 
-async function findJellyfinUserForOidcClaims(claims) {
-  const candidates = getOidcJellyfinMatchCandidates(claims);
-  if (!candidates.length) {
-    return null;
-  }
+const OIDC_CALLBACK_FALLBACK_ERROR = "Unable to complete OIDC login";
+// Fixed, user-facing text per known failure. Exception messages can carry provider or
+// request data, so they are only ever logged, never sent back to the browser.
+const OIDC_CALLBACK_ERRORS = new Map([
+  ["bad_alg", "Unable to complete OIDC login: the ID token uses an algorithm that is not allowed"],
+  ["bad_discovery", "Unable to complete OIDC login: the provider's discovery document is invalid"],
+  ["bad_nonce", "Unable to complete OIDC login: the ID token does not match this sign-in attempt"],
+  ["bad_token", "Unable to complete OIDC login: the ID token was rejected"],
+  ["blocked_host", "Unable to complete OIDC login: the provider address is not allowed"],
+  ["endpoint_host", "Unable to complete OIDC login: a provider endpoint is not on the issuer's host"],
+  ["invalid_url", "Unable to complete OIDC login: the provider URL is not valid"],
+  ["issuer_mismatch", "Unable to complete OIDC login: the provider's issuer does not match the configured issuer"],
+  ["missing_issuer", "Unable to complete OIDC login: no issuer URL is configured"],
+  ["unknown_key", "Unable to complete OIDC login: no matching signing key was found"],
+]);
 
+function describeOidcCallbackError(error) {
+  const code = error instanceof oidc.OidcError ? error.code : "";
+  const errorMessage = OIDC_CALLBACK_ERRORS.get(code);
+  if (errorMessage) return { status: 400, errorMessage };
+  return { status: 502, errorMessage: OIDC_CALLBACK_FALLBACK_ERROR };
+}
+
+// Bearer-like values (JWTs, long opaque tokens) are masked before an error reaches the log.
+function redactOidcErrorDetail(value) {
+  return sanitizeForLog(
+    String(value ?? "")
+      .replace(/eyJ[\w-]*\.[\w-]*\.[\w-]*/g, "[redacted-jwt]")
+      .replace(/[A-Za-z0-9_\-+/=]{32,}/g, "[redacted]")
+  );
+}
+
+// Media server users JellyGlance knows about, from the last sync or live as a fallback.
+async function listMediaUsers() {
   const { rows } = await db.query('SELECT "Id", "Name", "PrimaryImageTag", "IsAdministrator" FROM jf_users');
-  const syncedUser = rows.find((user) => candidates.includes(normalizeAccountName(user.Name)));
-  if (syncedUser) {
-    return {
-      id: syncedUser.Id,
-      name: syncedUser.Name,
-      primaryImageTag: syncedUser.PrimaryImageTag || null,
-      isAdministrator: Boolean(syncedUser.IsAdministrator),
-    };
-  }
+  const users = rows.length ? rows : await API.getUsers(true).catch(() => []);
+  return users.map((user) => ({
+    id: user.Id,
+    name: user.Name,
+    email: user.Email || user.email || null,
+    primaryImageTag: user.PrimaryImageTag || null,
+    isAdministrator: Boolean(user.IsAdministrator ?? user?.Policy?.IsAdministrator),
+  }));
+}
 
-  const jellyfinUsers = await API.getUsers(true);
-  const liveUser = jellyfinUsers.find((user) => candidates.includes(normalizeAccountName(user.Name)));
-  if (!liveUser) {
-    return null;
-  }
-
-  return {
-    id: liveUser.Id,
-    name: liveUser.Name,
-    primaryImageTag: liveUser.PrimaryImageTag || null,
-    isAdministrator: Boolean(liveUser?.Policy?.IsAdministrator),
-  };
+async function saveOidcLink(key, link) {
+  await db.query(
+    `UPDATE app_config
+        SET settings = jsonb_set(COALESCE(settings::jsonb, '{}'::jsonb), '{oidcLinks}',
+                                 COALESCE(settings::jsonb -> 'oidcLinks', '{}'::jsonb) || $1::jsonb, true)::json
+      WHERE "ID" = 1`,
+    [JSON.stringify({ [key]: link })]
+  );
 }
 
 function getOidcAppPath(auth) {
@@ -318,37 +344,31 @@ function getOidcErrorMessage(error, fallback = "Unable to complete OIDC login") 
   return data?.error_description || data?.errorMessage || data?.error || error?.message || fallback;
 }
 
+// Optional OIDC settings accepted from the setup and settings forms.
+function pickOidcOptions(body = {}) {
+  const options = {};
+  if (typeof body.scopes === "string") options.scopes = body.scopes.trim() || oidc.DEFAULT_SCOPES;
+  if (typeof body.groupsClaim === "string") options.groupsClaim = body.groupsClaim.trim() || "groups";
+  if (typeof body.roleMapping === "string" || (body.roleMapping && typeof body.roleMapping === "object")) {
+    options.roleMapping = oidc.parseRoleMapping(body.roleMapping);
+  }
+  if (oidc.LINK_POLICIES.includes(body.linkPolicy)) options.linkPolicy = body.linkPolicy;
+  if (body.autoProvision !== undefined) options.autoProvision = body.autoProvision === true || body.autoProvision === "true";
+  if (typeof body.defaultRole === "string" && body.defaultRole) options.defaultRole = body.defaultRole;
+  if (typeof body.label === "string" && body.label.trim()) options.label = body.label.trim().slice(0, 60);
+  return options;
+}
+
 async function testOidcDiscovery(issuerUrl) {
   const normalizedIssuer = normalizeIssuerUrl(issuerUrl);
   if (!normalizedIssuer) {
     return { isValid: false, errorMessage: "OIDC issuer URL is required" };
   }
-
   try {
-    const response = await safeHttpGet(normalizedIssuer, "/.well-known/openid-configuration", { timeout: 8000 });
-    const discovery = response?.data || {};
-    const hasRequiredEndpoints = discovery.authorization_endpoint && discovery.token_endpoint && discovery.issuer;
-
-    if (!hasRequiredEndpoints) {
-      return { isValid: false, errorMessage: "OIDC discovery document is missing required endpoints" };
-    }
-
-    return {
-      isValid: true,
-      issuerUrl: normalizedIssuer,
-      discovery: {
-        issuer: discovery.issuer,
-        authorization_endpoint: discovery.authorization_endpoint,
-        token_endpoint: discovery.token_endpoint,
-        userinfo_endpoint: discovery.userinfo_endpoint,
-        jwks_uri: discovery.jwks_uri,
-      },
-    };
+    const discovery = await oidc.discover(normalizedIssuer);
+    return { isValid: true, issuerUrl: normalizedIssuer, discovery };
   } catch (error) {
-    return {
-      isValid: false,
-      errorMessage: `Unable to reach OIDC discovery: ${error?.response?.status || error.message}`,
-    };
+    return { isValid: false, errorMessage: `OIDC discovery failed: ${error.code ? error.message : error?.response?.status || error.message}` };
   }
 }
 
@@ -615,173 +635,153 @@ router.get("/oidc/login", async (req, res) => {
   try {
     const config = await new configClass().getConfig();
     const auth = config.settings?.auth || {};
-
     if (auth.mode !== "oidc") {
       res.status(400).json({ errorMessage: "OIDC login is not enabled" });
       return;
     }
-
-    if (!auth.clientId || !auth.discovery?.authorization_endpoint || !auth.discovery?.token_endpoint) {
+    const options = oidc.resolveSettings(auth, process.env, decryptSecret);
+    if (!options.clientId || !options.issuerUrl) {
       res.status(400).json({ errorMessage: "OIDC settings are incomplete" });
       return;
     }
 
-    const verifier = createOidcVerifier();
-    const state = await signOidcState({
-      type: "oidc",
-      nonce: base64Url(randomBytes(16)),
-      verifier,
-      returnTo: "/",
-    });
-    const authorizationUrl = new URL(auth.discovery.authorization_endpoint);
-    authorizationUrl.searchParams.set("client_id", auth.clientId);
-    authorizationUrl.searchParams.set("redirect_uri", getOidcRedirectUri(req, auth));
-    authorizationUrl.searchParams.set("response_type", "code");
-    authorizationUrl.searchParams.set("scope", "openid profile email");
-    authorizationUrl.searchParams.set("state", state);
-    authorizationUrl.searchParams.set("code_challenge", createOidcChallenge(verifier));
-    authorizationUrl.searchParams.set("code_challenge_method", "S256");
+    const discovery = await oidc.discover(options.issuerUrl);
+    const verifier = oidc.createVerifier();
+    const nonce = oidc.createNonce();
+    const binding = oidc.createVerifier();
+    const state = await signOidcState({ type: "oidc", nonce, verifier, binding: hashBinding(binding) });
 
-    res.redirect(authorizationUrl.toString());
+    // Ties the callback to this browser, so a stolen callback link cannot sign someone else in.
+    res.cookie(OIDC_BINDING_COOKIE, binding, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: req.secure,
+      maxAge: 10 * 60 * 1000,
+      path: "/auth/oidc",
+    });
+    res.redirect(
+      oidc.buildAuthorizationUrl(discovery, {
+        clientId: options.clientId,
+        redirectUri: getOidcRedirectUri(req, options),
+        scopes: options.scopes,
+        state,
+        nonce,
+        verifier,
+      })
+    );
   } catch (error) {
-    console.log("[OIDC] login start failed", error.message);
-    res.status(500).json({ errorMessage: "Unable to start OIDC login" });
+    console.log("[OIDC] login start failed", sanitizeForLog(error.code || error.message));
+    res.status(502).json({ errorMessage: "Unable to start OIDC login" });
   }
 });
 
 router.get("/oidc/callback", async (req, res) => {
+  let appPath = "";
+  const fail = (status, errorMessage) => res.status(status).send(renderOidcCallbackPage({ errorMessage, appPath }));
   try {
-    const code = typeof req.query.code === "string" ? req.query.code : "";
-    // Always verify JWT state first (algorithms pinned in verifyOidcState). Missing/invalid
-    // state fails closed via jwt.verify throw — not a user-controlled security bypass.
+    const config = await new configClass().getConfig();
+    const settings = config.settings || {};
+    const auth = settings.auth || {};
+    appPath = getOidcAppPath(auth);
+
+    if (auth.mode !== "oidc") return fail(400, "OIDC login is not enabled");
+
+    const binding = readCookie(req, OIDC_BINDING_COOKIE);
+    res.clearCookie(OIDC_BINDING_COOKIE, { path: "/auth/oidc" });
     let statePayload;
     try {
       statePayload = await verifyOidcState(typeof req.query.state === "string" ? req.query.state : "");
     } catch {
-      res.status(400).send(renderOidcCallbackPage({ errorMessage: "OIDC callback is missing or invalid state" }));
-      return;
+      return fail(400, "OIDC callback is missing or invalid state");
     }
-    if (!statePayload || statePayload.type !== "oidc" || typeof statePayload.verifier !== "string" || !statePayload.verifier) {
-      res.status(400).send(renderOidcCallbackPage({ errorMessage: "OIDC state is invalid" }));
-      return;
+    if (!isValidOidcCallbackState(statePayload, binding)) {
+      return fail(400, "OIDC state is invalid or was started in another browser");
     }
+    if (typeof req.query.error === "string") {
+      return fail(400, "OIDC login was denied or cancelled");
+    }
+    const code = typeof req.query.code === "string" ? req.query.code : "";
+    if (!code) return fail(400, "OIDC login was denied or incomplete");
 
-    if (!code) {
-      res.status(400).send(renderOidcCallbackPage({ errorMessage: "OIDC login was denied or incomplete" }));
-      return;
-    }
-
-    const config = await new configClass().getConfig();
-    const settings = config.settings || {};
-    const auth = settings.auth || {};
-    const appPath = getOidcAppPath(auth);
-    if (auth.mode !== "oidc" || !auth.discovery?.token_endpoint) {
-      res.status(400).send(renderOidcCallbackPage({ errorMessage: "OIDC login is not enabled", appPath }));
-      return;
-    }
-
-    const tokenParams = new URLSearchParams({
-      grant_type: "authorization_code",
+    const options = oidc.resolveSettings(auth, process.env, decryptSecret);
+    const discovery = await oidc.discover(options.issuerUrl);
+    const redirectUri = getOidcRedirectUri(req, options);
+    const tokenData = await oidc.exchangeCode(discovery, {
       code,
-      redirect_uri: getOidcRedirectUri(req, auth),
-      client_id: auth.clientId,
-      code_verifier: statePayload.verifier,
+      redirectUri,
+      clientId: options.clientId,
+      clientSecret: options.clientSecret,
+      verifier: statePayload.verifier,
     });
+    if (!tokenData?.id_token) return fail(400, "The OIDC provider did not return an ID token");
 
-    const clientSecret = auth.clientSecret && auth.clientSecret !== auth.clientId ? auth.clientSecret : null;
-    const headers = { "Content-Type": "application/x-www-form-urlencoded" };
-    if (clientSecret) {
-      const clientCredentials = Buffer.from(`${auth.clientId}:${clientSecret}`).toString("base64");
-      headers.Authorization = `Basic ${clientCredentials}`;
+    const idClaims = await oidc.verifyIdToken(tokenData.id_token, {
+      discovery,
+      clientId: options.clientId,
+      nonce: statePayload.nonce,
+    });
+    const userInfo = await oidc.fetchUserInfo(discovery, tokenData.access_token, idClaims.sub).catch(() => ({}));
+    // ID token claims win over userinfo for anything security relevant.
+    const claims = { ...userInfo, ...idClaims, groups: idClaims.groups ?? userInfo.groups };
+
+    const links = settings.oidcLinks || {};
+    const key = oidc.linkKey(discovery.issuer, claims.sub);
+    const mediaUsers = await listMediaUsers();
+    const { mediaUser, linkedBy } = oidc.resolveLinkedUser({ claims, issuer: discovery.issuer, links, mediaUsers, linkPolicy: options.linkPolicy });
+
+    if (!mediaUser && !(links[key] && links[key].provisioned) && !options.autoProvision) {
+      return fail(403, "No JellyGlance account is linked to this sign-in yet. Ask an admin to link it or enable auto-provisioning.");
     }
 
-    let tokenResponse;
-    try {
-      tokenResponse = await axios.post(toSafeHttpUrl(auth.discovery.token_endpoint), tokenParams.toString(), {
-        headers,
-        timeout: 12000,
-      });
-    } catch (tokenError) {
-      if (!clientSecret || ![400, 401].includes(tokenError?.response?.status)) {
-        throw tokenError;
-      }
-
-      tokenParams.set("client_secret", clientSecret);
-      try {
-        tokenResponse = await axios.post(toSafeHttpUrl(auth.discovery.token_endpoint), tokenParams.toString(), {
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          timeout: 12000,
-        });
-      } catch (postSecretError) {
-        if (![400, 401].includes(postSecretError?.response?.status)) {
-          throw postSecretError;
-        }
-
-        tokenParams.delete("client_secret");
-        tokenResponse = await axios.post(toSafeHttpUrl(auth.discovery.token_endpoint), tokenParams.toString(), {
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          timeout: 12000,
-        });
-      }
-    }
-    const tokenData = tokenResponse?.data || {};
-
-    let claims = tokenData.id_token ? jwt.decode(tokenData.id_token) || {} : {};
-    if (auth.discovery.userinfo_endpoint && tokenData.access_token) {
-      try {
-        const userInfoResponse = await axios.get(toSafeHttpUrl(auth.discovery.userinfo_endpoint), {
-          headers: { Authorization: `Bearer ${tokenData.access_token}` },
-          timeout: 12000,
-        });
-        claims = { ...claims, ...(userInfoResponse?.data || {}) };
-      } catch (userinfoError) {
-        console.log("[OIDC] userinfo failed", userinfoError?.response?.status || userinfoError.message);
-      }
+    const groups = oidc.claimGroups(claims, options.groupsClaim);
+    const role = oidc.resolveRole({
+      groups,
+      roleMapping: options.roleMapping,
+      assignedRole: mediaUser ? settings.userRoles?.[mediaUser.id] : links[key]?.role,
+      isMediaAdmin: mediaUser?.isAdministrator,
+      defaultRole: options.defaultRole,
+      validRoles: settings.roles?.length ? settings.roles : undefined,
+    });
+    const permissions = getRolePermissions(settings, role);
+    if (role === "Disabled" || !permissions.dashboard) {
+      return fail(403, "This account is disabled in JellyGlance");
     }
 
-    const subject = getOidcSubject(claims);
-    if (!subject) {
-      res.status(400).send(renderOidcCallbackPage({ errorMessage: "OIDC provider did not return a usable user identity", appPath }));
-      return;
+    if (linkedBy && linkedBy !== "link") {
+      await saveOidcLink(key, { mediaUserId: mediaUser.id, linkedBy, linkedAt: new Date().toISOString() });
+    } else if (!mediaUser && !links[key]) {
+      await saveOidcLink(key, { mediaUserId: null, provisioned: true, role: options.defaultRole, name: getOidcDisplayName(claims), linkedAt: new Date().toISOString() });
     }
 
-    const jellyfinUser = await findJellyfinUserForOidcClaims(claims);
-    if (!jellyfinUser?.id) {
-      res.status(403).send(
-        renderOidcCallbackPage({
-          errorMessage: "No Jellyfin user matches this OIDC account",
-          appPath,
-        })
-      );
-      return;
-    }
-
-    const assignedRole = settings.userRoles?.[jellyfinUser.id] || (jellyfinUser.isAdministrator ? "Admin" : "Viewer");
-    const permissions = getRolePermissions(settings, assignedRole);
-    if (assignedRole === "Disabled" || !permissions.dashboard) {
-      res.status(403).send(renderOidcCallbackPage({ errorMessage: "This OIDC account is disabled in JellyGlance", appPath }));
-      return;
-    }
-
+    const jellyfinUser = mediaUser
+      ? { id: mediaUser.id, name: mediaUser.name, primaryImageTag: mediaUser.primaryImageTag, isAdministrator: mediaUser.isAdministrator }
+      : null;
     const token = await signAuthToken({
-      id: subject,
+      id: `oidc:${claims.sub}`,
       username: getOidcDisplayName(claims),
       authMode: "oidc",
-      role: assignedRole,
+      role,
       permissions,
       jellyfinUser,
       oidcUser: {
-        subject,
+        sub: claims.sub,
+        subject: claims.sub,
+        issuer: discovery.issuer,
         email: claims.email || null,
+        emailVerified: claims.email_verified === true,
         name: claims.name || null,
         preferredUsername: claims.preferred_username || null,
       },
     });
-
-    res.send(renderOidcCallbackPage({ token, appPath }));
+    return res.send(renderOidcCallbackPage({ token, appPath }));
   } catch (error) {
-    console.log("[OIDC] callback failed", error?.response?.status || 500, sanitizeForLog(error?.message));
-    res.status(error?.response?.status || 500).send(renderOidcCallbackPage({ errorMessage: "Unable to complete OIDC login" }));
+    console.log(
+      "[OIDC] callback failed",
+      redactOidcErrorDetail(error?.code || error?.response?.status || "error"),
+      redactOidcErrorDetail(error?.message)
+    );
+    const { status, errorMessage } = describeOidcCallbackError(error);
+    return fail(status, errorMessage);
   }
 });
 
@@ -807,6 +807,11 @@ function resolveAuthSummary(config) {
 
   return auth || null;
 }
+
+router.pickOidcOptions = pickOidcOptions;
+router.isValidOidcCallbackState = isValidOidcCallbackState;
+router.describeOidcCallbackError = describeOidcCallbackError;
+router.testOidcDiscovery = testOidcDiscovery;
 
 router.get("/isConfigured", async (req, res) => {
   try {
@@ -1020,9 +1025,10 @@ router.post("/setup-auth", async (req, res) => {
         label: "OIDC / Authentik",
         issuerUrl: oidcTest.issuerUrl,
         clientId,
-        clientSecret: clientSecret || null,
+        clientSecret: clientSecret ? encryptSecret(clientSecret) : null,
         redirectUri: redirectUri || null,
         discovery: oidcTest.discovery,
+        ...pickOidcOptions(req.body),
       };
       settings.firstRunExtrasPending = true;
 

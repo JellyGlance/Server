@@ -57,6 +57,21 @@
   <a href="https://discord.gg/dMGhv8j2kx"><strong>Discord</strong></a>
 </p>
 
+<p align="center">
+  <img src="docs/images/jellyglance-hero.png" alt="JellyGlance dashboard and statistics pages" width="100%">
+</p>
+
+<details>
+  <summary><strong>Take the tour</strong>: dashboard, statistics, libraries and activity</summary>
+  <br>
+  <p align="center">
+    <picture>
+      <source srcset="docs/images/jellyglance-tour.webp" type="image/webp">
+      <img src="docs/images/jellyglance-tour.gif" alt="Animated tour of the JellyGlance dashboard, statistics, library and activity pages" width="100%">
+    </picture>
+  </p>
+</details>
+
 ## Contents
 
 - [What it is](#what-it-is)
@@ -98,7 +113,7 @@ It runs as a single Docker container next to PostgreSQL. It's free, with no ads,
 - **Calendar and downloads.** Upcoming releases from the \*arr apps and the queues from your download clients.
 - **Users.** Dashboards with favourites, watchlists, Continue Watching and recently watched, and Wizarr invite management.
 - **Notifications.** Webhooks, Discord and Gotify, with delivery history, plus email newsletters.
-- **Sign-in options.** Local JellyGlance accounts, Jellyfin Quick Connect and OIDC, with roles and an admin audit trail.
+- **Sign-in options.** Local JellyGlance accounts, Jellyfin Quick Connect and OIDC single sign-on (Authentik, Authelia, Keycloak; see [docs/oidc.md](docs/oidc.md)), with group-to-role mapping, roles and an admin audit trail.
 - **Backups.** Export and restore from the Backup page, stored in a plain folder you can see.
 - **Translations.** English (US and UK), Català, Čeština, Deutsch, Español, Français, Italiano, Polski and 中文.
 
@@ -108,31 +123,31 @@ Connect these under **Settings > Integrations**. See the [integration directory]
 
 <table>
   <tr>
-    <td align="center" width="20%">
+    <td align="center" width="25%">
       <img src=".github/assets/icons/selfhst/jellyfin.svg" alt="Jellyfin" width="42"><br>
       <strong>Jellyfin</strong>
     </td>
-    <td align="center" width="20%">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/wizarr.png" alt="Wizarr" width="42"><br>
-      <strong>Wizarr</strong>
+    <td align="center" width="25%">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/emby.png" alt="Emby" width="42"><br>
+      <strong>Emby</strong>
     </td>
-    <td align="center" width="20%">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/tdarr.png" alt="Tdarr" width="42"><br>
-      <strong>Tdarr</strong>
+    <td align="center" width="25%">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/jellyseerr.png" alt="Jellyseerr" width="42"><br>
+      <strong>Jellyseerr</strong>
     </td>
-    <td align="center" width="20%">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/maintainerr.png" alt="Maintainerr" width="42"><br>
-      <strong>Maintainerr</strong>
-    </td>
-    <td align="center" width="20%">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/sickchill.png" alt="SickChill" width="42"><br>
-      <strong>SickChill</strong>
+    <td align="center" width="25%">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/overseerr.png" alt="Overseerr" width="42"><br>
+      <strong>Overseerr</strong>
     </td>
   </tr>
   <tr>
     <td align="center">
       <img src=".github/assets/icons/selfhst/sonarr.svg" alt="Sonarr" width="42"><br>
       <strong>Sonarr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/sickchill.png" alt="SickChill" width="42"><br>
+      <strong>SickChill</strong>
     </td>
     <td align="center">
       <img src=".github/assets/icons/selfhst/radarr.svg" alt="Radarr" width="42"><br>
@@ -142,24 +157,26 @@ Connect these under **Settings > Integrations**. See the [integration directory]
       <img src=".github/assets/icons/selfhst/lidarr.svg" alt="Lidarr" width="42"><br>
       <strong>Lidarr</strong>
     </td>
+  </tr>
+  <tr>
     <td align="center">
-      <img src=".github/assets/icons/selfhst/bazarr.svg" alt="Bazarr" width="42"><br>
-      <strong>Bazarr</strong>
+      <img src=".github/assets/icons/selfhst/readarr.svg" alt="Readarr" width="42"><br>
+      <strong>Readarr</strong>
     </td>
     <td align="center">
       <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/prowlarr.png" alt="Prowlarr" width="42"><br>
       <strong>Prowlarr</strong>
     </td>
+    <td align="center">
+      <img src=".github/assets/icons/selfhst/bazarr.svg" alt="Bazarr" width="42"><br>
+      <strong>Bazarr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/tdarr.png" alt="Tdarr" width="42"><br>
+      <strong>Tdarr</strong>
+    </td>
   </tr>
   <tr>
-    <td align="center">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/jellyseerr.png" alt="Jellyseerr" width="42"><br>
-      <strong>Jellyseerr</strong>
-    </td>
-    <td align="center">
-      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/overseerr.png" alt="Overseerr" width="42"><br>
-      <strong>Overseerr</strong>
-    </td>
     <td align="center">
       <img src=".github/assets/icons/selfhst/qbittorrent.svg" alt="qBittorrent" width="42"><br>
       <strong>qBittorrent</strong>
@@ -172,6 +189,10 @@ Connect these under **Settings > Integrations**. See the [integration directory]
       <img src=".github/assets/icons/selfhst/deluge.svg" alt="Deluge" width="42"><br>
       <strong>Deluge</strong>
     </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/rutorrent.png" alt="rTorrent" width="42"><br>
+      <strong>rTorrent</strong>
+    </td>
   </tr>
   <tr>
     <td align="center">
@@ -183,12 +204,66 @@ Connect these under **Settings > Integrations**. See the [integration directory]
       <strong>NZBGet</strong>
     </td>
     <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/unpackerr.png" alt="Unpackerr" width="42"><br>
+      <strong>Unpackerr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/autobrr.png" alt="autobrr" width="42"><br>
+      <strong>autobrr</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/wizarr.png" alt="Wizarr" width="42"><br>
+      <strong>Wizarr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/maintainerr.png" alt="Maintainerr" width="42"><br>
+      <strong>Maintainerr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/kometa.png" alt="Kometa" width="42"><br>
+      <strong>Kometa</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/recyclarr.png" alt="Recyclarr" width="42"><br>
+      <strong>Recyclarr</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/notifiarr.png" alt="Notifiarr" width="42"><br>
+      <strong>Notifiarr</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/audiobookshelf.png" alt="Audiobookshelf" width="42"><br>
+      <strong>Audiobookshelf</strong>
+    </td>
+    <td align="center">
       <img src=".github/assets/icons/selfhst/discord.svg" alt="Discord" width="42"><br>
       <strong>Discord</strong>
     </td>
     <td align="center">
       <img src=".github/assets/icons/selfhst/gotify.svg" alt="Gotify" width="42"><br>
       <strong>Gotify</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/ntfy.png" alt="ntfy" width="42"><br>
+      <strong>ntfy</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/telegram.png" alt="Telegram" width="42"><br>
+      <strong>Telegram</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/pushover.png" alt="Pushover" width="42"><br>
+      <strong>Pushover</strong>
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/webhook.png" alt="Webhook" width="42"><br>
+      <strong>Webhook</strong>
     </td>
   </tr>
 </table>
@@ -319,6 +394,7 @@ These are the main environment variables. The full list is in the [configuration
 | `JF_SERVER_TYPE` | detected | `jellyfin` or `emby` |
 | `JS_USER`, `JS_PASSWORD` | | Create the first local admin account without the setup screen |
 | `REJECT_SELF_SIGNED_CERTIFICATES` | `true` | Set to `false` to allow self-signed HTTPS on your media server and apps |
+| `JS_ALLOW_LOOPBACK_MEDIA_SERVER` | `false` | Set to `true` if your media server runs on the same host as JellyGlance (host networking) and you enter a `localhost`/`127.0.0.1` address |
 | `JF_USE_WEBSOCKETS` | `true` | Set to `false` to poll for sessions instead of using WebSockets |
 | `JS_GEOLITE_ACCOUNT_ID`, `JS_GEOLITE_LICENSE_KEY` | | Optional MaxMind GeoLite credentials to show where client IPs are |
 | `JS_PLAYBACK_RETENTION_DAYS` | off | Prune raw playback rows older than this many days (minimum `30`, `0` turns it off). Overrides **Settings > Health**. **Pruning is permanent**, see [Stats rollups and playback retention](#stats-rollups-and-playback-retention). |

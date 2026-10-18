@@ -414,3 +414,191 @@ select option {
 ::-webkit-scrollbar-thumb:hover {
   background-color: #88888883; /* set thumb color */
 }
+
+/* ---------- Phone: activity as cards ---------- */
+.activity-card-shell {
+  display: grid;
+  gap: 10px;
+}
+
+
+
+.activity-card-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 52px;
+  padding: 12px;
+  border: 1px solid var(--surface-border-color, rgba(255, 255, 255, 0.1));
+  border-radius: var(--jg-card-radius, 14px);
+  background: rgba(13, 17, 23, 0.96);
+}
+
+.activity-card-poster {
+  display: block;
+  width: 44px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.activity-card-poster img,
+.activity-card-poster .activity-poster-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.activity-card-body {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.activity-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+}
+
+.activity-card-title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-decoration: none;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.activity-card-time {
+  color: var(--subtle-text-color);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.activity-card-user {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: #d9e2ee;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.activity-card-user .activity-user-avatar {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.activity-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-card-meta .activity-method-pill,
+.activity-card-plays {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.activity-card-meta .activity-method-pill {
+  position: relative;
+}
+
+/* Extend the 32px pills to a 44px hit area without making them look bigger. */
+.activity-card-meta .activity-method-pill::after,
+.activity-card-plays::after {
+  position: absolute;
+  inset: -6px 0;
+  content: "";
+}
+
+.activity-card-plays {
+  position: relative;
+  background: rgba(var(--primary-rgb), 0.18);
+  color: var(--primary-light-color);
+}
+
+.activity-card-duration {
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.activity-card-subplays {
+  display: grid;
+  gap: 4px;
+  margin: 2px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  list-style: none;
+  color: var(--subtle-text-color);
+  font-size: 12px;
+}
+
+.activity-card-subplays li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.activity-card-empty {
+  padding: 24px 12px;
+  color: var(--subtle-text-color);
+  text-align: center;
+}
+
+/* ---------- Tablet: pinned title column ---------- */
+.activity-swipe-hint {
+  margin: 0 0 6px;
+  color: var(--subtle-text-color);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.activity-table-tablet .MuiTableContainer-root {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Pinned cells must be opaque or the scrolled cells show through them. */
+.activity-table-tablet td[data-pinned="true"],
+.activity-table-tablet th[data-pinned="true"] {
+  background-color: #0d1117 !important;
+  box-shadow: 10px 0 14px -10px rgba(0, 0, 0, 0.7);
+}
+
+.activity-table-tablet tr:nth-of-type(odd) td[data-pinned="true"] {
+  background-color: #0a0d12 !important;
+}
+
+@media (pointer: coarse) {
+  .activity-mrt-paper .MuiPagination-ul button,
+  .activity-mrt-paper .MuiIconButton-root,
+  .MuiPagination-ul .MuiPaginationItem-root {
+    min-width: var(--jg-touch-min);
+    min-height: var(--jg-touch-min);
+  }
+}

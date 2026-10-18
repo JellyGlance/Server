@@ -267,17 +267,28 @@ export function normalizeHomeSettings(settings) {
   return normalized;
 }
 
+// True for a layout still on a built-in preset that leads with Active sessions
+// (the default layout, Family and Kiosk). Any edit in the widget editor marks a
+// layout as custom, so a saved custom order never matches.
+function keepsSessionsOnTop(settings, ordered) {
+  const preset = settings?.preset && settings.preset !== "custom" ? HOME_PRESETS[settings.preset] : null;
+  return Boolean(preset) && preset.order[0] === "sessions" && ordered[0] === "sessions";
+}
+
 // The order Home renders in. The pinned widget always leads; Operations is
-// lifted while requests need attention, but only for display. The saved order
-// is never rewritten by this.
+// lifted while requests need attention, but only for display. On the default
+// layout it lands just under Active sessions, which stays on top. The saved
+// order is never rewritten by this.
 export function getHomeDisplayOrder(settings, { promoteOperations = false } = {}) {
   const hidden = new Set(settings?.hidden || []);
   const pinned = settings?.pinned || "";
   let ordered = normalizeHomeOrder(settings?.order).filter((sectionId) => !hidden.has(sectionId));
-  const lift = (sectionId) => {
-    if (sectionId && ordered.includes(sectionId)) ordered = [sectionId, ...ordered.filter((id) => id !== sectionId)];
+  const lift = (sectionId, position = 0) => {
+    if (!sectionId || !ordered.includes(sectionId)) return;
+    const rest = ordered.filter((id) => id !== sectionId);
+    ordered = [...rest.slice(0, position), sectionId, ...rest.slice(position)];
   };
-  if (promoteOperations && pinned !== "operations") lift("operations");
+  if (promoteOperations && pinned !== "operations") lift("operations", !pinned && keepsSessionsOnTop(settings, ordered) ? 1 : 0);
   lift(pinned);
   return ordered;
 }

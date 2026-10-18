@@ -31,7 +31,10 @@ globalThis.window = { atob: (value) => Buffer.from(value, "base64").toString("bi
 const {
   CURATED_DEFAULT_HOME_ORDER,
   DEFAULT_HOME_ORDER,
+  DEFAULT_HOME_SETTINGS,
   HOME_LAYOUT_VERSION,
+  HOME_PRESETS,
+  LEGACY_HOME_ORDER_STORAGE_KEY,
   getHomeDisplayOrder,
   getHomeSettingsStorageKey,
   loadHomeSettings,
@@ -134,6 +137,78 @@ describe("home display order", () => {
     const order = getHomeDisplayOrder(settings, { promoteOperations: true });
     assert.equal(order.includes("sessions"), false);
     assert.equal(order.includes("operations"), false);
+  });
+});
+
+describe("Active sessions first by default", () => {
+  const customOrder = ["overview", "hall", "sessions", ...CURATED_DEFAULT_HOME_ORDER.filter((id) => !["overview", "hall", "sessions"].includes(id))];
+  const savedCustom = () => normalizeHomeSettings({ order: customOrder, hidden: [], preset: "custom", density: "compact", sizes: { sessions: "small" } });
+
+  test("a fresh layout starts with Active sessions", () => {
+    const settings = loadHomeSettings("user");
+    assert.equal(settings.order[0], "sessions");
+    assert.equal(getHomeDisplayOrder(settings)[0], "sessions");
+    assert.equal(DEFAULT_HOME_SETTINGS.order[0], "sessions");
+  });
+
+  test("Active sessions stays on top of the default layout while requests need attention", () => {
+    for (const settings of [loadHomeSettings("user"), normalizeHomeSettings(DEFAULT_HOME_SETTINGS)]) {
+      assert.deepEqual(getHomeDisplayOrder(settings, { promoteOperations: true }).slice(0, 2), ["sessions", "operations"]);
+    }
+  });
+
+  test("Reset goes back to the default layout with Active sessions first", () => {
+    const reset = normalizeHomeSettings(DEFAULT_HOME_SETTINGS);
+    assert.equal(reset.preset, "default");
+    assert.deepEqual(reset.order, CURATED_DEFAULT_HOME_ORDER);
+    assert.equal(getHomeDisplayOrder(reset, { promoteOperations: true })[0], "sessions");
+  });
+
+  test("loading a fresh layout writes nothing to storage", () => {
+    const keysBefore = localStorage.length;
+    loadHomeSettings("user");
+    assert.equal(localStorage.length, keysBefore);
+    assert.equal(localStorage.getItem(userKey()), null);
+  });
+
+  test("a saved custom order is returned unchanged", () => {
+    const stored = JSON.stringify(savedCustom());
+    localStorage.setItem(userKey(), stored);
+    const settings = loadHomeSettings("user");
+    assert.deepEqual(settings.order, customOrder);
+    assert.equal(JSON.stringify(settings), stored, "writing the loaded layout back changes nothing");
+    assert.equal(localStorage.getItem(userKey()), stored);
+  });
+
+  test("a saved custom order renders as before, with or without the Operations lift", () => {
+    localStorage.setItem(userKey(), JSON.stringify(savedCustom()));
+    const settings = loadHomeSettings("user");
+    assert.deepEqual(getHomeDisplayOrder(settings), customOrder);
+    assert.deepEqual(getHomeDisplayOrder(settings, { promoteOperations: true }), ["operations", ...customOrder.filter((id) => id !== "operations")]);
+  });
+
+  test("a custom order that starts with Active sessions still lets Operations move to the top", () => {
+    const settings = normalizeHomeSettings({ order: CURATED_DEFAULT_HOME_ORDER, hidden: [], preset: "custom" });
+    assert.equal(getHomeDisplayOrder(settings, { promoteOperations: true })[0], "operations");
+  });
+
+  test("a saved custom order missing newer widgets keeps its own order", () => {
+    const older = customOrder.filter((id) => !["watchTonight", "prowlarr"].includes(id));
+    saveRaw({ order: older, hidden: [], preset: "custom", version: HOME_LAYOUT_VERSION });
+    const { order } = loadHomeSettings("user");
+    assert.deepEqual(order.filter((id) => older.includes(id)), older);
+    assert.equal(order.length, CURATED_DEFAULT_HOME_ORDER.length);
+    assert.equal(order[0], "overview");
+  });
+
+  test("the legacy saved order is kept as it was", () => {
+    localStorage.setItem(LEGACY_HOME_ORDER_STORAGE_KEY, JSON.stringify(customOrder));
+    assert.deepEqual(loadHomeSettings("user").order, customOrder);
+  });
+
+  test("presets that don't lead with Active sessions behave as before", () => {
+    const settings = normalizeHomeSettings({ ...DEFAULT_HOME_SETTINGS, ...HOME_PRESETS.media, preset: "media" });
+    assert.equal(getHomeDisplayOrder(settings, { promoteOperations: true })[0], "operations");
   });
 });
 
