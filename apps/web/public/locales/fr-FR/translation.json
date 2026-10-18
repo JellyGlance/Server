@@ -39,6 +39,8 @@
     "SIZE_SMALL": "Compact",
     "SIZE_MEDIUM": "Demi-largeur",
     "SIZE_LARGE": "Pleine largeur",
+    "OPERATIONS_MOVED_UP_one": "{{section}} passe en haut : {{count}} demande à traiter.",
+    "OPERATIONS_MOVED_UP_other": "{{section}} passe en haut : {{count}} demandes à traiter.",
     "SECTIONS": {
       "sessions": "Sessions actives",
       "streamCapacity": "Capacité de flux",

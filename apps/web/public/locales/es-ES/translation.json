@@ -39,6 +39,8 @@
     "SIZE_SMALL": "Compacto",
     "SIZE_MEDIUM": "Media anchura",
     "SIZE_LARGE": "Ancho completo",
+    "OPERATIONS_MOVED_UP_one": "La sección {{section}} sube: {{count}} petición necesita atención.",
+    "OPERATIONS_MOVED_UP_other": "La sección {{section}} sube: {{count}} peticiones necesitan atención.",
     "SECTIONS": {
       "sessions": "Sesiones activas",
       "streamCapacity": "Capacidad de stream",

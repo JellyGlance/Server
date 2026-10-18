@@ -1070,7 +1070,7 @@ export default function Home({ kioskMode = false }) {
             </label>
             <button type="button" onClick={() => updateHomeSettings((current) => ({ ...current, dismissedAlerts: {}, preset: "custom" }))}>Restore alerts</button>
           </div>
-          {requestUrgency > 0 ? <p className="home-order-note">{formatNumber(requestUrgency)} request issue{requestUrgency === 1 ? "" : "s"} detected, so Operations is bubbling up.</p> : null}
+          {requestUrgency > 0 ? <p className="home-order-note">{t("HOME_PAGE.OPERATIONS_MOVED_UP", { count: requestUrgency, section: sectionLabels.operations })}</p> : null}
           <div className="home-order-list">
             {normalizeHomeOrder(homeSettings.order).map((sectionId, index) => {
               const isHidden = homeSettings.hidden.includes(sectionId);

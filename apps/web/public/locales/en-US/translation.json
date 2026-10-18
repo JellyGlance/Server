@@ -39,6 +39,8 @@
     "SIZE_SMALL": "Compact",
     "SIZE_MEDIUM": "Half width",
     "SIZE_LARGE": "Full width",
+    "OPERATIONS_MOVED_UP_one": "{{section}} moved up: {{count}} request needs attention.",
+    "OPERATIONS_MOVED_UP_other": "{{section}} moved up: {{count}} requests need attention.",
     "SECTIONS": {
       "sessions": "Active sessions",
       "streamCapacity": "Stream capacity",
