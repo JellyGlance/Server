@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import axios from "../../../lib/axios_instance";
 import Config from "../../../lib/config";
 import { slugifyUserName } from "../../../lib/userProfile";
@@ -19,8 +20,8 @@ import UserSettingsLineIcon from "remixicon-react/UserSettingsLineIcon";
 import "../../css/home-user-wrap.css";
 import { isEmby, mediaServerName } from "../../../lib/media-server";
 
-function quickConnectLabel() {
-  return isEmby() ? "Emby login" : "Jellyfin Quick Connect";
+function quickConnectLabel(t) {
+  return isEmby() ? t("WRAP_UP.EMBY_LOGIN") : t("WRAP_UP.JELLYFIN_QUICK_CONNECT");
 }
 
 const token = localStorage.getItem("token");
@@ -56,7 +57,7 @@ function daysSince(value) {
   return Math.floor((Date.now() - new Date(value).getTime()) / (24 * 60 * 60 * 1000));
 }
 
-function buildUserAchievements(user, rank) {
+function buildUserAchievements(user, rank, t) {
   const streams = Number(user.TotalStreams || 0);
   const watchSeconds = Number(user.TotalWatchTime || 0);
   const watchHours = watchSeconds / 3600;
@@ -74,81 +75,86 @@ function buildUserAchievements(user, rank) {
   const achievements = [
     {
       id: "rank",
-      title: rank === 1 ? "Household Champion" : "Leaderboard Climber",
+      title: rank === 1 ? t("WRAP_UP.ACHIEVEMENTS.HOUSEHOLD_CHAMPION") : t("WRAP_UP.ACHIEVEMENTS.LEADERBOARD_CLIMBER"),
       value: `#${rank}`,
-      detail: rank === 1 ? "Top watch-time rank in the household." : "Ranked by total watch time.",
+      detail: rank === 1 ? t("WRAP_UP.ACHIEVEMENTS.HOUSEHOLD_CHAMPION_DETAIL") : t("WRAP_UP.ACHIEVEMENTS.LEADERBOARD_CLIMBER_DETAIL"),
       icon: TrophyLineIcon,
       unlocked: rank === 1,
       progress: rank === 1 ? 100 : Math.max(12, 100 - rank * 12),
     },
     {
       id: "streams",
-      title: streams >= 1000 ? "Stream Machine" : "Play Counter",
+      title: streams >= 1000 ? t("WRAP_UP.ACHIEVEMENTS.STREAM_MACHINE") : t("WRAP_UP.ACHIEVEMENTS.PLAY_COUNTER"),
       value: streams.toLocaleString(),
-      detail: `${Math.max(streamTarget - streams, 0).toLocaleString()} streams to ${streamTarget.toLocaleString()}`,
+      detail: t("WRAP_UP.ACHIEVEMENTS.STREAMS_TO_TARGET", { remaining: Math.max(streamTarget - streams, 0).toLocaleString(), target: streamTarget.toLocaleString() }),
       icon: PlayCircleLineIcon,
       unlocked: streams >= 10,
       progress: progress(streams, streamTarget),
     },
     {
       id: "watch-time",
-      title: watchHours >= 500 ? "Time Lord" : "Time Collector",
+      title: watchHours >= 500 ? t("WRAP_UP.ACHIEVEMENTS.TIME_LORD") : t("WRAP_UP.ACHIEVEMENTS.TIME_COLLECTOR"),
       value: formatWatchTime(watchSeconds),
-      detail: `${formatWatchTime(Math.max(hourTarget * 3600 - watchSeconds, 0))} to ${hourTarget.toLocaleString()} hours`,
+      detail: t("WRAP_UP.ACHIEVEMENTS.HOURS_TO_TARGET", { remaining: formatWatchTime(Math.max(hourTarget * 3600 - watchSeconds, 0)), target: hourTarget.toLocaleString() }),
       icon: TimeLineIcon,
       unlocked: watchHours >= 10,
       progress: progress(watchHours, hourTarget),
     },
     {
       id: "unique-titles",
-      title: uniqueTitles >= 100 ? "Taste Explorer" : "Sampler",
+      title: uniqueTitles >= 100 ? t("WRAP_UP.ACHIEVEMENTS.TASTE_EXPLORER") : t("WRAP_UP.ACHIEVEMENTS.SAMPLER"),
       value: uniqueTitles.toLocaleString(),
-      detail: `${Math.max(titleTarget - uniqueTitles, 0).toLocaleString()} titles to ${titleTarget.toLocaleString()}`,
+      detail: t("WRAP_UP.ACHIEVEMENTS.TITLES_TO_TARGET", { remaining: Math.max(titleTarget - uniqueTitles, 0).toLocaleString(), target: titleTarget.toLocaleString() }),
       icon: StarSmileLineIcon,
       unlocked: uniqueTitles >= 5,
       progress: progress(uniqueTitles, titleTarget),
     },
     {
       id: "clients",
-      title: uniqueClients >= 5 ? "Device Hopper" : "Client Curious",
+      title: uniqueClients >= 5 ? t("WRAP_UP.ACHIEVEMENTS.DEVICE_HOPPER") : t("WRAP_UP.ACHIEVEMENTS.CLIENT_CURIOUS"),
       value: uniqueClients.toLocaleString(),
-      detail: user.TopClient?.Name ? `${user.TopClient.Name} is the favourite client.` : "No client history yet.",
+      detail: user.TopClient?.Name ? t("WRAP_UP.ACHIEVEMENTS.FAVOURITE_CLIENT", { client: user.TopClient.Name }) : t("WRAP_UP.ACHIEVEMENTS.NO_CLIENT_HISTORY"),
       icon: ComputerLineIcon,
       unlocked: uniqueClients >= 2,
       progress: progress(uniqueClients, clientTarget),
     },
     {
       id: "watch-window",
-      title: topHour >= 22 || topHour <= 4 ? "Night Owl" : topHour >= 5 && topHour <= 11 ? "Morning Watcher" : "Prime-Time Regular",
-      value: formatHour(user.TopHour?.Hour),
-      detail: `${user.TopHour?.Count || 0} streams around this time.`,
+      title:
+        topHour >= 22 || topHour <= 4
+          ? t("WRAP_UP.ACHIEVEMENTS.NIGHT_OWL")
+          : topHour >= 5 && topHour <= 11
+            ? t("WRAP_UP.ACHIEVEMENTS.MORNING_WATCHER")
+            : t("WRAP_UP.ACHIEVEMENTS.PRIME_TIME_REGULAR"),
+      value: formatHour(user.TopHour?.Hour, t),
+      detail: t("WRAP_UP.ACHIEVEMENTS.STREAMS_AROUND_TIME", { streams: user.TopHour?.Count || 0 }),
       icon: topHour >= 22 || topHour <= 4 ? MoonLineIcon : topHour >= 5 && topHour <= 11 ? SunLineIcon : FireLineIcon,
       unlocked: topHour >= 0,
       progress: progress(Number(user.TopHour?.Count || 0), 25),
     },
     {
       id: "favourite-day",
-      title: "Ritual Day",
-      value: user.TopDay?.Name || "N/A",
-      detail: `${topDayCount.toLocaleString()} streams on this day.`,
+      title: t("WRAP_UP.ACHIEVEMENTS.RITUAL_DAY"),
+      value: user.TopDay?.Name || t("WRAP_UP.NOT_AVAILABLE"),
+      detail: t("WRAP_UP.ACHIEVEMENTS.STREAMS_ON_DAY", { streams: topDayCount.toLocaleString() }),
       icon: CalendarLineIcon,
       unlocked: topDayCount >= 3,
       progress: progress(topDayCount, 25),
     },
     {
       id: "library-loyalty",
-      title: topLibraryCount >= 50 ? "Library Loyalist" : "Library Regular",
-      value: user.TopLibrary?.Name || "N/A",
-      detail: `${topLibraryCount.toLocaleString()} plays in this library.`,
+      title: topLibraryCount >= 50 ? t("WRAP_UP.ACHIEVEMENTS.LIBRARY_LOYALIST") : t("WRAP_UP.ACHIEVEMENTS.LIBRARY_REGULAR"),
+      value: user.TopLibrary?.Name || t("WRAP_UP.NOT_AVAILABLE"),
+      detail: t("WRAP_UP.ACHIEVEMENTS.PLAYS_IN_LIBRARY", { plays: topLibraryCount.toLocaleString() }),
       icon: StackLineIcon,
       unlocked: topLibraryCount >= 10,
       progress: progress(topLibraryCount, 100),
     },
     {
       id: "recent",
-      title: recentDays <= 7 ? "Recently Active" : "Comeback Pending",
-      value: recentDays === Infinity ? "Never" : `${recentDays}d`,
-      detail: recentDays <= 7 ? "Watched within the last week." : "No synced playback in the last week.",
+      title: recentDays <= 7 ? t("WRAP_UP.ACHIEVEMENTS.RECENTLY_ACTIVE") : t("WRAP_UP.ACHIEVEMENTS.COMEBACK_PENDING"),
+      value: recentDays === Infinity ? t("WRAP_UP.NEVER") : `${recentDays}d`,
+      detail: recentDays <= 7 ? t("WRAP_UP.ACHIEVEMENTS.RECENTLY_ACTIVE_DETAIL") : t("WRAP_UP.ACHIEVEMENTS.COMEBACK_PENDING_DETAIL"),
       icon: FireLineIcon,
       unlocked: recentDays <= 7,
       progress: recentDays === Infinity ? 0 : Math.max(0, 100 - recentDays * 8),
@@ -158,16 +164,16 @@ function buildUserAchievements(user, rank) {
   return rank ? achievements : achievements.filter((achievement) => achievement.id !== "rank");
 }
 
-function greeting() {
+function greeting(t) {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return t("WRAP_UP.GOOD_MORNING");
+  if (hour < 18) return t("WRAP_UP.GOOD_AFTERNOON");
+  return t("WRAP_UP.GOOD_EVENING");
 }
 
-function formatHour(hour) {
+function formatHour(hour, t) {
   if (hour === undefined || hour === null) {
-    return "N/A";
+    return t("WRAP_UP.NOT_AVAILABLE");
   }
 
   const date = new Date();
@@ -221,7 +227,8 @@ function getHeatmapRange(activity = [], selectedRange) {
   return {
     start: addDays(today, -364),
     end: today,
-    label: "Last 12 months",
+    // The component fills in the translated "Last 12 months" label.
+    label: null,
     years,
   };
 }
@@ -265,6 +272,7 @@ function formatHeatmapRange(start, end) {
 }
 
 function WrapMetric({ icon: Icon, label, value, detail, imageId, imageType = "Backdrop" }) {
+  const { t } = useTranslation();
   const backgroundStyle = imageId
     ? {
         "--metric-art": `url(/proxy/Items/Images/${imageType}?id=${imageId}&fillWidth=720&quality=44)`,
@@ -275,13 +283,16 @@ function WrapMetric({ icon: Icon, label, value, detail, imageId, imageType = "Ba
     <div className={`wrap-metric-card ${imageId ? "has-artwork" : ""}`} style={backgroundStyle}>
       <Icon size={30} />
       <span>{label}</span>
-      <strong>{value || "N/A"}</strong>
+      <strong>{value || t("WRAP_UP.NOT_AVAILABLE")}</strong>
       <small>{detail || ""}</small>
     </div>
   );
 }
 
+const HEATMAP_DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
 function Heatmap({ user }) {
+  const { t } = useTranslation();
   const years = getHeatmapYears(user.DailyActivity);
   const [selectedRange, setSelectedRange] = useState("last-year");
   const { cells, label, start, end } = buildHeatmap(user.DailyActivity, selectedRange);
@@ -302,11 +313,11 @@ function Heatmap({ user }) {
     <div className="wrap-heatmap">
       <div className="wrap-heatmap-header">
         <div>
-          <span>Activity</span>
-          <strong>{user.FirstActivityDate ? `${label} · ${formatHeatmapRange(start, end)}` : "No playback yet"}</strong>
+          <span>{t("WRAP_UP.ACTIVITY")}</span>
+          <strong>{user.FirstActivityDate ? `${label || t("WRAP_UP.LAST_12_MONTHS")} · ${formatHeatmapRange(start, end)}` : t("WRAP_UP.NO_PLAYBACK_YET")}</strong>
         </div>
-        <select value={selectedRange} onChange={(event) => setSelectedRange(event.target.value)} aria-label="Activity heat map range">
-          <option value="last-year">Last 12 months</option>
+        <select value={selectedRange} onChange={(event) => setSelectedRange(event.target.value)} aria-label={t("WRAP_UP.HEATMAP_RANGE")}>
+          <option value="last-year">{t("WRAP_UP.LAST_12_MONTHS")}</option>
           {years.map((year) => (
             <option value={year} key={year}>
               {year}
@@ -324,47 +335,44 @@ function Heatmap({ user }) {
         </div>
         <div className="wrap-heatmap-body">
           <div className="wrap-heatmap-days" aria-hidden="true">
-            <span>Sun</span>
-            <span>Mon</span>
-            <span>Tue</span>
-            <span>Wed</span>
-            <span>Thu</span>
-            <span>Fri</span>
-            <span>Sat</span>
+            {HEATMAP_DAYS.map((day) => (
+              <span key={day}>{t(`WRAP_UP.DAYS.${day}`)}</span>
+            ))}
           </div>
           <div className="wrap-heatmap-grid">
             {cells.map((cell) => (
               <span
                 className={`heatmap-cell ${cell.isSpacer ? "is-spacer" : `heat-${intensity(cell.streams)}`}`}
                 key={cell.date}
-                title={cell.isSpacer ? "" : `${cell.date}: ${cell.streams} streams, ${formatWatchTime(cell.duration)}`}
+                title={cell.isSpacer ? "" : t("WRAP_UP.HEATMAP_CELL", { date: cell.date, streams: cell.streams, duration: formatWatchTime(cell.duration) })}
               />
             ))}
           </div>
         </div>
       </div>
       <div className="wrap-heatmap-legend">
-        <span>Less</span>
+        <span>{t("WRAP_UP.LESS")}</span>
         {[0, 1, 2, 3, 4].map((level) => (
           <i className={`heatmap-cell heat-${level}`} key={level} />
         ))}
-        <span>More</span>
+        <span>{t("WRAP_UP.MORE")}</span>
       </div>
     </div>
   );
 }
 
 function UserAchievements({ user, rank }) {
-  const achievements = buildUserAchievements(user, rank);
+  const { t } = useTranslation();
+  const achievements = buildUserAchievements(user, rank, t);
 
   return (
-    <section className="wrap-achievements" aria-label={`${user.UserName} achievements`}>
+    <section className="wrap-achievements" aria-label={t("WRAP_UP.USER_ACHIEVEMENTS", { user: user.UserName })}>
       <div className="wrap-achievements-header">
         <div>
-          <span>Achievements</span>
-          <strong>Personal Badges</strong>
+          <span>{t("WRAP_UP.ACHIEVEMENTS_TITLE")}</span>
+          <strong>{t("WRAP_UP.PERSONAL_BADGES")}</strong>
         </div>
-        <em>{achievements.filter((achievement) => achievement.unlocked).length}/{achievements.length} unlocked</em>
+        <em>{t("WRAP_UP.UNLOCKED", { unlocked: achievements.filter((achievement) => achievement.unlocked).length, total: achievements.length })}</em>
       </div>
       <div className="wrap-achievement-grid">
         {achievements.map((achievement) => {
@@ -391,6 +399,7 @@ function UserAchievements({ user, rank }) {
 }
 
 export function QuickConnectUserWrap({ user, rank }) {
+  const { t } = useTranslation();
   const heroImageId = user.TopMovie?.ItemId || user.TopSeries?.ItemId || user.TopTitle?.ItemId;
   const posterImageId = user.TopMovie?.ItemId || user.TopTitle?.ItemId || user.TopSeries?.ItemId;
   const seriesImageId = user.TopSeries?.ItemId || user.TopTitle?.ItemId || user.TopMovie?.ItemId;
@@ -407,31 +416,31 @@ export function QuickConnectUserWrap({ user, rank }) {
       >
         <div className="user-wrap-avatar">{avatar(user, 106)}</div>
         <div>
-          <p>{greeting()}</p>
+          <p>{greeting(t)}</p>
           <h2>{user.UserName}</h2>
-          <span>{user.IsAdministrator ? "Server admin" : `${quickConnectLabel()} user`}</span>
+          <span>{user.IsAdministrator ? t("WRAP_UP.SERVER_ADMIN") : t("WRAP_UP.SIGN_IN_USER", { label: quickConnectLabel(t) })}</span>
         </div>
       </div>
 
       <div className="user-wrap-body">
         <div className="user-wrap-title-row">
-          <h3>Personal Wrap-Up</h3>
-          {rank ? <span>Rank #{rank}</span> : null}
+          <h3>{t("WRAP_UP.PERSONAL_WRAP_UP")}</h3>
+          {rank ? <span>{t("WRAP_UP.RANK", { rank })}</span> : null}
         </div>
 
         <div className="wrap-metric-grid">
           {rank ? (
-            <WrapMetric icon={TrophyLineIcon} label="Server rank" value={`#${rank}`} detail={`${user.TotalStreams || 0} streams`} imageId={heroImageId} />
+            <WrapMetric icon={TrophyLineIcon} label={t("WRAP_UP.METRICS.SERVER_RANK")} value={`#${rank}`} detail={t("WRAP_UP.STREAMS", { streams: user.TotalStreams || 0 })} imageId={heroImageId} />
           ) : (
-            <WrapMetric icon={TimeLineIcon} label="Watch time" value={formatWatchTime(user.TotalWatchTime)} detail={`${user.UniqueTitles || 0} titles`} imageId={heroImageId} />
+            <WrapMetric icon={TimeLineIcon} label={t("WRAP_UP.METRICS.WATCH_TIME")} value={formatWatchTime(user.TotalWatchTime)} detail={t("WRAP_UP.TITLES", { titles: user.UniqueTitles || 0 })} imageId={heroImageId} />
           )}
-          <WrapMetric icon={PlayCircleLineIcon} label="Total streams" value={user.TotalStreams || 0} detail={formatWatchTime(user.TotalWatchTime)} imageId={seriesImageId} />
-          <WrapMetric icon={FilmLineIcon} label="Top title" value={user.TopTitle?.Name} detail={`${user.TopTitle?.Count || 0} plays`} imageId={user.TopTitle?.ItemId || heroImageId} />
-          <WrapMetric icon={StackLineIcon} label="Top library" value={user.TopLibrary?.Name} detail={`${user.TopLibrary?.Count || 0} plays`} imageId={heroImageId} />
-          <WrapMetric icon={CalendarLineIcon} label="Top day" value={user.TopDay?.Name} detail={`${user.TopDay?.Count || 0} streams`} imageId={heroImageId} />
-          <WrapMetric icon={TimeLineIcon} label="Time of day" value={formatHour(user.TopHour?.Hour)} detail={`${user.TopHour?.Count || 0} streams`} imageId={seriesImageId} />
-          <WrapMetric icon={FilmLineIcon} label="Top movie" value={user.TopMovie?.Name} detail={`${user.TopMovie?.Count || 0} plays`} imageId={posterImageId} imageType="Primary" />
-          <WrapMetric icon={UserSettingsLineIcon} label="Watch style" value={user.TopClient?.Name} detail={`${user.UniqueClients || 0} clients`} imageId={seriesImageId} />
+          <WrapMetric icon={PlayCircleLineIcon} label={t("WRAP_UP.METRICS.TOTAL_STREAMS")} value={user.TotalStreams || 0} detail={formatWatchTime(user.TotalWatchTime)} imageId={seriesImageId} />
+          <WrapMetric icon={FilmLineIcon} label={t("WRAP_UP.METRICS.TOP_TITLE")} value={user.TopTitle?.Name} detail={t("WRAP_UP.PLAYS", { plays: user.TopTitle?.Count || 0 })} imageId={user.TopTitle?.ItemId || heroImageId} />
+          <WrapMetric icon={StackLineIcon} label={t("WRAP_UP.METRICS.TOP_LIBRARY")} value={user.TopLibrary?.Name} detail={t("WRAP_UP.PLAYS", { plays: user.TopLibrary?.Count || 0 })} imageId={heroImageId} />
+          <WrapMetric icon={CalendarLineIcon} label={t("WRAP_UP.METRICS.TOP_DAY")} value={user.TopDay?.Name} detail={t("WRAP_UP.STREAMS", { streams: user.TopDay?.Count || 0 })} imageId={heroImageId} />
+          <WrapMetric icon={TimeLineIcon} label={t("WRAP_UP.METRICS.TIME_OF_DAY")} value={formatHour(user.TopHour?.Hour, t)} detail={t("WRAP_UP.STREAMS", { streams: user.TopHour?.Count || 0 })} imageId={seriesImageId} />
+          <WrapMetric icon={FilmLineIcon} label={t("WRAP_UP.METRICS.TOP_MOVIE")} value={user.TopMovie?.Name} detail={t("WRAP_UP.PLAYS", { plays: user.TopMovie?.Count || 0 })} imageId={posterImageId} imageType="Primary" />
+          <WrapMetric icon={UserSettingsLineIcon} label={t("WRAP_UP.METRICS.WATCH_STYLE")} value={user.TopClient?.Name} detail={t("WRAP_UP.CLIENTS", { clients: user.UniqueClients || 0 })} imageId={seriesImageId} />
         </div>
 
         <UserAchievements user={user} rank={rank} />
@@ -443,27 +452,30 @@ export function QuickConnectUserWrap({ user, rank }) {
 }
 
 export function AccountDashboard({ access }) {
+  const { t } = useTranslation();
   const localUsers = access?.localUsers || [];
   return (
     <section className="account-dashboard">
       <div>
-        <p>Account center</p>
-        <h2>OIDC & Local Users</h2>
-        <span>Manage non-{mediaServerName()} accounts separately from {quickConnectLabel()} watch history.</span>
+        <p>{t("WRAP_UP.ACCOUNT_CENTER")}</p>
+        <h2>{t("WRAP_UP.OIDC_AND_LOCAL_USERS")}</h2>
+        <span>{t("WRAP_UP.ACCOUNT_CENTER_HINT", { server: mediaServerName(), label: quickConnectLabel(t) })}</span>
       </div>
 
       <div className="account-dashboard-grid">
         <div>
-          <strong>{access?.authMode === "oidc" ? "OIDC / Authentik" : access?.authMode === "local" ? "Local login" : quickConnectLabel()}</strong>
-          <span>Active sign-in mode</span>
+          <strong>
+            {access?.authMode === "oidc" ? t("WRAP_UP.OIDC_AUTHENTIK") : access?.authMode === "local" ? t("WRAP_UP.LOCAL_LOGIN") : quickConnectLabel(t)}
+          </strong>
+          <span>{t("WRAP_UP.ACTIVE_SIGN_IN_MODE")}</span>
         </div>
         <div>
           <strong>{localUsers.length}</strong>
-          <span>Local users</span>
+          <span>{t("WRAP_UP.LOCAL_USERS")}</span>
         </div>
         <div>
           <strong>{access?.roles?.length || 0}</strong>
-          <span>Roles</span>
+          <span>{t("WRAP_UP.ROLES")}</span>
         </div>
       </div>
 
@@ -473,7 +485,7 @@ export function AccountDashboard({ access }) {
             <span key={user.id}>
               <AccountCircleFillIcon size={22} />
               {user.username}
-              <small>{user.role || "Viewer"}</small>
+              <small>{user.role || t("WRAP_UP.VIEWER")}</small>
             </span>
           ))}
         </div>
@@ -483,6 +495,7 @@ export function AccountDashboard({ access }) {
 }
 
 export default function UserWrapUpDashboard() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [access, setAccess] = useState(null);
   const [authMode, setAuthMode] = useState("quick-connect");
@@ -519,11 +532,11 @@ export default function UserWrapUpDashboard() {
     <section className="home-user-wrap">
       <div className="home-user-wrap-header">
         <div>
-          <p>Personal dashboards</p>
-          <h1>User Wrap-Ups</h1>
-          <span>{quickConnectLabel()} users get playback insight. OIDC and local accounts get account controls.</span>
+          <p>{t("WRAP_UP.PERSONAL_DASHBOARDS")}</p>
+          <h1>{t("WRAP_UP.USER_WRAP_UPS")}</h1>
+          <span>{t("WRAP_UP.USER_WRAP_UPS_HINT", { label: quickConnectLabel(t) })}</span>
         </div>
-        <strong>{authMode === "quick-connect" ? quickConnectLabel() : authMode === "oidc" ? "OIDC / Authentik" : "Local login"}</strong>
+        <strong>{authMode === "quick-connect" ? quickConnectLabel(t) : authMode === "oidc" ? t("WRAP_UP.OIDC_AUTHENTIK") : t("WRAP_UP.LOCAL_LOGIN")}</strong>
       </div>
 
       <div className="home-user-wrap-list">
