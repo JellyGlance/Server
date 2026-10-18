@@ -36,7 +36,9 @@ const {
   saveIntegrationData,
   getIntegrationHealthHistory,
   saveIntegrationHealthResults,
+  encryptSecret,
 } = require("../classes/integration-store");
+const authRouter = require("./auth");
 
 const dayjs = require("dayjs");
 const {
@@ -165,15 +167,6 @@ function queueFirstRunJellyfinTasks() {
   };
 
   startNextTask();
-}
-
-function normalizeIssuerUrl(url) {
-  try {
-    const trimmed = stripTrailingSlashes(url);
-    return trimmed ? stripTrailingSlashes(toSafeHttpUrl(trimmed)) : "";
-  } catch {
-    return "";
-  }
 }
 
 function cleanIntegrationUrl(url = "") {
@@ -4386,38 +4379,9 @@ async function runJellyfinUserMediaAction(userId, itemId, action) {
   return { ok: true, action, userId, itemId };
 }
 
+// Same checks as sign-in: issuer must match, endpoints must be on the issuer's host, no redirects.
 async function testOidcDiscovery(issuerUrl) {
-  const normalizedIssuer = normalizeIssuerUrl(issuerUrl);
-  if (!normalizedIssuer) {
-    return { isValid: false, errorMessage: "OIDC issuer URL is required" };
-  }
-
-  try {
-    const response = await safeHttpGet(normalizedIssuer, "/.well-known/openid-configuration", { timeout: 8000 });
-    const discovery = response?.data || {};
-    const hasRequiredEndpoints = discovery.authorization_endpoint && discovery.token_endpoint && discovery.issuer;
-
-    if (!hasRequiredEndpoints) {
-      return { isValid: false, errorMessage: "OIDC discovery document is missing required endpoints" };
-    }
-
-    return {
-      isValid: true,
-      issuerUrl: normalizedIssuer,
-      discovery: {
-        issuer: discovery.issuer,
-        authorization_endpoint: discovery.authorization_endpoint,
-        token_endpoint: discovery.token_endpoint,
-        userinfo_endpoint: discovery.userinfo_endpoint,
-        jwks_uri: discovery.jwks_uri,
-      },
-    };
-  } catch (error) {
-    return {
-      isValid: false,
-      errorMessage: `Unable to reach OIDC discovery: ${error?.response?.status || error.message}`,
-    };
-  }
+  return authRouter.testOidcDiscovery(issuerUrl);
 }
 
 function firstProviderId(providerIds, names) {
@@ -5576,15 +5540,19 @@ router.post("/setAuthMode", async (req, res) => {
       }
 
       // The saved secret is never sent to the browser, so a blank field means "keep it".
-      const keptSecret = settings.auth?.mode === "oidc" && settings.auth?.clientId === clientId ? settings.auth.clientSecret : null;
+      // req.body.clearClientSecret switches a confidential client to a public (PKCE only) one.
+      const keptSecret =
+        !req.body.clearClientSecret && settings.auth?.mode === "oidc" && settings.auth?.clientId === clientId ? settings.auth.clientSecret : null;
       settings.auth = {
         mode: "oidc",
         label: "OIDC / Authentik",
         issuerUrl: oidcTest.issuerUrl,
         clientId,
-        clientSecret: clientSecret || keptSecret || null,
+        clientSecret: clientSecret ? encryptSecret(clientSecret) : keptSecret ? encryptSecret(keptSecret) : null,
         redirectUri: redirectUri || null,
         discovery: oidcTest.discovery,
+        ...(settings.auth?.mode === "oidc" ? authRouter.pickOidcOptions(settings.auth) : {}),
+        ...authRouter.pickOidcOptions(req.body),
       };
 
       query = 'UPDATE app_config SET "APP_USER"=$1, "APP_PASSWORD"=$2, "REQUIRE_LOGIN"=$3, settings=$4 where "ID"=1';
@@ -5596,7 +5564,7 @@ router.post("/setAuthMode", async (req, res) => {
 
     await db.query(query, params);
     await addAuditEntry(req, "auth.mode.updated", { mode });
-    res.json({ isValid: true, mode, settings });
+    res.json({ isValid: true, mode, settings: clientSettings(settings) });
   } catch (error) {
     console.log(error);
     res.status(500).json({ errorMessage: "Unable to update authentication mode" });

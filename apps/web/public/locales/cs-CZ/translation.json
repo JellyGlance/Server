@@ -459,6 +459,23 @@
       "SHOW_KEY": "Show API key",
       "HIDE_KEY": "Hide API key"
     },
+    "OIDC": {
+      "PUBLIC_CLIENT": "Public client (no secret, PKCE only). Removes the saved secret.",
+      "SCOPES": "Scopes",
+      "GROUPS_CLAIM": "Groups claim",
+      "ROLE_MAPPING": "Group to role mapping",
+      "ROLE_MAPPING_HINT": "One group=Role per line. The highest matching role wins. Leave empty to keep roles set on the Users page.",
+      "LINK_POLICY": "Link sign-ins to users",
+      "LINK_VERIFIED_EMAIL": "Only on a verified email that matches a user (recommended)",
+      "LINK_USERNAME": "By username (trust the provider's usernames)",
+      "LINK_MANUAL": "Never automatically (existing links only)",
+      "LINK_USERNAME_WARNING": "Only use this if nobody can pick their own username at your provider, or they could sign in as another user.",
+      "DEFAULT_ROLE": "Default role",
+      "AUTO_PROVISION": "Create a JellyGlance account for sign-ins that match no user",
+      "BREAK_GLASS": "Local accounts and the JS_USER / JS_PASSWORD environment login keep working, so you can still get in if single sign-on breaks.",
+      "USE_LOCAL": "Sign in with a local account instead",
+      "USE_SSO": "Back to single sign-on"
+    },
     "API_KEY_COUNT_one": "{{count}} klíč",
     "API_KEY_COUNT_few": "{{count}} klíče",
     "API_KEY_COUNT_many": "{{count}} klíče",
