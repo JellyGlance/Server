@@ -7,6 +7,7 @@ const dayjs = require("dayjs");
 const { getIntegrations } = require("../classes/integration-store");
 const { fetchHouseholdWatchTonight } = require("../classes/watch-tonight");
 const { sendSafeError } = require("../utils/security");
+const { catalogCountSql, catalogCounts, groupPlaysByType } = require("../classes/library-types");
 
 const router = express.Router();
 
@@ -295,6 +296,7 @@ router.get("/getHomeDashboard", async (req, res) => {
           COALESCE(sum(CASE WHEN "CollectionType" = 'tvshows' THEN "Library_Count" ELSE 0 END), 0)::int AS "Shows",
           COALESCE(sum(CASE WHEN "CollectionType" = 'tvshows' THEN "Episode_Count" ELSE 0 END), 0)::int AS "Episodes",
           COALESCE(sum(CASE WHEN "CollectionType" = 'music' THEN "Library_Count" ELSE 0 END), 0)::int AS "Artists",
+          ${catalogCountSql()},
           COALESCE(count(*) FILTER (WHERE archived = false), 0)::int AS "ActiveLibraries"
         FROM js_library_stats_overview
       `),
@@ -474,6 +476,7 @@ router.get("/getHomeDashboard", async (req, res) => {
         shows: Number(counts.Shows || 0),
         episodes: Number(counts.Episodes || 0),
         artists: Number(counts.Artists || 0),
+        ...catalogCounts(counts),
         activeLibraries: Number(activeLibraries.rows[0]?.Count || counts.ActiveLibraries || 0),
         size: Number(catalogSize.rows[0]?.Size || 0),
       },
@@ -1397,23 +1400,7 @@ router.get("/getViewsByLibraryType", async (req, res) => {
       [days]
     );
 
-    const supportedTypes = new Set(["Audio", "Movie", "Series", "Other"]);
-    /** @type {Map<string, number>} */
-    const reorganizedData = new Map();
-
-    rows.forEach((item) => {
-      const { type, count } = item;
-
-      if (!supportedTypes.has(type)) return;
-      reorganizedData.set(type, count);
-    });
-
-    supportedTypes.forEach((type) => {
-      if (reorganizedData.has(type)) return;
-      reorganizedData.set(type, 0);
-    });
-
-    res.send(Object.fromEntries(reorganizedData));
+    res.send(groupPlaysByType(rows));
   } catch (error) {
     console.log(error);
     res.status(503);

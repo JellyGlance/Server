@@ -5,19 +5,14 @@ import Loading from "./general/loading";
 
 import LibraryStatComponent from "./libraryStatCard/library-stat-component";
 
-import TvLineIcon from "remixicon-react/TvLineIcon";
-import FilmLineIcon from "remixicon-react/FilmLineIcon";
-import FileMusicLineIcon from "remixicon-react/FileMusicLineIcon";
-import CheckboxMultipleBlankLineIcon from "remixicon-react/CheckboxMultipleBlankLineIcon";
 import { Trans } from "react-i18next";
+import { LIBRARY_TYPE_ORDER, libraryTypeKey, libraryTypeMeta } from "../../lib/library-types";
 import i18next from "i18next";
+
+const ALWAYS_SHOWN = ["movies", "tvshows", "music", "mixed"];
 
 export default function LibraryOverView() {
   const token = localStorage.getItem("token");
-  const SeriesIcon = <TvLineIcon size={"100%"} />;
-  const MovieIcon = <FilmLineIcon size={"100%"} />;
-  const MusicIcon = <FileMusicLineIcon size={"100%"} />;
-  const MixedIcon = <CheckboxMultipleBlankLineIcon size={"100%"} />;
   const [data, setData] = useState();
 
   useEffect(() => {
@@ -49,30 +44,22 @@ export default function LibraryOverView() {
         <Trans i18nKey="HOME_PAGE.LIBRARY_OVERVIEW" />
       </h1>
       <div className="overview-container">
-        <LibraryStatComponent
-          data={data.filter((stat) => stat.CollectionType === "movies")}
-          heading={<Trans i18nKey="LIBRARY_OVERVIEW.MOVIE_LIBRARIES" />}
-          units={<Trans i18nKey="MOVIES" />}
-          icon={MovieIcon}
-        />
-        <LibraryStatComponent
-          data={data.filter((stat) => stat.CollectionType === "tvshows")}
-          heading={<Trans i18nKey="LIBRARY_OVERVIEW.SHOW_LIBRARIES" />}
-          units={`${i18next.t("SERIES")} / ${i18next.t("SEASONS")} / ${i18next.t("EPISODES")}`}
-          icon={SeriesIcon}
-        />
-        <LibraryStatComponent
-          data={data.filter((stat) => stat.CollectionType === "music")}
-          heading={<Trans i18nKey="LIBRARY_OVERVIEW.MUSIC_LIBRARIES" />}
-          units={<Trans i18nKey="SONGS" />}
-          icon={MusicIcon}
-        />
-        <LibraryStatComponent
-          data={data.filter((stat) => stat.CollectionType === "mixed")}
-          heading={<Trans i18nKey="LIBRARY_OVERVIEW.MIXED_LIBRARIES" />}
-          units={<Trans i18nKey="UNITS.ITEMS" />}
-          icon={MixedIcon}
-        />
+        {LIBRARY_TYPE_ORDER.map((type) => {
+          const libraries = data.filter((stat) => libraryTypeKey(stat.CollectionType) === type);
+          // Movies, shows, music and mixed always show; the rest only when such a library exists.
+          if (!ALWAYS_SHOWN.includes(type) && libraries.length === 0) return null;
+          const meta = libraryTypeMeta(type);
+          const Icon = meta.icon;
+          return (
+            <LibraryStatComponent
+              key={type}
+              data={libraries}
+              heading={meta.heading}
+              units={type === "tvshows" ? `${i18next.t("SERIES")} / ${i18next.t("SEASONS")} / ${i18next.t("EPISODES")}` : meta.units}
+              icon={<Icon size={"100%"} />}
+            />
+          );
+        })}
       </div>
     </div>
   );
