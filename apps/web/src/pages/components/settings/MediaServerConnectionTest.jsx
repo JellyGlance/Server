@@ -1,15 +1,30 @@
 import { useState } from "react";
-import Alert from "react-bootstrap/Alert";
-import Button from "react-bootstrap/Button";
 import { useTranslation } from "react-i18next";
+import CheckboxCircleFillIcon from "remixicon-react/CheckboxCircleFillIcon";
+import CloseCircleFillIcon from "remixicon-react/CloseCircleFillIcon";
+import ErrorWarningFillIcon from "remixicon-react/ErrorWarningFillIcon";
+import IndeterminateCircleLineIcon from "remixicon-react/IndeterminateCircleLineIcon";
+import Loader4LineIcon from "remixicon-react/Loader4LineIcon";
+import PulseLineIcon from "remixicon-react/PulseLineIcon";
 import axios from "../../../lib/axios_instance";
 
-const PREFIX = "SETTINGS_PAGE.CONNECTION_TEST";
-const STATUS_ICON = { pass: "✓", warn: "!", fail: "✕", skip: "–" };
-const STATUS_VARIANT = { pass: "text-success", warn: "text-warning", fail: "text-danger", skip: "text-muted" };
+export const CONNECTION_TEST_PREFIX = "SETTINGS_PAGE.CONNECTION_TEST";
+const PREFIX = CONNECTION_TEST_PREFIX;
+const STATUS_ICON = {
+  pass: CheckboxCircleFillIcon,
+  warn: ErrorWarningFillIcon,
+  fail: CloseCircleFillIcon,
+  skip: IndeterminateCircleLineIcon,
+};
 
-// Admin-only live check of the saved media server connection.
-export default function MediaServerConnectionTest({ token, hostUrl }) {
+function normaliseUrl(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\/+$/, "");
+}
+
+// Runs the admin-only live check of the saved media server connection.
+export function useConnectionTest(token) {
   const { t } = useTranslation();
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState(null);
@@ -37,53 +52,72 @@ export default function MediaServerConnectionTest({ token, hostUrl }) {
     }
   }
 
+  return { running, result, error, runTest };
+}
+
+// Shows the status of each connection check next to the form.
+export default function MediaServerConnectionTest({ running, result, error, hostUrl, formUrl }) {
+  const { t } = useTranslation();
   const label = result?.serverLabel || "Jellyfin";
+  const testedUrl = result?.url || hostUrl;
+  const showTestedUrl = Boolean(testedUrl) && normaliseUrl(testedUrl) !== normaliseUrl(formUrl);
+
+  let state = "idle";
+  if (running) state = "running";
+  else if (error) state = "fail";
+  else if (result) state = ["pass", "warn", "fail"].includes(result.overall) ? result.overall : "fail";
+
+  let summary = t(`${PREFIX}.UNTESTED`);
+  if (state === "running") summary = t(`${PREFIX}.RUNNING_SUMMARY`, { server: label });
+  else if (error) summary = error;
+  else if (result) summary = t(`${PREFIX}.OVERALL_${state.toUpperCase()}`, { server: label });
+
+  const SummaryIcon = state === "running" ? Loader4LineIcon : state === "idle" ? PulseLineIcon : STATUS_ICON[state];
 
   return (
-    <div className="settings-form integration-settings-form media-server-connection-test">
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
-        <div>
-          <strong>{t(`${PREFIX}.TITLE`)}</strong>
-          <div className="text-muted small">
-            {t(`${PREFIX}.STORED_URL`)} <code>{result?.url || hostUrl || t(`${PREFIX}.NONE`)}</code>
-          </div>
-        </div>
-        <Button variant="outline-primary" type="button" onClick={runTest} disabled={running}>
-          {running ? t(`${PREFIX}.RUNNING`) : t(`${PREFIX}.RUN`)}
-        </Button>
+    <div className="jf-connection-results" aria-live="polite" aria-busy={running}>
+      <div className="jf-connection-results-head">
+        <strong>{t(`${PREFIX}.RESULTS_TITLE`)}</strong>
+        <span>{t(`${PREFIX}.TESTS_SAVED`)}</span>
       </div>
 
-      {error ? (
-        <Alert bg="dark" data-bs-theme="dark" variant="danger">
-          {error}
-        </Alert>
+      <div className={`jf-connection-summary is-${state}`} role="status">
+        <SummaryIcon className={state === "running" ? "jf-spin" : ""} aria-hidden="true" />
+        <span>{summary}</span>
+      </div>
+
+      {showTestedUrl ? (
+        <div className="jf-connection-tested-url">
+          {t(`${PREFIX}.STORED_URL`)} <code>{testedUrl}</code>
+        </div>
       ) : null}
 
-      {result ? (
-        <>
-          <Alert bg="dark" data-bs-theme="dark" variant={result.overall === "fail" ? "danger" : result.overall === "warn" ? "warning" : "success"}>
-            {t(`${PREFIX}.OVERALL_${String(result.overall || "fail").toUpperCase()}`, { server: label })}
-          </Alert>
-          <ul className="list-unstyled mb-0">
-            {result.checks.map((check) => {
-              const params = { server: label, ...(check.details || {}) };
-              const message = t(`${PREFIX}.${check.id.toUpperCase()}_${check.code}`, {
-                ...params,
-                defaultValue: t(`${PREFIX}.GENERIC_${check.code}`, { ...params, defaultValue: check.code }),
-              });
-              const hint = t(`${PREFIX}.HINT_${check.code}`, { ...params, defaultValue: "" });
-              return (
-                <li key={check.id} className="mb-2">
-                  <span className={`me-2 fw-bold ${STATUS_VARIANT[check.status] || ""}`} aria-label={check.status}>
-                    {STATUS_ICON[check.status] || "?"}
-                  </span>
-                  <strong>{t(`${PREFIX}.CHECK_${check.id.toUpperCase()}`)}:</strong> {message}
-                  {hint && check.status !== "pass" ? <div className="text-muted small ms-4">{hint}</div> : null}
-                </li>
-              );
-            })}
-          </ul>
-        </>
+      {result?.checks?.length ? (
+        <ul className="jf-connection-checks">
+          {result.checks.map((check) => {
+            const params = { server: label, ...(check.details || {}) };
+            const message = t(`${PREFIX}.${check.id.toUpperCase()}_${check.code}`, {
+              ...params,
+              defaultValue: t(`${PREFIX}.GENERIC_${check.code}`, { ...params, defaultValue: check.code }),
+            });
+            const hint = t(`${PREFIX}.HINT_${check.code}`, { ...params, defaultValue: "" });
+            const status = STATUS_ICON[check.status] ? check.status : "fail";
+            const Icon = STATUS_ICON[status];
+            return (
+              <li key={check.id} className={`jf-connection-check is-${status}`}>
+                <Icon className="jf-connection-check-icon" aria-hidden="true" />
+                <div>
+                  <div className="jf-connection-check-line">
+                    <strong>{t(`${PREFIX}.CHECK_${check.id.toUpperCase()}`)}</strong>
+                    <span className="jf-connection-check-badge">{t(`${PREFIX}.STATUS_${status.toUpperCase()}`)}</span>
+                  </div>
+                  <div className="jf-connection-check-message">{message}</div>
+                  {hint && status !== "pass" ? <div className="jf-connection-check-hint">{hint}</div> : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       ) : null}
     </div>
   );
