@@ -66,45 +66,120 @@ test("/validateSettings requires the settings permission and an admin role", () 
   assert.deepEqual(runGuard({ user: { role: "Owner" }, permissions: { settings: true } }), { status: 200, nextCalled: true });
 });
 
-test("detectServerType in probe mode refuses loopback and sends LAN probes without redirects", async () => {
-  const { detectServerType } = require("../classes/server-type");
+// detectServerType sends its requests through safeHttpGet (axios.request with a rebuilt
+// baseURL + path); capture what would have been requested.
+async function withCapturedRequests(reply, fn) {
   const { axios } = require("../classes/axios");
-  const original = axios.get;
+  const original = axios.request;
   const seen = [];
-  axios.get = async (url, config) => {
-    seen.push({ url, maxRedirects: config?.maxRedirects });
-    return { data: { ProductName: "Jellyfin Server" } };
+  axios.request = async (config) => {
+    seen.push({ url: `${config.baseURL}${config.url}`, maxRedirects: config.maxRedirects, method: config.method });
+    return { data: reply };
   };
   try {
+    await fn(seen);
+  } finally {
+    axios.request = original;
+  }
+}
+
+async function withLookup(addresses, fn) {
+  const original = dns.promises.lookup;
+  dns.promises.lookup = async () => addresses.map((address) => ({ address, family: address.includes(":") ? 6 : 4 }));
+  try {
+    await fn();
+  } finally {
+    dns.promises.lookup = original;
+  }
+}
+
+test("detectServerType in probe mode refuses loopback and sends LAN probes without redirects", async () => {
+  const { detectServerType } = require("../classes/server-type");
+  await withCapturedRequests({ ProductName: "Jellyfin Server" }, async (seen) => {
     assert.equal(await detectServerType("http://127.0.0.1:8096", { probe: true }), null);
     assert.equal(seen.length, 0);
     assert.equal(await detectServerType("http://192.168.1.20:8096", { probe: true }), "jellyfin");
-    assert.deepEqual(seen, [{ url: "http://192.168.1.20:8096/System/Info/Public", maxRedirects: 0 }]);
-  } finally {
-    axios.get = original;
-  }
+    assert.deepEqual(seen, [{ url: "http://192.168.1.20:8096/System/Info/Public", maxRedirects: 0, method: "get" }]);
+  });
 });
 
 test("detectServerType rebuilds the URL from validated parts and rejects bad input", async () => {
   const { detectServerType } = require("../classes/server-type");
-  const { axios } = require("../classes/axios");
-  const original = axios.get;
-  const seen = [];
-  axios.get = async (url) => {
-    seen.push(url);
-    return { data: { ProductName: "Emby Server" } };
-  };
-  try {
+  await withCapturedRequests({ ProductName: "Emby Server" }, async (seen) => {
     assert.equal(await detectServerType("ftp://192.168.1.20", { probe: true }), null);
+    assert.equal(await detectServerType("file:///etc/passwd", { probe: false }), null);
     assert.equal(await detectServerType("http://user:pass@192.168.1.20:8096", { probe: true }), null);
     assert.equal(await detectServerType("http://[::ffff:127.0.0.1]:8096", { probe: true }), null);
+    assert.equal(await detectServerType("http://[::ffff:7f00:1]:8096", { probe: true }), null);
     assert.equal(await detectServerType("http://169.254.169.254/latest", { probe: true }), null);
+    assert.equal(await detectServerType("http://169.254.169.254/latest", { probe: false }), null);
+    assert.equal(await detectServerType("http://metadata.google.internal/", { probe: false }), null);
     assert.equal(seen.length, 0);
-    assert.equal(await detectServerType("HTTP://Media.LAN", { probe: false }), "emby");
+    assert.equal(await detectServerType("HTTP://Media.LAN?x=1#frag", { probe: false }), "emby");
     assert.equal(await detectServerType("https://10.0.0.5:8920/jf/web/index.html#!/home.html", { probe: true }), "emby");
-    assert.deepEqual(seen, ["http://media.lan/System/Info/Public", "https://10.0.0.5:8920/jf/System/Info/Public"]);
+    assert.deepEqual(
+      seen.map((entry) => entry.url),
+      ["http://media.lan/System/Info/Public", "https://10.0.0.5:8920/jf/System/Info/Public"]
+    );
+  });
+});
+
+test("detectServerType in probe mode refuses names that resolve to a blocked address (rebinding)", async () => {
+  const { detectServerType } = require("../classes/server-type");
+  await withCapturedRequests({ ProductName: "Jellyfin Server" }, async (seen) => {
+    await withLookup(["192.168.1.20", "127.0.0.1"], async () => {
+      assert.equal(await detectServerType("http://rebind.example:8096", { probe: true }), null);
+    });
+    await withLookup(["::ffff:169.254.169.254"], async () => {
+      assert.equal(await detectServerType("http://mapped.example", { probe: true }), null);
+    });
+    assert.equal(seen.length, 0);
+    await withLookup(["203.0.113.10"], async () => {
+      assert.equal(await detectServerType("https://jellyfin.example.com", { probe: true }), "jellyfin");
+    });
+    assert.deepEqual(seen, [{ url: "https://jellyfin.example.com/System/Info/Public", maxRedirects: 0, method: "get" }]);
+  });
+});
+
+test("detectServerType allows a public media server and falls back to the /emby path", async () => {
+  const { detectServerType } = require("../classes/server-type");
+  const { axios } = require("../classes/axios");
+  const original = axios.request;
+  const seen = [];
+  axios.request = async (config) => {
+    seen.push(`${config.baseURL}${config.url}`);
+    if (!config.url.startsWith("/emby/")) throw Object.assign(new Error("Not Found"), { response: { status: 404 } });
+    return { data: { Id: "abc", Version: "4.8.0.0" } };
+  };
+  try {
+    assert.equal(await detectServerType("http://8.8.8.8:8096", { probe: true }), "emby");
+    assert.deepEqual(seen, ["http://8.8.8.8:8096/System/Info/Public", "http://8.8.8.8:8096/emby/System/Info/Public"]);
   } finally {
-    axios.get = original;
+    axios.request = original;
+  }
+});
+
+test("detectServerType probes loopback only with JS_ALLOW_LOOPBACK_MEDIA_SERVER=true", async () => {
+  const { detectServerType } = require("../classes/server-type");
+  const previous = process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER;
+  try {
+    await withCapturedRequests({ ProductName: "Jellyfin Server" }, async (seen) => {
+      delete process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER;
+      assert.equal(await detectServerType("http://127.0.0.1:8096", { probe: true }), null);
+      assert.equal(await detectServerType("http://[::1]:8096", { probe: true }), null);
+      assert.equal(seen.length, 0);
+      process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER = "true";
+      assert.equal(await detectServerType("http://127.0.0.1:8096", { probe: true }), "jellyfin");
+      assert.equal(await detectServerType("http://[::1]:8096", { probe: true }), "jellyfin");
+      assert.equal(await detectServerType("http://169.254.169.254", { probe: true }), null);
+      assert.deepEqual(
+        seen.map((entry) => entry.url),
+        ["http://127.0.0.1:8096/System/Info/Public", "http://[::1]:8096/System/Info/Public"]
+      );
+    });
+  } finally {
+    if (previous === undefined) delete process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER;
+    else process.env.JS_ALLOW_LOOPBACK_MEDIA_SERVER = previous;
   }
 });
 

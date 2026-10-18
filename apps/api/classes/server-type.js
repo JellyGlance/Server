@@ -33,8 +33,7 @@ function serverLabel(type = active) {
 // Ask the server what it is. Jellyfin always reports ProductName "Jellyfin Server";
 // Emby reports "Emby Server" or, on older builds, no ProductName at all.
 async function detectServerType(url, { probe = false } = {}) {
-  const { axios } = require("./axios");
-  const { stripTrailingSlashes } = require("../utils/security");
+  const { stripTrailingSlashes, toSafeHttpUrl, safeHttpGet } = require("../utils/security");
   const { resolveProbeHost, probeRequestOptions } = require("../utils/probe-guard");
   const raw = String(url || "");
   const webIndex = raw.indexOf("/web/index.html");
@@ -42,43 +41,34 @@ async function detectServerType(url, { probe = false } = {}) {
   if (!base) return null;
   if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(base)) base = `http://${base}`;
 
-  // Validate the target inside this function, right before the request:
-  // parse, require http(s), refuse credentials, check the host against the blocked
-  // internal ranges (after DNS resolution when probing), and rebuild the URL from
-  // the validated parts only.
-  let parsed;
+  // toSafeHttpUrl only accepts http(s), refuses embedded credentials and the cloud
+  // metadata hosts, and rebuilds the URL from the validated parts.
+  let target;
   try {
-    parsed = new URL(base);
+    target = new URL(toSafeHttpUrl(base));
   } catch {
     return null;
   }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-  if (parsed.username || parsed.password) return null;
-  const hostname = parsed.hostname.toLowerCase();
-  if (!hostname || ["169.254.169.254", "metadata.google.internal", "metadata.goog"].includes(hostname)) return null;
+  target.search = "";
+  target.hash = "";
+
+  // Probe mode (POST /proxy/validateSettings): resolve the host up front and refuse
+  // loopback/link-local/metadata/reserved addresses. The guarded connections repeat the check
+  // on the address actually connected to, and redirects are not followed.
   if (probe) {
-    const bareHost = hostname.replace(/^\[|\]$/g, "");
     try {
-      await resolveProbeHost(bareHost);
+      await resolveProbeHost(target.hostname.replace(/^\[|\]$/g, ""));
     } catch {
       return null;
     }
   }
-  const protocol = parsed.protocol === "https:" ? "https:" : "http:";
-  const portNumber = parsed.port ? Number.parseInt(parsed.port, 10) : null;
-  if (portNumber !== null && !(portNumber > 0 && portNumber < 65536)) return null;
-  const origin = `${protocol}//${hostname}${portNumber ? `:${portNumber}` : ""}`;
-  const basePath = stripTrailingSlashes(parsed.pathname || "");
   const options = probe ? probeRequestOptions({ timeout: 5000 }) : { timeout: 5000 };
 
   for (const path of ["/System/Info/Public", "/emby/System/Info/Public"]) {
     try {
-      // By design this contacts the media server URL an admin enters (setup wizard or
-      // admin-only settings). /proxy/validateSettings is limited to Owner/Admin with the
-      // settings permission (classes/route-guards.js), and in probe mode the host is
-      // resolved and loopback/link-local/metadata/IPv4-mapped addresses are refused,
-      // with no redirects (utils/probe-guard.js). LAN private ranges stay allowed.
-      const { data } = await axios.get(`${origin}${basePath}${path}`, options);
+      // All outbound requests go through the shared guarded helper, which validates
+      // and rebuilds the URL again (same host only) before calling axios.
+      const { data } = await safeHttpGet(target.href, path, options);
       if (!data || typeof data !== "object") continue;
       const product = String(data.ProductName || "");
       if (/jellyfin/i.test(product)) return "jellyfin";
