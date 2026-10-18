@@ -64,7 +64,8 @@ function ActivityTimeline(props) {
       .then((response) => {
         const nextUsers = response.data || [];
         setUsers(nextUsers);
-        setSelectedUser((current) => current || nextUsers[0]?.UserId || "");
+        // A remembered choice may be someone this account can no longer see, so fall back to the first entry.
+        setSelectedUser((current) => (nextUsers.some((user) => user.UserId === current) ? current : nextUsers[0]?.UserId || ""));
       })
       .catch((error) => {
         console.log(error);
@@ -154,6 +155,8 @@ function ActivityTimeline(props) {
           <ActivityTimelineComponent userId={selectedUser} libraries={selectedLibraries} />
         ) : selectedLibraries?.length === 0 ? (
           <div className="activity-timeline-empty">Select at least one library to load the timeline.</div>
+        ) : Array.isArray(users) && users.length === 0 ? (
+          <div className="activity-timeline-empty">No timeline activity to show yet.</div>
         ) : (
           <Loading />
         )}

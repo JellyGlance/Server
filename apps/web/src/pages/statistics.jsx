@@ -18,6 +18,7 @@ import PlayStatsByDay from "./components/statistics/play-stats-by-day";
 import PlayStatsByHour from "./components/statistics/play-stats-by-hour";
 import HomeStatisticCards from "./components/HomeStatisticCards";
 import { Trans } from "react-i18next";
+import { readAuth } from "./components/general/PageTabs";
 
 function getStatValue(item = {}) {
   return Number(item.Plays ?? item.Count ?? item.unique_viewers ?? 0);
@@ -69,6 +70,8 @@ function StatsRankList({ title, icon, items, emptyText }) {
 }
 
 function StatsOverview({ days }) {
+  const { isAdmin, permissions } = readAuth();
+  const seesEveryone = isAdmin || Boolean(permissions.users);
   const [overview, setOverview] = useState({
     movies: [],
     series: [],
@@ -153,7 +156,8 @@ function StatsOverview({ days }) {
   const topCards = [
     { label: "Top library", value: metrics.topLibrary?.Name || "No data", detail: `${formatNumber(getStatValue(metrics.topLibrary))} plays`, icon: <BarChartFillIcon /> },
     {
-      label: "Most active user",
+      // Without the Users permission the API only returns the signed-in user's own entry.
+      label: seesEveryone ? "Most active user" : "Your plays",
       value: metrics.topUser?.Name || "No data",
       detail: `${formatNumber(getStatValue(metrics.topUser))} plays`,
       icon: metrics.topUser?.UserId ? <img src={`/proxy/Users/Images/Primary?id=${metrics.topUser.UserId}&fillWidth=80&quality=80`} alt="" /> : <UserStarLineIcon />,
