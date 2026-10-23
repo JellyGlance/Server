@@ -503,7 +503,6 @@ module.exports = {
   OidcLinkConflict,
   createGuardedLookup,
   ipv6ToBytes,
-  isBlockedAddress,
   saveLinkAtomically,
   assertSafeUrl,
   buildAuthorizationUrl,
