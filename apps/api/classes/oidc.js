@@ -112,11 +112,15 @@ function isBlockedAddress(address) {
   if (startsWith(bytes, [...ZERO_10, 0xff, 0xff])) return isBlockedV4(embeddedV4);
   // ::/96 covers ::, ::1 and the deprecated IPv4-compatible form; none is a real provider.
   if (startsWith(bytes, [...ZERO_10, 0, 0])) return true;
+  // SIIT ::ffff:0:0/96 (RFC 2765) is a translation form no provider should use: block it outright.
+  if (startsWith(bytes, [0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0])) return true;
   // NAT64 64:ff9b::/96 reaches the embedded IPv4 address.
   if (startsWith(bytes, [0x00, 0x64, 0xff, 0x9b, 0, 0, 0, 0, 0, 0, 0, 0])) return isBlockedV4(embeddedV4);
   if (bytes[0] === 0xff) return true; // multicast ff00::/8
   if (bytes[0] === 0xfe && (bytes[1] & 0xc0) === 0x80) return true; // link-local fe80::/10
   if (bytes[0] === 0xfe && (bytes[1] & 0xc0) === 0xc0) return true; // site-local fec0::/10
+  // Unique local fc00::/7 stays allowed on purpose: it is IPv6's RFC 1918, and self-hosted
+  // identity providers on the LAN are supported, just like 10/8, 172.16/12 and 192.168/16.
   return startsWith(bytes, [0xfd, 0x00, 0x0e, 0xc2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x02, 0x54]); // AWS metadata
 }
 
@@ -199,6 +203,9 @@ function createHttp({ axios, lookup } = {}) {
       timeout: REQUEST_TIMEOUT_MS,
       maxRedirects: 0,
       ...getGuardedAgents(),
+      // An HTTP(S)_PROXY from the environment would connect on our behalf and skip the
+      // agents' address check, so OIDC requests always connect directly.
+      proxy: false,
       validateStatus: (status) => status >= 200 && status < 300,
     });
     return response.data;

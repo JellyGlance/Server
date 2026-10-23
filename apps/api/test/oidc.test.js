@@ -257,6 +257,9 @@ test("the address guard unwraps every IPv6 form of a blocked address", async () 
     "fec0::1", // site-local
     "feff::1",
     "fe80::1%eth0",
+    "::ffff:0:7f00:1", // SIIT
+    "::ffff:0:c0a8:114",
+    "0:0:0:0:ffff:0:127.0.0.1",
   ];
   for (const address of blocked) {
     assert.equal(oidc.isBlockedAddress(address), true, address);
@@ -293,6 +296,43 @@ test("the connection lookup re-checks the address, so DNS rebinding is refused",
   await transport.get("https://auth.lan/x");
   assert.equal(typeof seen.httpsAgent.options.lookup, "function");
   assert.equal(typeof seen.httpAgent.options.lookup, "function");
+  assert.equal(seen.proxy, false);
+});
+
+test("hex-form IPv4-mapped addresses are judged by the IPv4 address they carry", () => {
+  for (const [hex, blocked] of [
+    ["::ffff:7f00:1", true],
+    ["::ffff:7f00:0001", true],
+    ["0:0:0:0:0:ffff:7f00:1", true],
+    ["::FFFF:A9FE:A9FE", true],
+    ["::ffff:0:0", true],
+    ["::ffff:e000:1", true],
+    ["::ffff:a00:1", false],
+    ["::ffff:c0a8:114", false],
+  ]) {
+    assert.equal(oidc.isBlockedAddress(hex), blocked, hex);
+  }
+});
+
+test("a real connection through the guarded agent is refused when the name resolves to loopback", async () => {
+  const server = require("http").createServer((req, res) => res.end("reached"));
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address();
+  const agent = new (require("http").Agent)({ lookup: oidc.createGuardedLookup() });
+  try {
+    const error = await new Promise((resolve) => {
+      require("http")
+        .get({ host: "localhost", port, path: "/", agent }, (res) => {
+          res.resume();
+          resolve(null);
+        })
+        .on("error", resolve);
+    });
+    assert.equal(error?.code, "blocked_host");
+  } finally {
+    agent.destroy();
+    server.close();
+  }
 });
 
 // A pool whose SELECT ... FOR UPDATE really serialises callers, like PostgreSQL's row lock.
