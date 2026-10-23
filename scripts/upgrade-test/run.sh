@@ -101,7 +101,16 @@ login >/dev/null || fail "admin login on the old release"
 
 log "seed SMTP password with the old crypto-js encryption"
 ENCRYPTED="$(docker exec -w /app/apps/api -e PLAIN="${SMTP_PASS}" "${APP}" \
-  node -e 'const C=require("crypto-js");process.stdout.write(C.AES.encrypt(process.env.PLAIN,process.env.JWT_SECRET).toString())')"
+  node -e '
+// Same output as crypto-js AES.encrypt(text, passphrase): OpenSSL "Salted__" format,
+// EVP_BytesToKey (MD5) key derivation, AES-256-CBC. Built-in crypto only, because
+// newer release images no longer ship crypto-js.
+const c=require("crypto");const salt=c.randomBytes(8);const pass=Buffer.from(process.env.JWT_SECRET);
+let d=Buffer.alloc(0),prev=Buffer.alloc(0);
+while(d.length<48){prev=c.createHash("md5").update(Buffer.concat([prev,pass,salt])).digest();d=Buffer.concat([d,prev]);}
+const ci=c.createCipheriv("aes-256-cbc",d.subarray(0,32),d.subarray(32,48));
+const ct=Buffer.concat([ci.update(process.env.PLAIN,"utf8"),ci.final()]);
+process.stdout.write(Buffer.concat([Buffer.from("Salted__"),salt,ct]).toString("base64"));')"
 [ -n "${ENCRYPTED}" ] || fail "could not produce a crypto-js ciphertext"
 psql_db -v enc="${ENCRYPTED}" <<'SQL'
 UPDATE app_config
