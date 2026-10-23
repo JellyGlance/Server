@@ -432,7 +432,9 @@ function matchFreeUser({ claims, key, links, mediaUsers, linkPolicy }) {
     const verified = claims.email_verified === true || claims.email_verified === "true";
     if (!verified || !claims.email) return { mediaUser: null, linkedBy: null };
     const email = normalise(claims.email);
-    const match = free.filter((user) => normalise(user.email) === email || normalise(user.name) === email);
+    // Only the media user's real email field counts: a username is chosen freely and can be
+    // set to someone else's address, so it must never satisfy email linking.
+    const match = free.filter((user) => user.email && normalise(user.email) === email);
     return match.length === 1 ? { mediaUser: match[0], linkedBy: "verified_email" } : { mediaUser: null, linkedBy: null };
   }
   if (linkPolicy === "username") {

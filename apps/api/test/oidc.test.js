@@ -213,7 +213,8 @@ test("linking: verified email only by default, never by an unverified email or a
 
   assert.equal(resolve({ sub: "1", preferred_username: "admin" }).mediaUser, null);
   assert.equal(resolve({ sub: "1", email: "alice@example.test", email_verified: false }).mediaUser, null);
-  assert.equal(resolve({ sub: "1", email: "alice@example.test", email_verified: true }).mediaUser.id, "u-alice");
+  // A username that looks like the email is not an email: no link.
+  assert.equal(resolve({ sub: "1", email: "alice@example.test", email_verified: true }).mediaUser, null);
   assert.equal(resolve({ sub: "1", email: "BOB@example.test", email_verified: true }).mediaUser.id, "u-bob");
 
   assert.equal(resolve({ sub: "1", preferred_username: "admin" }, { linkPolicy: "username" }).mediaUser.id, "u-admin");
@@ -412,4 +413,27 @@ test("concurrent callbacks for one identity provision once, and stale links are 
   });
   assert.equal(resolved.mediaUser.id, "media-3");
   assert.deepEqual(resolved.staleLink, stale);
+});
+
+test("email linking matches only the media user's email field, never a username", () => {
+  const mediaUsers = [
+    { id: "u-squatter", name: "victim@example.test" },
+    { id: "u-squatter-2", name: " VICTIM@example.test ", email: null },
+    { id: "u-blank", name: "", email: "" },
+    { id: "u-victim", name: "victim", email: "Victim@Example.test" },
+  ];
+  const resolve = (claims) => oidc.resolveLinkedUser({ claims, issuer: ISSUER, mediaUsers });
+  const result = resolve({ sub: "v", email: "victim@example.test", email_verified: true });
+  assert.equal(result.mediaUser.id, "u-victim");
+  assert.equal(result.linkedBy, "verified_email");
+
+  // With only a username match available, nothing links.
+  const onlyName = oidc.resolveLinkedUser({
+    claims: { sub: "v", email: "victim@example.test", email_verified: true },
+    issuer: ISSUER,
+    mediaUsers: mediaUsers.slice(0, 3),
+  });
+  assert.deepEqual(onlyName, { mediaUser: null, linkedBy: null });
+  // An empty email field never matches.
+  assert.equal(resolve({ sub: "e", email: "", email_verified: true }).mediaUser, null);
 });
