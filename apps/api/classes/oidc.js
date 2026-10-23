@@ -12,7 +12,10 @@
 // - Accounts are linked by the provider's issuer + subject. A new login is only linked to an
 //   existing media server user on a verified email, or by username when an admin opts in.
 const { createHash, createPublicKey, randomBytes, timingSafeEqual } = require("crypto");
-const dns = require("dns").promises;
+const dnsCallback = require("dns");
+const dns = dnsCallback.promises;
+const http = require("http");
+const https = require("https");
 const net = require("net");
 const jwt = require("jsonwebtoken");
 
@@ -60,24 +63,61 @@ function inV4Range(ip, base, bits) {
   return (ipv4ToInt(ip) & mask) === (ipv4ToInt(base) & mask);
 }
 
+function isBlockedV4(ip) {
+  return (
+    inV4Range(ip, "0.0.0.0", 8) ||
+    inV4Range(ip, "127.0.0.0", 8) ||
+    inV4Range(ip, "169.254.0.0", 16) ||
+    inV4Range(ip, "224.0.0.0", 4) ||
+    inV4Range(ip, "240.0.0.0", 4) ||
+    ip === "100.100.100.200" // Alibaba Cloud metadata
+  );
+}
+
+// Parses any IPv6 text form (compressed, dotted tail, zone id) into 16 bytes, or null.
+function ipv6ToBytes(address) {
+  let ip = String(address || "").toLowerCase().replace(/%.*$/, "");
+  if (!net.isIPv6(ip)) return null;
+  let tail = [];
+  const dotted = ip.match(/:(\d+\.\d+\.\d+\.\d+)$/);
+  if (dotted) {
+    tail = dotted[1].split(".").map(Number);
+    ip = `${ip.slice(0, -dotted[1].length)}0:0`;
+  }
+  const [head, rest] = ip.includes("::") ? ip.split("::") : [ip, null];
+  const left = head ? head.split(":") : [];
+  const right = rest ? rest.split(":") : [];
+  const groups = rest === null ? left : [...left, ...Array(8 - left.length - right.length).fill("0"), ...right];
+  if (groups.length !== 8) return null;
+  const bytes = [];
+  for (const group of groups) {
+    const value = parseInt(group || "0", 16);
+    bytes.push(value >> 8, value & 0xff);
+  }
+  if (tail.length) bytes.splice(12, 4, ...tail);
+  return bytes;
+}
+
+const startsWith = (bytes, prefix) => prefix.every((value, index) => bytes[index] === value);
+const ZERO_10 = Array(10).fill(0);
+
 // Addresses an identity provider can never legitimately live on.
 function isBlockedAddress(address) {
-  let ip = String(address || "").toLowerCase();
-  if (ip.startsWith("::ffff:") && net.isIPv4(ip.slice(7))) ip = ip.slice(7);
-  if (net.isIPv4(ip)) {
-    return (
-      inV4Range(ip, "0.0.0.0", 8) ||
-      inV4Range(ip, "127.0.0.0", 8) ||
-      inV4Range(ip, "169.254.0.0", 16) ||
-      inV4Range(ip, "224.0.0.0", 4) ||
-      inV4Range(ip, "240.0.0.0", 4) ||
-      ip === "100.100.100.200" // Alibaba Cloud metadata
-    );
-  }
-  if (net.isIPv6(ip)) {
-    return ip === "::" || ip === "::1" || /^fe[89ab]/.test(ip) || /^ff/.test(ip) || ip.startsWith("fd00:ec2::254");
-  }
-  return true;
+  const ip = String(address || "").toLowerCase();
+  if (net.isIPv4(ip)) return isBlockedV4(ip);
+  const bytes = ipv6ToBytes(ip);
+  if (!bytes) return true;
+  const embeddedV4 = bytes.slice(12).join(".");
+  // IPv4-mapped ::ffff:0:0/96, in any text form: judge the IPv4 address it carries.
+  if (startsWith(bytes, [...ZERO_10, 0xff, 0xff])) return isBlockedV4(embeddedV4);
+  // ::/96 covers ::, ::1 and the deprecated IPv4-compatible form; none is a real provider.
+  if (startsWith(bytes, [...ZERO_10, 0, 0])) return true;
+  // NAT64 64:ff9b::/96 reaches the embedded IPv4 address.
+  if (startsWith(bytes, [0x00, 0x64, 0xff, 0x9b, 0, 0, 0, 0, 0, 0, 0, 0])) return isBlockedV4(embeddedV4);
+  if (bytes[0] === 0xff) return true; // multicast ff00::/8
+  if (bytes[0] === 0xfe && (bytes[1] & 0xc0) === 0x80) return true; // link-local fe80::/10
+  if (bytes[0] === 0xfe && (bytes[1] & 0xc0) === 0xc0) return true; // site-local fec0::/10
+  return startsWith(bytes, [0xfd, 0x00, 0x0e, 0xc2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x02, 0x54]); // AWS metadata
 }
 
 async function assertSafeUrl(rawUrl, { lookup = dns.lookup } = {}) {
@@ -89,7 +129,7 @@ async function assertSafeUrl(rawUrl, { lookup = dns.lookup } = {}) {
   }
   if (!["http:", "https:"].includes(url.protocol)) throw new OidcError("invalid_url", "OIDC URLs must use http or https");
   if (url.username || url.password) throw new OidcError("invalid_url", "OIDC URLs must not contain credentials");
-  const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase().replace(/\.+$/, "");
   if (BLOCKED_HOSTNAMES.has(hostname) || hostname.endsWith(".localhost")) {
     throw new OidcError("blocked_host", "The OIDC provider address is not allowed");
   }
@@ -107,7 +147,46 @@ class OidcError extends Error {
   }
 }
 
-// Default transport: axios with redirects disabled and the address guard applied first.
+// A dns.lookup replacement for the HTTP agents: the address actually connected to is checked
+// too, so a hostname that re-resolves to a blocked address between checks is refused.
+function createGuardedLookup(baseLookup = dnsCallback.lookup) {
+  return function guardedLookup(hostname, options, callback) {
+    if (typeof options === "function") [callback, options] = [options, {}];
+    if (typeof options === "number") options = { family: options };
+    const opts = options || {};
+    baseLookup(hostname, { ...opts, all: true }, (error, addresses) => {
+      if (error) return callback(error);
+      const list = Array.isArray(addresses) ? addresses : [{ address: addresses, family: net.isIP(addresses) }];
+      if (!list.length || list.some((entry) => isBlockedAddress(entry.address))) {
+        return callback(new OidcError("blocked_host", "The OIDC provider address is not allowed"));
+      }
+      if (opts.all) return callback(null, list);
+      return callback(null, list[0].address, list[0].family);
+    });
+  };
+}
+
+let guardedAgents;
+function getGuardedAgents() {
+  if (!guardedAgents) {
+    const lookup = createGuardedLookup();
+    const preferIpv4 = String(process.env.JS_PREFER_IPV4 || "true").toLowerCase() !== "false";
+    const family = preferIpv4 ? { family: 4 } : {};
+    guardedAgents = {
+      httpAgent: new http.Agent({ keepAlive: true, lookup, ...family }),
+      httpsAgent: new https.Agent({
+        keepAlive: true,
+        lookup,
+        rejectUnauthorized: (process.env.REJECT_SELF_SIGNED_CERTIFICATES || "true").toLowerCase() === "true",
+        ...family,
+      }),
+    };
+  }
+  return guardedAgents;
+}
+
+// Default transport: axios with redirects disabled, the address guard applied first and
+// again on the address each connection actually uses.
 function createHttp({ axios, lookup } = {}) {
   const client = axios || require("./axios").axios;
   async function request(method, url, { data, headers } = {}) {
@@ -119,6 +198,7 @@ function createHttp({ axios, lookup } = {}) {
       headers,
       timeout: REQUEST_TIMEOUT_MS,
       maxRedirects: 0,
+      ...getGuardedAgents(),
       validateStatus: (status) => status >= 200 && status < 300,
     });
     return response.data;
@@ -320,12 +400,26 @@ function normalise(value) {
 // Decides which media server user (if any) an OIDC identity belongs to.
 // Returns { mediaUser, linkedBy } where linkedBy is "link", "verified_email", "username" or null.
 function resolveLinkedUser({ claims, issuer, links = {}, mediaUsers = [], linkPolicy = "verified_email" }) {
-  const existing = links[linkKey(issuer, claims.sub)];
+  const key = linkKey(issuer, claims.sub);
+  const existing = links[key];
+  let staleLink = null;
   if (existing) {
+    if (existing.provisioned && !existing.mediaUserId) return { mediaUser: null, linkedBy: "provisioned" };
     const mediaUser = mediaUsers.find((user) => user.id === existing.mediaUserId) || null;
-    return { mediaUser, linkedBy: mediaUser ? "link" : null, staleLink: !mediaUser };
+    if (mediaUser) return { mediaUser, linkedBy: "link", staleLink: false };
+    // The linked media user is gone: match afresh, and let the caller replace the stale link.
+    staleLink = existing;
   }
-  const alreadyLinked = new Set(Object.values(links).map((link) => link.mediaUserId));
+  const result = matchFreeUser({ claims, key, links, mediaUsers, linkPolicy });
+  return staleLink ? { ...result, staleLink } : result;
+}
+
+function matchFreeUser({ claims, key, links, mediaUsers, linkPolicy }) {
+  const alreadyLinked = new Set(
+    Object.entries(links)
+      .filter(([otherKey, link]) => otherKey !== key && link?.mediaUserId)
+      .map(([, link]) => link.mediaUserId)
+  );
   const free = mediaUsers.filter((user) => !alreadyLinked.has(user.id));
   if (linkPolicy === "verified_email") {
     const verified = claims.email_verified === true || claims.email_verified === "true";
@@ -353,6 +447,50 @@ function resolveRole({ groups, roleMapping, assignedRole, isMediaAdmin, defaultR
   return defaultRole;
 }
 
+class OidcLinkConflict extends OidcError {
+  constructor() {
+    super("link_conflict", "This sign-in conflicts with an existing account link");
+  }
+}
+
+// Saves one identity link inside a transaction holding the app_config row lock, so two
+// callbacks at once can't link two identities to one media user or provision twice.
+// `expected` is the link the caller saw for this key (undefined when there was none).
+async function saveLinkAtomically(pool, key, link, { expected } = {}) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.query('SELECT settings FROM app_config WHERE "ID" = 1 FOR UPDATE');
+    const settings = typeof rows[0]?.settings === "string" ? JSON.parse(rows[0].settings) : rows[0]?.settings || {};
+    const links = settings.oidcLinks || {};
+    const current = links[key];
+    if (current && !(expected && current.mediaUserId === expected.mediaUserId && current.linkedAt === expected.linkedAt)) {
+      await client.query("ROLLBACK");
+      // Another callback for the same identity got there first with the same result.
+      if ((link.mediaUserId || null) === (current.mediaUserId || null)) return current;
+      throw new OidcLinkConflict();
+    }
+    if (link.mediaUserId && Object.entries(links).some(([otherKey, other]) => otherKey !== key && other?.mediaUserId === link.mediaUserId)) {
+      await client.query("ROLLBACK");
+      throw new OidcLinkConflict();
+    }
+    await client.query(
+      `UPDATE app_config
+          SET settings = jsonb_set(COALESCE(settings::jsonb, '{}'::jsonb), '{oidcLinks}',
+                                   COALESCE(settings::jsonb -> 'oidcLinks', '{}'::jsonb) || $1::jsonb, true)::json
+        WHERE "ID" = 1`,
+      [JSON.stringify({ [key]: link })]
+    );
+    await client.query("COMMIT");
+    return link;
+  } catch (error) {
+    if (!(error instanceof OidcLinkConflict)) await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 function clearJwksCache() {
   jwksCache.clear();
 }
@@ -362,6 +500,11 @@ module.exports = {
   DEFAULT_SCOPES,
   LINK_POLICIES,
   OidcError,
+  OidcLinkConflict,
+  createGuardedLookup,
+  ipv6ToBytes,
+  isBlockedAddress,
+  saveLinkAtomically,
   assertSafeUrl,
   buildAuthorizationUrl,
   claimGroups,
