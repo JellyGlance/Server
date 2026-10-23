@@ -9,6 +9,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
+const { mountSwaggerUi } = require("./swagger-page");
 const sanitizeFilename = require("./utils/sanitizer");
 const { getBackupDir } = require("./utils/storage-paths");
 const {
@@ -451,31 +452,7 @@ app.get("/backup-download/:filename", fileRateLimit, (req, res) => {
 });
 
 // Swagger spec + standalone UI. The Glance app owns GET /swagger.
-app.get("/swagger.json", (_req, res) => {
-  res.set("Cache-Control", "no-store");
-  res.json(swaggerDocument);
-});
-app.use(
-  "/swagger-ui",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument, {
-    customSiteTitle: "JellyGlance API",
-    customCss: `
-      .swagger-ui .topbar { display: none; }
-      body { margin: 0; background: #0b1118; }
-      .swagger-ui { background: transparent; }
-      .swagger-ui .info .title { display: none; }
-      .swagger-ui .info p, .swagger-ui .info li, .swagger-ui .info table { color: #9aa7bb; }
-      .swagger-ui .scheme-container { background: #121821; box-shadow: none; }
-      .swagger-ui .opblock-tag { color: #f8fafc; border-color: rgba(255,255,255,0.08); }
-    `,
-    swaggerOptions: {
-      persistAuthorization: true,
-      tagsSorter: "alpha",
-      operationsSorter: "alpha",
-    },
-  })
-);
+mountSwaggerUi(app, swaggerUi, swaggerDocument);
 
 // for deployment of static page
 writeEnvVariables().then(() => {
