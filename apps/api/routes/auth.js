@@ -280,14 +280,8 @@ async function listMediaUsers() {
   }));
 }
 
-async function saveOidcLink(key, link) {
-  await db.query(
-    `UPDATE app_config
-        SET settings = jsonb_set(COALESCE(settings::jsonb, '{}'::jsonb), '{oidcLinks}',
-                                 COALESCE(settings::jsonb -> 'oidcLinks', '{}'::jsonb) || $1::jsonb, true)::json
-      WHERE "ID" = 1`,
-    [JSON.stringify({ [key]: link })]
-  );
+async function saveOidcLink(key, link, options) {
+  return oidc.saveLinkAtomically(db.pool, key, link, options);
 }
 
 function getOidcAppPath(auth) {
@@ -332,16 +326,6 @@ function renderOidcCallbackPage({ token, errorMessage, appPath = "" }) {
     </script>
   </body>
 </html>`;
-}
-
-// eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
-function getOidcErrorMessage(error, fallback = "Unable to complete OIDC login") {
-  const data = error?.response?.data;
-  if (typeof data === "string" && data.trim()) {
-    return data;
-  }
-
-  return data?.error_description || data?.errorMessage || data?.error || error?.message || fallback;
 }
 
 // Optional OIDC settings accepted from the setup and settings forms.
@@ -727,9 +711,9 @@ router.get("/oidc/callback", async (req, res) => {
     const links = settings.oidcLinks || {};
     const key = oidc.linkKey(discovery.issuer, claims.sub);
     const mediaUsers = await listMediaUsers();
-    const { mediaUser, linkedBy } = oidc.resolveLinkedUser({ claims, issuer: discovery.issuer, links, mediaUsers, linkPolicy: options.linkPolicy });
+    const { mediaUser, linkedBy, staleLink } = oidc.resolveLinkedUser({ claims, issuer: discovery.issuer, links, mediaUsers, linkPolicy: options.linkPolicy });
 
-    if (!mediaUser && !(links[key] && links[key].provisioned) && !options.autoProvision) {
+    if (!mediaUser && linkedBy !== "provisioned" && !options.autoProvision) {
       return fail(403, "No JellyGlance account is linked to this sign-in yet. Ask an admin to link it or enable auto-provisioning.");
     }
 
@@ -737,7 +721,7 @@ router.get("/oidc/callback", async (req, res) => {
     const role = oidc.resolveRole({
       groups,
       roleMapping: options.roleMapping,
-      assignedRole: mediaUser ? settings.userRoles?.[mediaUser.id] : links[key]?.role,
+      assignedRole: mediaUser ? settings.userRoles?.[mediaUser.id] : linkedBy === "provisioned" ? links[key].role : undefined,
       isMediaAdmin: mediaUser?.isAdministrator,
       defaultRole: options.defaultRole,
       validRoles: settings.roles?.length ? settings.roles : undefined,
@@ -747,10 +731,19 @@ router.get("/oidc/callback", async (req, res) => {
       return fail(403, "This account is disabled in JellyGlance");
     }
 
-    if (linkedBy && linkedBy !== "link") {
-      await saveOidcLink(key, { mediaUserId: mediaUser.id, linkedBy, linkedAt: new Date().toISOString() });
-    } else if (!mediaUser && !links[key]) {
-      await saveOidcLink(key, { mediaUserId: null, provisioned: true, role: options.defaultRole, name: getOidcDisplayName(claims), linkedAt: new Date().toISOString() });
+    try {
+      if (mediaUser && linkedBy !== "link") {
+        await saveOidcLink(key, { mediaUserId: mediaUser.id, linkedBy, linkedAt: new Date().toISOString() }, { expected: staleLink });
+      } else if (!mediaUser && linkedBy !== "provisioned") {
+        await saveOidcLink(
+          key,
+          { mediaUserId: null, provisioned: true, role: options.defaultRole, name: getOidcDisplayName(claims), linkedAt: new Date().toISOString() },
+          { expected: staleLink }
+        );
+      }
+    } catch (error) {
+      if (error instanceof oidc.OidcLinkConflict) return fail(403, "This sign-in conflicts with an existing account link. Ask an admin to check it.");
+      throw error;
     }
 
     const jellyfinUser = mediaUser

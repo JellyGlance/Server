@@ -242,3 +242,174 @@ test("settings: env vars override the UI, secrets are decrypted, unsafe values f
   assert.equal(options.autoProvision, false);
   assert.deepEqual(options.roleMapping, { a: "Admin" });
 });
+
+test("the address guard unwraps every IPv6 form of a blocked address", async () => {
+  const lookupTo = (address) => async () => [{ address }];
+  const blocked = [
+    "::ffff:7f00:1", // IPv4-mapped loopback in hex
+    "::ffff:a9fe:a9fe", // IPv4-mapped 169.254.169.254 in hex
+    "0:0:0:0:0:ffff:127.0.0.1",
+    "::127.0.0.1", // IPv4-compatible
+    "::7f00:1",
+    "::a00:5", // IPv4-compatible, even for a private address
+    "64:ff9b::7f00:1", // NAT64 to loopback
+    "64:ff9b::169.254.169.254",
+    "fec0::1", // site-local
+    "feff::1",
+    "fe80::1%eth0",
+    "::ffff:0:7f00:1", // SIIT
+    "::ffff:0:c0a8:114",
+    "0:0:0:0:ffff:0:127.0.0.1",
+  ];
+  for (const address of blocked) {
+    assert.equal(oidc.isBlockedAddress(address), true, address);
+    await assert.rejects(oidc.assertSafeUrl("https://idp.example.test/x", { lookup: lookupTo(address) }), { code: "blocked_host" }, address);
+  }
+  for (const literal of ["http://[::ffff:7f00:1]/", "http://[::ffff:127.0.0.1]/", "http://[64:ff9b::7f00:1]/", "http://[fec0::1]/"]) {
+    await assert.rejects(oidc.assertSafeUrl(literal), { code: "blocked_host" }, literal);
+  }
+  for (const allowed of ["::ffff:c0a8:114", "64:ff9b::c0a8:114", "2001:db8::5", "fd12:3456::1"]) {
+    assert.equal(oidc.isBlockedAddress(allowed), false, allowed);
+  }
+  assert.deepEqual(oidc.ipv6ToBytes("::ffff:7f00:1").slice(10), [0xff, 0xff, 127, 0, 0, 1]);
+});
+
+test("a trailing dot does not get past the blocked hostname list", async () => {
+  await assert.rejects(oidc.assertSafeUrl("http://localhost./"), { code: "blocked_host" });
+  await assert.rejects(oidc.assertSafeUrl("http://metadata.google.internal./"), { code: "blocked_host" });
+  await assert.rejects(oidc.assertSafeUrl("http://foo.localhost./"), { code: "blocked_host" });
+});
+
+test("the connection lookup re-checks the address, so DNS rebinding is refused", async () => {
+  const answers = { "idp.example.test": [{ address: "127.0.0.1", family: 4 }], "auth.lan": [{ address: "192.168.1.20", family: 4 }] };
+  const lookup = oidc.createGuardedLookup((host, options, cb) => cb(null, answers[host]));
+  const call = (host, options) => new Promise((resolve) => lookup(host, options, (error, address, family) => resolve({ error, address, family })));
+  const rebound = await call("idp.example.test", {});
+  assert.equal(rebound.error?.code, "blocked_host");
+  assert.deepEqual(await call("auth.lan", {}), { error: null, address: "192.168.1.20", family: 4 });
+  assert.deepEqual((await call("auth.lan", { all: true })).address, answers["auth.lan"]);
+  let seen;
+  const transport = oidc.createHttp({
+    lookup: async () => [{ address: "192.168.1.2" }],
+    axios: { request: async (config) => ((seen = config), { data: {} }) },
+  });
+  await transport.get("https://auth.lan/x");
+  assert.equal(typeof seen.httpsAgent.options.lookup, "function");
+  assert.equal(typeof seen.httpAgent.options.lookup, "function");
+  assert.equal(seen.proxy, false);
+});
+
+test("hex-form IPv4-mapped addresses are judged by the IPv4 address they carry", () => {
+  for (const [hex, blocked] of [
+    ["::ffff:7f00:1", true],
+    ["::ffff:7f00:0001", true],
+    ["0:0:0:0:0:ffff:7f00:1", true],
+    ["::FFFF:A9FE:A9FE", true],
+    ["::ffff:0:0", true],
+    ["::ffff:e000:1", true],
+    ["::ffff:a00:1", false],
+    ["::ffff:c0a8:114", false],
+  ]) {
+    assert.equal(oidc.isBlockedAddress(hex), blocked, hex);
+  }
+});
+
+test("a real connection through the guarded agent is refused when the name resolves to loopback", async () => {
+  const server = require("http").createServer((req, res) => res.end("reached"));
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address();
+  const agent = new (require("http").Agent)({ lookup: oidc.createGuardedLookup() });
+  try {
+    const error = await new Promise((resolve) => {
+      require("http")
+        .get({ host: "localhost", port, path: "/", agent }, (res) => {
+          res.resume();
+          resolve(null);
+        })
+        .on("error", resolve);
+    });
+    assert.equal(error?.code, "blocked_host");
+  } finally {
+    agent.destroy();
+    server.close();
+  }
+});
+
+// A pool whose SELECT ... FOR UPDATE really serialises callers, like PostgreSQL's row lock.
+function fakeConfigPool(initialLinks = {}) {
+  const state = { settings: { oidcLinks: { ...initialLinks } } };
+  let lock = Promise.resolve();
+  return {
+    state,
+    async connect() {
+      let release = null;
+      let pending = null;
+      return {
+        async query(sql, params) {
+          if (/FOR UPDATE/.test(sql)) {
+            const previous = lock;
+            lock = new Promise((resolve) => (release = resolve));
+            await previous;
+            await new Promise((resolve) => setImmediate(resolve));
+            pending = JSON.parse(JSON.stringify(state.settings));
+            return { rows: [{ settings: pending }] };
+          }
+          if (/^UPDATE/.test(sql.trim())) {
+            Object.assign(pending.oidcLinks, JSON.parse(params[0]));
+            return { rows: [] };
+          }
+          if (sql === "COMMIT") state.settings = pending;
+          if ((sql === "COMMIT" || sql === "ROLLBACK") && release) {
+            release();
+            release = null;
+          }
+          return { rows: [] };
+        },
+        release() {
+          if (release) release();
+        },
+      };
+    },
+  };
+}
+
+test("concurrent callbacks can't link two identities to one media user", async () => {
+  const pool = fakeConfigPool();
+  const link = { mediaUserId: "media-1", linkedBy: "verified_email", linkedAt: "2026-10-24T00:00:00Z" };
+  const results = await Promise.allSettled([
+    oidc.saveLinkAtomically(pool, "https://idp#alice", link),
+    oidc.saveLinkAtomically(pool, "https://idp#mallory", link),
+  ]);
+  assert.deepEqual(results.map((r) => r.status).sort(), ["fulfilled", "rejected"]);
+  assert.ok(results.find((r) => r.status === "rejected").reason instanceof oidc.OidcLinkConflict);
+  assert.equal(Object.keys(pool.state.settings.oidcLinks).length, 1);
+});
+
+test("concurrent callbacks for one identity provision once, and stale links are replaced", async () => {
+  const pool = fakeConfigPool();
+  const provisioned = (n) => ({ mediaUserId: null, provisioned: true, role: "Viewer", linkedAt: `t${n}` });
+  const [first, second] = await Promise.all([
+    oidc.saveLinkAtomically(pool, "https://idp#bob", provisioned(1)),
+    oidc.saveLinkAtomically(pool, "https://idp#bob", provisioned(2)),
+  ]);
+  assert.deepEqual(first, second);
+  assert.equal(Object.keys(pool.state.settings.oidcLinks).length, 1);
+
+  const stale = { mediaUserId: "gone", linkedBy: "verified_email", linkedAt: "old" };
+  const pool2 = fakeConfigPool({ "https://idp#carol": stale });
+  await assert.rejects(
+    oidc.saveLinkAtomically(pool2, "https://idp#carol", { mediaUserId: "media-2", linkedAt: "new" }),
+    oidc.OidcLinkConflict
+  );
+  await oidc.saveLinkAtomically(pool2, "https://idp#carol", { mediaUserId: "media-2", linkedAt: "new" }, { expected: stale });
+  assert.equal(pool2.state.settings.oidcLinks["https://idp#carol"].mediaUserId, "media-2");
+
+  const resolved = oidc.resolveLinkedUser({
+    claims: { sub: "carol", email: "c@example.test", email_verified: true },
+    issuer: "https://idp",
+    links: { "https://idp#carol": stale },
+    mediaUsers: [{ id: "media-3", name: "carol", email: "c@example.test" }],
+  });
+  assert.equal(resolved.mediaUser.id, "media-3");
+  assert.deepEqual(resolved.staleLink, stale);
+});
