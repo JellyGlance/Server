@@ -25,7 +25,7 @@
     "file-saver": "^2.0.5",
     "i18next": "^26.4.2",
     "i18next-browser-languagedetector": "^8.2.1",
-    "i18next-http-backend": "^4.0.2",
+    "i18next-http-backend": "^4.0.7",
     "material-react-table": "^3.1.0",
     "react": "^19.3.0",
     "react-blurhash": "^0.3.0",
