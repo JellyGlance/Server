@@ -1,4 +1,11 @@
 {
+  "1.4.2-beta": [
+    {
+      "icon": "rocket",
+      "title": "Meet Blobbo",
+      "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it for tips and quick links to find your way around. It stays still if you prefer reduced motion, and you can hide it any time."
+    }
+  ],
   "1.4.0": [
     {
       "icon": "rocket",

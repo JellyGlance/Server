@@ -1,0 +1,55 @@
+.blobbo {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+.blobbo > * { pointer-events: auto; }
+.blobbo-avatar {
+  width: 76px;
+  height: 76px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, rgba(196, 160, 255, 0.28), rgba(27, 21, 48, 0) 70%);
+  cursor: pointer;
+  filter: drop-shadow(0 6px 14px rgba(139, 92, 246, 0.35));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+.blobbo-avatar:hover { transform: scale(1.06); filter: drop-shadow(0 8px 18px rgba(224, 90, 170, 0.45)); }
+.blobbo-avatar:focus-visible { outline: 2px solid #c4a0ff; outline-offset: 3px; }
+.blobbo-avatar img { width: 72px; height: 72px; display: block; margin: 2px auto 0; border-radius: 50%; user-select: none; }
+.blobbo-bubble {
+  max-width: 280px;
+  padding: 14px 16px;
+  border-radius: 16px 16px 4px 16px;
+  background: linear-gradient(160deg, rgba(139, 92, 246, 0.96), rgba(110, 70, 210, 0.96));
+  border: 1px solid rgba(196, 160, 255, 0.45);
+  color: #fff;
+  box-shadow: 0 12px 32px rgba(10, 8, 25, 0.5);
+  animation: blobbo-pop 0.22s ease-out;
+}
+.blobbo-bubble-title { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.04em; opacity: 0.85; margin-bottom: 4px; }
+.blobbo-bubble-text { margin: 0 0 10px; font-size: 0.92rem; line-height: 1.4; }
+.blobbo-bubble-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.blobbo-btn {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.blobbo-btn:hover { background: rgba(255, 255, 255, 0.22); }
+.blobbo-btn--primary { background: #e05aaa; border-color: #e05aaa; }
+.blobbo-btn--primary:hover { background: #ea6fb8; }
+.blobbo-btn--ghost { background: transparent; }
+@keyframes blobbo-pop { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
+@media (max-width: 900px) { .blobbo { bottom: 84px; right: 12px; } }
+@media (prefers-reduced-motion: reduce) { .blobbo-bubble { animation: none; } .blobbo-avatar { transition: none; } }
