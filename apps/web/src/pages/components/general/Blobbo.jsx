@@ -76,7 +76,6 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
   }, [messages, open]);
 
   if (!enabled || hidden) return null;
-  const src = reducedMotion ? "/blobbo/blobbo-still.png" : "/blobbo/blobbo-idle.gif";
 
   const ask = async (question, intentId) => {
     const q = String(question || "").trim();
@@ -88,6 +87,23 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
     setMessages((m) => [...m, { from: "blobbo", ...reply }]);
     setBusy(false);
   };
+
+  const renderLinks = (links, small) =>
+    links?.length > 0 && (
+      <div className={`blobbo-links${small ? " blobbo-links--line" : ""}`}>
+        {links.map((l, k) =>
+          l.href ? (
+            <a key={k} className={`blobbo-btn ${small ? "blobbo-btn--ghost blobbo-btn--sm" : "blobbo-btn--primary"}`} href={l.href} target="_blank" rel="noopener noreferrer">
+              {l.label} ↗
+            </a>
+          ) : (
+            <button key={k} type="button" className={`blobbo-btn ${small ? "blobbo-btn--ghost blobbo-btn--sm" : "blobbo-btn--primary"}`} onClick={() => { navigate(l.to); setOpen(false); }}>
+              {l.label}
+            </button>
+          ),
+        )}
+      </div>
+    );
 
   const nextTip = () => {
     const next = tip + 1;
@@ -111,14 +127,14 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
               <div key={i} className={`blobbo-msg blobbo-msg--${m.from}`}>
                 {m.text && <p>{m.text}</p>}
                 {m.lines?.length > 0 && (
-                  <ul>{m.lines.map((l, j) => <li key={j}>{l}</li>)}</ul>
+                  <ul>
+                    {m.lines.map((l, j) =>
+                      typeof l === "string" ? <li key={j}>{l}</li> : <li key={j}>{l.text}{renderLinks(l.links, true)}</li>,
+                    )}
+                  </ul>
                 )}
                 {m.note && <p className="blobbo-msg-note">{m.note}</p>}
-                {m.link && (
-                  <button type="button" className="blobbo-btn blobbo-btn--primary" onClick={() => { navigate(m.link.to); setOpen(false); }}>
-                    {m.link.label}
-                  </button>
-                )}
+                {renderLinks([...(m.links || []), ...(m.link ? [m.link] : [])])}
               </div>
             ))}
             {busy && <div className="blobbo-msg blobbo-msg--blobbo blobbo-typing">Blobbo is wobbling over to check…</div>}
@@ -136,7 +152,7 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               ref={inputRef}
-              placeholder="Ask about your server…"
+              placeholder="Ask about your server, or find a title…"
               aria-label="Ask Blobbo a question"
               maxLength={200}
             />
@@ -152,7 +168,14 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        <img src={src} alt="" width="72" height="72" draggable="false" />
+        {reducedMotion ? (
+          <img src="/blobbo/blobbo-still.png" alt="" width="72" height="72" draggable="false" />
+        ) : (
+          <picture>
+            <source srcSet="/blobbo/blobbo-idle.webp" type="image/webp" />
+            <img src="/blobbo/blobbo-idle.gif" alt="" width="72" height="72" draggable="false" />
+          </picture>
+        )}
       </button>
     </div>
   );

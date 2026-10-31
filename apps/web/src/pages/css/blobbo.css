@@ -115,3 +115,9 @@
 @keyframes blobbo-pop { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
 @media (max-width: 900px) { .blobbo { bottom: 84px; right: 12px; } }
 @media (prefers-reduced-motion: reduce) { .blobbo-bubble { animation: none; } .blobbo-avatar { transition: none; } }
+.blobbo-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.blobbo-links--line { margin-top: 4px; gap: 4px; }
+a.blobbo-btn { display: inline-flex; align-items: center; text-decoration: none; color: inherit; }
+a.blobbo-btn--primary { color: var(--background-color, #0b0d12); }
+.blobbo-btn--sm { padding: 2px 8px; font-size: 0.78rem; }
+.blobbo-avatar picture { display: block; }
