@@ -1,6 +1,7 @@
 // Blobbo Q&A: keyword -> existing read-only endpoint -> template answer.
 // Answers only use fields returned by the server. No writes, no guessing.
 import axios from "./axios_instance";
+import Config from "./config";
 
 const n = (v) => (v === undefined || v === null || v === "" ? null : Number(v));
 const fmt = (v) => (n(v) === null || Number.isNaN(n(v)) ? null : n(v).toLocaleString());
@@ -8,6 +9,60 @@ const list = (rows, pick, max = 5) => (Array.isArray(rows) ? rows : []).slice(0,
 const join = (parts) => parts.filter(Boolean).join(" · ");
 const get = (url, params) => axios.get(url, { params }).then((r) => r.data);
 const post = (url, body) => axios.post(url, body).then((r) => r.data);
+
+// Base URL for "Open in Jellyfin", read the same way the stat cards do.
+async function jellyfinBase() {
+  try {
+    const config = await Config.getConfig();
+    const base = config?.settings?.EXTERNAL_URL ?? config?.hostUrl;
+    return typeof base === "string" && base ? base.replace(/\/+$/, "") : null;
+  } catch {
+    return null;
+  }
+}
+
+// Links for one item: JellyGlance item page, plus Jellyfin when the host is known.
+export function itemLinks(id, base) {
+  if (!id) return [];
+  return [
+    { to: `/libraries/item/${id}`, label: "Open in JellyGlance" },
+    base && { href: `${base}/web/index.html#!/details?id=${id}`, label: "Open in Jellyfin", external: true },
+  ].filter(Boolean);
+}
+
+const withLinks = (text, id, base) => (text ? (id ? { text, links: itemLinks(id, base) } : text) : null);
+
+const pad = (v) => String(v ?? "?").padStart(2, "0");
+const typeLabel = { Movie: "Film", Series: "Series", Episode: "Episode" };
+
+// Pull the title out of "find dune", "do I have the expanse?", "is alien in my library" ...
+const FIND_LEAD = /^ ?(?:(?:can|could) you |please |blobbo |hey |hi )*(?:find|search for|search|look up|lookup|look for|locate|where is|wheres|where can i find|do i have|do we have|have i got|have we got|have i|is there|is|are|show me|got)( an?| the)? (?:title |film |movie |show |series )?(?:called |named )?/;
+const FIND_TAIL = / (?:in|on) (?:my|our|the) (?:librar(?:y|ies)|server|jellyfin|collection)| please| for me| anywhere| at all$/g;
+
+export function extractFindQuery(normalised) {
+  let q = ` ${String(normalised || "").trim()} `;
+  q = q.replace(FIND_LEAD, " ").replace(FIND_TAIL, " ").replace(/\s+/g, " ").trim();
+  if (/^(an?|the)? ?(title|film|movie|show|series|something)?$/.test(q)) return "";
+  return q;
+}
+
+// Films and series first; episodes only when no matching series is already listed.
+export function rankFindResults(rows, max = 8) {
+  const all = Array.isArray(rows) ? rows : [];
+  const top = all.filter((r) => r.Type === "Movie" || r.Type === "Series");
+  const seriesNames = new Set(top.filter((r) => r.Type === "Series").map((r) => String(r.Name).toLowerCase()));
+  const eps = all.filter((r) => r.Type === "Episode" && !seriesNames.has(String(r.SeriesName || "").toLowerCase()));
+  return [...top, ...eps].slice(0, max);
+}
+
+export function findResultLine(r, base) {
+  const text =
+    r.Type === "Episode"
+      ? `${r.SeriesName || "Series"} – S${pad(r.SeasonNumber)}E${pad(r.EpisodeNumber)} – ${r.Name} · Episode`
+      : join([r.Name, typeLabel[r.Type] || r.Type, r.ProductionYear]);
+  const id = r.Type === "Episode" ? r.EpisodeId || r.Id : r.Id;
+  return { text, links: itemLinks(id, base) };
+}
 
 const sessionTitle = (s) => {
   const item = s?.NowPlayingItem;
@@ -19,6 +74,23 @@ const sessionTitle = (s) => {
 
 export const INTENTS = [
   {
+    id: "findTitle",
+    chip: "Find a title",
+    keywords: ["find", "find a title", "search for", "search", "look up", "lookup", "look for", "locate", "where is", "wheres", "do i have", "do we have", "have i got", "have we got", "in my library", "in my libraries", "on my server", "is there"],
+    link: { to: "/libraries", label: "Open Libraries" },
+    async answer(q, { fromChip } = {}) {
+      const search = fromChip ? "" : extractFindQuery(q);
+      if (search.length < 2) return "Which title shall I look for? Type something like \u201cFind Dune\u201d or \u201cDo I have The Expanse?\u201d";
+      const [rows, base] = await Promise.all([get("/tautulli/search-media", { search }), jellyfinBase()]);
+      const hits = rankFindResults(rows, 8);
+      if (!hits.length) return `I couldn't find \u201c${search}\u201d in your libraries.`;
+      return {
+        text: `${hits.length === 1 ? "Found one match" : `Found ${hits.length} matches`} for \u201c${search}\u201d:`,
+        lines: hits.map((r) => findResultLine(r, base)),
+      };
+    },
+  },
+  {
     id: "sessions",
     chip: "Who's watching now?",
     keywords: ["watching", "watching now", "who is watching", "whos watching", "anyone watching", "anybody watching", "now playing", "playing", "playing now", "stream*", "session*", "live", "right now", "on air", "in use"],
@@ -27,7 +99,8 @@ export const INTENTS = [
       const data = await get("/proxy/getSessions");
       const active = (Array.isArray(data) ? data : []).filter((s) => s?.NowPlayingItem);
       if (!active.length) return "Nobody is watching right now. It's nice and quiet.";
-      const lines = list(active, sessionTitle, 6);
+      const base = await jellyfinBase();
+      const lines = list(active, (s) => withLinks(sessionTitle(s), s.NowPlayingItem?.Id, base), 6);
       return { text: `${active.length === 1 ? "One person is" : `${active.length} people are`} watching right now:`, lines };
     },
   },
@@ -99,8 +172,8 @@ export const INTENTS = [
     keywords: ["new", "whats new", "recent", "recently added", "added", "latest", "arriv*", "fresh", "this week", "just landed", "new episodes", "new films", "new movies"],
     link: { to: "/recently-added", label: "See what is new" },
     async answer() {
-      const [rows, home] = await Promise.all([get("/api/getRecentlyAdded", { limit: 6 }), get("/api/widgets/homepage").catch(() => null)]);
-      const items = list(rows, (i) => (i.SeriesName ? `${i.SeriesName} – ${i.Name}` : i.Name), 6);
+      const [rows, home, base] = await Promise.all([get("/api/getRecentlyAdded", { limit: 6 }), get("/api/widgets/homepage").catch(() => null), jellyfinBase()]);
+      const items = list(rows, (i) => withLinks(i.SeriesName ? `${i.SeriesName} – ${i.Name}` : i.Name, i.Id, base), 6);
       if (!items.length) return "Nothing new has landed lately.";
       return { text: home && fmt(home.addedWeek) !== null ? `${fmt(home.addedWeek)} added this week. Newest:` : "Newest arrivals:", lines: items };
     },
@@ -134,8 +207,8 @@ export const INTENTS = [
     link: { to: "/statistics", label: "Open Statistics" },
     async answer(q) {
       const type = / (shows?|series|tv|episodes?) /.test(q) ? "Series" : / (music|songs?|audio|albums?|tracks?) /.test(q) ? "Audio" : "Movie";
-      const rows = await post("/stats/getMostViewedByType", { days: 30, type });
-      const items = list(rows, (r) => `${r.Name}: ${fmt(r.Plays)} plays`);
+      const [rows, base] = await Promise.all([post("/stats/getMostViewedByType", { days: 30, type }), jellyfinBase()]);
+      const items = list(rows, (r) => withLinks(`${r.Name}: ${fmt(r.Plays)} plays`, r.Id, base));
       const label = { Movie: "films", Series: "shows", Audio: "music" }[type];
       return items.length ? { text: `Most watched ${label} (30 days):`, lines: items } : `No ${label} plays in the last 30 days.`;
     },
@@ -322,6 +395,7 @@ export function helpReply() {
   return {
     text: "I'm only a small jellyfish, but I can tell you about:",
     lines: [
+      "Finding a film or show in your libraries, with links to open it",
       "What's playing right now and on which devices",
       "Today's activity and what was watched lately",
       "Libraries, storage and what's been added",
@@ -329,7 +403,7 @@ export function helpReply() {
       "Server health, integrations, downloads, requests and the calendar",
       "Whether JellyGlance is up to date, or a quick server summary",
     ],
-    note: "Try a topic below, or ask something like \u201cwho's watching?\u201d or \u201cany downloads stuck?\u201d",
+    note: "Try a topic below, or ask something like \u201cwho's watching?\u201d \u201cany downloads stuck?\u201d or \u201cfind Dune\u201d",
   };
 }
 
@@ -341,7 +415,8 @@ export async function askBlobbo(question, intentId) {
   const intent = intentId ? INTENTS.find((i) => i.id === intentId) : HELP.test(q) ? null : matchIntent(question);
   if (!intent) return { ...helpReply(), chips: true };
   try {
-    const result = await intent.answer(q);
+    const fromChip = Boolean(intentId) && question === intent.chip;
+    const result = await intent.answer(q, { fromChip });
     const reply = typeof result === "string" ? { text: result } : result;
     return { ...reply, link: intent.link };
   } catch (error) {

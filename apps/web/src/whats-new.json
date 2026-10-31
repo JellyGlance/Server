@@ -3,12 +3,17 @@
     {
       "icon": "rocket",
       "title": "Meet Blobbo",
-      "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it, or press Shift+A anywhere to say hello, for tips, quick links and answers about your server. Its chat now matches your chosen theme colours, it stays still if you prefer reduced motion, and you can show or hide it under Settings → General."
+      "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it, or press Shift+A anywhere to say hello, for tips, quick links and answers about your server. Its chat now matches your chosen theme colours, it stays still if you prefer reduced motion, and you can show or hide it under Settings → General. Blobbo's idle animation now has a properly transparent background, so the dark square behind it is gone."
     },
     {
       "icon": "chat",
       "title": "Ask Blobbo About Your Server",
       "body": "Ask who is watching, how busy today was, how much space your libraries take up, what is new, who watches most, whether everything is healthy, if downloads are stuck, or if you are up to date. Blobbo now understands far more ways of asking, gives clearer answers straight from your server data, and always links to the full page. Tap a topic chip or type your own question."
+    },
+    {
+      "icon": "movie",
+      "title": "Find A Title With Blobbo",
+      "body": "Ask Blobbo to find a film or show, for example “find Dune” or “do I have The Expanse?”, and it lists the matches from your libraries. Each result, and titles in answers about what is playing, what is new and what is most watched, comes with Open in… buttons that take you straight to the title in JellyGlance or Jellyfin."
     }
   ],
   "1.4.0": [
