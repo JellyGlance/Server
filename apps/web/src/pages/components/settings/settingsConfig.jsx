@@ -22,6 +22,7 @@ import i18n from "i18next";
 import { FONT_WEIGHT_OPTIONS, getStoredFontWeight, saveFontWeightPreference } from "../../../lib/appearance";
 import { languages } from "../../../lib/languages.js";
 import { navData } from "../../../lib/navdata";
+import { isBlobboHidden, setBlobboHidden } from "../../../lib/blobbo-settings";
 import { DEFAULT_THEME, THEME_GROUPS, THEME_PRESETS, filterThemePresets, findMatchingThemePreset, getStoredTheme, resetTheme, saveTheme, themeColorFields } from "../../../lib/theme";
 import {
   applyNavOrder,
@@ -328,6 +329,11 @@ export default function SettingsConfig() {
   const [submissionMessage, setsubmissionMessage] = useState("");
   const [submissionMessageExternal, setsubmissionMessageExternal] = useState("");
   const [twelve_hr, set12hr] = useState(localStorage.getItem("12hr") === "true");
+  const [blobboHidden, setBlobboHiddenState] = useState(isBlobboHidden);
+  const updateBlobboHidden = (next) => {
+    setBlobboHidden(next);
+    setBlobboHiddenState(next);
+  };
   const [fontWeight, setFontWeight] = useState(() => getStoredFontWeight());
   const [theme, setTheme] = useState(() => getStoredTheme());
   const [themeDraft, setThemeDraft] = useState(() => getStoredTheme());
@@ -511,6 +517,15 @@ export default function SettingsConfig() {
                       {option.label}
                     </option>
                   ))}
+                </Form.Select>
+              </Col>
+            </Form.Group>
+            <Form.Group as={Row} className="mb-0 mt-3">
+              <Form.Label column htmlFor="blobbo-visibility">Blobbo helper</Form.Label>
+              <Col sm="10">
+                <Form.Select id="blobbo-visibility" value={blobboHidden ? "hidden" : "shown"} onChange={(event) => updateBlobboHidden(event.target.value === "hidden")}>
+                  <option value="shown">Show Blobbo (Shift+A to say hello)</option>
+                  <option value="hidden">Hide Blobbo</option>
                 </Form.Select>
               </Col>
             </Form.Group>

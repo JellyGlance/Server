@@ -3,12 +3,12 @@
     {
       "icon": "rocket",
       "title": "Meet Blobbo",
-      "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it for tips, quick links and answers about your server. It stays still if you prefer reduced motion, and you can hide it any time."
+      "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it, or press Shift+A anywhere to say hello, for tips, quick links and answers about your server. Its chat now matches your chosen theme colours, it stays still if you prefer reduced motion, and you can show or hide it under Settings → General."
     },
     {
       "icon": "chat",
       "title": "Ask Blobbo About Your Server",
-      "body": "Ask who is watching, how big your libraries are, what is new, who watches most, whether everything is healthy, if downloads are stuck, or if you are up to date. Answers come straight from your server data, with a link to the full page. Tap a topic chip or type your own question."
+      "body": "Ask who is watching, how busy today was, how much space your libraries take up, what is new, who watches most, whether everything is healthy, if downloads are stuck, or if you are up to date. Blobbo now understands far more ways of asking, gives clearer answers straight from your server data, and always links to the full page. Tap a topic chip or type your own question."
     }
   ],
   "1.4.0": [
