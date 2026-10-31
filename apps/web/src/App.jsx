@@ -30,6 +30,7 @@ const FirstRunExtras = lazy(() => import("./pages/first-run-extras"));
 const Login = lazy(() => import("./pages/login"));
 const Navbar = lazy(() => import("./pages/components/general/navbar"));
 const WhatsNewModal = lazy(() => import("./pages/components/general/WhatsNewModal"));
+const Blobbo = lazy(() => import("./pages/components/general/Blobbo"));
 const PwaInstallBanner = lazy(() => import("./pages/components/general/PwaInstallBanner"));
 
 // Warm common authenticated routes after login so navigation feels instant.
@@ -432,6 +433,7 @@ function App() {
           progressClassName="jellyglance-toast-progress"
         />
         <WhatsNewModal enabled={!kioskMode} />
+        {kioskMode ? null : <Blobbo enabled />}
         {kioskMode ? null : (
           <PwaInstallBanner
             enabled
