@@ -1,6 +1,6 @@
 {
   "name": "jellyglance",
-  "version": "1.4.3-beta",
+  "version": "1.4.2-beta",
   "private": true,
   "description": "JellyGlance - a modern Jellyfin analytics and media control dashboard by Nerdy-Technician.",
   "keywords": [
