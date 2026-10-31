@@ -11,6 +11,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY apps/web/package.json apps/web/package.json
 COPY apps/api/package.json apps/api/package.json
+COPY packaging/shims packaging/shims
 RUN npm ci
 
 FROM deps AS web-builder
@@ -33,6 +34,7 @@ RUN apt-get update \
 
 COPY package*.json ./
 COPY apps/api/package.json apps/api/package.json
+COPY packaging/shims packaging/shims
 RUN npm ci --omit=dev --workspace @jellyglance/api --include-workspace-root=false
 
 COPY apps/api apps/api
