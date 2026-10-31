@@ -4,6 +4,11 @@
       "icon": "rocket",
       "title": "Meet Blobbo",
       "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it for tips and quick links to find your way around. It stays still if you prefer reduced motion, and you can hide it any time."
+    },
+    {
+      "icon": "rocket",
+      "title": "Ask Blobbo About Your Server",
+      "body": "Blobbo can now answer questions. Ask who is watching, how big your libraries are, what is new, who watches most, whether everything is healthy, if downloads are stuck or if you are up to date. Answers come straight from your server, with a link to the full page. Tap a topic chip or type your own question."
     }
   ],
   "1.4.0": [
