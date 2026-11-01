@@ -176,6 +176,10 @@ class WebhookManager {
 
     async triggerEventWebhooks(eventType, data = {}, webhookIds = null) {
         try {
+            if (!webhookIds && !data?.test) {
+                // Outbound webhook rules run alongside the classic webhooks and never block them.
+                require('./webhook-out').dispatch(eventType, data).catch(() => {});
+            }
             if (!webhookIds && eventType !== 'playback_digest') {
                 await this.flushQuietHoursDigest();
             }

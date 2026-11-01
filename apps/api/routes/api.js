@@ -4847,8 +4847,20 @@ router.post("/requests/media", async (req, res) => {
       res.status(429).send({ error: quota.message, quota: quota.usage });
       return;
     }
+    // Smart routing: genres come from Seerr so rules can match on them. If the lookup fails,
+    // genre rules simply don't match and the request falls through to the safer defaults.
+    let routeGenres = [];
+    let routeTitle = null;
+    if ((quota.rules.routes || []).some((route) => route.enabled && route.genres?.length)) {
+      const detail = await fetchSeerrMediaResultDetail({ sourceId: override.sourceId, mediaType, mediaId: req.body?.mediaId }).catch(() => null);
+      routeGenres = detail?.genres || [];
+      routeTitle = detail?.title || null;
+    }
+    const routing = requestRules.routeRequest(quota.rules, req.user, { mediaType, genres: routeGenres });
     let seerrUserId = null;
-    if (quota.rules.requestAsSeerrUser && !requestRules.isAdmin(req.user)) {
+    // A hold needs the request filed under the person's own Seerr account, otherwise Seerr
+    // treats the JellyGlance API key as admin and approves it immediately.
+    if ((quota.rules.requestAsSeerrUser || (routing.decision === "hold" && routing.source === "rule")) && !requestRules.isAdmin(req.user)) {
       seerrUserId = await findSeerrUserId(override.sourceId, req.user).catch((error) => {
         console.log("[REQUESTS] Seerr user lookup failed:", error.message);
         return null;
@@ -4869,7 +4881,7 @@ router.post("/requests/media", async (req, res) => {
       });
     const seerrRequest = created?.request || {};
     let status = seerrRequest.status === 1 ? "pending" : seerrRequest.status === 2 ? "approved" : null;
-    if (status === "pending" && requestRules.shouldAutoApprove(quota.rules, req.user) && seerrRequest.id) {
+    if (status === "pending" && routing.approve && seerrRequest.id) {
       try {
         await runSeerrRequestAction({ requestId: seerrRequest.id, sourceId: override.sourceId, action: "approve" });
         status = "approved";
@@ -4881,6 +4893,20 @@ router.post("/requests/media", async (req, res) => {
     await requestRules.logRequest(req.user, mediaType, req.body?.mediaId, { seerrRequestId: seerrRequest.id, status }).catch((error) => {
       console.log("[REQUESTS] Could not log request for quotas:", error.message);
     });
+    created.routing = { decision: routing.decision, rule: routing.route?.name || null };
+    await requestRules
+      .logRouting(req.user, {
+        mediaType,
+        mediaId: req.body?.mediaId,
+        title: routeTitle,
+        genres: routeGenres,
+        route: routing.route,
+        decision: routing.decision,
+        // "held" = waiting in Seerr; "approved" = sent on to Sonarr/Radarr; "approved-by-seerr" = a hold Seerr overrode.
+        outcome: status === "approved" ? (routing.decision === "hold" ? "approved-by-seerr" : "approved") : status === "pending" ? "held" : status || "unknown",
+        seerrRequestId: seerrRequest.id,
+      })
+      .catch((error) => console.log("[REQUESTS] Could not write routing log:", error.message));
     res.send({ ...created, quota: await requestRules.usage(req.user, quota.rules).catch(() => null) });
   } catch (error) {
     console.error("Seerr media request failed:", error);

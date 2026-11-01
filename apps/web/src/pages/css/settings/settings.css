@@ -6698,3 +6698,8 @@
 .server-management-grid:has(.quiet-hours-panel) {
   align-items: start;
 }
+
+.webhook-out { margin-top: 18px; }
+.webhook-out-advanced { gap: 8px; }
+.webhook-out-template, .webhook-out-preview { width: 100%; padding: 8px 10px; border: 1px solid rgba(var(--primary-light-rgb, 139, 92, 246), 0.25); border-radius: 8px; background: rgba(8, 12, 20, 0.8); color: #e6edf7; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.webhook-out-preview { margin: 4px 0 0 26px; width: calc(100% - 26px); max-height: 260px; overflow: auto; white-space: pre-wrap; }
