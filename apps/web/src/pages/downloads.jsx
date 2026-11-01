@@ -13,8 +13,9 @@ import { loadSavedIntegrations } from "../lib/integrations-storage";
 import { useTranslation } from "react-i18next";
 import "./css/integrations.css";
 import { useWatchingLock } from "./components/general/WatchingLockModal";
+import { selfhstIconUrl } from "../lib/selfhst-icons";
 
-const iconUrl = (slug) => `https://cdn.jsdelivr.net/gh/selfhst/icons/svg/${slug}.svg`;
+const iconUrl = (slug) => selfhstIconUrl(slug);
 
 function clientIcon(client) {
   if (!client?.slug) return null;

@@ -11,13 +11,14 @@ import { useEffect, useState } from "react";
 import axios from "../lib/axios_instance";
 import { loadSavedIntegrations } from "../lib/integrations-storage";
 import "./css/integrations.css";
+import { selfhstIconUrl } from "../lib/selfhst-icons";
 
 const iconUrl = (slug) => {
   const safe = String(slug || "sonarr")
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "");
   const iconSlug = /^[a-z0-9][a-z0-9-]{0,63}$/.test(safe) ? safe : "sonarr";
-  return `https://cdn.jsdelivr.net/gh/selfhst/icons/svg/${iconSlug}.svg`;
+  return selfhstIconUrl(iconSlug);
 };
 const calendarSourceDefaults = [
   { name: "Sonarr", slug: "sonarr", connected: false },
