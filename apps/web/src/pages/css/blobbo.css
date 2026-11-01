@@ -143,7 +143,7 @@ a.blobbo-btn--primary { color: var(--background-color, #0b0d12); }
   position: absolute; bottom: 2px; right: 0; width: 20px; height: 20px; border-radius: 50%;
   background: #e0a030; color: #111; font-weight: 800; font-size: 0.8rem; line-height: 20px; text-align: center;
 }
-.blobbo--mood-worried .blobbo-avatar img { filter: saturate(0.6) hue-rotate(-20deg); }
+.blobbo--mood-worried .blobbo-avatar img, .blobbo--mood-worried .blobbo-avatar .blobbo-look-svg { filter: saturate(0.6) hue-rotate(-20deg); }
 .blobbo-mood-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
 .blobbo-mood-dot--happy { background: #4caf7a; }
 .blobbo-mood-dot--worried { background: #e0a030; }
@@ -171,9 +171,9 @@ a.blobbo-btn--primary { color: var(--background-color, #0b0d12); }
 @keyframes blobbo-hand { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-20deg); } 75% { transform: rotate(20deg); } }
 @keyframes blobbo-look { 0%, 100% { transform: none; } 25%, 60% { transform: translateX(-5px) rotate(-6deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .blobbo--react-wave .blobbo-avatar img, .blobbo--react-look .blobbo-avatar img, .blobbo-react-badge { animation: none; }
+  .blobbo--react-wave .blobbo-avatar img, .blobbo-avatar .blobbo-look-svg, .blobbo--react-look .blobbo-avatar img, .blobbo-avatar .blobbo-look-svg, .blobbo-react-badge { animation: none; }
 }
-.blobbo--still .blobbo-avatar img, .blobbo--still .blobbo-react-badge { animation: none !important; }
+.blobbo--still .blobbo-avatar img, .blobbo-avatar .blobbo-look-svg, .blobbo--still .blobbo-react-badge { animation: none !important; }
 
 /* Looks picker (Options): locked seasonal outfits and costumes. */
 .blobbo-looks { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; margin: 8px 0 4px; max-height: 220px; overflow-y: auto; }
@@ -181,3 +181,7 @@ a.blobbo-btn--primary { color: var(--background-color, #0b0d12); }
 .blobbo-look img { width: 40px; height: 40px; }
 .blobbo-look:hover, .blobbo-look:focus-visible { border-color: rgba(196, 168, 255, 0.5); }
 .blobbo-look--on { border-color: var(--primary-color, #9b6ac8); background: rgba(155, 106, 200, 0.18); }
+
+/* Live look: the sticky SVG is animated in place (mild idle), outfit included. */
+.blobbo-avatar .blobbo-look-svg { display: block; width: 72px; height: 72px; margin: 2px auto 0; }
+.blobbo-avatar .blobbo-look-svg svg { display: block; width: 100%; height: 100%; overflow: visible; }

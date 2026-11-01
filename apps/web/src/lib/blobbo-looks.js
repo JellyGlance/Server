@@ -34,7 +34,6 @@ export const lookAssets = (id) => {
   const dir = "/blobbo/looks/";
   return {
     svg: `${dir}${look}.svg`,
-    overlay: look === "base" ? null : `${dir}${look}-overlay.svg`,
     thumb: `${dir}${look}-thumb.png`,
     still: `${dir}${look}-still.png`,
     idle: `${dir}${look}-idle.webp`,

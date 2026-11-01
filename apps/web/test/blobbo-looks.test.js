@@ -39,5 +39,5 @@ test("a picked look wins; clearing returns to auto; seasonal off means classic",
 
 test("assets point at looks folder", () => {
   assert.equal(lookAssets("chef").idle, "/blobbo/looks/chef-idle.webp");
-  assert.equal(lookAssets("base").overlay, null);
+  assert.equal(lookAssets("chef").svg, "/blobbo/looks/chef.svg");
 });
