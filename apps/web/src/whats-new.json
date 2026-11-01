@@ -7,6 +7,11 @@
     },
     {
       "icon": "rocket",
+      "title": "Disk-Fill Forecast",
+      "body": "Libraries now opens with a disk-fill forecast for admins: free and used space from your Sonarr, Radarr or Lidarr disks, how much is being added per day, and roughly how long until the disks are full, with a range based on the last 30 and 90 days. It shows which libraries are growing fastest, says Stable when little is being added, and asks for more data instead of guessing when the history is too short."
+    },
+    {
+      "icon": "rocket",
       "title": "Ops Copilot Preview",
       "body": "Server → Ops Copilot lets admins ask plain questions like “why is Dune buffering for Mum?”, “free 500 GB without touching favourites” or “anything stuck in downloads?”. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."
     },
