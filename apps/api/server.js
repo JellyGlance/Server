@@ -48,6 +48,7 @@ const insightsRouter = require("./routes/insights");
 const opsCopilotRouter = require("./routes/ops-copilot");
 const subtitleGapRouter = require("./routes/subtitle-gap");
 const alertsRouter = require("./routes/alerts");
+const webhookOutRouter = require("./routes/webhook-out");
 const { publicRouter: publicStatusRouter, adminRouter: publicStatusAdminRouter } = require("./routes/public-status");
 const thresholdAlerts = require("./classes/threshold-alerts");
 
@@ -397,6 +398,7 @@ app.use("/insights-data", apiRateLimit, authenticate, restrictApiKeyScope, insig
 app.use("/ops-copilot", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), opsCopilotRouter);
 app.use("/subtitle-gap", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), subtitleGapRouter);
 app.use("/alerts-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), alertsRouter);
+app.use("/webhook-out-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), webhookOutRouter);
 app.use("/status-data/admin", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), publicStatusAdminRouter);
 app.use("/status-data", apiRateLimit, publicStatusRouter);
 app.use("/stats", apiRateLimit, authenticate, restrictApiKeyScope, statsRouter, () => {

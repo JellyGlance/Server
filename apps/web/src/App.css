@@ -555,3 +555,30 @@ select option:hover {
     padding: 0 16px;
   }
 }
+
+.release-channel-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  background: rgba(251, 191, 36, 0.14);
+  color: #fcd34d;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.whats-new-hero .release-channel-badge {
+  display: flex;
+  width: fit-content;
+  margin: 8px 0 0;
+}
+
+.version-channel-badge {
+  margin: 4px 0 2px;
+}
