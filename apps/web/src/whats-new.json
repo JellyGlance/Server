@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "movie",
+      "title": "Incomplete Season Hunter",
+      "body": "Server → Incomplete Seasons lists every series with a season that is short on episodes. With Sonarr connected under Integrations it compares what is on disk against Sonarr's aired episode count; without it, gaps in episode numbering (like E01, E02, E04) are flagged. Each row shows which seasons are short and the missing episode numbers, with buttons to open the series in Sonarr (or add it if Sonarr doesn't have it yet) and on TVDB."
+    },
+    {
       "icon": "users",
       "title": "Live Session Wall",
       "body": "Active Sessions on Home now has a Wall layout: a compact tile for every stream showing who is watching, the poster, progress, device and whether it is direct playing or transcoding. Switch between Cards and Wall with the toggle beside the heading, and your choice is remembered in this browser. When nobody is playing, the Active Sessions section is hidden completely instead of showing an empty box, and it reappears as soon as playback starts."
