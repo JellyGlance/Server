@@ -9,6 +9,7 @@ import { BLOBBO_PREFS_EVENT, clearHistory, getFlag, getHistory, getPrefs, rememb
 import { OPEN_WHATS_NEW_EVENT } from "../../../lib/events";
 import { fetchActiveSessions, getCachedActiveSessions, subscribeActiveSessions } from "../../../lib/session-cache";
 import { BLOBBO_REACT_DURATION_MS, decideSessionReaction, sessionKeys } from "../../../lib/blobbo-session-react";
+import BlobboLook from "./BlobboLook";
 import "../../css/blobbo.css";
 
 const isTypingTarget = (el) => !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
@@ -443,11 +444,7 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
           aria-expanded={open}
           onClick={() => (open ? setOpen(false) : openChat())}
         >
-          {reducedMotion ? (
-            <img src={lookArt.still} alt="" width="72" height="72" draggable="false" />
-          ) : (
-            <img key={look.id} src={lookArt.idle} alt="" width="72" height="72" draggable="false" />
-          )}
+          <BlobboLook key={look.id} svg={lookArt.svg} still={lookArt.still} size={72} animate={!reducedMotion} />
           {reaction && <span className="blobbo-react-badge" aria-hidden="true">{reaction === "wave" ? "\u{1F44B}" : "\u{1F440}"}</span>}
           {mood === "worried" && <span className="blobbo-worry" aria-label="Some health checks need a look">!</span>}
         </button>

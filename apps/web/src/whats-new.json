@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "palette",
+      "title": "Calmer Blobbo, Costumes That Stay On",
+      "body": "Blobbo's idle is gentler now: a soft float and squish instead of the big bounce, with the same little blink. Every look's hat, scarf, glasses or helmet now moves with Blobbo through the whole motion instead of sliding off, and tiny floating props hide at small sizes so they don't smudge."
+    },
+    {
       "icon": "shield",
       "title": "Beta Builds Show Beta Notes",
       "body": "Beta images such as v1.4.2-beta.3 now say they are on the Beta channel in About, the version card and What's New, and open What's New (beta) with the notes for this beta line instead of falling back to the last stable release. Each new beta build shows What's New again once, so you can catch up on what changed since the previous beta."
