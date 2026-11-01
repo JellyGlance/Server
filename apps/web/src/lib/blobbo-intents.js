@@ -2,6 +2,8 @@
 // Answers only use fields returned by the server. No writes, no guessing.
 import axios from "./axios_instance";
 import Config from "./config";
+import { buildMoreIntents } from "./blobbo-more-intents";
+import { getPrefs, kidsSafeReply } from "./blobbo-prefs";
 
 const n = (v) => (v === undefined || v === null || v === "" ? null : Number(v));
 const fmt = (v) => (n(v) === null || Number.isNaN(n(v)) ? null : n(v).toLocaleString());
@@ -203,7 +205,7 @@ export const INTENTS = [
   {
     id: "topContent",
     chip: "Most watched movies?",
-    keywords: ["most watched", "most viewed", "most played", "popular", "top movie*", "top film*", "top show*", "top series", "top song*", "top music", "top album*", "favourite*", "favorite*", "best films", "best shows", "trending"],
+    keywords: ["most watched", "most viewed", "most played", "popular", "top movie*", "top film*", "top show*", "top series", "top song*", "top music", "top album*", "favourite*", "favorite*", "best films", "best shows"],
     link: { to: "/statistics", label: "Open Statistics" },
     async answer(q) {
       const type = / (shows?|series|tv|episodes?) /.test(q) ? "Series" : / (music|songs?|audio|albums?|tracks?) /.test(q) ? "Audio" : "Movie";
@@ -227,7 +229,7 @@ export const INTENTS = [
   {
     id: "playMethod",
     chip: "Direct play or transcode?",
-    keywords: ["direct play*", "play method", "playback method*", "transcod*", "direct stream*", "remux*", "buffering", "cpu"],
+    keywords: ["direct play*", "play method", "playback method*", "transcod*", "direct stream*", "remux*", "cpu"],
     link: { to: "/statistics", label: "Open Statistics" },
     async answer() {
       const rows = await post("/stats/getPlaybackMethodStats", { days: 30 });
@@ -349,7 +351,56 @@ export const INTENTS = [
   },
 ];
 
-export const STARTER_CHIPS = INTENTS.map((i) => ({ id: i.id, label: i.chip }));
+INTENTS.push(...buildMoreIntents({ get, post, fmt, list, join, withLinks, jellyfinBase }));
+
+// Topics shown when the chat opens. "More topics" reveals the rest.
+const STARTER_IDS = ["sessions", "findTitle", "recommend", "sinceYesterday", "health", "downloads", "explainPage", "storagePie"];
+const chip = (i) => ({ id: i.id, label: i.chip });
+export const STARTER_CHIPS = STARTER_IDS.map((id) => INTENTS.find((i) => i.id === id)).filter(Boolean).map(chip);
+export const ALL_CHIPS = INTENTS.map(chip);
+
+// Follow-up chips offered after an answer, by topic.
+export const FOLLOW_UPS = {
+  findTitle: ["similar", "recommend", "recent"],
+  sessions: ["devices", "buffering", "today"],
+  devices: ["newDevices", "clients", "buffering"],
+  today: ["history", "sinceYesterday", "weekend"],
+  libraries: ["storagePie", "duplicates", "missingEpisodes"],
+  storage: ["storagePie", "duplicates", "libraries"],
+  storagePie: ["duplicates", "storage", "missingEpisodes"],
+  recent: ["recommend", "trending", "sinceYesterday"],
+  users: ["offline", "achievements", "history"],
+  topLibraries: ["storagePie", "trending", "topContent"],
+  topContent: ["trending", "recommend", "similar"],
+  clients: ["devices", "playMethod", "heatmap"],
+  playMethod: ["heatmap", "buffering", "clients"],
+  history: ["weekend", "sinceYesterday", "trending"],
+  health: ["mood", "tasks", "remote"],
+  automation: ["downloads", "failedDownloads", "health"],
+  downloads: ["failedDownloads", "calendar", "requests"],
+  failedDownloads: ["downloads", "automation", "storage"],
+  requests: ["calendar", "downloads", "recent"],
+  calendar: ["requests", "recent", "downloads"],
+  version: ["health", "tasks", "explainPage"],
+  digest: ["sinceYesterday", "weekend", "mood"],
+  explainPage: ["tour", "digest", "sessions"],
+  sinceYesterday: ["weekend", "recent", "health"],
+  weekend: ["trending", "users", "sinceYesterday"],
+  offline: ["users", "newDevices", "history"],
+  recommend: ["similar", "trending", "findTitle"],
+  mood: ["health", "tasks", "digest"],
+  duplicates: ["storagePie", "missingEpisodes", "libraries"],
+  missingEpisodes: ["duplicates", "calendar", "libraries"],
+  heatmap: ["playMethod", "buffering", "clients"],
+  tasks: ["health", "version", "mood"],
+  remote: ["health", "newDevices", "sessions"],
+  newDevices: ["devices", "offline", "remote"],
+  buffering: ["heatmap", "playMethod", "devices"],
+  trending: ["recommend", "similar", "topContent"],
+  similar: ["recommend", "trending", "findTitle"],
+  achievements: ["users", "weekend", "similar"],
+};
+export const followUpChips = (id) => (FOLLOW_UPS[id] || []).map((f) => INTENTS.find((i) => i.id === f)).filter(Boolean).map(chip);
 
 // Normalise a question: lower-case, drop apostrophes, collapse punctuation so
 // "What's", "whats" and "what is" all line up with the keyword lists.
@@ -402,12 +453,18 @@ export function helpReply() {
       "Top users, libraries, titles, apps and direct play vs transcode",
       "Server health, integrations, downloads, requests and the calendar",
       "Whether JellyGlance is up to date, or a quick server summary",
+      "What changed since yesterday, a weekend digest and who's been offline",
+      "Something to watch, what's trending and titles similar to your taste",
+      "Duplicates, empty series, storage per library and a transcode heat map",
+      "Why something is buffering, failed downloads, tasks, new devices and remote access",
+      "This page, a quick tour, a setup quiz and your badges",
     ],
     note: "Try a topic below, or ask something like \u201cwho's watching?\u201d \u201cany downloads stuck?\u201d or \u201cfind Dune\u201d",
   };
 }
 
-export async function askBlobbo(question, intentId) {
+export async function askBlobbo(question, intentId, ctx = {}) {
+  const safe = (r) => (getPrefs().kidsSafe ? kidsSafeReply(r) : r);
   const q = normaliseQuestion(question);
   if (!intentId && GREETING.test(q)) {
     return { text: "Hello! Lovely to see you. Ask me about your server, or pick a topic below." };
@@ -416,9 +473,9 @@ export async function askBlobbo(question, intentId) {
   if (!intent) return { ...helpReply(), chips: true };
   try {
     const fromChip = Boolean(intentId) && question === intent.chip;
-    const result = await intent.answer(q, { fromChip });
+    const result = await intent.answer(q, { fromChip, path: ctx.path });
     const reply = typeof result === "string" ? { text: result } : result;
-    return { ...reply, link: intent.link };
+    return safe({ ...reply, link: intent.link, intentId: intent.id, followUps: followUpChips(intent.id) });
   } catch (error) {
     const status = error?.response?.status;
     if (status === 401 || status === 403) {

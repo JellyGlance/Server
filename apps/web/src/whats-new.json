@@ -14,6 +14,26 @@
       "icon": "movie",
       "title": "Find A Title With Blobbo",
       "body": "Ask Blobbo to find a film or show, for example “find Dune” or “do I have The Expanse?”, and it lists the matches from your libraries. Each result, and titles in answers about what is playing, what is new and what is most watched, comes with Open in… buttons that take you straight to the title in JellyGlance or Jellyfin."
+    },
+    {
+      "icon": "chat",
+      "title": "Blobbo Remembers And Suggests",
+      "body": "After each answer Blobbo offers a few follow-up questions to tap. Your last five questions stay in this browser so you can ask them again in one tap, and More topics shows everything Blobbo knows. Ask Blobbo to explain the page you are on, and look for the Ask Blobbo button beside it on every page."
+    },
+    {
+      "icon": "users",
+      "title": "Digests And Picks",
+      "body": "Ask what changed since yesterday, for a weekend digest, who has been offline, what is trending, for something to watch from your newest arrivals, for titles similar to your taste, or about your achievement badges."
+    },
+    {
+      "icon": "shield",
+      "title": "Troubleshooting With Blobbo",
+      "body": "Blobbo can explain why something is buffering, why a download failed, how scheduled tasks are doing, whether new devices have joined and whether remote access looks right. It can also hunt for duplicate films and empty series, draw a storage per library pie and a transcode heat map. Its mood now follows server health, so a worried Blobbo means a check needs a look."
+    },
+    {
+      "icon": "rocket",
+      "title": "Getting To Know Blobbo",
+      "body": "New installs get a short guided tour and an optional setup quiz, there is a tip of the day when you sign in, and Blobbo says welcome back after an upgrade. Under Options you can turn on kids-safe answers, have answers read aloud and let Blobbo wear seasonal outfits. Tips can now be translated."
     }
   ],
   "1.4.0": [
