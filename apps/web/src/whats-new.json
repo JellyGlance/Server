@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "chat",
+      "title": "Subtitle And Audio Gap Report",
+      "body": "Server → Subtitle Gaps lists every movie and series missing your household's preferred subtitle or audio languages, using the tracks Jellyfin already knows about. Set the languages once (codes or names like en, fr or German), filter by missing subtitles or audio, and with Bazarr connected under Integrations hit Search in Bazarr on any row, or tick several and search them together."
+    },
+    {
       "icon": "upload",
       "title": "Outbound Webhook Rules",
       "body": "Settings → Notifications now has outbound webhook rules. Pick a trigger such as a stuck or failed download, Cleanuparr needing attention, low disk space or playback starting, and JellyGlance POSTs it as JSON to Home Assistant, ntfy, Discord or any URL. Filter on any field, add headers, write your own JSON body with placeholders, preview the payload and send a test. Recent deliveries show the status code or error, and saved URLs and header values stay encrypted and hidden."
