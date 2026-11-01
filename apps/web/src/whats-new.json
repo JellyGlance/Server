@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "movie",
+      "title": "Incomplete Season Hunter",
+      "body": "Server → Incomplete Seasons lists every series with a season that is short on episodes. With Sonarr connected under Integrations it compares what is on disk against Sonarr's aired episode count; without it, gaps in episode numbering (like E01, E02, E04) are flagged. Each row shows which seasons are short and the missing episode numbers, with buttons to open the series in Sonarr (or add it if Sonarr doesn't have it yet) and on TVDB."
+    },
+    {
       "icon": "speed",
       "title": "Why Is This Transcoding?",
       "body": "Active Sessions now explains every transcode for admins. Each transcoding stream gets a small chip such as “Transcode: Subtitle burn-in” or “Remux: Container”; tap it for a plain-English reason (HEVC to H.264, audio codec, bitrate over the limit, HDR tone-mapping, image subtitles being burned in, resolution caps or direct play turned off) plus a fix hint for that device, like enabling HEVC in Infuse or Android TV, raising the max streaming bitrate, or switching to SRT subtitles. Remuxes and audio-only transcodes are labelled separately so you can tell the cheap ones from the heavy ones."
