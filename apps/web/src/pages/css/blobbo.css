@@ -162,3 +162,16 @@ a.blobbo-btn--primary { color: var(--background-color, #0b0d12); }
 .blobbo-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; }
 .blobbo-heat { display: grid; grid-template-columns: repeat(7, 18px); gap: 3px; }
 .blobbo-heat span { width: 18px; height: 18px; border-radius: 4px; background: var(--primary-color, #9b6ac8); }
+
+/* Idle reacts to live sessions: a short wave when playback starts, a glance when another stream joins. */
+.blobbo-react-badge { position: absolute; top: -6px; left: -8px; font-size: 22px; line-height: 1; pointer-events: none; animation: blobbo-pop 0.2s ease-out; }
+.blobbo--react-wave .blobbo-avatar img { animation: blobbo-wave 0.6s ease-in-out 3; transform-origin: 50% 90%; }
+.blobbo--react-wave .blobbo-react-badge { animation: blobbo-hand 0.6s ease-in-out 3; transform-origin: 70% 80%; }
+.blobbo--react-look .blobbo-avatar img { animation: blobbo-look 1.8s ease-in-out 1; }
+@keyframes blobbo-wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+@keyframes blobbo-hand { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-20deg); } 75% { transform: rotate(20deg); } }
+@keyframes blobbo-look { 0%, 100% { transform: none; } 25%, 60% { transform: translateX(-5px) rotate(-6deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .blobbo--react-wave .blobbo-avatar img, .blobbo--react-look .blobbo-avatar img, .blobbo-react-badge { animation: none; }
+}
+.blobbo--still .blobbo-avatar img, .blobbo--still .blobbo-react-badge { animation: none !important; }
