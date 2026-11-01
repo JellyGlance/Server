@@ -71,6 +71,33 @@
 .insights-delivery-ok { margin: 10px 0 0; color: #8fe3b0; }
 .insights-delivery-error { margin: 10px 0 0; color: #ff9a9a; }
 
+/* Device profiles */
+.device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.device-card { display: flex; flex-direction: column; gap: 12px; }
+.device-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.device-card-head h3 { margin: 0; }
+.device-verdict { font-size: 0.75rem; padding: 2px 10px; border-radius: 999px; white-space: nowrap; background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.device-verdict.is-mixed { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.device-verdict.is-struggles { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.device-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, 0.06); }
+.device-bar span, .device-legend i { background: #22c55e; }
+.device-bar .is-directStream, .device-legend i.is-directStream { background: #38bdf8; }
+.device-bar .is-transcode, .device-legend i.is-transcode { background: #f59e0b; }
+.device-bar .is-unknown, .device-legend i.is-unknown { background: #64748b; }
+.device-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: #a7b1c2; }
+.device-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.device-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
+.device-facts dt { font-size: 0.7rem; text-transform: uppercase; color: #8a97ad; font-weight: 500; }
+.device-facts dd { margin: 0; font-weight: 600; }
+.device-reasons { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; background: rgba(245, 158, 11, 0.07); }
+.device-reason em { color: #fbbf24; font-style: normal; }
+.device-reason small { display: block; color: #a7b1c2; }
+.device-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 600px) { .device-facts { grid-template-columns: repeat(2, 1fr); } .device-meta { grid-template-columns: 1fr; } }
+.device-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.device-chips span { font-size: 0.78rem; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); }
+.device-chips b { color: #a78bfa; margin-left: 2px; }
+
 .taste-users { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 16px; margin-top: 16px; }
 .taste-user-charts { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 8px; }
 @media (max-width: 640px) { .taste-user-charts { grid-template-columns: 1fr; } }

@@ -2,6 +2,11 @@
   "1.4.2-beta": [
     {
       "icon": "speed",
+      "title": "Device Profiles",
+      "body": "Insights → Devices gives every TV, phone, browser and cast device its own card: how often it direct plays versus transcodes, its typical bitrate, which apps and versions it runs, who uses it and when it was last seen. Devices that transcode get their top reasons with a fix hint for that device. Admins only."
+    },
+    {
+      "icon": "speed",
       "title": "Quiet Hours For Scans And Intros",
       "body": "Server → Server Jobs now has Quiet hours. Pick a start and end time, an optional time zone and which days it applies to, and JellyGlance holds Jellyfin library scans and intro / credits detection during that window so evening or overnight playback is not slowed down. Jobs that start on their own schedule are stopped and run once as soon as the window ends (or you can let them wait for their next schedule instead). Held jobs show an In quiet hours tag, and pressing Run still starts a job straight away."
     },
