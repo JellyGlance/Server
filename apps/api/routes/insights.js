@@ -226,6 +226,21 @@ router.get("/streams", async (req, res) => {
   }
 });
 
+// Device profiles: one card per playback device. Device-level history spans every user, so this
+// follows the stats-access rule and is only for people who can view all users.
+router.get("/devices", async (req, res) => {
+  try {
+    const { canViewAllUsers } = require("../classes/stats-access");
+    if (!canViewAllUsers(req)) return res.status(403).json({ error: "Only server admins can see this." });
+    const { buildDeviceProfiles } = require("../classes/device-profiles");
+    const days = clampInt(req.query.days, 90, 1, 3650);
+    const sort = ["recent", "plays", "transcode"].includes(req.query.sort) ? req.query.sort : "recent";
+    res.json(await buildDeviceProfiles({ days, sort }));
+  } catch (error) {
+    res.status(503).json({ error: error.message || "Unable to build device profiles" });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Up next and abandoned shows
 

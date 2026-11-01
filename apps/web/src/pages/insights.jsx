@@ -6,6 +6,7 @@ import CalendarCheckLineIcon from "remixicon-react/CalendarCheckLineIcon";
 import HeartPulseLineIcon from "remixicon-react/HeartPulseLineIcon";
 import PulseLineIcon from "remixicon-react/PulseLineIcon";
 import PlayList2LineIcon from "remixicon-react/PlayList2LineIcon";
+import DeviceLineIcon from "remixicon-react/DeviceLineIcon";
 import axios from "../lib/axios_instance";
 import { useTranslation } from "react-i18next";
 import { formatDate as formatLocaleDate } from "../lib/format-date";
@@ -612,11 +613,138 @@ function UpNext() {
   );
 }
 
+const VERDICT_TEXT = { healthy: "Plays direct", mixed: "Sometimes transcodes", struggles: "Mostly transcodes", idle: "No plays" };
+
+function mbps(value) {
+  return value ? `${(Number(value) / 1e6).toFixed(1)} Mbps` : "–";
+}
+
+function pct(value) {
+  return `${Math.round(Number(value || 0) * 100)}%`;
+}
+
+function DeviceCard({ device }) {
+  const m = device.methods;
+  const total = device.plays || 1;
+  const segments = [
+    { key: "directPlay", label: "Direct play", value: m.directPlay },
+    { key: "directStream", label: "Direct stream", value: m.directStream },
+    { key: "transcode", label: "Transcode", value: m.transcode },
+    { key: "unknown", label: "Unknown", value: m.unknown },
+  ].filter((seg) => seg.value > 0);
+  return (
+    <section className={`insights-panel device-card is-${device.verdict}`}>
+      <header className="device-card-head">
+        <div>
+          <h3>{device.name}</h3>
+          <small className="insights-muted">{device.client}</small>
+        </div>
+        <span className={`device-verdict is-${device.verdict}`}>{VERDICT_TEXT[device.verdict]}</span>
+      </header>
+      <div className="device-bar" aria-label="Play methods">
+        {segments.map((seg) => (
+          <span key={seg.key} className={`is-${seg.key}`} style={{ width: `${(seg.value / total) * 100}%` }} title={`${seg.label}: ${seg.value}`} />
+        ))}
+      </div>
+      <div className="device-legend">
+        {segments.map((seg) => (
+          <span key={seg.key}>
+            <i className={`is-${seg.key}`} /> {seg.label} {pct(seg.value / total)}
+          </span>
+        ))}
+      </div>
+      <dl className="device-facts">
+        <div><dt>Plays</dt><dd>{device.plays.toLocaleString()}</dd></div>
+        <div><dt>Watched</dt><dd>{hours(device.seconds)} h</dd></div>
+        <div><dt>Typical bitrate</dt><dd>{mbps(device.avgBitrate)}</dd></div>
+        <div><dt>Last seen</dt><dd>{dateText(device.lastSeen)}</dd></div>
+      </dl>
+      {device.reasons.length ? (
+        <div className="device-reasons">
+          <b>Why it transcodes</b>
+          {device.reasons.map((r) => (
+            <div key={r.code} className="device-reason">
+              <span>{r.label} <em>×{r.count}</em></span>
+              {r.hint ? <small>{r.hint}</small> : null}
+            </div>
+          ))}
+          {device.methods.transcode ? <small className="insights-muted">Hardware accelerated: {pct(device.hardwareRate)} of transcodes</small> : null}
+        </div>
+      ) : null}
+      <div className="device-meta">
+        <div>
+          <b>Apps</b>
+          <div className="device-chips">
+            {device.apps.slice(0, 3).map((a) => (
+              <span key={a.name}>{a.name} <b>{a.plays}</b></span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <b>Used by</b>
+          <div className="device-chips">
+            {device.users.map((u) => (
+              <span key={u.id || u.name}>{u.name} <b>{u.plays}</b></span>
+            ))}
+            {device.userCount > device.users.length ? <span>+{device.userCount - device.users.length}</span> : null}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Devices() {
+  const [days, setDays] = useState(90);
+  const [sort, setSort] = useState("recent");
+  const state = useInsight("devices", { days, sort });
+  const data = state.data;
+  return (
+    <>
+      <div className="insights-pickers">
+        <select value={days} onChange={(event) => setDays(Number(event.target.value))}>
+          <option value={7}>Last 7 days</option>
+          <option value={30}>Last 30 days</option>
+          <option value={90}>Last 90 days</option>
+          <option value={365}>Last year</option>
+        </select>
+        <select value={sort} onChange={(event) => setSort(event.target.value)}>
+          <option value="recent">Recently seen</option>
+          <option value="plays">Most plays</option>
+          <option value="transcode">Most transcoding</option>
+        </select>
+      </div>
+      <Loading state={state}>
+        {data ? (
+          <>
+            <div className="insights-stats">
+              <Stat label="Devices" value={data.summary.devices} note={`Seen in the last ${data.days} days`} />
+              <Stat label="Plays" value={data.summary.plays.toLocaleString()} note="Live plays only, imports excluded" />
+              <Stat label="Transcoded" value={pct(data.summary.transcodeRate)} note="Across all devices" />
+              <Stat label="Mostly transcoding" value={data.summary.struggling} note="Devices over 50%" />
+            </div>
+            {data.devices.length ? (
+              <div className="device-grid">
+                {data.devices.map((device) => (
+                  <DeviceCard key={device.key} device={device} />
+                ))}
+              </div>
+            ) : (
+              <div className="insights-empty">No plays in this period yet.</div>
+            )}
+          </>
+        ) : null}
+      </Loading>
+    </>
+  );
+}
+
 export const INSIGHT_TABS = [
   { id: "wrapped", label: "Recap", icon: CalendarCheckLineIcon, Component: Wrapped },
   { id: "upnext", label: "Up next", icon: PlayList2LineIcon, Component: UpNext },
   { id: "health", label: "Library health", icon: HeartPulseLineIcon, Component: LibraryHealth },
   { id: "streams", label: "Streams", icon: PulseLineIcon, Component: Streams },
+  { id: "devices", label: "Devices", icon: DeviceLineIcon, Component: Devices },
 ];
 
 const TABS = INSIGHT_TABS;
