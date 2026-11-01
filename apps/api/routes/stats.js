@@ -1509,6 +1509,31 @@ router.get("/getViewsByHour", async (req, res) => {
   }
 });
 
+router.get("/getLibraryHeatmap", async (req, res) => {
+  try {
+    const scope = resolveStatsUser(req, req.query.userId);
+    if (scope.forbidden) return sendForbidden(res);
+    if (!scope.admin && !scope.userId) {
+      return res.status(403).json({ error: "Link your account to see your own heat map" });
+    }
+    const { getLibraryHeatmap } = require("../classes/library-heatmap");
+    res.send(
+      await getLibraryHeatmap({
+        db,
+        days: req.query.days,
+        userId: scope.userId,
+        libraryId: req.query.libraryId || null,
+        timeZone: process.env.TZ || "UTC",
+        metric: req.query.metric,
+      })
+    );
+  } catch (error) {
+    console.log(error);
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
 router.get("/getViewsByLibraryType", async (req, res) => {
   try {
     const { days = 30 } = req.query;
