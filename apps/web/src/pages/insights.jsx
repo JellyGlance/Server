@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Line, LineChart, PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Spinner } from "react-bootstrap";
 import CalendarCheckLineIcon from "remixicon-react/CalendarCheckLineIcon";
 import HeartPulseLineIcon from "remixicon-react/HeartPulseLineIcon";
 import PulseLineIcon from "remixicon-react/PulseLineIcon";
 import PlayList2LineIcon from "remixicon-react/PlayList2LineIcon";
+import Compass3LineIcon from "remixicon-react/Compass3LineIcon";
 import DeviceLineIcon from "remixicon-react/DeviceLineIcon";
 import axios from "../lib/axios_instance";
 import { useTranslation } from "react-i18next";
@@ -613,6 +614,170 @@ function UpNext() {
   );
 }
 
+
+function percent(value) {
+  return `${Math.round(Number(value || 0) * 100)}%`;
+}
+
+function TasteUser({ user }) {
+  const radar = user.genres.slice(0, 6).map((g) => ({ genre: g.name, share: Math.round(g.share * 100) }));
+  return (
+    <section className="insights-panel taste-user">
+      <h3>
+        {user.name} <em>{hours(user.seconds)} h</em>
+      </h3>
+      {user.genres.length ? (
+        <div className="taste-user-charts">
+          <ResponsiveContainer width="100%" height={220}>
+            <RadarChart data={radar} outerRadius="62%">
+              <PolarGrid stroke="rgba(255,255,255,0.12)" />
+              <PolarAngleAxis dataKey="genre" stroke="#8a97ad" fontSize={11} />
+              <Radar dataKey="share" stroke="var(--primary-color, #8b5cf6)" fill="var(--primary-color, #8b5cf6)" fillOpacity={0.35} />
+              <Tooltip formatter={(v) => `${v}%`} contentStyle={{ background: "#101624", border: "1px solid #2a3350" }} />
+            </RadarChart>
+          </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={user.decades.map((d) => ({ decade: d.name, share: Math.round(d.share * 100) }))}>
+              <XAxis dataKey="decade" stroke="#8a97ad" fontSize={11} />
+              <YAxis stroke="#8a97ad" fontSize={11} width={32} unit="%" />
+              <Tooltip formatter={(v) => `${v}%`} cursor={{ fill: "rgba(255,255,255,0.04)" }} contentStyle={{ background: "#101624", border: "1px solid #2a3350" }} />
+              <Bar dataKey="share" name="Watch time" fill="#d946ef" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="insights-empty">No genre data for these plays yet.</div>
+      )}
+      <div className="taste-chips">
+        {user.genres.slice(0, 5).map((g) => (
+          <span key={g.name}>
+            {g.name} <b>{percent(g.share)}</b>
+          </span>
+        ))}
+      </div>
+      {user.topTitles.length ? (
+        <small className="insights-muted">Most watched: {user.topTitles.slice(0, 3).map((t) => t.name).join(", ")}</small>
+      ) : null}
+    </section>
+  );
+}
+
+function TasteMatrix({ users, overlaps }) {
+  const lookup = new Map();
+  for (const pair of overlaps) {
+    lookup.set(`${pair.a.id}|${pair.b.id}`, pair);
+    lookup.set(`${pair.b.id}|${pair.a.id}`, pair);
+  }
+  return (
+    <section className="insights-panel">
+      <h3>Household taste match</h3>
+      <small className="insights-muted">How closely each pair&rsquo;s genre mix lines up, from 0% (nothing in common) to 100% (identical).</small>
+      <div className="taste-matrix-wrap">
+        <table className="taste-matrix">
+          <thead>
+            <tr>
+              <th />
+              {users.map((u) => (
+                <th key={u.id}>{u.name}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((row) => (
+              <tr key={row.id}>
+                <th>{row.name}</th>
+                {users.map((col) => {
+                  if (row.id === col.id) return <td key={col.id} className="is-self">–</td>;
+                  const pair = lookup.get(`${row.id}|${col.id}`);
+                  const value = pair?.similarity || 0;
+                  return (
+                    <td key={col.id} style={{ background: `rgba(var(--primary-rgb, 139, 92, 246), ${0.08 + value * 0.72})` }} title={pair?.sharedGenres?.join(", ") || "No shared top genres"}>
+                      {percent(value)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function TastePair({ pair }) {
+  return (
+    <article className="insights-panel taste-pair">
+      <header>
+        <strong>{pair.a.name}</strong>
+        <span className="taste-venn" aria-hidden="true">
+          <i />
+          <i />
+        </span>
+        <strong>{pair.b.name}</strong>
+        <em>{percent(pair.similarity)} match</em>
+      </header>
+      <div className="taste-chips">
+        {pair.sharedGenres.length ? pair.sharedGenres.map((g) => <span key={g}>{g}</span>) : <small className="insights-muted">No shared top genres</small>}
+      </div>
+      <small className="insights-muted">
+        {pair.sharedTitleCount
+          ? `Both watched ${pair.sharedTitleCount} title${pair.sharedTitleCount === 1 ? "" : "s"}: ${pair.sharedTitles.slice(0, 4).map((t) => t.name).join(", ")}${pair.sharedTitleCount > 4 ? "…" : ""}`
+          : "No titles watched by both yet"}
+      </small>
+    </article>
+  );
+}
+
+function TasteMap() {
+  const [days, setDays] = useState(365);
+  const state = useInsight("taste-map", { days });
+  const data = state.data;
+  return (
+    <>
+      <div className="insights-pickers">
+        <select value={days} onChange={(event) => setDays(Number(event.target.value))}>
+          <option value={90}>Last 90 days</option>
+          <option value={365}>Last year</option>
+          <option value={1095}>Last 3 years</option>
+          <option value={3650}>All time</option>
+        </select>
+      </div>
+      <Loading state={state}>
+        {data ? (
+          data.users.length ? (
+            <>
+              {!data.scoped && data.users.length > 1 ? (
+                <>
+                  <div className="insights-stats">
+                    <Stat label="Viewers" value={data.users.length} />
+                    <Stat label="Closest match" value={data.overlaps[0] ? `${data.overlaps[0].a.name} & ${data.overlaps[0].b.name}` : "–"} note={data.overlaps[0] ? `${percent(data.overlaps[0].similarity)} genre match` : null} />
+                    <Stat label="Household favourite" value={data.sharedGenres[0]?.name || "–"} note={data.sharedGenres[0] ? `Top genre for ${data.sharedGenres[0].users.length} of ${data.users.length}` : null} />
+                  </div>
+                  <TasteMatrix users={data.users} overlaps={data.overlaps} />
+                  <div className="insights-grid">
+                    {data.overlaps.slice(0, 6).map((pair) => (
+                      <TastePair key={`${pair.a.id}-${pair.b.id}`} pair={pair} />
+                    ))}
+                  </div>
+                </>
+              ) : null}
+              <div className="taste-users">
+                {data.users.map((user) => (
+                  <TasteUser key={user.id} user={user} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="insights-empty">No plays recorded in this window yet.</div>
+          )
+        ) : null}
+      </Loading>
+    </>
+  );
+}
+
+
 const VERDICT_TEXT = { healthy: "Plays direct", mixed: "Sometimes transcodes", struggles: "Mostly transcodes", idle: "No plays" };
 
 function mbps(value) {
@@ -741,6 +906,7 @@ function Devices() {
 
 export const INSIGHT_TABS = [
   { id: "wrapped", label: "Recap", icon: CalendarCheckLineIcon, Component: Wrapped },
+  { id: "tastemap", label: "Taste map", icon: Compass3LineIcon, Component: TasteMap },
   { id: "upnext", label: "Up next", icon: PlayList2LineIcon, Component: UpNext },
   { id: "health", label: "Library health", icon: HeartPulseLineIcon, Component: LibraryHealth },
   { id: "streams", label: "Streams", icon: PulseLineIcon, Component: Streams },
