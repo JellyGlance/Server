@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "users",
+      "title": "Live Session Wall",
+      "body": "Active Sessions on Home now has a Wall layout: a compact tile for every stream showing who is watching, the poster, progress, device and whether it is direct playing or transcoding. Switch between Cards and Wall with the toggle beside the heading, and your choice is remembered in this browser. When nobody is playing, the Active Sessions section is hidden completely instead of showing an empty box, and it reappears as soon as playback starts."
+    },
+    {
       "icon": "rocket",
       "title": "Ops Copilot Preview",
       "body": "Server → Ops Copilot lets admins ask plain questions like “why is Dune buffering for Mum?”, “free 500 GB without touching favourites” or “anything stuck in downloads?”. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."
