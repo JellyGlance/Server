@@ -109,4 +109,13 @@ export const taskList = [
     group: "Integrations",
     link: "/api/startTask?task=IntegrationHealthCheck",
   },
+  {
+    id: 12,
+    name: "WrappedRecaps",
+    title: "Wrapped Recaps",
+    description: "Send scheduled weekly and monthly Wrapped recaps by email or webhook once each period finishes.",
+    type: "JOB",
+    group: "Notifications",
+    link: "/api/startTask?task=WrappedRecaps",
+  },
 ];
