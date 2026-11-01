@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "upload",
+      "title": "Outbound Webhook Rules",
+      "body": "Settings → Notifications now has outbound webhook rules. Pick a trigger such as a stuck or failed download, Cleanuparr needing attention, low disk space or playback starting, and JellyGlance POSTs it as JSON to Home Assistant, ntfy, Discord or any URL. Filter on any field, add headers, write your own JSON body with placeholders, preview the payload and send a test. Recent deliveries show the status code or error, and saved URLs and header values stay encrypted and hidden."
+    },
+    {
       "icon": "users",
       "title": "Taste Map",
       "body": "Statistics → Taste map shows what each person watches by genre and decade, with their most watched titles. Admins also get a household view: a match grid showing how closely everyone's tastes line up, the genres you share, and the shows and films more than one of you has watched. Everyone else sees their own map."
