@@ -6596,6 +6596,109 @@
   color: #bbf7d0;
   font-size: 13px;
 }
+
+/* Quiet hours */
+.quiet-hours-panel .server-management-panel-heading > div {
+  flex: 1 1 auto;
+}
+
+.quiet-hours-panel.is-quiet {
+  border-color: rgba(129, 140, 248, 0.55);
+}
+
+.quiet-hours-status {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quiet-hours-status.is-active,
+.quiet-hours-chip {
+  background: rgba(129, 140, 248, 0.2);
+  color: #c7d2fe;
+}
+
+.quiet-hours-times {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.quiet-hours-times label {
+  color: #7f8da3;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.quiet-hours-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quiet-hours-days button {
+  min-width: 46px;
+  padding: 4px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quiet-hours-days button.is-active {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.quiet-hours-options {
+  display: grid;
+  gap: 4px;
+}
+
+.quiet-hours-note {
+  color: #94a3b8;
+}
+
+.quiet-hours-deferred {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.quiet-hours-deferred span {
+  color: #7f8da3;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.quiet-hours-deferred ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.quiet-hours-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.server-management-grid:has(.quiet-hours-panel) {
+  align-items: start;
+}
+
 .webhook-out { margin-top: 18px; }
 .webhook-out-advanced { gap: 8px; }
 .webhook-out-template, .webhook-out-preview { width: 100%; padding: 8px 10px; border: 1px solid rgba(var(--primary-light-rgb, 139, 92, 246), 0.25); border-radius: 8px; background: rgba(8, 12, 20, 0.8); color: #e6edf7; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }

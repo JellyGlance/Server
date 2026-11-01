@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "speed",
+      "title": "Quiet Hours For Scans And Intros",
+      "body": "Server → Server Jobs now has Quiet hours. Pick a start and end time, an optional time zone and which days it applies to, and JellyGlance holds Jellyfin library scans and intro / credits detection during that window so evening or overnight playback is not slowed down. Jobs that start on their own schedule are stopped and run once as soon as the window ends (or you can let them wait for their next schedule instead). Held jobs show an In quiet hours tag, and pressing Run still starts a job straight away."
+    },
+    {
       "icon": "chat",
       "title": "Subtitle And Audio Gap Report",
       "body": "Server → Subtitle Gaps lists every movie and series missing your household's preferred subtitle or audio languages, using the tracks Jellyfin already knows about. Set the languages once (codes or names like en, fr or German), filter by missing subtitles or audio, and with Bazarr connected under Integrations hit Search in Bazarr on any row, or tick several and search them together."
