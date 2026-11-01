@@ -27,6 +27,8 @@ function Login() {
   const [submitButtonText, setsubmitButtonText] = useState(i18next.t("LOGIN"));
   const [quickConnect, setQuickConnect] = useState(null);
   const [quickConnectStatus, setQuickConnectStatus] = useState("");
+  const [quickConnectOpened, setQuickConnectOpened] = useState(false);
+  const [quickConnectCopied, setQuickConnectCopied] = useState(false);
   const [oidcStatus, setOidcStatus] = useState("");
   // Break-glass: local accounts still sign in when single sign-on is set up but broken.
   const [useLocalLogin, setUseLocalLogin] = useState(false);
@@ -40,6 +42,31 @@ function Login() {
 
   function handleFormChange(event) {
     setFormValues({ ...formValues, [event.target.name]: event.target.value });
+  }
+
+  // Jellyfin Web reads `code` from the Quick Connect page query string, so the code arrives prefilled.
+  function quickConnectDeepLink(data) {
+    if (!data?.quickConnectUrl || !data?.code) {
+      return null;
+    }
+    const separator = data.quickConnectUrl.includes("?") ? "&" : "?";
+    return `${data.quickConnectUrl}${separator}code=${encodeURIComponent(data.code)}`;
+  }
+
+  function openQuickConnectInJellyfin() {
+    const url = quickConnectDeepLink(quickConnect);
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      setQuickConnectOpened(true);
+    }
+  }
+
+  async function handleCopyQuickConnectCode() {
+    const copied = await copyQuickConnectCode(quickConnect?.code);
+    setQuickConnectCopied(copied);
+    if (copied) {
+      window.setTimeout(() => setQuickConnectCopied(false), 1800);
+    }
   }
 
   async function copyQuickConnectCode(code) {
@@ -158,19 +185,18 @@ function Login() {
   async function startQuickConnect(openJellyfin = false) {
     try {
       setQuickConnect(null);
+      setQuickConnectOpened(false);
+      setQuickConnectCopied(false);
       setQuickConnectStatus("Requesting a Jellyfin Quick Connect code...");
       const response = await axios.post("/auth/jellyfin-quick-connect/initiate");
-      const copied = await copyQuickConnectCode(response.data.code);
 
       setQuickConnect(response.data);
-      setQuickConnectStatus(
-        copied
-          ? "Code copied. Paste it into Jellyfin Quick Connect to approve this browser."
-          : "Enter this code in Jellyfin Quick Connect to approve this browser."
-      );
+      setQuickConnectStatus("");
 
-      if (openJellyfin && response.data.quickConnectUrl) {
-        window.open(response.data.quickConnectUrl, "_blank", "noopener,noreferrer");
+      const deepLink = quickConnectDeepLink(response.data);
+      if (openJellyfin && deepLink) {
+        window.open(deepLink, "_blank", "noopener,noreferrer");
+        setQuickConnectOpened(true);
       }
 
       setProcessing(false);
@@ -316,11 +342,12 @@ function Login() {
 
         <Form onSubmit={handleFormSubmit} className="setup-form login-form">
           {canQuickConnect ? (
-            <div className="setup-auth-summary quick-connect-intro">
-              <strong>Jellyfin Quick Connect</strong>
-              <small>Use Jellyfin Quick Connect to approve this browser with your Jellyfin admin account.</small>
+            <p className="quick-connect-lede">
+              {quickConnect?.code
+                ? "Opens Jellyfin with the code already filled in — just approve."
+                : "Approve this browser with your Jellyfin admin account via Quick Connect."}
               {!quickConnect?.code && quickConnectStatus && <small className="quick-connect-status">{quickConnectStatus}</small>}
-            </div>
+            </p>
           ) : canOidc ? (
             <div className="setup-auth-summary quick-connect-intro">
               <strong>{setupInfo?.auth?.label || "OIDC / Authentik"}</strong>
@@ -381,16 +408,32 @@ function Login() {
 
           {canUseQuickConnect && quickConnect?.code ? (
             <>
-              <Button type="button" className="setup-button quick-connect-open-button" disabled={processing} onClick={() => startQuickConnect(true)}>
-                Open Jellyfin Quick Connect
+              <Button type="button" className="setup-button quick-connect-open-button" disabled={processing} onClick={openQuickConnectInJellyfin}>
+                Open in Jellyfin · code ready
               </Button>
+              {quickConnectDeepLink(quickConnect) && (
+                <small className="quick-connect-link-hint" title={quickConnectDeepLink(quickConnect)}>
+                  …/web/#/quickconnect?code={quickConnect.code}
+                </small>
+              )}
 
               <div className="quick-connect-code-panel">
-                <span className="quick-connect-code">{quickConnect.code}</span>
-                <small>Enter this code in Jellyfin Quick Connect. JellyGlance will continue automatically.</small>
+                <div className="quick-connect-code-chip">
+                  <span className="quick-connect-code" aria-label={`Quick Connect code ${quickConnect.code}`}>{quickConnect.code}</span>
+                  <Button type="button" className="quick-connect-copy-button" onClick={handleCopyQuickConnectCode}>
+                    {quickConnectCopied ? "Copied" : "Copy"}
+                  </Button>
+                </div>
+                <small>If Jellyfin doesn&apos;t open prefilled: copy the code, then paste on Quick Connect.</small>
+                {quickConnectOpened && !processing && (
+                  <span className="quick-connect-waiting" role="status">
+                    <span className="quick-connect-waiting-dot" aria-hidden="true" />
+                    Waiting for approval…
+                  </span>
+                )}
                 {quickConnectStatus && <small className="quick-connect-status">{quickConnectStatus}</small>}
-                <Button type="submit" className="quick-connect-refresh-button" disabled={processing}>
-                  {processing ? `${i18next.t("VALIDATING")}...` : "Get New Code"}
+                <Button type="submit" variant="link" className="quick-connect-new-code" disabled={processing}>
+                  {processing ? `${i18next.t("VALIDATING")}...` : "Get new code"}
                 </Button>
               </div>
             </>

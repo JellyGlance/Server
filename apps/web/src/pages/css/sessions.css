@@ -1347,3 +1347,151 @@
   opacity: 0.7;
   font-variant-numeric: tabular-nums;
 }
+
+/* Active Sessions card: title + user first, status pills, consistent fields */
+.session-card-layout {
+  gap: 7px;
+  padding-top: 12px;
+}
+
+.session-card-main:has(.session-card-layout) {
+  height: auto;
+  min-height: 176px;
+}
+
+.session-card-body:has(.session-card-layout) {
+  padding-right: 14px !important;
+}
+
+.session-card:has(.session-card-layout) .card-device-image-overlay {
+  display: none;
+}
+
+.session-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.session-card-head .session-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-card-head .session-play-state {
+  width: 18px;
+  height: 18px;
+  flex-basis: 18px;
+}
+
+.session-card-head .session-play-state svg {
+  width: 12px;
+  height: 12px;
+}
+
+.session-card-head .session-title a {
+  font-size: 15px;
+}
+
+.session-card-head .session-subtitle {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.session-user-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  max-width: 130px;
+  padding: 3px 10px 3px 3px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.32);
+  text-decoration: none !important;
+}
+
+.session-user-chip .session-card-user-image {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border-width: 1px;
+}
+
+.session-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.session-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.session-pill.is-ok {
+  border-color: rgba(52, 211, 153, 0.36);
+  background: rgba(6, 78, 59, 0.34);
+  color: #a7f3d0;
+}
+
+.session-pill.is-warn {
+  border-color: rgba(250, 204, 21, 0.4);
+  background: rgba(113, 63, 18, 0.34);
+  color: #fde68a;
+}
+
+.session-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 14px;
+  min-width: 0;
+}
+
+.session-field {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.session-field-label {
+  flex: 0 0 auto;
+  color: #8b95a7;
+}
+
+.session-field-value {
+  min-width: 0;
+  overflow: hidden;
+  color: #f1f5f9;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-card-layout .session-timecode {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto !important;
+  padding-top: 2px;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.session-card .progress-custom {
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+}
