@@ -12,6 +12,11 @@
     },
     {
       "icon": "rocket",
+      "title": "Smart Request Routing",
+      "body": "Requests → Rules now has Smart routing. Build rules that match on who is asking, the genre and whether it is a movie or TV show, then choose Approve to send it straight to Sonarr/Radarr or Hold to keep it for an admin. Rules run top to bottom and the first match wins; anything that matches no rule keeps your existing settings, which hold requests unless auto-approve is on. A routing log shows every request, the rule that caught it and whether it was sent on or held."
+    },
+    {
+      "icon": "rocket",
       "title": "Ops Copilot Preview",
       "body": "Server → Ops Copilot lets admins ask plain questions like “why is Dune buffering for Mum?”, “free 500 GB without touching favourites” or “anything stuck in downloads?”. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."
     },

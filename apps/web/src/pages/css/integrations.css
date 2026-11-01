@@ -6774,3 +6774,15 @@
 .cleanuparr-event.is-attention {
   border-left: 3px solid #fbbf24;
 }
+
+.request-routing { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
+.request-routing-help, .request-routing-empty { font-size: 0.85rem; opacity: 0.75; margin: 0; }
+.request-routing-rule { border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.request-routing-rule.is-disabled { opacity: 0.55; }
+.request-routing-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.request-routing-row label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.8rem; flex: 1 1 140px; }
+.request-routing-row select[multiple] { min-height: 4.5rem; }
+.request-routing-name { flex: 1 1 160px; }
+.request-routing-genres { flex: 2 1 200px !important; }
+.request-routing-outcome.is-approved { color: var(--bs-success, #3fb950); }
+.request-routing-outcome.is-held { color: var(--bs-warning, #d29922); }
