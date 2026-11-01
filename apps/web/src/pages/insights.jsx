@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Line, LineChart, PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Spinner } from "react-bootstrap";
 import CalendarCheckLineIcon from "remixicon-react/CalendarCheckLineIcon";
 import HeartPulseLineIcon from "remixicon-react/HeartPulseLineIcon";
 import PulseLineIcon from "remixicon-react/PulseLineIcon";
 import PlayList2LineIcon from "remixicon-react/PlayList2LineIcon";
+import Compass3LineIcon from "remixicon-react/Compass3LineIcon";
+import DeviceLineIcon from "remixicon-react/DeviceLineIcon";
 import axios from "../lib/axios_instance";
 import { useTranslation } from "react-i18next";
 import { formatDate as formatLocaleDate } from "../lib/format-date";
@@ -612,11 +614,303 @@ function UpNext() {
   );
 }
 
+
+function percent(value) {
+  return `${Math.round(Number(value || 0) * 100)}%`;
+}
+
+function TasteUser({ user }) {
+  const radar = user.genres.slice(0, 6).map((g) => ({ genre: g.name, share: Math.round(g.share * 100) }));
+  return (
+    <section className="insights-panel taste-user">
+      <h3>
+        {user.name} <em>{hours(user.seconds)} h</em>
+      </h3>
+      {user.genres.length ? (
+        <div className="taste-user-charts">
+          <ResponsiveContainer width="100%" height={220}>
+            <RadarChart data={radar} outerRadius="62%">
+              <PolarGrid stroke="rgba(255,255,255,0.12)" />
+              <PolarAngleAxis dataKey="genre" stroke="#8a97ad" fontSize={11} />
+              <Radar dataKey="share" stroke="var(--primary-color, #8b5cf6)" fill="var(--primary-color, #8b5cf6)" fillOpacity={0.35} />
+              <Tooltip formatter={(v) => `${v}%`} contentStyle={{ background: "#101624", border: "1px solid #2a3350" }} />
+            </RadarChart>
+          </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={user.decades.map((d) => ({ decade: d.name, share: Math.round(d.share * 100) }))}>
+              <XAxis dataKey="decade" stroke="#8a97ad" fontSize={11} />
+              <YAxis stroke="#8a97ad" fontSize={11} width={32} unit="%" />
+              <Tooltip formatter={(v) => `${v}%`} cursor={{ fill: "rgba(255,255,255,0.04)" }} contentStyle={{ background: "#101624", border: "1px solid #2a3350" }} />
+              <Bar dataKey="share" name="Watch time" fill="#d946ef" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="insights-empty">No genre data for these plays yet.</div>
+      )}
+      <div className="taste-chips">
+        {user.genres.slice(0, 5).map((g) => (
+          <span key={g.name}>
+            {g.name} <b>{percent(g.share)}</b>
+          </span>
+        ))}
+      </div>
+      {user.topTitles.length ? (
+        <small className="insights-muted">Most watched: {user.topTitles.slice(0, 3).map((t) => t.name).join(", ")}</small>
+      ) : null}
+    </section>
+  );
+}
+
+function TasteMatrix({ users, overlaps }) {
+  const lookup = new Map();
+  for (const pair of overlaps) {
+    lookup.set(`${pair.a.id}|${pair.b.id}`, pair);
+    lookup.set(`${pair.b.id}|${pair.a.id}`, pair);
+  }
+  return (
+    <section className="insights-panel">
+      <h3>Household taste match</h3>
+      <small className="insights-muted">How closely each pair&rsquo;s genre mix lines up, from 0% (nothing in common) to 100% (identical).</small>
+      <div className="taste-matrix-wrap">
+        <table className="taste-matrix">
+          <thead>
+            <tr>
+              <th />
+              {users.map((u) => (
+                <th key={u.id}>{u.name}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((row) => (
+              <tr key={row.id}>
+                <th>{row.name}</th>
+                {users.map((col) => {
+                  if (row.id === col.id) return <td key={col.id} className="is-self">–</td>;
+                  const pair = lookup.get(`${row.id}|${col.id}`);
+                  const value = pair?.similarity || 0;
+                  return (
+                    <td key={col.id} style={{ background: `rgba(var(--primary-rgb, 139, 92, 246), ${0.08 + value * 0.72})` }} title={pair?.sharedGenres?.join(", ") || "No shared top genres"}>
+                      {percent(value)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function TastePair({ pair }) {
+  return (
+    <article className="insights-panel taste-pair">
+      <header>
+        <strong>{pair.a.name}</strong>
+        <span className="taste-venn" aria-hidden="true">
+          <i />
+          <i />
+        </span>
+        <strong>{pair.b.name}</strong>
+        <em>{percent(pair.similarity)} match</em>
+      </header>
+      <div className="taste-chips">
+        {pair.sharedGenres.length ? pair.sharedGenres.map((g) => <span key={g}>{g}</span>) : <small className="insights-muted">No shared top genres</small>}
+      </div>
+      <small className="insights-muted">
+        {pair.sharedTitleCount
+          ? `Both watched ${pair.sharedTitleCount} title${pair.sharedTitleCount === 1 ? "" : "s"}: ${pair.sharedTitles.slice(0, 4).map((t) => t.name).join(", ")}${pair.sharedTitleCount > 4 ? "…" : ""}`
+          : "No titles watched by both yet"}
+      </small>
+    </article>
+  );
+}
+
+function TasteMap() {
+  const [days, setDays] = useState(365);
+  const state = useInsight("taste-map", { days });
+  const data = state.data;
+  return (
+    <>
+      <div className="insights-pickers">
+        <select value={days} onChange={(event) => setDays(Number(event.target.value))}>
+          <option value={90}>Last 90 days</option>
+          <option value={365}>Last year</option>
+          <option value={1095}>Last 3 years</option>
+          <option value={3650}>All time</option>
+        </select>
+      </div>
+      <Loading state={state}>
+        {data ? (
+          data.users.length ? (
+            <>
+              {!data.scoped && data.users.length > 1 ? (
+                <>
+                  <div className="insights-stats">
+                    <Stat label="Viewers" value={data.users.length} />
+                    <Stat label="Closest match" value={data.overlaps[0] ? `${data.overlaps[0].a.name} & ${data.overlaps[0].b.name}` : "–"} note={data.overlaps[0] ? `${percent(data.overlaps[0].similarity)} genre match` : null} />
+                    <Stat label="Household favourite" value={data.sharedGenres[0]?.name || "–"} note={data.sharedGenres[0] ? `Top genre for ${data.sharedGenres[0].users.length} of ${data.users.length}` : null} />
+                  </div>
+                  <TasteMatrix users={data.users} overlaps={data.overlaps} />
+                  <div className="insights-grid">
+                    {data.overlaps.slice(0, 6).map((pair) => (
+                      <TastePair key={`${pair.a.id}-${pair.b.id}`} pair={pair} />
+                    ))}
+                  </div>
+                </>
+              ) : null}
+              <div className="taste-users">
+                {data.users.map((user) => (
+                  <TasteUser key={user.id} user={user} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="insights-empty">No plays recorded in this window yet.</div>
+          )
+        ) : null}
+      </Loading>
+    </>
+  );
+}
+
+
+const VERDICT_TEXT = { healthy: "Plays direct", mixed: "Sometimes transcodes", struggles: "Mostly transcodes", idle: "No plays" };
+
+function mbps(value) {
+  return value ? `${(Number(value) / 1e6).toFixed(1)} Mbps` : "–";
+}
+
+function pct(value) {
+  return `${Math.round(Number(value || 0) * 100)}%`;
+}
+
+function DeviceCard({ device }) {
+  const m = device.methods;
+  const total = device.plays || 1;
+  const segments = [
+    { key: "directPlay", label: "Direct play", value: m.directPlay },
+    { key: "directStream", label: "Direct stream", value: m.directStream },
+    { key: "transcode", label: "Transcode", value: m.transcode },
+    { key: "unknown", label: "Unknown", value: m.unknown },
+  ].filter((seg) => seg.value > 0);
+  return (
+    <section className={`insights-panel device-card is-${device.verdict}`}>
+      <header className="device-card-head">
+        <div>
+          <h3>{device.name}</h3>
+          <small className="insights-muted">{device.client}</small>
+        </div>
+        <span className={`device-verdict is-${device.verdict}`}>{VERDICT_TEXT[device.verdict]}</span>
+      </header>
+      <div className="device-bar" aria-label="Play methods">
+        {segments.map((seg) => (
+          <span key={seg.key} className={`is-${seg.key}`} style={{ width: `${(seg.value / total) * 100}%` }} title={`${seg.label}: ${seg.value}`} />
+        ))}
+      </div>
+      <div className="device-legend">
+        {segments.map((seg) => (
+          <span key={seg.key}>
+            <i className={`is-${seg.key}`} /> {seg.label} {pct(seg.value / total)}
+          </span>
+        ))}
+      </div>
+      <dl className="device-facts">
+        <div><dt>Plays</dt><dd>{device.plays.toLocaleString()}</dd></div>
+        <div><dt>Watched</dt><dd>{hours(device.seconds)} h</dd></div>
+        <div><dt>Typical bitrate</dt><dd>{mbps(device.avgBitrate)}</dd></div>
+        <div><dt>Last seen</dt><dd>{dateText(device.lastSeen)}</dd></div>
+      </dl>
+      {device.reasons.length ? (
+        <div className="device-reasons">
+          <b>Why it transcodes</b>
+          {device.reasons.map((r) => (
+            <div key={r.code} className="device-reason">
+              <span>{r.label} <em>×{r.count}</em></span>
+              {r.hint ? <small>{r.hint}</small> : null}
+            </div>
+          ))}
+          {device.methods.transcode ? <small className="insights-muted">Hardware accelerated: {pct(device.hardwareRate)} of transcodes</small> : null}
+        </div>
+      ) : null}
+      <div className="device-meta">
+        <div>
+          <b>Apps</b>
+          <div className="device-chips">
+            {device.apps.slice(0, 3).map((a) => (
+              <span key={a.name}>{a.name} <b>{a.plays}</b></span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <b>Used by</b>
+          <div className="device-chips">
+            {device.users.map((u) => (
+              <span key={u.id || u.name}>{u.name} <b>{u.plays}</b></span>
+            ))}
+            {device.userCount > device.users.length ? <span>+{device.userCount - device.users.length}</span> : null}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Devices() {
+  const [days, setDays] = useState(90);
+  const [sort, setSort] = useState("recent");
+  const state = useInsight("devices", { days, sort });
+  const data = state.data;
+  return (
+    <>
+      <div className="insights-pickers">
+        <select value={days} onChange={(event) => setDays(Number(event.target.value))}>
+          <option value={7}>Last 7 days</option>
+          <option value={30}>Last 30 days</option>
+          <option value={90}>Last 90 days</option>
+          <option value={365}>Last year</option>
+        </select>
+        <select value={sort} onChange={(event) => setSort(event.target.value)}>
+          <option value="recent">Recently seen</option>
+          <option value="plays">Most plays</option>
+          <option value="transcode">Most transcoding</option>
+        </select>
+      </div>
+      <Loading state={state}>
+        {data ? (
+          <>
+            <div className="insights-stats">
+              <Stat label="Devices" value={data.summary.devices} note={`Seen in the last ${data.days} days`} />
+              <Stat label="Plays" value={data.summary.plays.toLocaleString()} note="Live plays only, imports excluded" />
+              <Stat label="Transcoded" value={pct(data.summary.transcodeRate)} note="Across all devices" />
+              <Stat label="Mostly transcoding" value={data.summary.struggling} note="Devices over 50%" />
+            </div>
+            {data.devices.length ? (
+              <div className="device-grid">
+                {data.devices.map((device) => (
+                  <DeviceCard key={device.key} device={device} />
+                ))}
+              </div>
+            ) : (
+              <div className="insights-empty">No plays in this period yet.</div>
+            )}
+          </>
+        ) : null}
+      </Loading>
+    </>
+  );
+}
+
 export const INSIGHT_TABS = [
   { id: "wrapped", label: "Recap", icon: CalendarCheckLineIcon, Component: Wrapped },
+  { id: "tastemap", label: "Taste map", icon: Compass3LineIcon, Component: TasteMap },
   { id: "upnext", label: "Up next", icon: PlayList2LineIcon, Component: UpNext },
   { id: "health", label: "Library health", icon: HeartPulseLineIcon, Component: LibraryHealth },
   { id: "streams", label: "Streams", icon: PulseLineIcon, Component: Streams },
+  { id: "devices", label: "Devices", icon: DeviceLineIcon, Component: Devices },
 ];
 
 const TABS = INSIGHT_TABS;

@@ -400,4 +400,4 @@ function stop() {
   timer = null;
 }
 
-module.exports = { deliver, start, stop, runChecks, sendTestAlert, sendRuleTest, getAlertSettings, saveAlertSettings, getAlertLog, getAlertState, maskSettings };
+module.exports = { fetchDisks, deliver, start, stop, runChecks, sendTestAlert, sendRuleTest, getAlertSettings, saveAlertSettings, getAlertLog, getAlertState, maskSettings };

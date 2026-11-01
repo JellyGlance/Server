@@ -6,6 +6,8 @@ import { askBlobbo, ALL_CHIPS, STARTER_CHIPS } from "../../../lib/blobbo-intents
 import { BLOBBO_HIDDEN_KEY, BLOBBO_SETTING_EVENT, isBlobboHidden } from "../../../lib/blobbo-settings";
 import { BLOBBO_PREFS_EVENT, clearHistory, currentSeason, getFlag, getHistory, getPrefs, rememberQuestion, setFlag, setPref, speak } from "../../../lib/blobbo-prefs";
 import { OPEN_WHATS_NEW_EVENT } from "../../../lib/events";
+import { fetchActiveSessions, getCachedActiveSessions, subscribeActiveSessions } from "../../../lib/session-cache";
+import { BLOBBO_REACT_DURATION_MS, decideSessionReaction, sessionKeys } from "../../../lib/blobbo-session-react";
 import "../../css/blobbo.css";
 
 const isTypingTarget = (el) => !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
@@ -103,6 +105,9 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
   const [showOptions, setShowOptions] = useState(false);
   const [teaser, setTeaser] = useState(null);
   const [mood, setMood] = useState(null);
+  const [reaction, setReaction] = useState(null);
+  const sessionKeysRef = useRef(null);
+  const lastReactRef = useRef(0);
   const [tourStep, setTourStep] = useState(-1);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
@@ -154,6 +159,32 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, hidden]);
+
+  // Idle reacts to live sessions: wave when playback starts, look over when another stream joins.
+  useEffect(() => {
+    if (!enabled || hidden) return undefined;
+    let clearTimer = null;
+    const onSessions = (sessions) => {
+      const next = sessionKeys(sessions);
+      const now = Date.now();
+      const kind = decideSessionReaction(sessionKeysRef.current, next, lastReactRef.current, now);
+      sessionKeysRef.current = next;
+      if (!kind) return;
+      lastReactRef.current = now;
+      setReaction(kind);
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(() => setReaction(null), BLOBBO_REACT_DURATION_MS);
+    };
+    const cached = getCachedActiveSessions();
+    if (cached) onSessions(cached);
+    const unsubscribe = subscribeActiveSessions(onSessions);
+    const poll = () => {
+      if (document.hidden || !localStorage.getItem("token")) return;
+      fetchActiveSessions().catch(() => {});
+    };
+    const id = setInterval(poll, 30000);
+    return () => { unsubscribe(); clearInterval(id); clearTimeout(clearTimer); };
   }, [enabled, hidden]);
 
   // Mood follows server health, checked every five minutes.
@@ -284,7 +315,7 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
   const toggle = (name) => setPref(name, !prefs[name]);
 
   return (
-    <div className={`blobbo ${open ? "blobbo--open" : ""} ${reducedMotion ? "blobbo--still" : ""} ${mood ? `blobbo--mood-${mood}` : ""} ${season ? `blobbo--season-${season.id}` : ""}`}>
+    <div className={`blobbo ${open ? "blobbo--open" : ""} ${reducedMotion ? "blobbo--still" : ""} ${mood ? `blobbo--mood-${mood}` : ""} ${season ? `blobbo--season-${season.id}` : ""} ${reaction ? `blobbo--react-${reaction}` : ""}`}>
       {!open && teaser && (
         <div className="blobbo-bubble blobbo-teaser" role="status">
           <div className="blobbo-bubble-title">Blobbo</div>
@@ -409,6 +440,7 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
             </picture>
           )}
           {season && <span className="blobbo-season-badge" aria-hidden="true">{season.badge}</span>}
+          {reaction && <span className="blobbo-react-badge" aria-hidden="true">{reaction === "wave" ? "\u{1F44B}" : "\u{1F440}"}</span>}
           {mood === "worried" && <span className="blobbo-worry" aria-label="Some health checks need a look">!</span>}
         </button>
       </div>
