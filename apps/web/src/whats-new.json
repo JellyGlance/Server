@@ -6,6 +6,31 @@
       "body": "Statistics → Taste map shows what each person watches by genre and decade, with their most watched titles. Admins also get a household view: a match grid showing how closely everyone's tastes line up, the genres you share, and the shows and films more than one of you has watched. Everyone else sees their own map."
     },
     {
+      "icon": "magic",
+      "title": "Blobbo Notices Live Sessions",
+      "body": "Blobbo now reacts when someone starts watching: a quick wave when playback begins on an idle server, and a glance over when another stream joins. Reactions have a short cool-down so busy evenings do not keep it bouncing, and with reduced motion turned on Blobbo simply shows a small badge without moving."
+    },
+    {
+      "icon": "users",
+      "title": "Live Session Wall",
+      "body": "Active Sessions on Home now has a Wall layout: a compact tile for every stream showing who is watching, the poster, progress, device and whether it is direct playing or transcoding. Switch between Cards and Wall with the toggle beside the heading, and your choice is remembered in this browser. When nobody is playing, the Active Sessions section is hidden completely instead of showing an empty box, and it reappears as soon as playback starts."
+    },
+    {
+      "icon": "rocket",
+      "title": "Disk-Fill Forecast",
+      "body": "Libraries now opens with a disk-fill forecast for admins: free and used space from your Sonarr, Radarr or Lidarr disks, how much is being added per day, and roughly how long until the disks are full, with a range based on the last 30 and 90 days. It shows which libraries are growing fastest, says Stable when little is being added, and asks for more data instead of guessing when the history is too short."
+    },
+    {
+      "icon": "rocket",
+      "title": "Smart Request Routing",
+      "body": "Requests → Rules now has Smart routing. Build rules that match on who is asking, the genre and whether it is a movie or TV show, then choose Approve to send it straight to Sonarr/Radarr or Hold to keep it for an admin. Rules run top to bottom and the first match wins; anything that matches no rule keeps your existing settings, which hold requests unless auto-approve is on. A routing log shows every request, the rule that caught it and whether it was sent on or held."
+    },
+    {
+      "icon": "rocket",
+      "title": "Ops Copilot Preview",
+      "body": "Server → Ops Copilot lets admins ask plain questions like “why is Dune buffering for Mum?”, “free 500 GB without touching favourites” or “anything stuck in downloads?”. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."
+    },
+    {
       "icon": "mail",
       "title": "Wrapped Recaps By Email Or Webhook",
       "body": "Statistics → Recap now lets you schedule a weekly or monthly Wrapped for any user, with top shows, hours watched and the busiest day. Recaps arrive by email or on one of your webhooks as soon as each week or month finishes, with the recap card attached. Users can set up email delivery of their own recap, and Send now resends the last finished period whenever you like."

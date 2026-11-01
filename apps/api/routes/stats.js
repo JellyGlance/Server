@@ -1136,6 +1136,20 @@ router.post("/getGlobalLibraryStats", async (req, res) => {
   }
 });
 
+router.get("/getDiskForecast", async (req, res) => {
+  try {
+    if (!canViewAllUsers(req)) {
+      return res.status(403).send({ error: "Only admins can see the disk forecast" });
+    }
+    const { getDiskForecast } = require("../classes/disk-forecast");
+    const { fetchDisks } = require("../classes/threshold-alerts");
+    res.send(await getDiskForecast({ db, fetchDisks }));
+  } catch (error) {
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
 router.get("/getLibraryCardStats", async (req, res) => {
   try {
     const { rows } = await db.query(
