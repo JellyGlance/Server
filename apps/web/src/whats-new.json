@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "shield",
+      "title": "Heads-Up Before Removing Something Being Watched",
+      "body": "Removing a download, re-grabbing a new copy, or purging an item now checks Active Sessions first. If someone is playing that title you'll see who and on which device, and can cancel or carry on anyway."
+    },
+    {
       "icon": "speed",
       "title": "Device Profiles",
       "body": "Insights → Devices gives every TV, phone, browser and cast device its own card: how often it direct plays versus transcodes, its typical bitrate, which apps and versions it runs, who uses it and when it was last seen. Devices that transcode get their top reasons with a fix hint for that device. Admins only."
