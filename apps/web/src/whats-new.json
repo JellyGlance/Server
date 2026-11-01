@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "shield",
+      "title": "Beta Builds Show Beta Notes",
+      "body": "Beta images such as v1.4.2-beta.3 now say they are on the Beta channel in About, the version card and What's New, and open What's New (beta) with the notes for this beta line instead of falling back to the last stable release. Each new beta build shows What's New again once, so you can catch up on what changed since the previous beta."
+    },
+    {
       "icon": "speed",
       "title": "Why Is This Transcoding?",
       "body": "Active Sessions now explains every transcode for admins. Each transcoding stream gets a small chip such as “Transcode: Subtitle burn-in” or “Remux: Container”; tap it for a plain-English reason (HEVC to H.264, audio codec, bitrate over the limit, HDR tone-mapping, image subtitles being burned in, resolution caps or direct play turned off) plus a fix hint for that device, like enabling HEVC in Infuse or Android TV, raising the max streaming bitrate, or switching to SRT subtitles. Remuxes and audio-only transcodes are labelled separately so you can tell the cheap ones from the heavy ones."
