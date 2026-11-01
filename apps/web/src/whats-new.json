@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "magic",
+      "title": "Watching Heat Map",
+      "body": "Statistics → Play Count and Watch Duration now open with a heat map of when your household watches, by day of the week and hour of the day, in your server's time zone. Hover or tap a square for plays and watch time in that hour, and see the busiest slot, day and hour at a glance. Filter by library, and admins can pick a single user; everyone else sees just their own viewing."
+    },
+    {
       "icon": "shield",
       "title": "Heads-Up Before Removing Something Being Watched",
       "body": "Removing a download, re-grabbing a new copy, or purging an item now checks Active Sessions first. If someone is playing that title you'll see who and on which device, and can cancel or carry on anyway."
