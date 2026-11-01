@@ -22,6 +22,7 @@ import { Trans } from "react-i18next";
 import baseUrl from "../../../lib/baseurl";
 import axios from "../../../lib/axios_instance";
 import SessionGlanceStrip from "./session-glance-strip";
+import TranscodeExplainer from "./transcode-explainer";
 
 function formatTranscodeReasons(session) {
   const reasons = session?.TranscodingInfo?.TranscodeReasons;
@@ -355,6 +356,7 @@ function SessionCard(props) {
                 {isTranscoding ? <span className="is-transcoding">Transcoding</span> : <span>Direct</span>}
               </div>
               {transcodeReason ? <p className="session-popout-reason">{transcodeReason}</p> : null}
+              {canManage && isTranscoding ? <TranscodeExplainer session={session} defaultOpen /> : null}
               <h2>{title}</h2>
               <p>{subtitle}</p>
               <div className="session-popout-progress" aria-label={`Playback progress ${Math.round(progressPercent)} percent`}>
@@ -673,6 +675,7 @@ function SessionCard(props) {
                           </Tooltip>
                       </SessionCardDetailRow>
                     )}
+                    {canManage && isTranscoding ? <TranscodeExplainer session={session} compact /> : null}
 
                     {!hideIpAddress ? (
                     <SessionCardDetailRow label={<Trans i18nKey="ACTIVITY_TABLE.IP_ADDRESS" />} className="mt-2">

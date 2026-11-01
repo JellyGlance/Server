@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "speed",
+      "title": "Why Is This Transcoding?",
+      "body": "Active Sessions now explains every transcode for admins. Each transcoding stream gets a small chip such as “Transcode: Subtitle burn-in” or “Remux: Container”; tap it for a plain-English reason (HEVC to H.264, audio codec, bitrate over the limit, HDR tone-mapping, image subtitles being burned in, resolution caps or direct play turned off) plus a fix hint for that device, like enabling HEVC in Infuse or Android TV, raising the max streaming bitrate, or switching to SRT subtitles. Remuxes and audio-only transcodes are labelled separately so you can tell the cheap ones from the heavy ones."
+    },
+    {
       "icon": "magic",
       "title": "Watching Heat Map",
       "body": "Statistics → Play Count and Watch Duration now open with a heat map of when your household watches, by day of the week and hour of the day, in your server's time zone. Hover or tap a square for plays and watch time in that hour, and see the busiest slot, day and hour at a glance. Filter by library, and admins can pick a single user; everyone else sees just their own viewing."
