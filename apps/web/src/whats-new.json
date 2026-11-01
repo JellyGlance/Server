@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "users",
+      "title": "Taste Map",
+      "body": "Statistics → Taste map shows what each person watches by genre and decade, with their most watched titles. Admins also get a household view: a match grid showing how closely everyone's tastes line up, the genres you share, and the shows and films more than one of you has watched. Everyone else sees their own map."
+    },
+    {
       "icon": "magic",
       "title": "Blobbo Notices Live Sessions",
       "body": "Blobbo now reacts when someone starts watching: a quick wave when playback begins on an idle server, and a glance over when another stream joins. Reactions have a short cool-down so busy evenings do not keep it bouncing, and with reduced motion turned on Blobbo simply shows a small badge without moving."
