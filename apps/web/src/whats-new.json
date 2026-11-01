@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "rocket",
+      "title": "Storage by Library",
+      "body": "Libraries now shows admins how much space each library takes, with its share of the total and title count. Open the top 20 largest titles to see size, plays and when each was last played, plus soft hints for anything worth a second look: never played, not played in 2+ years, or a movie that shares its name and year with another copy. Titles added in the last 90 days never get a hint, and nothing is deleted from here."
+    },
+    {
       "icon": "users",
       "title": "Live Session Wall",
       "body": "Active Sessions on Home now has a Wall layout: a compact tile for every stream showing who is watching, the poster, progress, device and whether it is direct playing or transcoding. Switch between Cards and Wall with the toggle beside the heading, and your choice is remembered in this browser. When nobody is playing, the Active Sessions section is hidden completely instead of showing an empty box, and it reappears as soon as playback starts."
