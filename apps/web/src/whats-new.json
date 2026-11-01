@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "rocket",
+      "title": "Storage by Library",
+      "body": "Libraries now shows admins how much space each library takes, with its share of the total and title count. Open the top 20 largest titles to see size, plays and when each was last played, plus soft hints for anything worth a second look: never played, not played in 2+ years, or a movie that shares its name and year with another copy. Titles added in the last 90 days never get a hint, and nothing is deleted from here."
+    },
+    {
       "icon": "movie",
       "title": "Incomplete Season Hunter",
       "body": "Server → Incomplete Seasons lists every series with a season that is short on episodes. With Sonarr connected under Integrations it compares what is on disk against Sonarr's aired episode count; without it, gaps in episode numbering (like E01, E02, E04) are flagged. Each row shows which seasons are short and the missing episode numbers, with buttons to open the series in Sonarr (or add it if Sonarr doesn't have it yet) and on TVDB."

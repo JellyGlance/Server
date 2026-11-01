@@ -1136,6 +1136,19 @@ router.post("/getGlobalLibraryStats", async (req, res) => {
   }
 });
 
+router.get("/getStorageByLibrary", async (req, res) => {
+  try {
+    if (!canViewAllUsers(req)) {
+      return res.status(403).send({ error: "Only admins can see storage by library" });
+    }
+    const { getStorageReport } = require("../classes/storage-library");
+    res.send(await getStorageReport({ db }));
+  } catch (error) {
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
 router.get("/getDiskForecast", async (req, res) => {
   try {
     if (!canViewAllUsers(req)) {
