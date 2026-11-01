@@ -130,8 +130,11 @@ async function deliver(alerts, { rules = [] } = {}) {
 async function checkStuckDownloads(rules) {
   const data = await getIntegrationData();
   const items = data.downloads?.items || [];
+  const handled = data.cleanuparr?.handled || {};
   return items
     .filter((item) => item.stalled && Number(item.stalledMinutes || 0) >= rules.stuckMinutes)
+    // Cleanuparr is already striking or removing these; it raises its own alert if a person is needed.
+    .filter((item) => !(item.hash && handled[String(item.hash).toLowerCase()]))
     .map((item) => {
       const name = item.name || item.title || "A download";
       const minutes = Number(item.stalledMinutes || 0);
@@ -397,4 +400,4 @@ function stop() {
   timer = null;
 }
 
-module.exports = { start, stop, runChecks, sendTestAlert, sendRuleTest, getAlertSettings, saveAlertSettings, getAlertLog, getAlertState, maskSettings };
+module.exports = { deliver, start, stop, runChecks, sendTestAlert, sendRuleTest, getAlertSettings, saveAlertSettings, getAlertLog, getAlertState, maskSettings };

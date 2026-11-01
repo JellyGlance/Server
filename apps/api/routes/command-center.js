@@ -1,4 +1,5 @@
 const express = require("express");
+const cleanuparr = require("../classes/cleanuparr");
 const API = require("../classes/api-loader");
 const { getAuditLog, mergeSettings, addAuditEntry, getSettings } = require("../classes/admin-history");
 const {
@@ -36,6 +37,7 @@ const {
   buildTodayWidgets,
   buildInviteWidgets,
   buildAutobrrWidgets,
+  buildCleanuparrWidgets,
   buildTranscodeWidgets,
   buildMaintainerrWidgets,
   buildAutomationWidgets,
@@ -198,6 +200,7 @@ const extraWidgetRoutes = [
   ["today", buildTodayWidgets, "Releases today"],
   ["invites", buildInviteWidgets, "Wizarr invites"],
   ["autobrr", buildAutobrrWidgets, "autobrr hits"],
+  ["cleanuparr", buildCleanuparrWidgets, "Cleanuparr"],
   ["transcodes", buildTranscodeWidgets, "Tdarr queue"],
   ["maintainerr", buildMaintainerrWidgets, "Maintainerr cleanup"],
   ["automation", buildAutomationWidgets, "Integration health"],
@@ -376,6 +379,37 @@ router.post("/setBackupDestination", async (req, res) => {
     res.send({ ok: true });
   } catch (error) {
     res.status(500).send({ error: "Unable to save backup destination" });
+  }
+});
+
+router.get("/downloads/cleanuparr", async (req, res) => {
+  /* #swagger.tags = ['Downloads'] #swagger.summary = 'Cleanuparr stats, health and recent events' */
+  try {
+    const hours = Math.min(8760, Math.max(1, Number(req.query.hours) || 168));
+    res.send(await cleanuparr.fetchCleanuparrSnapshot({ hours }));
+  } catch (error) {
+    console.error("Cleanuparr snapshot failed:", error);
+    res.status(503).send({ error: "Unable to load Cleanuparr" });
+  }
+});
+
+router.get("/integrations/cleanuparr/webhook", async (_req, res) => {
+  /* #swagger.tags = ['Integrations'] #swagger.summary = 'Cleanuparr notification receiver settings' */
+  try {
+    res.send({ token: await cleanuparr.getWebhookToken(), path: "/cleanuparr", events: cleanuparr.EVENT_TYPES });
+  } catch (error) {
+    console.error("Cleanuparr webhook token failed:", error);
+    res.status(503).send({ error: "Unable to load Cleanuparr receiver" });
+  }
+});
+
+router.post("/integrations/cleanuparr/webhook/rotate", async (_req, res) => {
+  /* #swagger.tags = ['Integrations'] #swagger.summary = 'Rotate the Cleanuparr receiver token' */
+  try {
+    res.send({ token: await cleanuparr.rotateWebhookToken(), path: "/cleanuparr" });
+  } catch (error) {
+    console.error("Cleanuparr webhook rotate failed:", error);
+    res.status(503).send({ error: "Unable to rotate token" });
   }
 });
 

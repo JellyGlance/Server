@@ -197,6 +197,12 @@ async function getIntegrationData() {
       syncedAt: null,
       ...(settings.IntegrationData?.autobrr || {}),
     },
+    cleanuparr: {
+      events: [],
+      handled: {},
+      lastEventAt: null,
+      ...(settings.IntegrationData?.cleanuparr || {}),
+    },
   };
 }
 

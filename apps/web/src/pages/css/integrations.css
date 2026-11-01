@@ -6680,3 +6680,97 @@
     flex: 1 1 100%;
   }
 }
+
+/* Cleanuparr notification receiver */
+.integration-receiver {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.integration-receiver small {
+  font-size: 12px;
+  color: rgba(199, 211, 230, 0.72);
+  line-height: 1.45;
+}
+
+.integration-receiver label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.integration-receiver-rotate {
+  justify-self: start;
+}
+
+/* Cleanuparr card on the Downloads page */
+.download-cleanuparr {
+  color: #7dd3fc !important;
+  font-weight: 700;
+}
+
+.download-cleanuparr.is-attention {
+  color: #fbbf24 !important;
+}
+
+.cleanuparr-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cleanuparr-panel-head span,
+.cleanuparr-empty {
+  font-size: 0.82rem;
+  color: rgba(199, 211, 230, 0.62);
+}
+
+.cleanuparr-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.cleanuparr-tile {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.cleanuparr-tile strong {
+  font-size: 1.4rem;
+}
+
+.cleanuparr-tile span {
+  font-size: 0.78rem;
+  color: rgba(199, 211, 230, 0.72);
+}
+
+.cleanuparr-tile.is-attention {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.cleanuparr-health {
+  margin: 0 0 10px;
+  color: #86efac;
+  font-size: 0.85rem;
+}
+
+.cleanuparr-health.is-attention {
+  color: #fbbf24;
+}
+
+.cleanuparr-event.is-attention {
+  border-left: 3px solid #fbbf24;
+}

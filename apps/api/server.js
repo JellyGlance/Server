@@ -42,6 +42,7 @@ const jellystatRouter = require("./routes/jellystat");
 const logRouter = require("./routes/logging");
 const utilsRouter = require("./routes/utils");
 const webhooksRouter = require("./routes/webhooks");
+const cleanuparrInboundRouter = require("./routes/cleanuparr-inbound");
 const newsletterRouter = require("./routes/newsletter");
 const insightsRouter = require("./routes/insights");
 const alertsRouter = require("./routes/alerts");
@@ -381,6 +382,7 @@ app.get("/webhook-cards/:id.jpg", fileRateLimit, (req, res) => {
   res.setHeader("Cache-Control", "public, max-age=600");
   return res.end(card.buffer);
 });
+app.use("/cleanuparr", apiRateLimit, cleanuparrInboundRouter);
 app.use("/api", apiRateLimit, authenticate, restrictApiKeyScope, authorizeApiRoute, commandCenterRouter, apiRouter, () => {
   /*  #swagger.tags = ['API']*/
 }); // mount the API router at /api, with JWT middleware

@@ -52,6 +52,7 @@ export default function Downloads() {
   const [torrentFile, setTorrentFile] = useState(null);
   const [downloads, setDownloads] = useState([]);
   const [autobrrHits, setAutobrrHits] = useState([]);
+  const [cleanuparr, setCleanuparr] = useState(null);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [busyDownloadId, setBusyDownloadId] = useState("");
@@ -68,7 +69,7 @@ export default function Downloads() {
 
   async function loadDownloadData() {
     try {
-      const [integrationResponse, downloadResponse, autobrrResponse] = await Promise.all([
+      const [integrationResponse, downloadResponse, autobrrResponse, cleanuparrResponse] = await Promise.all([
         axios.get("/api/integrations", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }).catch(() => ({ data: loadSavedIntegrations({ clients: [] }) })),
@@ -80,12 +81,16 @@ export default function Downloads() {
         axios.get("/api/autobrr/hits", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }).catch(() => ({ data: { items: [] } })),
+        axios.get("/api/downloads/cleanuparr", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }).catch(() => ({ data: null })),
       ]);
       setIntegrations(integrationResponse.data || { clients: [] });
       if (Array.isArray(downloadResponse.data?.items)) {
         setDownloads(downloadResponse.data.items);
       }
       setAutobrrHits(Array.isArray(autobrrResponse.data?.items) ? autobrrResponse.data.items : []);
+      setCleanuparr(cleanuparrResponse.data?.configured ? cleanuparrResponse.data : null);
     } catch (error) {
       console.log("Unable to load download sync data", error);
     }
@@ -324,7 +329,15 @@ export default function Downloads() {
                     <TimerFlashLineIcon size={13} />
                     {download.progress >= 100 ? t("FEATURES.DOWNLOADS.COMPLETE") : t("FEATURES.DOWNLOADS.ACTIVE_STATE")}
                   </span>
-                  {download.stalledReason ? <span className="download-stalled">{download.stalledReason}</span> : null}
+                  {download.cleanuparr ? (
+                    <span className={`download-cleanuparr ${download.cleanuparr.needsIntervention ? "is-attention" : ""}`}>
+                      {download.cleanuparr.needsIntervention
+                        ? t("FEATURES.DOWNLOADS.CLEANUPARR_INTERVENTION")
+                        : t("FEATURES.DOWNLOADS.CLEANUPARR_HANDLING", { reason: download.cleanuparr.reason || download.cleanuparr.eventType })}
+                    </span>
+                  ) : download.stalledReason ? (
+                    <span className="download-stalled">{download.stalledReason}</span>
+                  ) : null}
                   {download.peers != null || download.seeds != null ? (
                     <span>{t("FEATURES.DOWNLOADS.PEERS", { seeds: download.seeds || 0, peers: download.peers || 0 })}</span>
                   ) : null}
@@ -371,6 +384,8 @@ export default function Downloads() {
         </article>
       </section>
 
+      {cleanuparr ? <CleanuparrPanel snapshot={cleanuparr} t={t} /> : null}
+
       {autobrrHits.length ? (
         <section className="download-panel autobrr-hits-panel">
           <h2>{t("FEATURES.DOWNLOADS.AUTOBRR")}</h2>
@@ -393,5 +408,65 @@ export default function Downloads() {
         </section>
       ) : null}
     </div>
+  );
+}
+
+function CleanuparrPanel({ snapshot, t }) {
+  const totals = snapshot.totals || {};
+  const unhealthy = (snapshot.instances || []).flatMap((instance) => (instance.ok ? instance.stats?.health?.unhealthy || [] : []));
+  const unreachable = (snapshot.instances || []).filter((instance) => !instance.ok);
+  const attention = (totals.needsAttention || 0) + (totals.interventions || 0);
+  const tiles = [
+    ["CLEANUPARR_STRIKES", totals.strikes],
+    ["CLEANUPARR_REMOVALS", totals.removals],
+    ["CLEANUPARR_CLEANED", totals.cleaned],
+    ["CLEANUPARR_EVENTS", totals.events],
+    ["CLEANUPARR_ATTENTION", attention],
+  ];
+  return (
+    <section className="download-panel cleanuparr-panel">
+      <div className="cleanuparr-panel-head">
+        <h2>{t("FEATURES.DOWNLOADS.CLEANUPARR")}</h2>
+        <span>{t("FEATURES.DOWNLOADS.CLEANUPARR_WINDOW", { hours: snapshot.hours })}</span>
+      </div>
+      <div className="cleanuparr-tiles">
+        {tiles.map(([key, value]) => (
+          <div key={key} className={`cleanuparr-tile ${key === "CLEANUPARR_ATTENTION" && value ? "is-attention" : ""}`}>
+            <strong>{Number(value || 0).toLocaleString()}</strong>
+            <span>{t(`FEATURES.DOWNLOADS.${key}`)}</span>
+          </div>
+        ))}
+      </div>
+      <p className={`cleanuparr-health ${unhealthy.length || unreachable.length ? "is-attention" : ""}`}>
+        {unreachable.length
+          ? unreachable.map((instance) => t("FEATURES.DOWNLOADS.CLEANUPARR_UNREACHABLE", { name: instance.name, error: instance.error })).join(" · ")
+          : unhealthy.length
+            ? t("FEATURES.DOWNLOADS.CLEANUPARR_UNHEALTHY", { names: unhealthy.map((row) => row.name).join(", ") })
+            : t("FEATURES.DOWNLOADS.CLEANUPARR_HEALTHY")}
+      </p>
+      {snapshot.recentEvents?.length ? (
+        <div className="download-list">
+          {snapshot.recentEvents.slice(0, 8).map((event) => (
+            <div className={`download-row cleanuparr-event ${event.needsIntervention ? "is-attention" : ""}`} key={event.id}>
+              <div className="download-row-main">
+                <div className="download-title-group">
+                  <div>
+                    <strong>{event.item || event.title}</strong>
+                    <span>
+                      {[event.title, event.strikeCount ? `#${event.strikeCount}` : "", event.instanceType, new Date(event.receivedAt).toLocaleString()]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </div>
+                  {event.needsIntervention ? <span className="download-cleanuparr is-attention">{t("FEATURES.DOWNLOADS.CLEANUPARR_INTERVENTION")}</span> : null}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="cleanuparr-empty">{t("FEATURES.DOWNLOADS.CLEANUPARR_NO_EVENTS")}</p>
+      )}
+    </section>
   );
 }
