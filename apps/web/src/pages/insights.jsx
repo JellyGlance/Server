@@ -142,6 +142,125 @@ const PERIODS = [
   { id: "year", label: "Year" },
 ];
 
+function RecapDelivery({ users, selectedUserId, selectedPeriod }) {
+  const [state, setState] = useState({ loading: true, data: null, error: null });
+  const [form, setForm] = useState({ userId: "", period: "week", email: "", webhookId: "" });
+  const [busy, setBusy] = useState("");
+  const [notice, setNotice] = useState(null);
+  const load = () =>
+    axios
+      .get("/insights-data/wrapped/delivery", { headers: authHeader() })
+      .then((response) => setState({ loading: false, data: response.data, error: null }))
+      .catch((error) => setState({ loading: false, data: null, error: error.response?.data?.error || "Unable to load recap delivery." }));
+  useEffect(() => {
+    load();
+  }, []);
+  const data = state.data;
+  useEffect(() => {
+    setForm((current) => ({
+      ...current,
+      userId: data && !data.admin ? data.ownUserId || "" : selectedUserId || current.userId,
+      period: selectedPeriod === "month" ? "month" : "week",
+    }));
+  }, [selectedUserId, selectedPeriod, data]);
+  const nameOf = (sub) => users.find((user) => user.id === sub.userId)?.name || sub.userName || sub.userId;
+  const webhookName = (id) => data?.webhooks?.find((hook) => Number(hook.id) === Number(id))?.name || `Webhook #${id}`;
+  const run = async (key, action, done) => {
+    setBusy(key);
+    setNotice(null);
+    try {
+      const response = await action();
+      setNotice({ ok: true, text: done(response.data) });
+      await load();
+    } catch (error) {
+      setNotice({ ok: false, text: error.response?.data?.error || "Something went wrong." });
+    } finally {
+      setBusy("");
+    }
+  };
+  const save = (event) => {
+    event.preventDefault();
+    run(
+      "save",
+      () => axios.post("/insights-data/wrapped/delivery", { ...form, webhookId: form.webhookId || null }, { headers: authHeader() }),
+      () => {
+        setForm((current) => ({ ...current, email: "", webhookId: "" }));
+        return "Recap delivery saved.";
+      }
+    );
+  };
+  if (state.loading) return null;
+  if (state.error) return <section className="insights-panel insights-delivery"><h3>Recap delivery</h3><p className="insights-muted">{state.error}</p></section>;
+  const canSave = form.userId && (form.email || form.webhookId);
+  return (
+    <section className="insights-panel insights-delivery">
+      <h3>Recap delivery</h3>
+      <p className="insights-muted">
+        Get each finished week or month sent automatically, with the recap card attached. Weekly recaps go out on Monday and monthly ones on the 1st.
+        {data.smtpReady ? "" : " Email needs SMTP set up under Newsletter settings first."}
+      </p>
+      {data.subscriptions.length ? (
+        <ul className="insights-delivery-list">
+          {data.subscriptions.map((sub) => (
+            <li key={sub.id}>
+              <div>
+                <strong>{nameOf(sub)}</strong> · {sub.period === "month" ? "Monthly" : "Weekly"}
+                <span className="insights-muted">
+                  {[sub.email, sub.webhookId ? webhookName(sub.webhookId) : null].filter(Boolean).join(" + ")}
+                  {sub.lastResult ? ` · last sent ${dateText(sub.lastResult.at)}${sub.lastResult.ok ? "" : ` (failed: ${sub.lastResult.error})`}` : " · not sent yet"}
+                </span>
+              </div>
+              <div className="insights-delivery-actions">
+                <button type="button" disabled={Boolean(busy)} onClick={() => run(`send-${sub.id}`, () => axios.post(`/insights-data/wrapped/delivery/${sub.id}/send`, {}, { headers: authHeader() }), (result) => (result.ok ? `Sent “${result.title}”.` : `Send failed: ${result.error}`))}>
+                  {busy === `send-${sub.id}` ? "Sending…" : "Send now"}
+                </button>
+                <button type="button" disabled={Boolean(busy)} onClick={() => run(`toggle-${sub.id}`, () => axios.post("/insights-data/wrapped/delivery", { id: sub.id, enabled: sub.enabled === false }, { headers: authHeader() }), () => (sub.enabled === false ? "Recap delivery resumed." : "Recap delivery paused."))}>
+                  {sub.enabled === false ? "Resume" : "Pause"}
+                </button>
+                <button type="button" className="danger" disabled={Boolean(busy)} onClick={() => run(`del-${sub.id}`, () => axios.delete(`/insights-data/wrapped/delivery/${sub.id}`, { headers: authHeader() }), () => "Recap delivery removed.")}>
+                  Remove
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <form className="insights-delivery-form" onSubmit={save}>
+        {data.admin ? (
+          <select aria-label="User" value={form.userId} onChange={(event) => setForm({ ...form, userId: event.target.value })}>
+            <option value="">Pick a user…</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
+        <select aria-label="How often" value={form.period} onChange={(event) => setForm({ ...form, period: event.target.value })}>
+          <option value="week">Weekly</option>
+          <option value="month">Monthly</option>
+        </select>
+        <input type="email" placeholder="Email address" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+        {data.admin ? (
+          <select aria-label="Webhook" value={form.webhookId} onChange={(event) => setForm({ ...form, webhookId: event.target.value })}>
+            <option value="">No webhook</option>
+            {data.webhooks.map((hook) => (
+              <option key={hook.id} value={hook.id}>
+                {hook.name}
+                {hook.enabled === false ? " (disabled)" : ""}
+              </option>
+            ))}
+          </select>
+        ) : null}
+        <button type="submit" className="insights-share" disabled={!canSave || Boolean(busy)}>
+          {busy === "save" ? "Saving…" : "Schedule recap"}
+        </button>
+      </form>
+      {notice ? <p className={notice.ok ? "insights-delivery-ok" : "insights-delivery-error"}>{notice.text}</p> : null}
+    </section>
+  );
+}
+
 function Wrapped() {
   const meta = useInsight("wrapped/years", {});
   const [period, setPeriod] = useState("year");
@@ -293,6 +412,7 @@ function Wrapped() {
           <div className="insights-empty">No plays recorded for this {period} yet.</div>
         )}
       </Loading>
+      <RecapDelivery users={meta.data?.users || []} selectedUserId={userId} selectedPeriod={period} />
     </>
   );
 }

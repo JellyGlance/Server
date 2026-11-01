@@ -565,6 +565,10 @@ class WebhookManager {
     }
 
     getDefaultTitle(data = {}) {
+        if (data.event === 'wrapped_recap') {
+            return data.title || 'Wrapped recap';
+        }
+
         if (data.event === 'playback_digest') {
             return data.integrationEvent || 'Overnight playback digest';
         }
