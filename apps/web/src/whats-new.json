@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "shield",
+      "title": "Beta Builds Show Beta Notes",
+      "body": "Beta images such as v1.4.2-beta.3 now say they are on the Beta channel in About, the version card and What's New, and open What's New (beta) with the notes for this beta line instead of falling back to the last stable release. Each new beta build shows What's New again once, so you can catch up on what changed since the previous beta."
+    },
+    {
       "icon": "palette",
       "title": "Blobbo Costumes and Seasonal Looks",
       "body": "Blobbo now has 20 looks: Classic plus Halloween, festive winter, Valentine's hearts and summer outfits, and 15 costumes including New Year, Easter, Pride, birthday, gaming, St Patrick's, harvest, cozy night, chef, space, music, bookworm, sports, wizard and movie night. Each look keeps Blobbo's soft bouncy idle. Pick one from Blobbo's Options or Settings → General → Blobbo look and it stays on. Leave it on Auto and Blobbo dresses for the calendar: New Year's Eve, winter in December, Valentine's week, St Patrick's, Easter, Pride week, summer, harvest and Halloween. Choices stay in this browser only."
