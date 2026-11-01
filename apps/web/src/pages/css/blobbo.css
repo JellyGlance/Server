@@ -16,39 +16,40 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 45%, rgba(196, 160, 255, 0.28), rgba(27, 21, 48, 0) 70%);
+  background: radial-gradient(circle at 50% 45%, rgba(var(--primary-rgb, 155, 106, 200), 0.28), rgba(var(--primary-rgb, 155, 106, 200), 0) 70%);
   cursor: pointer;
-  filter: drop-shadow(0 6px 14px rgba(139, 92, 246, 0.35));
+  filter: drop-shadow(0 6px 14px rgba(var(--primary-rgb, 155, 106, 200), 0.35));
   transition: transform 0.2s ease, filter 0.2s ease;
 }
-.blobbo-avatar:hover { transform: scale(1.06); filter: drop-shadow(0 8px 18px rgba(224, 90, 170, 0.45)); }
-.blobbo-avatar:focus-visible { outline: 2px solid #c4a0ff; outline-offset: 3px; }
+.blobbo-avatar:hover { transform: scale(1.06); filter: drop-shadow(0 8px 18px rgba(var(--primary-rgb, 155, 106, 200), 0.5)); }
+.blobbo-avatar:focus-visible { outline: 2px solid var(--primary-color, #9b6ac8); outline-offset: 3px; }
 .blobbo-avatar img { width: 72px; height: 72px; display: block; margin: 2px auto 0; border-radius: 50%; user-select: none; }
 .blobbo-bubble {
   max-width: 280px;
   padding: 14px 16px;
   border-radius: 16px 16px 4px 16px;
-  background: linear-gradient(160deg, rgba(139, 92, 246, 0.96), rgba(110, 70, 210, 0.96));
-  border: 1px solid rgba(196, 160, 255, 0.45);
-  color: #fff;
-  box-shadow: 0 12px 32px rgba(10, 8, 25, 0.5);
+  background: var(--secondary-background-color, #131820);
+  background-image: linear-gradient(160deg, rgba(var(--primary-rgb, 155, 106, 200), 0.16), rgba(var(--primary-rgb, 155, 106, 200), 0.04));
+  border: 1px solid rgba(var(--primary-rgb, 155, 106, 200), 0.4);
+  color: var(--text-color, #f8fafc);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   animation: blobbo-pop 0.22s ease-out;
 }
-.blobbo-bubble-title { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.04em; opacity: 0.85; margin-bottom: 4px; }
+.blobbo-bubble-title { color: var(--primary-light-color, #c9a7e6); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.04em; opacity: 0.85; margin-bottom: 4px; }
 .blobbo-bubble-text { margin: 0 0 10px; font-size: 0.92rem; line-height: 1.4; }
 .blobbo-bubble-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .blobbo-btn {
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  border: 1px solid var(--surface-border-color, rgba(255, 255, 255, 0.11));
+  background: var(--tertiary-background-color, #1b212b);
+  color: var(--text-color, #f8fafc);
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 0.8rem;
   cursor: pointer;
 }
-.blobbo-btn:hover { background: rgba(255, 255, 255, 0.22); }
-.blobbo-btn--primary { background: #e05aaa; border-color: #e05aaa; }
-.blobbo-btn--primary:hover { background: #ea6fb8; }
+.blobbo-btn:hover { border-color: rgba(var(--primary-rgb, 155, 106, 200), 0.6); }
+.blobbo-btn--primary { background: var(--primary-color, #9b6ac8); border-color: var(--primary-color, #9b6ac8); color: var(--background-color, #0b0d12); font-weight: 600; }
+.blobbo-btn--primary:hover { background: var(--primary-light-color, #c9a7e6); border-color: var(--primary-light-color, #c9a7e6); }
 .blobbo-btn--ghost { background: transparent; }
 .blobbo-chat {
   width: 320px;
@@ -63,7 +64,7 @@
 .blobbo-chat-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .blobbo-chat-header .blobbo-bubble-title { margin: 0; }
 .blobbo-chat-header-actions { display: flex; align-items: center; gap: 4px; }
-.blobbo-icon-btn { border: 0; background: transparent; color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 0 4px; opacity: 0.85; }
+.blobbo-icon-btn { border: 0; background: transparent; color: var(--muted-text-color, #b3bfce); font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 0 4px; opacity: 0.85; }
 .blobbo-icon-btn:hover { opacity: 1; }
 .blobbo-chat-messages {
   flex: 1;
@@ -72,44 +73,92 @@
   flex-direction: column;
   gap: 8px;
   padding: 4px 2px;
-  background: rgba(20, 14, 40, 0.28);
+  background: var(--background-color, #0b0d12);
+  border: 1px solid var(--surface-border-color, rgba(255, 255, 255, 0.11));
   border-radius: 12px;
 }
 .blobbo-msg { max-width: 88%; padding: 8px 10px; border-radius: 12px; font-size: 0.86rem; line-height: 1.4; }
 .blobbo-msg p { margin: 0 0 4px; }
 .blobbo-msg ul { margin: 2px 0 6px; padding-left: 16px; }
 .blobbo-msg li { margin: 1px 0; }
-.blobbo-msg--blobbo { align-self: flex-start; background: rgba(255, 255, 255, 0.14); border-bottom-left-radius: 4px; margin-left: 4px; }
-.blobbo-msg--you { align-self: flex-end; background: #e05aaa; border-bottom-right-radius: 4px; margin-right: 4px; }
-.blobbo-msg-note { opacity: 0.75; font-size: 0.78rem; }
+.blobbo-msg--blobbo { align-self: flex-start; background: var(--tertiary-background-color, #1b212b); color: var(--text-color, #f8fafc); border-bottom-left-radius: 4px; margin-left: 4px; }
+.blobbo-msg--you { align-self: flex-end; background: rgba(var(--primary-rgb, 155, 106, 200), 0.85); color: var(--background-color, #0b0d12); border-bottom-right-radius: 4px; margin-right: 4px; }
+.blobbo-msg-note { color: var(--subtle-text-color, #94a3b8); font-size: 0.78rem; }
 .blobbo-typing { opacity: 0.8; font-style: italic; }
 .blobbo-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
 .blobbo-chip {
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border: 1px solid rgba(var(--secondary-rgb, 74, 168, 188), 0.45);
+  background: rgba(var(--secondary-rgb, 74, 168, 188), 0.1);
+  color: var(--text-color, #f8fafc);
   border-radius: 999px;
   padding: 3px 9px;
   font-size: 0.75rem;
   cursor: pointer;
   white-space: nowrap;
 }
-.blobbo-chip:hover:not(:disabled) { background: rgba(255, 255, 255, 0.22); }
+.blobbo-chip:hover:not(:disabled) { background: rgba(var(--secondary-rgb, 74, 168, 188), 0.24); }
 .blobbo-chip:disabled, .blobbo-btn:disabled { opacity: 0.55; cursor: default; }
 .blobbo-chat-input { display: flex; gap: 6px; }
 .blobbo-chat-input input {
   flex: 1;
   min-width: 0;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(20, 14, 40, 0.45);
-  color: #fff;
+  border: 1px solid var(--surface-border-color, rgba(255, 255, 255, 0.11));
+  background: var(--background-color, #0b0d12);
+  color: var(--text-color, #f8fafc);
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 0.85rem;
 }
-.blobbo-chat-input input::placeholder { color: rgba(255, 255, 255, 0.6); }
-.blobbo-chat-input input:focus-visible { outline: 2px solid #c4a0ff; outline-offset: 1px; }
+.blobbo-chat-input input::placeholder { color: var(--subtle-text-color, #94a3b8); }
+.blobbo-chat-input input:focus-visible { outline: 2px solid var(--primary-color, #9b6ac8); outline-offset: 1px; }
 @keyframes blobbo-pop { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
 @media (max-width: 900px) { .blobbo { bottom: 84px; right: 12px; } }
 @media (prefers-reduced-motion: reduce) { .blobbo-bubble { animation: none; } .blobbo-avatar { transition: none; } }
+.blobbo-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.blobbo-links--line { margin-top: 4px; gap: 4px; }
+a.blobbo-btn { display: inline-flex; align-items: center; text-decoration: none; color: inherit; }
+a.blobbo-btn--primary { color: var(--background-color, #0b0d12); }
+.blobbo-btn--sm { padding: 2px 8px; font-size: 0.78rem; }
+.blobbo-avatar picture { display: block; }
+
+/* Expanded beta.2: FAB label, teaser, mood, seasonal badge, follow-ups, history, options, charts */
+.blobbo-fab-row { display: flex; align-items: center; gap: 8px; pointer-events: none; }
+.blobbo-fab-row > * { pointer-events: auto; }
+.blobbo-fab {
+  border: 1px solid rgba(var(--primary-rgb, 155, 106, 200), 0.55);
+  background: var(--secondary-background-color, #131820);
+  color: var(--text-color, #f8fafc);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.blobbo-fab:hover, .blobbo-fab:focus-visible { background: var(--primary-color, #9b6ac8); color: var(--background-color, #0b0d12); }
+@media (max-width: 640px) { .blobbo-fab { display: none; } }
+.blobbo-avatar { position: relative; }
+.blobbo-season-badge { position: absolute; top: -4px; right: -2px; font-size: 1.25rem; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); }
+.blobbo-worry {
+  position: absolute; bottom: 2px; right: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: #e0a030; color: #111; font-weight: 800; font-size: 0.8rem; line-height: 20px; text-align: center;
+}
+.blobbo--mood-worried .blobbo-avatar img { filter: saturate(0.6) hue-rotate(-20deg); }
+.blobbo-mood-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
+.blobbo-mood-dot--happy { background: #4caf7a; }
+.blobbo-mood-dot--worried { background: #e0a030; }
+.blobbo-teaser { max-width: 300px; }
+.blobbo-followups { margin-top: 6px; }
+.blobbo-chips--inline { padding: 4px 0 0; border: 0; background: transparent; flex-wrap: wrap; overflow: visible; }
+.blobbo-chips--all { flex-wrap: wrap; max-height: 110px; overflow-y: auto; }
+.blobbo-history { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 6px 10px 0; }
+.blobbo-chip--history { opacity: 0.85; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.blobbo-more { border: 0; background: transparent; color: var(--primary-light-color, #c9a7e6); font-size: 0.75rem; padding: 0 12px 4px; text-align: left; cursor: pointer; }
+.blobbo-options label { display: flex; gap: 6px; align-items: flex-start; font-size: 0.82rem; margin-bottom: 6px; cursor: pointer; }
+.blobbo-viz { margin: 8px 0 4px; }
+.blobbo-pie { display: flex; gap: 10px; align-items: center; }
+.blobbo-pie ul { list-style: none; padding: 0; margin: 0; font-size: 0.75rem; }
+.blobbo-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; }
+.blobbo-heat { display: grid; grid-template-columns: repeat(7, 18px); gap: 3px; }
+.blobbo-heat span { width: 18px; height: 18px; border-radius: 4px; background: var(--primary-color, #9b6ac8); }

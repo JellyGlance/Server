@@ -1250,5 +1250,23 @@
     "COPY_INVITE": "Copy invite link {{code}}",
     "OPEN_INVITE": "Open invite {{code}}",
     "DELETE_INVITE": "Delete invite {{code}}"
+  },
+  "BLOBBO_TIPS": {
+    "HOME": "Active sessions live on Home. Peek there to see who is watching right now.",
+    "HOME_LINK": "Go to Home",
+    "LIBRARIES": "Looking for a show or film? Libraries has everything grouped by type.",
+    "LIBRARIES_LINK": "Open Libraries",
+    "RECENT": "Fresh arrivals land in Recently added.",
+    "RECENT_LINK": "See what is new",
+    "INTEGRATIONS": "Connect Wizarr, Tdarr or Maintainerr under 3rd party apps.",
+    "INTEGRATIONS_LINK": "Open 3rd party apps",
+    "SETTINGS": "Tweak themes, notifications and more in Settings.",
+    "SETTINGS_LINK": "Open Settings",
+    "FIND": "Ask me “find Dune” and I'll look through every library for you.",
+    "FIND_LINK": "Open Libraries",
+    "BUFFERING": "If someone says it keeps buffering, ask me “why is this buffering?”",
+    "BUFFERING_LINK": "Open Active transcodes",
+    "INSIGHTS": "Insights finds duplicates, unwatched giants and transcode trends.",
+    "INSIGHTS_LINK": "Open Insights"
   }
 }
