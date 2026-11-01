@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "mail",
+      "title": "Wrapped Recaps By Email Or Webhook",
+      "body": "Statistics → Recap now lets you schedule a weekly or monthly Wrapped for any user, with top shows, hours watched and the busiest day. Recaps arrive by email or on one of your webhooks as soon as each week or month finishes, with the recap card attached. Users can set up email delivery of their own recap, and Send now resends the last finished period whenever you like."
+    },
+    {
       "icon": "rocket",
       "title": "Meet Blobbo",
       "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it, or press Shift+A anywhere to say hello, for tips, quick links and answers about your server. Its chat now matches your chosen theme colours, it stays still if you prefer reduced motion, and you can show or hide it under Settings → General. Blobbo's idle animation now has a properly transparent background, so the dark square behind it is gone."

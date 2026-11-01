@@ -67,6 +67,10 @@ class TaskScheduler {
         Interval: 60,
         ...TaskList.NewsletterCampaigns,
       },
+      WrappedRecaps: {
+        Interval: 60,
+        ...TaskList.WrappedRecaps,
+      },
     };
 
     // Initialize tasks with default intervals
@@ -235,6 +239,7 @@ class TaskScheduler {
       case "DownloadQueueSync":
       case "InviteSync":
       case "IntegrationHealthCheck":
+      case "WrappedRecaps":
         this.addGenericTask(taskEnumKey);
         break;
       default:
