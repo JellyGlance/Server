@@ -6,6 +6,21 @@
       "body": "Beta images such as v1.4.2-beta.3 now say they are on the Beta channel in About, the version card and What's New, and open What's New (beta) with the notes for this beta line instead of falling back to the last stable release. Each new beta build shows What's New again once, so you can catch up on what changed since the previous beta."
     },
     {
+      "icon": "palette",
+      "title": "Blobbo Costumes and Seasonal Looks",
+      "body": "Blobbo now has 20 looks: Classic plus Halloween, festive winter, Valentine's hearts and summer outfits, and 15 costumes including New Year, Easter, Pride, birthday, gaming, St Patrick's, harvest, cozy night, chef, space, music, bookworm, sports, wizard and movie night. Each look keeps Blobbo's soft bouncy idle. Pick one from Blobbo's Options or Settings → General → Blobbo look and it stays on. Leave it on Auto and Blobbo dresses for the calendar: New Year's Eve, winter in December, Valentine's week, St Patrick's, Easter, Pride week, summer, harvest and Halloween. Choices stay in this browser only."
+    },
+    {
+      "icon": "rocket",
+      "title": "Storage by Library",
+      "body": "Libraries now shows admins how much space each library takes, with its share of the total and title count. Open the top 20 largest titles to see size, plays and when each was last played, plus soft hints for anything worth a second look: never played, not played in 2+ years, or a movie that shares its name and year with another copy. Titles added in the last 90 days never get a hint, and nothing is deleted from here."
+    },
+    {
+      "icon": "movie",
+      "title": "Incomplete Season Hunter",
+      "body": "Server → Incomplete Seasons lists every series with a season that is short on episodes. With Sonarr connected under Integrations it compares what is on disk against Sonarr's aired episode count; without it, gaps in episode numbering (like E01, E02, E04) are flagged. Each row shows which seasons are short and the missing episode numbers, with buttons to open the series in Sonarr (or add it if Sonarr doesn't have it yet) and on TVDB."
+    },
+    {
       "icon": "speed",
       "title": "Why Is This Transcoding?",
       "body": "Active Sessions now explains every transcode for admins. Each transcoding stream gets a small chip such as “Transcode: Subtitle burn-in” or “Remux: Container”; tap it for a plain-English reason (HEVC to H.264, audio codec, bitrate over the limit, HDR tone-mapping, image subtitles being burned in, resolution caps or direct play turned off) plus a fix hint for that device, like enabling HEVC in Infuse or Android TV, raising the max streaming bitrate, or switching to SRT subtitles. Remuxes and audio-only transcodes are labelled separately so you can tell the cheap ones from the heavy ones."
