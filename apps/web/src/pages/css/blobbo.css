@@ -25,8 +25,8 @@
 .blobbo-avatar:focus-visible { outline: 2px solid var(--primary-color, #9b6ac8); outline-offset: 3px; }
 .blobbo-avatar img { width: 72px; height: 72px; display: block; margin: 2px auto 0; border-radius: 50%; user-select: none; }
 .blobbo-bubble {
-  max-width: 280px;
-  padding: 14px 16px;
+  max-width: 340px;
+  padding: 16px 18px;
   border-radius: 16px 16px 4px 16px;
   background: var(--secondary-background-color, #131820);
   background-image: linear-gradient(160deg, rgba(var(--primary-rgb, 155, 106, 200), 0.16), rgba(var(--primary-rgb, 155, 106, 200), 0.04));
@@ -36,14 +36,14 @@
   animation: blobbo-pop 0.22s ease-out;
 }
 .blobbo-bubble-title { color: var(--primary-light-color, #c9a7e6); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.04em; opacity: 0.85; margin-bottom: 4px; }
-.blobbo-bubble-text { margin: 0 0 10px; font-size: 0.92rem; line-height: 1.4; }
+.blobbo-bubble-text { margin: 0 0 12px; font-size: 0.92rem; line-height: 1.5; }
 .blobbo-bubble-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .blobbo-btn {
   border: 1px solid var(--surface-border-color, rgba(255, 255, 255, 0.11));
   background: var(--tertiary-background-color, #1b212b);
   color: var(--text-color, #f8fafc);
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 6px 12px;
   font-size: 0.8rem;
   cursor: pointer;
 }
@@ -52,18 +52,18 @@
 .blobbo-btn--primary:hover { background: var(--primary-light-color, #c9a7e6); border-color: var(--primary-light-color, #c9a7e6); }
 .blobbo-btn--ghost { background: transparent; }
 .blobbo-chat {
-  width: 320px;
+  width: 380px;
   max-width: calc(100vw - 24px);
-  height: 420px;
-  max-height: calc(100vh - 140px);
+  height: 520px;
+  max-height: calc(100vh - 120px);
   display: flex;
   flex-direction: column;
-  padding: 12px;
-  gap: 8px;
+  padding: 16px;
+  gap: 12px;
 }
-.blobbo-chat-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.blobbo-chat-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .blobbo-chat-header .blobbo-bubble-title { margin: 0; }
-.blobbo-chat-header-actions { display: flex; align-items: center; gap: 4px; }
+.blobbo-chat-header-actions { display: flex; align-items: center; gap: 6px; }
 .blobbo-icon-btn { border: 0; background: transparent; color: var(--muted-text-color, #b3bfce); font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 0 4px; opacity: 0.85; }
 .blobbo-icon-btn:hover { opacity: 1; }
 .blobbo-chat-messages {
@@ -71,35 +71,35 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 4px 2px;
+  gap: 12px;
+  padding: 10px 12px;
   background: var(--background-color, #0b0d12);
   border: 1px solid var(--surface-border-color, rgba(255, 255, 255, 0.11));
-  border-radius: 12px;
+  border-radius: 14px;
 }
-.blobbo-msg { max-width: 88%; padding: 8px 10px; border-radius: 12px; font-size: 0.86rem; line-height: 1.4; }
-.blobbo-msg p { margin: 0 0 4px; }
-.blobbo-msg ul { margin: 2px 0 6px; padding-left: 16px; }
-.blobbo-msg li { margin: 1px 0; }
+.blobbo-msg { max-width: 90%; padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; line-height: 1.5; }
+.blobbo-msg p { margin: 0 0 8px; }
+.blobbo-msg ul { margin: 4px 0 8px; padding-left: 18px; }
+.blobbo-msg li { margin: 3px 0; }
 .blobbo-msg--blobbo { align-self: flex-start; background: var(--tertiary-background-color, #1b212b); color: var(--text-color, #f8fafc); border-bottom-left-radius: 4px; margin-left: 4px; }
 .blobbo-msg--you { align-self: flex-end; background: rgba(var(--primary-rgb, 155, 106, 200), 0.85); color: var(--background-color, #0b0d12); border-bottom-right-radius: 4px; margin-right: 4px; }
 .blobbo-msg-note { color: var(--subtle-text-color, #94a3b8); font-size: 0.78rem; }
 .blobbo-typing { opacity: 0.8; font-style: italic; }
-.blobbo-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+.blobbo-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
 .blobbo-chip {
   flex: 0 0 auto;
   border: 1px solid rgba(var(--secondary-rgb, 74, 168, 188), 0.45);
   background: rgba(var(--secondary-rgb, 74, 168, 188), 0.1);
   color: var(--text-color, #f8fafc);
   border-radius: 999px;
-  padding: 3px 9px;
-  font-size: 0.75rem;
+  padding: 6px 12px;
+  font-size: 0.8rem;
   cursor: pointer;
   white-space: nowrap;
 }
 .blobbo-chip:hover:not(:disabled) { background: rgba(var(--secondary-rgb, 74, 168, 188), 0.24); }
 .blobbo-chip:disabled, .blobbo-btn:disabled { opacity: 0.55; cursor: default; }
-.blobbo-chat-input { display: flex; gap: 6px; }
+.blobbo-chat-input { display: flex; gap: 8px; }
 .blobbo-chat-input input {
   flex: 1;
   min-width: 0;
@@ -107,8 +107,8 @@
   background: var(--background-color, #0b0d12);
   color: var(--text-color, #f8fafc);
   border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 0.85rem;
+  padding: 9px 14px;
+  font-size: 0.9rem;
 }
 .blobbo-chat-input input::placeholder { color: var(--subtle-text-color, #94a3b8); }
 .blobbo-chat-input input:focus-visible { outline: 2px solid var(--primary-color, #9b6ac8); outline-offset: 1px; }
@@ -148,10 +148,10 @@ a.blobbo-btn--primary { color: var(--background-color, #0b0d12); }
 .blobbo-mood-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
 .blobbo-mood-dot--happy { background: #4caf7a; }
 .blobbo-mood-dot--worried { background: #e0a030; }
-.blobbo-teaser { max-width: 300px; }
-.blobbo-followups { margin-top: 6px; }
+.blobbo-teaser { max-width: 340px; }
+.blobbo-followups { margin-top: 10px; }
 .blobbo-chips--inline { padding: 4px 0 0; border: 0; background: transparent; flex-wrap: wrap; overflow: visible; }
-.blobbo-chips--all { flex-wrap: wrap; max-height: 110px; overflow-y: auto; }
+.blobbo-chips--all { flex-wrap: wrap; max-height: 140px; overflow-y: auto; }
 .blobbo-history { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 6px 10px 0; }
 .blobbo-chip--history { opacity: 0.85; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .blobbo-more { border: 0; background: transparent; color: var(--primary-light-color, #c9a7e6); font-size: 0.75rem; padding: 0 12px 4px; text-align: left; cursor: pointer; }
