@@ -1106,7 +1106,7 @@ export default function Home({ kioskMode = false }) {
       ) : null}
 
       <div className="home-section-stack">
-      {shouldRenderSection("sessions") ? <section className={getHomeSectionClass("sessions", "home-active-sessions home-glass-card")} style={getHomeSectionStyle("sessions")}>
+      {shouldRenderSection("sessions") && activeSessionCount > 0 ? <section className={getHomeSectionClass("sessions", "home-active-sessions home-glass-card")} style={getHomeSectionStyle("sessions")}>
         <Sessions surface={kioskMode ? "kiosk" : "home"} />
       </section> : null}
 

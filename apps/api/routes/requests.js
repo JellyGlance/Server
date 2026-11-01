@@ -79,6 +79,19 @@ router.put("/requests/rules", async (req, res) => {
   }
 });
 
+router.get("/requests/routing-log", async (req, res) => {
+  const requestRules = require("../classes/request-rules");
+  if (!requestRules.isAdmin(req.user)) {
+    res.status(403).send({ error: "Only server admins can view the routing log" });
+    return;
+  }
+  try {
+    res.send({ entries: await requestRules.routingLog(req.query?.limit) });
+  } catch (error) {
+    res.status(503).send({ error: error.message || "Unable to load the routing log" });
+  }
+});
+
 router.get("/requests/providers", async (_req, res) => {
   try {
     res.send({ providers: listProviders() });

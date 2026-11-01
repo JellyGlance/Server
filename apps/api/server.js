@@ -45,6 +45,7 @@ const webhooksRouter = require("./routes/webhooks");
 const cleanuparrInboundRouter = require("./routes/cleanuparr-inbound");
 const newsletterRouter = require("./routes/newsletter");
 const insightsRouter = require("./routes/insights");
+const opsCopilotRouter = require("./routes/ops-copilot");
 const alertsRouter = require("./routes/alerts");
 const webhookOutRouter = require("./routes/webhook-out");
 const { publicRouter: publicStatusRouter, adminRouter: publicStatusAdminRouter } = require("./routes/public-status");
@@ -393,6 +394,7 @@ app.use("/sync", apiRateLimit, authenticate, restrictApiKeyScope, requirePermiss
 app.use("/insights-data/library-health", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"));
 app.use("/insights-data/streams", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"));
 app.use("/insights-data", apiRateLimit, authenticate, restrictApiKeyScope, insightsRouter);
+app.use("/ops-copilot", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), opsCopilotRouter);
 app.use("/alerts-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), alertsRouter);
 app.use("/webhook-out-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), webhookOutRouter);
 app.use("/status-data/admin", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), publicStatusAdminRouter);
