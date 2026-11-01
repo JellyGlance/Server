@@ -792,7 +792,20 @@
       "NEW_TORRENT": "Torrent baharu",
       "MAGNET_DOWNLOAD": "Muat turun magnet",
       "TORRENT_DOWNLOAD": "Muat turun torrent",
-      "QUEUED": "Dalam baris gilir"
+      "QUEUED": "Dalam baris gilir",
+      "CLEANUPARR": "Cleanuparr",
+      "CLEANUPARR_WINDOW": "Last {{hours}} hours",
+      "CLEANUPARR_STRIKES": "Strikes",
+      "CLEANUPARR_REMOVALS": "Removed",
+      "CLEANUPARR_CLEANED": "Cleaned",
+      "CLEANUPARR_EVENTS": "Events",
+      "CLEANUPARR_ATTENTION": "Needs attention",
+      "CLEANUPARR_HEALTHY": "All clients and arrs healthy",
+      "CLEANUPARR_UNHEALTHY": "Unhealthy: {{names}}",
+      "CLEANUPARR_UNREACHABLE": "{{name}} unreachable: {{error}}",
+      "CLEANUPARR_NO_EVENTS": "No notifications received yet. Point Cleanuparr's Gotify provider at JellyGlance from Integrations.",
+      "CLEANUPARR_HANDLING": "Cleanuparr: {{reason}}",
+      "CLEANUPARR_INTERVENTION": "Needs you"
     },
     "MY_GLANCE": {
       "TITLE": "Glance Saya",

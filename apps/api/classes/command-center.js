@@ -16,6 +16,8 @@ const { setDownloadPaused } = require("./download-client");
 // eslint-disable-next-line no-unused-vars -- existing code, kept unchanged
 const { joinSafeHttpUrl, stripTrailingSlashes, toSafeHttpUrl, safeHttpGet, safeHttpPost} = require("../utils/security");
 
+const cleanuparr = require("./cleanuparr");
+
 let lastJellyfinSeenWrite = 0;
 
 function cleanUrl(url = "") {
@@ -189,7 +191,7 @@ async function buildItemGlance(itemId) {
 
 async function stitchDownloads() {
   const [requests, integrationData] = await Promise.all([fetchSeerrSnapshot(), getIntegrationData()]);
-  const downloads = integrationData.downloads?.items || [];
+  const downloads = cleanuparr.annotateDownloads(integrationData.downloads?.items || [], integrationData.cleanuparr);
   return downloads.map((item) => {
     const request = bestMatch(item.name, requests, (row) => row.title);
     return {
@@ -298,6 +300,7 @@ function listWidgetCatalog() {
       { path: "/api/widgets/issues", method: "GET", summary: "Seerr issue counts by status" },
       { path: "/api/widgets/invites", method: "GET", summary: "Cached Wizarr invite links" },
       { path: "/api/widgets/autobrr", method: "GET", summary: "Cached autobrr release hits" },
+      { path: "/api/widgets/cleanuparr", method: "GET", summary: "Cleanuparr strikes, removals and health" },
       { path: "/api/widgets/transcodes", method: "GET", summary: "Tdarr active, queued, and error counts" },
       { path: "/api/widgets/maintainerr", method: "GET", summary: "Maintainerr cleanup counts and reclaimable size" },
       { path: "/api/widgets/automation", method: "GET", summary: "Latest integration health results" },
@@ -767,6 +770,25 @@ async function buildAutobrrWidgets() {
       filter: row.filter || "",
       indexer: row.indexer || "",
       action: row.action || "",
+    })),
+  });
+}
+
+async function buildCleanuparrWidgets() {
+  const snapshot = await cleanuparr.fetchCleanuparrSnapshot({ hours: 24 });
+  return widgetPayload({
+    cleanuparr: snapshot.totals.strikes,
+    strikes: snapshot.totals.strikes,
+    removals: snapshot.totals.removals,
+    cleaned: snapshot.totals.cleaned,
+    events: snapshot.totals.events,
+    unhealthy: snapshot.totals.unhealthy,
+    needsAttention: snapshot.totals.needsAttention + snapshot.totals.interventions,
+    items: snapshot.recentEvents.slice(0, 8).map((event) => ({
+      name: event.item || event.title,
+      event: event.eventType,
+      severity: event.severity,
+      needsIntervention: Boolean(event.needsIntervention),
     })),
   });
 }
@@ -1451,6 +1473,7 @@ async function pingThirdParty(integration) {
   if (slug.includes("notifiarr")) return pingNotifiarr(integration);
   if (slug.includes("recyclarr")) return pingRecyclarr(integration);
   if (slug.includes("autobrr")) return pingAutobrr(integration);
+  if (slug.includes("cleanuparr")) return cleanuparr.pingCleanuparr(integration);
   const url = cleanUrl(integration.values?.url);
   if (!url) return { ok: false, error: "URL required" };
   try {
@@ -1684,6 +1707,7 @@ module.exports = {
   buildTodayWidgets,
   buildInviteWidgets,
   buildAutobrrWidgets,
+  buildCleanuparrWidgets,
   buildTranscodeWidgets,
   buildMaintainerrWidgets,
   buildAutomationWidgets,

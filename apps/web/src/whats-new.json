@@ -34,6 +34,11 @@
       "icon": "rocket",
       "title": "Getting To Know Blobbo",
       "body": "New installs get a short guided tour and an optional setup quiz, there is a tip of the day when you sign in, and Blobbo says welcome back after an upgrade. Under Options you can turn on kids-safe answers, have answers read aloud and let Blobbo wear seasonal outfits. Tips can now be translated."
+    },
+    {
+      "icon": "shield",
+      "title": "Cleanuparr Integration",
+      "body": "Connect Cleanuparr under Integrations → 3rd party apps to see its strikes, removals, cleaned downloads and client and arr health on the Downloads page. Point Cleanuparr's Gotify notifications at JellyGlance and downloads it is already handling are tagged instead of raising stuck download alerts, while failed imports, errored downloads and repeated stalls alert you because they need a look."
     }
   ],
   "1.4.0": [

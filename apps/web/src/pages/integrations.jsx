@@ -14,6 +14,7 @@ import Settings3LineIcon from "remixicon-react/Settings3LineIcon";
 import UploadCloud2LineIcon from "remixicon-react/UploadCloud2LineIcon";
 import UserAddLineIcon from "remixicon-react/UserAddLineIcon";
 import axios from "../lib/axios_instance";
+import baseUrl from "../lib/baseurl";
 import { useTranslation } from "react-i18next";
 import { formatDate as formatLocaleDate } from "../lib/format-date";
 import { loadSavedIntegrations, saveSavedIntegrations } from "../lib/integrations-storage";
@@ -106,6 +107,7 @@ const thirdPartyOptions = [
   { name: "Notifiarr", slug: "notifiarr", purpose: "Arr notify status", accent: "#f97316" },
   { name: "Recyclarr", slug: "recyclarr", purpose: "Arr config health", accent: "#22d3ee", secretOptional: true },
   { name: "autobrr", slug: "autobrr", purpose: "Filter hits", accent: "#fb7185" },
+  { name: "Cleanuparr", slug: "cleanuparr", purpose: "Strikes, cleanup and health", accent: "#38bdf8" },
   { name: "Audiobookshelf", slug: "audiobookshelf", purpose: "Audiobook listening", accent: "#e0b865", secretLabel: "API token" },
 ];
 const firstRunIntegrationPickerOptions = [
@@ -257,6 +259,65 @@ function isLiveConnected(app) {
   return Boolean(app?.version) || /connected to/i.test(message);
 }
 
+// Shows where Cleanuparr should send notifications (its Gotify provider) and the token it must use.
+function CleanuparrReceiver({ onCopySecret }) {
+  const [receiver, setReceiver] = useState(null);
+  const [error, setError] = useState("");
+  const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+  const serverUrl = new URL(`${String(baseUrl || "").replace(/\/+$/, "")}/cleanuparr`, window.location.origin).href;
+
+  useEffect(() => {
+    axios
+      .get("/api/integrations/cleanuparr/webhook", { headers })
+      .then((response) => setReceiver(response.data))
+      .catch(() => setError("Unable to load the notification receiver"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once
+  }, []);
+
+  async function rotate() {
+    try {
+      const response = await axios.post("/api/integrations/cleanuparr/webhook/rotate", {}, { headers });
+      setReceiver((current) => ({ ...(current || {}), ...response.data }));
+    } catch {
+      setError("Unable to rotate the token");
+    }
+  }
+
+  return (
+    <div className="integration-receiver">
+      <strong>Notifications from Cleanuparr</strong>
+      <small>
+        In Cleanuparr, add a <b>Gotify</b> notification provider with these values and enable Failed Import, Stalled, Slow, Errored
+        Strike, Queue Item Deleted, Download Cleaned and Download Stopped. Failed imports, errored downloads and repeated stalls become
+        alerts here; everything else is shown on the Downloads page.
+      </small>
+      <label>
+        Server URL
+        <span className="integration-secret-field">
+          <input value={serverUrl} readOnly />
+          <button type="button" title="Copy server URL" onClick={() => onCopySecret(serverUrl)}>
+            <ClipboardLineIcon size={17} />
+          </button>
+        </span>
+      </label>
+      <label>
+        Application token
+        <span className="integration-secret-field">
+          <input value={receiver?.token || ""} readOnly placeholder={error || "Loading..."} />
+          <button type="button" title="Copy token" onClick={() => onCopySecret(receiver?.token || "")} disabled={!receiver?.token}>
+            <ClipboardLineIcon size={17} />
+          </button>
+        </span>
+      </label>
+      <div className="integration-actions integration-receiver-rotate">
+        <button type="button" onClick={rotate}>
+          New token
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function IntegrationCard({ app, type, onChange, onRemove, onSave, onTest, onCopySecret, removable = false }) {
   const { auth: clientAuth, authHint } = type === "download" ? downloadClientAuth(app) : {};
   const usesUserPass = clientAuth === "userpass";
@@ -279,6 +340,7 @@ function IntegrationCard({ app, type, onChange, onRemove, onSave, onTest, onCopy
         ? "Saved on server — paste to replace"
         : `Paste ${secretLabel}`;
   const [showSecret, setShowSecret] = useState(false);
+  const isCleanuparr = String(app.slug || app.name || "").toLowerCase().includes("cleanuparr");
 
   return (
     <article className="integration-card" style={{ "--integration-accent": app.accent || "var(--primary-light-color)" }}>
@@ -335,7 +397,11 @@ function IntegrationCard({ app, type, onChange, onRemove, onSave, onTest, onCopy
           </span>
         </label>
         {authHint ? <small className="integration-auth-hint">{authHint}</small> : null}
+        {isCleanuparr ? (
+          <small className="integration-auth-hint">Uses the stats API (/api/v2/stats). Include Cleanuparr&apos;s BASE_PATH in the URL if you set one.</small>
+        ) : null}
       </div>
+      {isCleanuparr ? <CleanuparrReceiver onCopySecret={onCopySecret} /> : null}
       {app.message ? <p className={`integration-message ${app.messageType === "error" ? "is-error" : ""}`}>{app.message}</p> : null}
       <div className="integration-actions">
         <button type="button" onClick={() => onTest(app.instanceId)}>
