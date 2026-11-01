@@ -16,7 +16,7 @@ import "./css/integrations.css";
 const iconUrl = (slug) => `https://cdn.jsdelivr.net/gh/selfhst/icons/svg/${slug}.svg`;
 
 function clientIcon(client) {
-  if (!client.slug) return null;
+  if (!client?.slug) return null;
   return <img src={iconUrl(client.slug)} alt="" loading="lazy" decoding="async" />;
 }
 
