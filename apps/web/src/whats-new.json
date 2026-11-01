@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "users",
+      "title": "Taste Map",
+      "body": "Statistics → Taste map shows what each person watches by genre and decade, with their most watched titles. Admins also get a household view: a match grid showing how closely everyone's tastes line up, the genres you share, and the shows and films more than one of you has watched. Everyone else sees their own map."
+    },
+    {
       "icon": "mail",
       "title": "Wrapped Recaps By Email Or Webhook",
       "body": "Statistics → Recap now lets you schedule a weekly or monthly Wrapped for any user, with top shows, hours watched and the busiest day. Recaps arrive by email or on one of your webhooks as soon as each week or month finishes, with the recap card attached. Users can set up email delivery of their own recap, and Send now resends the last finished period whenever you like."
