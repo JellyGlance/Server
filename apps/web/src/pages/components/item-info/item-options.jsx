@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Container, Row,Col, Modal } from "react-bootstrap";
 import { Trans } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useWatchingLock } from "../general/WatchingLockModal";
 
 
 function ItemOptions(props) {
@@ -23,11 +24,15 @@ function ItemOptions(props) {
   ];
   const [selectedOption, setSelectedOption] = useState(options[0]);
   const navigate = useNavigate();
+  const { guard, modal: watchingModal } = useWatchingLock();
 
 
 
   async function execPurge(withActivity) {
     const url=`/api/item/purge`;
+    setShow(false);
+    const { proceed } = await guard({ itemId: props.itemid, label: props.itemName }, "purge");
+    if (!proceed) return;
 
     return await axios.delete(url,
 
@@ -86,6 +91,7 @@ function ItemOptions(props) {
                   </button>
                 </Modal.Footer>
             </Modal>
+            {watchingModal}
 
         </Container>
 

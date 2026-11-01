@@ -506,7 +506,7 @@ function ItemInfo() {
           </ErrorBoundary>
         </Tab>
         <Tab eventKey="tabOptions" title="Options" className="bg-transparent">
-          <ItemOptions itemid={Id} />
+          <ItemOptions itemid={Id} itemName={data?.SeriesName || data?.Name} />
         </Tab>
       </Tabs>
     </div>

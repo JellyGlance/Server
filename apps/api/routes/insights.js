@@ -70,6 +70,22 @@ router.get("/wrapped/card", async (req, res) => {
   }
 });
 
+// Taste Map: genre and decade clusters per user plus household overlaps. Users who can view
+// everyone get the household; everyone else only their own linked media-server user.
+router.get("/taste-map", async (req, res) => {
+  try {
+    const { canViewAllUsers, ownMediaUserId } = require("../classes/stats-access");
+    const { buildTasteMap } = require("../classes/taste-map");
+    const admin = canViewAllUsers(req);
+    const userId = admin ? (req.query.userId ? String(req.query.userId) : null) : ownMediaUserId(req.user);
+    if (!admin && !userId) return res.json({ days: 0, scoped: true, users: [], overlaps: [], sharedGenres: [] });
+    const days = clampInt(req.query.days, 365, 7, 3650);
+    res.json(await buildTasteMap({ userId, admin, days }));
+  } catch (error) {
+    res.status(503).json({ error: error.message || "Unable to build the taste map" });
+  }
+});
+
 // Scheduled recap delivery (email and/or webhook). Admins manage anyone's; everyone else only
 // their own linked media-server user, and only by email.
 function deliveryScope(req) {
@@ -223,6 +239,21 @@ router.get("/streams", async (req, res) => {
     });
   } catch (error) {
     res.status(503).json({ error: error.message || "Unable to build stream insights" });
+  }
+});
+
+// Device profiles: one card per playback device. Device-level history spans every user, so this
+// follows the stats-access rule and is only for people who can view all users.
+router.get("/devices", async (req, res) => {
+  try {
+    const { canViewAllUsers } = require("../classes/stats-access");
+    if (!canViewAllUsers(req)) return res.status(403).json({ error: "Only server admins can see this." });
+    const { buildDeviceProfiles } = require("../classes/device-profiles");
+    const days = clampInt(req.query.days, 90, 1, 3650);
+    const sort = ["recent", "plays", "transcode"].includes(req.query.sort) ? req.query.sort : "recent";
+    res.json(await buildDeviceProfiles({ days, sort }));
+  } catch (error) {
+    res.status(503).json({ error: error.message || "Unable to build device profiles" });
   }
 });
 

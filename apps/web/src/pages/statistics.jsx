@@ -16,6 +16,7 @@ import "./css/stats.css";
 import DailyPlayStats from "./components/statistics/daily-play-count";
 import PlayStatsByDay from "./components/statistics/play-stats-by-day";
 import PlayStatsByHour from "./components/statistics/play-stats-by-hour";
+import LibraryHeatmap from "./components/statistics/library-heatmap";
 import HomeStatisticCards from "./components/HomeStatisticCards";
 import { Trans } from "react-i18next";
 import { readAuth } from "./components/general/PageTabs";
@@ -357,6 +358,7 @@ function Statistics() {
               <strong>{days} day window</strong>
             </div>
             <DailyPlayStats days={days} viewName={activeTab === "tabCount" ? "count" : "duration"} />
+            <LibraryHeatmap days={days} viewName={activeTab === "tabCount" ? "count" : "duration"} />
             <div className="statistics-graphs">
               <PlayStatsByDay days={days} viewName={activeTab === "tabCount" ? "count" : "duration"} />
               <PlayStatsByHour days={days} viewName={activeTab === "tabCount" ? "count" : "duration"} />
