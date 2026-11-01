@@ -18,6 +18,7 @@ import {
 import { isMobileDevice, isStandaloneApp, requestSystemPermission, showSystemNotification, systemPermission } from "../../../lib/system-notifications";
 import "../../css/settings/settings.css";
 import ThresholdAlertsPanel from "./ThresholdAlertsPanel";
+import WebhookOutPanel from "./WebhookOutPanel";
 
 const modes = [
   { value: "all", title: "All notifications", text: "Show starts, updates, successes, warnings, and errors." },
@@ -297,6 +298,7 @@ export default function NotificationSettings() {
         </Button>
       </div>
       <ThresholdAlertsPanel />
+      <WebhookOutPanel />
     </Form>
   );
 }

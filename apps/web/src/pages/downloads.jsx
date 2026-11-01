@@ -12,6 +12,7 @@ import Config from "../lib/config";
 import { loadSavedIntegrations } from "../lib/integrations-storage";
 import { useTranslation } from "react-i18next";
 import "./css/integrations.css";
+import { useWatchingLock } from "./components/general/WatchingLockModal";
 
 const iconUrl = (slug) => `https://cdn.jsdelivr.net/gh/selfhst/icons/svg/${slug}.svg`;
 
@@ -51,6 +52,7 @@ export default function Downloads() {
   const [torrentValue, setTorrentValue] = useState("");
   const [torrentFile, setTorrentFile] = useState(null);
   const [downloads, setDownloads] = useState([]);
+  const { guard: guardWatching, modal: watchingModal } = useWatchingLock();
   const [autobrrHits, setAutobrrHits] = useState([]);
   const [cleanuparr, setCleanuparr] = useState(null);
   const [message, setMessage] = useState("");
@@ -177,8 +179,15 @@ export default function Downloads() {
     }
   }
 
+  function lockTarget(download) {
+    return { title: download?.name, tmdb: download?.request?.tmdb, tvdb: download?.request?.tvdb, label: download?.name };
+  }
+
   async function removeDownload(id) {
-    if (!window.confirm(t("FEATURES.DOWNLOADS.REMOVE_CONFIRM"))) return;
+    const download = downloads.find((entry) => entry.id === id);
+    const lock = await guardWatching(lockTarget(download), "remove");
+    if (!lock.proceed) return;
+    if (!lock.watched && !window.confirm(t("FEATURES.DOWNLOADS.REMOVE_CONFIRM"))) return;
     setBusyDownloadId(id);
     setMessage("");
     try {
@@ -193,6 +202,8 @@ export default function Downloads() {
   }
 
   async function retryGrab(download) {
+    const lock = await guardWatching(lockTarget(download), "re-grab a new copy of");
+    if (!lock.proceed) return;
     setBusyDownloadId(download.id);
     setMessage("");
     try {
@@ -231,6 +242,7 @@ export default function Downloads() {
 
   return (
     <div className="downloads-page">
+      {watchingModal}
       <header className="download-page-header">
         <div>
           <p>{t("FEATURES.DOWNLOADS.KICKER")}</p>

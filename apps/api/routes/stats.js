@@ -1136,6 +1136,20 @@ router.post("/getGlobalLibraryStats", async (req, res) => {
   }
 });
 
+router.get("/getDiskForecast", async (req, res) => {
+  try {
+    if (!canViewAllUsers(req)) {
+      return res.status(403).send({ error: "Only admins can see the disk forecast" });
+    }
+    const { getDiskForecast } = require("../classes/disk-forecast");
+    const { fetchDisks } = require("../classes/threshold-alerts");
+    res.send(await getDiskForecast({ db, fetchDisks }));
+  } catch (error) {
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
 router.get("/getLibraryCardStats", async (req, res) => {
   try {
     const { rows } = await db.query(
@@ -1502,6 +1516,31 @@ router.get("/getViewsByHour", async (req, res) => {
     });
     const finalData = { libraries: libraries, stats: Object.values(reorganizedData) };
     res.send(finalData);
+  } catch (error) {
+    console.log(error);
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
+router.get("/getLibraryHeatmap", async (req, res) => {
+  try {
+    const scope = resolveStatsUser(req, req.query.userId);
+    if (scope.forbidden) return sendForbidden(res);
+    if (!scope.admin && !scope.userId) {
+      return res.status(403).json({ error: "Link your account to see your own heat map" });
+    }
+    const { getLibraryHeatmap } = require("../classes/library-heatmap");
+    res.send(
+      await getLibraryHeatmap({
+        db,
+        days: req.query.days,
+        userId: scope.userId,
+        libraryId: req.query.libraryId || null,
+        timeZone: process.env.TZ || "UTC",
+        metric: req.query.metric,
+      })
+    );
   } catch (error) {
     console.log(error);
     res.status(503);

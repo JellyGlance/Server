@@ -1197,3 +1197,153 @@
 .transcode-explainer.is-compact { margin-top: 4px; }
 .transcode-explainer-popper.MuiTooltip-tooltip { max-width: 380px; padding: 0; background: transparent; }
 .transcode-explainer-popper .transcode-explainer-detail { margin-top: 0; background: rgba(7, 9, 13, 0.96); font-size: 12px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); }
+
+.sessions-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sessions-view-toggle {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.sessions-view-toggle button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  opacity: 0.7;
+}
+
+.sessions-view-toggle button.is-active {
+  background: var(--primary-color);
+  opacity: 1;
+}
+
+.session-wall-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.session-wall-tile {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-width: 0;
+}
+
+.session-wall-tile.is-paused {
+  opacity: 0.72;
+}
+
+.session-wall-art {
+  aspect-ratio: 2 / 3;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary-color), #0b1119) center / cover no-repeat;
+}
+
+.session-wall-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.session-wall-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.session-wall-user img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.session-wall-state {
+  margin-left: auto;
+  font-size: 10px;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.session-wall-title,
+.session-wall-sub,
+.session-wall-device {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-wall-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.session-wall-sub {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.session-wall-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  margin-top: auto;
+  min-width: 0;
+}
+
+.session-wall-method {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.session-wall-method.is-direct {
+  background: rgba(46, 204, 113, 0.18);
+  color: #7ee2a8;
+}
+
+.session-wall-method.is-transcode {
+  background: rgba(241, 196, 15, 0.18);
+  color: #f5d76e;
+}
+
+.session-wall-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.session-wall-progress span {
+  display: block;
+  height: 100%;
+  background: var(--primary-color);
+}
+
+.session-wall-time {
+  font-size: 11px;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}

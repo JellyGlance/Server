@@ -13,6 +13,7 @@ import GroupLineIcon from "remixicon-react/GroupLineIcon";
 import axios from "../../../lib/axios_instance";
 import { APP_VERSION_STORAGE_KEY, OPEN_WHATS_NEW_EVENT } from "../../../lib/events";
 import releaseNotes from "../../../whats-new.json";
+import { findReleaseNotes, formatDisplayVersion, isBetaVersion } from "../../../lib/release-channel";
 
 const SEEN_VERSION_KEY = "jellyglance_whats_new_seen_version";
 
@@ -30,7 +31,7 @@ const iconMap = {
 };
 
 function getNotes(version) {
-  return releaseNotes[version] || [
+  return findReleaseNotes(releaseNotes, version) || [
     {
       icon: MagicLineIcon,
       title: "JellyGlance updated",
@@ -41,10 +42,6 @@ function getNotes(version) {
 
 function resolveIcon(icon) {
   return iconMap[icon] || MagicLineIcon;
-}
-
-function formatDisplayVersion(version) {
-  return `v${String(version || "").replace(/-beta\.\d+$/i, "").replace(/^v/i, "")}`;
 }
 
 export default function WhatsNewModal({ enabled = true }) {
@@ -123,8 +120,9 @@ export default function WhatsNewModal({ enabled = true }) {
         <div className="whats-new-hero">
           <span>
             <MagicLineIcon size={17} />
-            What&apos;s new
+            What&apos;s new{isBetaVersion(version) ? " (beta)" : ""}
           </span>
+          {isBetaVersion(version) ? <em className="release-channel-badge">Beta channel</em> : null}
           <h2>JellyGlance {formatDisplayVersion(version)}</h2>
           <p>A quick look at the newest bits before you dive back in.</p>
         </div>

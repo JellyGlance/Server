@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import axios from "../../../lib/axios_instance";
 import StarFillIcon from "remixicon-react/StarFillIcon";
 
+import { formatDisplayVersion as formatReleaseVersion, isBetaVersion } from "../../../lib/release-channel";
 import "../../css/settings/version.css";
-import { Card } from "react-bootstrap";
 
 function formatDisplayVersion(version) {
-  const normalized = String(version || "").replace(/-beta\.\d+$/i, "");
-  return normalized === "Loading" ? normalized : `v${normalized.replace(/^v/i, "")}`;
+  return version === "Loading" ? version : formatReleaseVersion(version);
 }
+import { Card } from "react-bootstrap";
+
 
 export default function VersionCard() {
 
@@ -55,6 +56,9 @@ export default function VersionCard() {
     <Card  className="version rounded-0 border-0" >
        <Card.Body>
             <p className="version-current">JellyGlance {formatDisplayVersion(data.current_version)}</p>
+            {isBetaVersion(data.current_version) ? (
+              <span className="release-channel-badge version-channel-badge" title="This build is on the beta channel">Beta channel</span>
+            ) : null}
             <div className="version-links">
               <a href="https://discord.gg/dMGhv8j2kx" target="_blank" rel="noreferrer">Join Discord</a>
               {Number.isFinite(data.stars) ? (
