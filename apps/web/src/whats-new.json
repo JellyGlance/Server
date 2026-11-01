@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "speed",
+      "title": "Quiet Hours For Scans And Intros",
+      "body": "Server → Server Jobs now has Quiet hours. Pick a start and end time, an optional time zone and which days it applies to, and JellyGlance holds Jellyfin library scans and intro / credits detection during that window so evening or overnight playback is not slowed down. Jobs that start on their own schedule are stopped and run once as soon as the window ends (or you can let them wait for their next schedule instead). Held jobs show an In quiet hours tag, and pressing Run still starts a job straight away."
+    },
+    {
       "icon": "rocket",
       "title": "Ops Copilot Preview",
       "body": "Server → Ops Copilot lets admins ask plain questions like “why is Dune buffering for Mum?”, “free 500 GB without touching favourites” or “anything stuck in downloads?”. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."

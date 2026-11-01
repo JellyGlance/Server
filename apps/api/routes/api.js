@@ -3,6 +3,7 @@ const express = require("express");
 const { mediaServerAuthHeaders, chooseServerType, withServerType, saveServerType, envServerType } = require("../classes/server-type");
 const { clientSettings } = require("../classes/client-config");
 const audiobookshelf = require("../classes/audiobookshelf");
+const quietHours = require("../classes/quiet-hours");
 const fs = require("fs");
 const path = require("path");
 
@@ -8025,6 +8026,8 @@ router.post("/server-management/action", async (req, res) => {
       return;
     }
 
+    // A job started by hand is allowed even during quiet hours.
+    quietHours.markManualRun(taskId);
     await jellyfinRequest(`/ScheduledTasks/Running/${encodeURIComponent(taskId)}`, { method: "post" });
     await addAuditEntry(req, "server-management.action", {
       action,
