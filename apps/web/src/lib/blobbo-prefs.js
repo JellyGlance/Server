@@ -31,23 +31,12 @@ export function rememberQuestion(text, intentId) {
 }
 export const clearHistory = () => write("history", []);
 
-export const DEFAULT_PREFS = { kidsSafe: false, seasonal: true, voice: false, language: "auto" };
+export const DEFAULT_PREFS = { kidsSafe: false, seasonal: true, look: null, voice: false, language: "auto" };
 export const getPrefs = () => ({ ...DEFAULT_PREFS, ...(read("prefs", {}) || {}) });
 export const setPref = (name, value) => write("prefs", { ...getPrefs(), [name]: value });
 
 export const getFlag = (name) => read(`flag.${name}`, null);
 export const setFlag = (name, value) => write(`flag.${name}`, value);
-
-// Seasonal skin: picked from today's date, shown as a small badge on Blobbo.
-export function currentSeason(date = new Date()) {
-  const m = date.getMonth() + 1;
-  const d = date.getDate();
-  if (m === 10 && d >= 20) return { id: "halloween", badge: "🎃", label: "Spooky season" };
-  if (m === 12) return { id: "winter", badge: "❄️", label: "Festive frost" };
-  if (m === 2 && d <= 14 && d >= 7) return { id: "hearts", badge: "💗", label: "Valentine's week" };
-  if (m >= 6 && m <= 8) return { id: "summer", badge: "😎", label: "Summer shades" };
-  return null;
-}
 
 // Kids-safe answers: hide anything that reads as grown-up in titles or names.
 const MATURE = /\b(sex\w*|porn\w*|nud(e|ity)|xxx|erotic\w*|fuck\w*|shit\w*|bitch\w*|cunt\w*|dick\w*|bastard\w*|slasher\w*|gore\w*|kill(er|ers|ing)?|murder\w*|blood\w*|horror\w*|drug\w*|cocaine|heroin)\b/i;

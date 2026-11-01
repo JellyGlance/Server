@@ -139,7 +139,6 @@ a.blobbo-btn--primary { color: var(--background-color, #0b0d12); }
 .blobbo-fab:hover, .blobbo-fab:focus-visible { background: var(--primary-color, #9b6ac8); color: var(--background-color, #0b0d12); }
 @media (max-width: 640px) { .blobbo-fab { display: none; } }
 .blobbo-avatar { position: relative; }
-.blobbo-season-badge { position: absolute; top: -4px; right: -2px; font-size: 1.25rem; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); }
 .blobbo-worry {
   position: absolute; bottom: 2px; right: 0; width: 20px; height: 20px; border-radius: 50%;
   background: #e0a030; color: #111; font-weight: 800; font-size: 0.8rem; line-height: 20px; text-align: center;
@@ -175,3 +174,10 @@ a.blobbo-btn--primary { color: var(--background-color, #0b0d12); }
   .blobbo--react-wave .blobbo-avatar img, .blobbo--react-look .blobbo-avatar img, .blobbo-react-badge { animation: none; }
 }
 .blobbo--still .blobbo-avatar img, .blobbo--still .blobbo-react-badge { animation: none !important; }
+
+/* Looks picker (Options): locked seasonal outfits and costumes. */
+.blobbo-looks { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; margin: 8px 0 4px; max-height: 220px; overflow-y: auto; }
+.blobbo-look { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px; border: 1px solid transparent; border-radius: 10px; background: rgba(255, 255, 255, 0.04); color: inherit; font-size: 0.68rem; line-height: 1.1; cursor: pointer; }
+.blobbo-look img { width: 40px; height: 40px; }
+.blobbo-look:hover, .blobbo-look:focus-visible { border-color: rgba(196, 168, 255, 0.5); }
+.blobbo-look--on { border-color: var(--primary-color, #9b6ac8); background: rgba(155, 106, 200, 0.18); }
