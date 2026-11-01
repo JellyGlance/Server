@@ -1,6 +1,11 @@
 {
   "1.4.2-beta": [
     {
+      "icon": "speed",
+      "title": "Why Is This Transcoding?",
+      "body": "Active Sessions now explains every transcode for admins. Each transcoding stream gets a small chip such as “Transcode: Subtitle burn-in” or “Remux: Container”; tap it for a plain-English reason (HEVC to H.264, audio codec, bitrate over the limit, HDR tone-mapping, image subtitles being burned in, resolution caps or direct play turned off) plus a fix hint for that device, like enabling HEVC in Infuse or Android TV, raising the max streaming bitrate, or switching to SRT subtitles. Remuxes and audio-only transcodes are labelled separately so you can tell the cheap ones from the heavy ones."
+    },
+    {
       "icon": "rocket",
       "title": "Ops Copilot Preview",
       "body": "Server → Ops Copilot lets admins ask plain questions like “why is Dune buffering for Mum?”, “free 500 GB without touching favourites” or “anything stuck in downloads?”. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."

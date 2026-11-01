@@ -1172,3 +1172,28 @@
     display: none !important;
   }
 }
+
+/* Transcode-cause explainer */
+.transcode-explainer { margin-top: 8px; font-size: 12px; }
+.transcode-explainer-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 9px; border-radius: 999px; border: 1px solid rgba(251, 191, 36, 0.55);
+  background: rgba(251, 191, 36, 0.14); color: #fbbf24; font-weight: 700; font-size: 11px; cursor: pointer;
+}
+.transcode-explainer-chip.is-remux { border-color: rgba(96, 165, 250, 0.55); background: rgba(96, 165, 250, 0.14); color: #93c5fd; }
+.transcode-explainer-chip.is-audio-only { border-color: rgba(167, 243, 208, 0.5); background: rgba(52, 211, 153, 0.12); color: #6ee7b7; }
+.transcode-explainer-chip svg { transition: transform 0.15s ease; }
+.transcode-explainer.is-open .transcode-explainer-chip svg { transform: rotate(180deg); }
+.transcode-explainer-detail {
+  margin-top: 6px; padding: 8px 10px; border-radius: 10px;
+  background: rgba(7, 9, 13, 0.82); border: 1px solid rgba(255, 255, 255, 0.08); color: #e5e7eb;
+}
+.transcode-explainer-device { margin: 0 0 6px; color: #9ca3af; font-size: 11px; }
+.transcode-explainer-detail ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.transcode-explainer-detail li { display: grid; gap: 2px; }
+.transcode-explainer-detail li strong { color: #fbbf24; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.transcode-explainer-detail li em { color: #a7f3d0; font-style: normal; }
+
+.transcode-explainer.is-compact { margin-top: 4px; }
+.transcode-explainer-popper.MuiTooltip-tooltip { max-width: 380px; padding: 0; background: transparent; }
+.transcode-explainer-popper .transcode-explainer-detail { margin-top: 0; background: rgba(7, 9, 13, 0.96); font-size: 12px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); }
