@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import axios from "../../../lib/axios_instance";
 import { askBlobbo, ALL_CHIPS, STARTER_CHIPS } from "../../../lib/blobbo-intents";
 import { BLOBBO_HIDDEN_KEY, BLOBBO_SETTING_EVENT, isBlobboHidden } from "../../../lib/blobbo-settings";
-import { BLOBBO_PREFS_EVENT, clearHistory, currentSeason, getFlag, getHistory, getPrefs, rememberQuestion, setFlag, setPref, speak } from "../../../lib/blobbo-prefs";
+import { BLOBBO_LOOKS, getLook, lookAssets, resolveLook } from "../../../lib/blobbo-looks";
+import { BLOBBO_PREFS_EVENT, clearHistory, getFlag, getHistory, getPrefs, rememberQuestion, setFlag, setPref, speak } from "../../../lib/blobbo-prefs";
 import { OPEN_WHATS_NEW_EVENT } from "../../../lib/events";
 import { fetchActiveSessions, getCachedActiveSessions, subscribeActiveSessions } from "../../../lib/session-cache";
 import { BLOBBO_REACT_DURATION_MS, decideSessionReaction, sessionKeys } from "../../../lib/blobbo-session-react";
@@ -308,14 +309,15 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
     </div>
   );
 
-  const season = prefs.seasonal ? currentSeason() : null;
+  const look = resolveLook(prefs);
+  const lookArt = lookAssets(look.id);
   const lastIndex = messages.length - 1;
   const quizChips = (ids) => ids.map(chipFor).filter(Boolean);
 
   const toggle = (name) => setPref(name, !prefs[name]);
 
   return (
-    <div className={`blobbo ${open ? "blobbo--open" : ""} ${reducedMotion ? "blobbo--still" : ""} ${mood ? `blobbo--mood-${mood}` : ""} ${season ? `blobbo--season-${season.id}` : ""} ${reaction ? `blobbo--react-${reaction}` : ""}`}>
+    <div className={`blobbo ${open ? "blobbo--open" : ""} ${reducedMotion ? "blobbo--still" : ""} ${mood ? `blobbo--mood-${mood}` : ""} blobbo--look-${look.id} ${reaction ? `blobbo--react-${reaction}` : ""}`}>
       {!open && teaser && (
         <div className="blobbo-bubble blobbo-teaser" role="status">
           <div className="blobbo-bubble-title">Blobbo</div>
@@ -383,8 +385,18 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
               <div className="blobbo-msg blobbo-msg--blobbo blobbo-options">
                 <label><input type="checkbox" checked={prefs.kidsSafe} onChange={() => toggle("kidsSafe")} /> Kids-safe answers (hides grown-up titles and words)</label>
                 <label><input type="checkbox" checked={prefs.voice} onChange={() => toggle("voice")} /> Read answers aloud (uses your browser&rsquo;s voice)</label>
-                <label><input type="checkbox" checked={prefs.seasonal} onChange={() => toggle("seasonal")} /> Seasonal outfits{currentSeason() ? ` (now: ${currentSeason().label} ${currentSeason().badge})` : ""}</label>
-                <p className="blobbo-msg-note">Blobbo&rsquo;s own voice pack and full seasonal costumes are on the way in a later beta. For now Blobbo borrows your browser&rsquo;s voice and wears a small seasonal badge.</p>
+                <label><input type="checkbox" checked={prefs.seasonal} onChange={() => toggle("seasonal")} /> Dress up for the season when I haven&rsquo;t picked a look</label>
+                <div className="blobbo-looks" role="radiogroup" aria-label="Blobbo's look">
+                  <button type="button" role="radio" aria-checked={!prefs.look} className={`blobbo-look ${!prefs.look ? "blobbo-look--on" : ""}`} onClick={() => setPref("look", null)} title="Auto: dress for the calendar">
+                    <img src={lookAssets(resolveLook({ ...prefs, look: null }).id).thumb} alt="" width="40" height="40" /><span>Auto</span>
+                  </button>
+                  {BLOBBO_LOOKS.map((l) => (
+                    <button key={l.id} type="button" role="radio" aria-checked={prefs.look === l.id} className={`blobbo-look ${prefs.look === l.id ? "blobbo-look--on" : ""}`} onClick={() => setPref("look", l.id)} title={l.label}>
+                      <img src={lookAssets(l.id).thumb} alt="" width="40" height="40" loading="lazy" /><span>{l.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="blobbo-msg-note">{look.source === "picked" ? `Wearing ${getLook(look.id).label} until you pick Auto again.` : `Auto: wearing ${getLook(look.id).label} for today.`} Blobbo borrows your browser&rsquo;s voice for now.</p>
                 <div className="blobbo-bubble-actions">
                   <button type="button" className="blobbo-btn" onClick={() => { setShowOptions(false); startTour(0); }}>Take the tour</button>
                   <button type="button" className="blobbo-btn" onClick={() => { setShowOptions(false); startQuiz(0); }}>Setup quiz</button>
@@ -432,14 +444,10 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
           onClick={() => (open ? setOpen(false) : openChat())}
         >
           {reducedMotion ? (
-            <img src="/blobbo/blobbo-still.png" alt="" width="72" height="72" draggable="false" />
+            <img src={lookArt.still} alt="" width="72" height="72" draggable="false" />
           ) : (
-            <picture>
-              <source srcSet="/blobbo/blobbo-idle.webp" type="image/webp" />
-              <img src="/blobbo/blobbo-idle.gif" alt="" width="72" height="72" draggable="false" />
-            </picture>
+            <img key={look.id} src={lookArt.idle} alt="" width="72" height="72" draggable="false" />
           )}
-          {season && <span className="blobbo-season-badge" aria-hidden="true">{season.badge}</span>}
           {reaction && <span className="blobbo-react-badge" aria-hidden="true">{reaction === "wave" ? "\u{1F44B}" : "\u{1F440}"}</span>}
           {mood === "worried" && <span className="blobbo-worry" aria-label="Some health checks need a look">!</span>}
         </button>
