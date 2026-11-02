@@ -39,6 +39,51 @@ function formatTranscodeReasons(session) {
   return parts.join(", ");
 }
 
+function lastStreamPart(value) {
+  const parts = String(value || "").split("->");
+  return parts[parts.length - 1].trim();
+}
+
+// Short, client-agnostic pills: playback method, resolution/codec and bitrate.
+function getSessionPills(session) {
+  const item = session.NowPlayingItem || {};
+  const transcoding = session.TranscodingInfo;
+  const pills = [];
+  const videoTranscode = Boolean(transcoding) && transcoding.IsVideoDirect === false;
+  const audioTranscode = Boolean(transcoding) && transcoding.IsAudioDirect === false;
+
+  if (videoTranscode) {
+    pills.push({ key: "method", label: "Video transcode", tone: "warn" });
+  } else {
+    pills.push({ key: "method", label: session.PlayState?.PlayMethod === "DirectStream" ? "Direct stream" : "Direct play", tone: "ok" });
+  }
+  if (audioTranscode) {
+    pills.push({ key: "audio", label: "Audio transcode", tone: "warn" });
+  }
+
+  const videoMatch = /\(([^-\s)]+)-([^\s)]+)/.exec(item.VideoStream || "");
+  if (videoMatch) {
+    const target = /->\s*([^-\s)]+)-([^\s)]+)/.exec(item.VideoStream || "");
+    const codec = target ? target[1] : videoMatch[1];
+    const resolution = target ? target[2] : videoMatch[2];
+    pills.push({ key: "video", label: `${resolution} · ${codec}` });
+  }
+
+  const bitrate = lastStreamPart(item.VideoBitrateStream);
+  if (bitrate) {
+    pills.push({ key: "bitrate", label: bitrate });
+  }
+  return pills;
+}
+
+function formatStreamDetail(value) {
+  const inner = /\((.*)\)/.exec(String(value || ""));
+  return (inner ? inner[1] : String(value || ""))
+    .replace(/->/g, "→")
+    .replace(/-(\d+)Ch/gi, " $1ch")
+    .trim();
+}
+
 function ticksToTimeString(ticks) {
   // Convert ticks to seconds
   const seconds = Math.floor(ticks / 10000000);
@@ -92,11 +137,14 @@ function SessionDetailItem({ label, value, wide = false }) {
   );
 }
 
-function SessionCardDetailRow({ label, children, className = "", short = false }) {
+function SessionField({ label, value, title }) {
+  if (value === undefined || value === null || value === "") return null;
   return (
-    <div className={`session-details-row ${className}`.trim()}>
-      <span className="session-details-title text-end text-uppercase">{label}</span>
-      <div className={`ellipse session-details-value${short ? " session-details-value-short" : ""}`}>{children}</div>
+    <div className="session-field">
+      <span className="session-field-label">{label}</span>
+      <Tooltip title={title || (typeof value === "string" ? value : "")}>
+        <span className="session-field-value">{value}</span>
+      </Tooltip>
     </div>
   );
 }
@@ -604,129 +652,81 @@ function SessionCard(props) {
           </Col>
           <Col className="w-100 h-100 m-0 px-0">
             <Card.Body className="session-card-body w-100 h-100">
-              <Container className="h-100 d-flex flex-column justify-content-between g-0">
-                <Row className="d-flex justify-content-start session-details">
-                  <Col className="session-details-list">
-                    <SessionCardDetailRow label={<Trans i18nKey="ACTIVITY_TABLE.DEVICE" />} className="session-details-row-short">
-                        <Tooltip title={props.data.session.DeviceName}>
-                          <span
-                            style={{
-                              display: "-webkit-box",
-                              WebkitBoxOrient: "vertical",
-                              WebkitLineClamp: 1,
-                            }}
-                          >
-                            {props.data.session.DeviceName}
-                          </span>
-                        </Tooltip>
-                    </SessionCardDetailRow>
-                    <SessionCardDetailRow label={<Trans i18nKey="ACTIVITY_TABLE.CLIENT" />} className="session-details-row-short">
-                        <Tooltip title={props.data.session.Client + " " + props.data.session.ApplicationVersion}>
-                          <span
-                            style={{
-                              display: "-webkit-box",
-                              WebkitBoxOrient: "vertical",
-                              WebkitLineClamp: 1,
-                            }}
-                          >
-                            {props.data.session.Client + " " + props.data.session.ApplicationVersion}
-                          </span>
-                        </Tooltip>
-                    </SessionCardDetailRow>
-                    {props.data.session.NowPlayingItem.ContainerStream !== "" && (
-                      <SessionCardDetailRow label={<Trans i18nKey="CONTAINER" />} className="mt-2" short>
-                          <Tooltip title={props.data.session.NowPlayingItem.ContainerStream}>
-                            <span>{props.data.session.NowPlayingItem.ContainerStream}</span>
-                          </Tooltip>
-                      </SessionCardDetailRow>
-                    )}
-                    {props.data.session.NowPlayingItem.VideoStream !== "" && (
-                      <SessionCardDetailRow label={<Trans i18nKey="VIDEO" />} short>
-                          <Tooltip title={props.data.session.NowPlayingItem.VideoStream}>
-                            <span>{props.data.session.NowPlayingItem.VideoStream}</span>
-                          </Tooltip>
-                      </SessionCardDetailRow>
-                    )}
-                    {props.data.session.NowPlayingItem.VideoBitrateStream !== "" && (
-                      <SessionCardDetailRow label="" short>
-                          <Tooltip title={props.data.session.NowPlayingItem.VideoBitrateStream}>
-                            <span>{props.data.session.NowPlayingItem.VideoBitrateStream}</span>
-                          </Tooltip>
-                      </SessionCardDetailRow>
-                    )}
-                    {props.data.session.NowPlayingItem.AudioStream !== "" && (
-                      <SessionCardDetailRow label={<Trans i18nKey="AUDIO" />} short>
-                          <Tooltip title={props.data.session.NowPlayingItem.AudioStream}>
-                            <span>{props.data.session.NowPlayingItem.AudioStream}</span>
-                          </Tooltip>
-                      </SessionCardDetailRow>
-                    )}
-                    {props.data.session.NowPlayingItem.AudioBitrateStream !== "" && (
-                      <SessionCardDetailRow label="" short>
-                          <Tooltip title={props.data.session.NowPlayingItem.AudioBitrateStream}>
-                            <span>{props.data.session.NowPlayingItem.AudioBitrateStream}</span>
-                          </Tooltip>
-                      </SessionCardDetailRow>
-                    )}
-                    {props.data.session.NowPlayingItem.SubtitleStream !== "" && (
-                      <SessionCardDetailRow label={<Trans i18nKey="SUBTITLES" />} short>
-                          <Tooltip title={props.data.session.NowPlayingItem.SubtitleStream}>
-                            <span>{props.data.session.NowPlayingItem.SubtitleStream}</span>
-                          </Tooltip>
-                      </SessionCardDetailRow>
-                    )}
-                    {canManage && isTranscoding ? <TranscodeExplainer session={session} compact /> : null}
+              <Container className="h-100 d-flex flex-column justify-content-between g-0 session-card-layout">
+                <div className="session-card-head">
+                  <div className="session-title-copy">
+                    <Card.Text className="session-title">
+                      <span className="session-play-state">{playState.IsPaused ? <PauseFillIcon /> : <PlayFillIcon />}</span>
+                      <Link to={`/libraries/item/${nowPlaying.Id}`} target="_blank" className="item-name">
+                        {title}
+                      </Link>
+                    </Card.Text>
+                    <Tooltip title={`${session.DeviceName} · ${session.Client} ${session.ApplicationVersion}`}>
+                      <Card.Text className="session-subtitle">
+                        {[subtitle, session.Client && `${session.Client} ${session.ApplicationVersion || ""}`.trim()].filter(Boolean).join(" · ")}
+                      </Card.Text>
+                    </Tooltip>
+                  </div>
+                  <Tooltip title={session.UserName}>
+                    <Link to={`/users/${session.UserId}`} className="session-user-chip">
+                      {session.UserPrimaryImageTag !== undefined ? (
+                        <img
+                          className="session-card-user-image"
+                          src={baseUrl + "/proxy/Users/Images/Primary?id=" + session.UserId + "&fillWidth=72&quality=55"}
+                          loading="lazy"
+                          decoding="async"
+                          alt=""
+                        />
+                      ) : (
+                        <AccountCircleFillIcon className="session-card-user-image" />
+                      )}
+                      <span className="session-user-name">{session.UserName}</span>
+                    </Link>
+                  </Tooltip>
+                </div>
 
-                    {!hideIpAddress ? (
-                    <SessionCardDetailRow label={<Trans i18nKey="ACTIVITY_TABLE.IP_ADDRESS" />} className="mt-2">
-                        {isRemoteSession(props.data.session.RemoteEndPoint) &&
+                <div className="session-pills">
+                  {getSessionPills(session).map((pill) => (
+                    <span key={pill.key} className={`session-pill${pill.tone ? ` is-${pill.tone}` : ""}`}>
+                      {pill.label}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="session-fields">
+                  <SessionField label="Device" value={session.DeviceName} />
+                  <SessionField label="ETA" value={eta || <Trans i18nKey="ERROR_MESSAGES.N/A" />} />
+                  {nowPlaying.AudioStream ? (
+                    <SessionField
+                      label="Audio"
+                      value={[formatStreamDetail(nowPlaying.AudioStream), lastStreamPart(nowPlaying.AudioBitrateStream)].filter(Boolean).join(" · ")}
+                      title={`${nowPlaying.AudioStream} ${nowPlaying.AudioBitrateStream || ""}`.trim()}
+                    />
+                  ) : null}
+                  {nowPlaying.SubtitleStream ? <SessionField label="Subtitles" value={nowPlaying.SubtitleStream} /> : null}
+                  {!hideIpAddress ? (
+                    <SessionField
+                      label="IP"
+                      value={
+                        isRemoteSession(session.RemoteEndPoint) &&
                         (window.env?.JS_GEOLITE_ACCOUNT_ID ?? import.meta.env.JS_GEOLITE_ACCOUNT_ID) ? (
-                          <Link
-                            className="text-decoration-none text-white"
-                            onClick={() => showIPDataModal(props.data.session.RemoteEndPoint)}
-                          >
-                            {props.data.session.RemoteEndPoint}
+                          <Link className="text-decoration-none text-white" onClick={() => showIPDataModal(session.RemoteEndPoint)}>
+                            {session.RemoteEndPoint}
                           </Link>
                         ) : (
-                          <span>{props.data.session.RemoteEndPoint}</span>
-                        )}
-                    </SessionCardDetailRow>
-                    ) : null}
+                          session.RemoteEndPoint
+                        )
+                      }
+                    />
+                  ) : null}
+                </div>
+                {canManage && isTranscoding ? <TranscodeExplainer session={session} compact /> : null}
+                <SessionGlanceStrip stitch={props.stitch} />
 
-                    <SessionCardDetailRow label="ETA">
-                        {props.data.session.NowPlayingItem.RunTimeTicks ||
-                        props.data.session.NowPlayingItem.ChannelType === "TV" ? (
-                          getETA(props.data.session.NowPlayingItem, props.data.session.PlayState)
-                        ) : (
-                          <Trans i18nKey="ERROR_MESSAGES.N/A" />
-                        )}
-                    </SessionCardDetailRow>
-                  </Col>
-                </Row>
-
-                <Row className="p-0 m-0">
-                  <Col>
-                    <Card.Text className="session-timecode text-end">
-                      <Tooltip
-                        title={`Ends at ${
-                          props.data.session.NowPlayingItem.RunTimeTicks ||
-                          props.data.session.NowPlayingItem.ChannelType === "TV" ? (
-                            getETA(props.data.session.NowPlayingItem, props.data.session.PlayState)
-                          ) : (
-                            <Trans i18nKey="ERROR_MESSAGES.N/A" />
-                          )
-                        }`}
-                      >
-                        <span className="session-timecode-value">
-                          {ticksToTimeString(props.data.session.PlayState.PositionTicks)}
-                          {props.data.session.NowPlayingItem.RunTimeTicks
-                            ? "/" + ticksToTimeString(props.data.session.NowPlayingItem.RunTimeTicks)
-                            : ""}
-                        </span>
-                      </Tooltip>
-                    </Card.Text>
-                  </Col>
-                </Row>
+                <div className="session-timecode">
+                  <span className="session-timecode-value">{ticksToTimeString(playState.PositionTicks)}</span>
+                  <span className="session-timecode-value">{nowPlaying.RunTimeTicks ? ticksToTimeString(nowPlaying.RunTimeTicks) : ""}</span>
+                </div>
               </Container>
             </Card.Body>
           </Col>
@@ -749,46 +749,6 @@ function SessionCard(props) {
               />
             ) : null}
           </div>
-        </Col>
-      </Row>
-      <Row className="session-card-meta p-0 m-0">
-        <Col className="session-card-now-playing">
-          <span className="session-play-state">{props.data.session.PlayState.IsPaused ? <PauseFillIcon /> : <PlayFillIcon />}</span>
-          <div className="session-title-copy">
-            <Card.Text className="session-title">
-              <Link to={`/libraries/item/${props.data.session.NowPlayingItem.Id}`} target="_blank" className="item-name">
-                {props.data.session.NowPlayingItem.Type === "Episode" && props.data.session.NowPlayingItem.SeriesName
-                  ? props.data.session.NowPlayingItem.SeriesName
-                  : props.data.session.NowPlayingItem.Name}
-              </Link>
-            </Card.Text>
-            <Card.Text className="session-subtitle">
-              {props.data.session.NowPlayingItem.Type === "Episode"
-                ? `${props.data.session.NowPlayingItem.Name} · S${props.data.session.NowPlayingItem.ParentIndexNumber} E${props.data.session.NowPlayingItem.IndexNumber}`
-                : props.data.session.NowPlayingItem.Type === "Audio" && props.data.session.NowPlayingItem.Artists?.length > 0
-                  ? props.data.session.NowPlayingItem.Artists[0]
-                  : props.data.session.NowPlayingItem.SeriesName || props.data.session.NowPlayingItem.Type}
-            </Card.Text>
-            <SessionGlanceStrip stitch={props.stitch} />
-          </div>
-        </Col>
-        <Col className="session-card-user">
-          <Tooltip title={props.data.session.UserName}>
-            <Link to={`/users/${props.data.session.UserId}`} className="item-name session-user-name">
-              {props.data.session.UserName}
-            </Link>
-          </Tooltip>
-          {props.data.session.UserPrimaryImageTag !== undefined ? (
-            <img
-              className="session-card-user-image"
-              src={baseUrl + "/proxy/Users/Images/Primary?id=" + props.data.session.UserId + "&fillWidth=72&quality=55"}
-              loading="lazy"
-              decoding="async"
-              alt=""
-            />
-          ) : (
-            <AccountCircleFillIcon className="session-card-user-image" />
-          )}
         </Col>
       </Row>
     </Card>

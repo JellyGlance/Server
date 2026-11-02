@@ -523,10 +523,28 @@ select option:hover {
   align-items: center;
   max-width: min(420px, calc(100vw - 32px));
   padding: 12px 14px;
+}
+
+/* Blobbo publishes --jg-blobbo-strip-w while mounted; sit beside its bottom strip rather than under it. */
+:root:has(.blobbo) .pwa-install-banner {
+  right: calc(20px + var(--jg-blobbo-strip-w, 76px) + 12px);
+  bottom: 20px;
+  max-width: min(420px, calc(100vw - 52px - var(--jg-blobbo-strip-w, 76px)));
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   background: rgba(11, 17, 23, 0.94);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* While Blobbo's tour/tip card or chat is open it owns the corner; defer the install banner until it closes. */
+:root:has(.blobbo-teaser, .blobbo--open) .pwa-install-banner {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pwa-install-banner {
+  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .pwa-install-banner span {

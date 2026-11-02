@@ -109,6 +109,7 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
   const [mood, setMood] = useState(null);
   const [reaction, setReaction] = useState(null);
   const sessionKeysRef = useRef(null);
+  const fabRowRef = useRef(null);
   const lastReactRef = useRef(0);
   const [tourStep, setTourStep] = useState(-1);
   const scrollRef = useRef(null);
@@ -216,6 +217,24 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, open, showOptions]);
+
+  // Publish the FAB strip footprint so other bottom-right UI (install banner) can sit beside it instead of under it.
+  useEffect(() => {
+    const root = document.documentElement;
+    const row = fabRowRef.current;
+    if (!enabled || hidden || !row) {
+      root.style.removeProperty("--jg-blobbo-strip-w");
+      return undefined;
+    }
+    const publish = () => root.style.setProperty("--jg-blobbo-strip-w", `${Math.ceil(row.getBoundingClientRect().width)}px`);
+    publish();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(publish) : null;
+    observer?.observe(row);
+    return () => {
+      observer?.disconnect();
+      root.style.removeProperty("--jg-blobbo-strip-w");
+    };
+  }, [enabled, hidden]);
 
   if (!enabled || hidden) return null;
 
@@ -430,7 +449,7 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
           </form>
         </div>
       )}
-      <div className="blobbo-fab-row">
+      <div className="blobbo-fab-row" ref={fabRowRef}>
         {!open && (
           <button type="button" className="blobbo-fab" onClick={openChat} aria-label="Ask Blobbo (Shift+A)">
             Ask Blobbo
