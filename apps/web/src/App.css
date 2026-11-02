@@ -536,6 +536,17 @@ select option:hover {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
+/* While Blobbo's tour/tip card or chat is open it owns the corner; defer the install banner until it closes. */
+:root:has(.blobbo-teaser, .blobbo--open) .pwa-install-banner {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pwa-install-banner {
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
 .pwa-install-banner span {
   flex: 1 1 180px;
   font-size: 13px;
