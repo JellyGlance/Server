@@ -4,7 +4,7 @@
 
 export const BLOBBO_LOOKS = [
   { id: "base", label: "Classic", emoji: "\u{1FAE7}", kind: "seasonal" },
-  { id: "halloween", label: "Halloween", emoji: "\u{1F383}", kind: "seasonal" },
+  { id: "halloween", label: "Halloween ghost", emoji: "\u{1F47B}", kind: "seasonal" },
   { id: "winter", label: "Festive winter", emoji: "\u2744\uFE0F", kind: "seasonal" },
   { id: "hearts", label: "Valentine's hearts", emoji: "\u{1F497}", kind: "seasonal" },
   { id: "summer", label: "Summer shades", emoji: "\u{1F60E}", kind: "seasonal" },
