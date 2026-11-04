@@ -270,6 +270,10 @@ Connect these under **Settings > Integrations**. See the [integration directory]
 
 ## Quick start
 
+### One-Click Deploy
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/JellyGlance/)
+
 ### Docker Compose
 
 Create a `docker-compose.yml` (or start from the one in this repo):
