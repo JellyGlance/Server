@@ -39,9 +39,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      # Always read the release so we know prerelease vs stable even when a
+      # webhook secret is missing — otherwise the job can succeed with no post.
       - name: Read release
         id: release
-        if: ${{ env.DISCORD_RELEASES_WEBHOOK != '' || env.DISCORD_BETA_RELEASES_WEBHOOK != '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
@@ -58,6 +59,17 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `url=${release.html_url}\n`);
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `is_prerelease=${!!release.prerelease}\n`);
           NODE
+
+      - name: Require beta Discord webhook for prereleases
+        if: >-
+          steps.release.outcome == 'success' &&
+          steps.release.outputs.is_prerelease == 'true' &&
+          env.DISCORD_BETA_RELEASES_WEBHOOK == ''
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          echo "::error::DISCORD_BETA_RELEASES_WEBHOOK is empty. Prerelease ${TAG} cannot be announced to the beta Discord channel. Add the Actions secret for the beta releases webhook, then re-run Notify / Discord Release with this tag."
+          exit 1
 
       - name: Login to GitHub Container Registry
         if: ${{ steps.release.outcome == 'success' }}
