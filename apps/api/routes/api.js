@@ -5628,7 +5628,16 @@ router.post("/updateCredentials", async (req, res) => {
   }
 
   try {
+    // Renaming the primary owner account requires the current password so a Viewer
+    // cannot claim Owner by posting their own username (GHSA-fcf4-f825-3347).
     if (username !== undefined && config.APP_USER !== username) {
+      if (!current_password || !verifyPassword(current_password, config.APP_PASSWORD)) {
+        result.isValid = false;
+        result.errorMessage = "Current password is required to change the owner username";
+        res.status(400);
+        res.send(result);
+        return;
+      }
       await db.query(`UPDATE app_config SET "APP_USER"=$1 where "ID"=1`, [username]);
     }
 

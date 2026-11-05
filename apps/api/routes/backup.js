@@ -2,6 +2,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const { randomUUID } = require("crypto");
 const multer = require("multer");
 const jwt = require("jsonwebtoken");
@@ -645,9 +646,69 @@ router.post("/upload", (req, res) => {
   });
 });
 
+
+// First-run restores must never land in the live backup directory before we know
+// setup is still open (GHSA-pjwm-mr57-hjv4). Temp + random name, then unlink on failure.
+const firstRunTempDir = path.join(os.tmpdir(), "jellyglance-first-run");
+const firstRunStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    if (!fs.existsSync(firstRunTempDir)) {
+      fs.mkdirSync(firstRunTempDir, { recursive: true });
+    }
+    cb(null, firstRunTempDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${randomUUID()}.json`);
+  },
+});
+
+const firstRunUpload = multer({
+  storage: firstRunStorage,
+  fileFilter: function (req, file, cb) {
+    const safeName = sanitizeFilename(file.originalname);
+    if (!safeName.endsWith(".json")) {
+      cb(new Error("Only JSON backup files can be uploaded"));
+      return;
+    }
+    cb(null, true);
+  },
+  limits: { fileSize: 1024 * 1024 * 512 },
+});
+
+const discardFirstRunUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 1024 * 1024 * 512 },
+});
+
+function unlinkQuietly(filePath) {
+  if (!filePath) return;
+  fs.unlink(filePath, () => {});
+}
+
 async function firstRunRestoreHandler(req, res) {
-  upload.single("file")(req, res, async (error) => {
+  let setupOpen = true;
+  let setupError = null;
+  try {
+    await assertFirstRunAvailable();
+  } catch (error) {
+    setupOpen = false;
+    setupError = error;
+  }
+
+  // If setup is already complete, consume the multipart body in memory only so
+  // nothing is written under the backup directory, then return 403.
+  const uploader = setupOpen ? firstRunUpload : discardFirstRunUpload;
+
+  uploader.single("file")(req, res, async (error) => {
+    if (!setupOpen) {
+      res.status(setupError?.statusCode || 403).json({
+        error: setupError?.message || "Setup is already complete",
+      });
+      return;
+    }
+
     if (error) {
+      unlinkQuietly(req.file?.path);
       const message = /boundary not found/i.test(error.message)
         ? "Upload failed. Try choosing the backup file again."
         : error.message;
@@ -656,6 +717,7 @@ async function firstRunRestoreHandler(req, res) {
     }
 
     try {
+      // Re-check after the upload in case setup finished while the file was in flight.
       await assertFirstRunAvailable();
 
       if (!req.file) {
@@ -681,6 +743,7 @@ async function firstRunRestoreHandler(req, res) {
 
       runFirstRunRestore(filePath)
         .then(async (restoreResult) => {
+          unlinkQuietly(filePath);
           setFirstRunRestoreStatus({
             status: "complete",
             setupState: restoreResult?.setupState ?? 0,
@@ -702,6 +765,7 @@ async function firstRunRestoreHandler(req, res) {
           });
         })
         .catch((restoreError) => {
+          unlinkQuietly(filePath);
           console.error("[BACKUP] First-run restore failed:", restoreError);
           setFirstRunRestoreStatus({
             status: "failed",
@@ -717,6 +781,7 @@ async function firstRunRestoreHandler(req, res) {
           });
         });
     } catch (restoreError) {
+      unlinkQuietly(req.file?.path);
       console.error("[BACKUP] First-run restore failed:", restoreError);
       res.status(restoreError.statusCode || 500).json({
         error: restoreError.message || "Restore failed",
