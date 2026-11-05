@@ -785,6 +785,16 @@ function authorizeApiRoute(req, res, next) {
     return;
   }
 
+
+  // Primary owner username/password changes must stay Owner-only (GHSA-fcf4-f825-3347).
+  if (pathName === "/updatecredentials" || pathName === "/updatepassword") {
+    if (req.user?.role !== "Owner") {
+      return res.status(403).json({ message: "Owner role required" });
+    }
+    next();
+    return;
+  }
+
   if (pathName.startsWith("/requests/user-folders") || pathName === "/requests/folder-options") {
     if (!req.permissions?.users && !["Owner", "Admin"].includes(req.user?.role)) {
       return res.status(403).json({ message: "Users permission required" });
