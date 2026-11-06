@@ -5630,10 +5630,11 @@ router.post("/updateCredentials", async (req, res) => {
   try {
     // Renaming the primary owner account requires the current password so a Viewer
     // cannot claim Owner by posting their own username (GHSA-fcf4-f825-3347).
-    // Always verify first: whether a password is needed must not depend on what the client sent.
+    // Verify the current password unconditionally so no client-supplied field decides
+    // whether the check runs (verifyPassword rejects missing or empty values).
+    const currentPasswordValid = verifyPassword(current_password, config.APP_PASSWORD);
     if (username !== undefined) {
-      const passwordOk = typeof current_password === "string" && current_password !== "" && verifyPassword(current_password, config.APP_PASSWORD);
-      if (!passwordOk) {
+      if (!currentPasswordValid) {
         result.isValid = false;
         result.errorMessage = "Current password is required to change the owner username";
         res.status(400);
@@ -5648,7 +5649,7 @@ router.post("/updateCredentials", async (req, res) => {
       return;
     }
 
-    if (verifyPassword(current_password, config.APP_PASSWORD)) {
+    if (currentPasswordValid) {
       if (verifyPassword(new_password, config.APP_PASSWORD)) {
         result.isValid = false;
         result.errorMessage = "New Password cannot be the same as Old Password";
