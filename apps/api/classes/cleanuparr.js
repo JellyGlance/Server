@@ -112,9 +112,19 @@ function apiHeaders(app) {
   return { "X-Api-Key": app.values?.secret || "", Accept: "application/json" };
 }
 
+// Linear-time slash trimming (avoids regex backtracking on user-supplied paths).
+function trimSlashes(value = "") {
+  const text = String(value);
+  let start = 0;
+  let end = text.length;
+  while (start < end && text[start] === "/") start += 1;
+  while (end > start && text[end - 1] === "/") end -= 1;
+  return text.slice(start, end);
+}
+
 function baseUrl(app) {
   const url = stripTrailingSlashes(String(app.values?.url || "").trim());
-  const basePath = String(app.values?.basePath || "").trim().replace(/^\/+|\/+$/g, "");
+  const basePath = trimSlashes(String(app.values?.basePath || "").trim());
   if (!url || !basePath || url.endsWith(`/${basePath}`)) return url;
   return `${url}/${basePath}`;
 }
@@ -194,15 +204,53 @@ async function fetchCleanuparrSnapshot({ hours = 168 } = {}) {
 
 // ---- inbound notifications -----------------------------------------------
 
-function parseDataLines(message = "") {
-  const data = {};
-  const description = [];
-  for (const line of String(message).split(/\n+/)) {
-    const match = line.match(/^\s*\*\*(.+?):\*\*\s*(.*)$/);
-    if (match) data[match[1].trim()] = match[2].trim();
-    else if (line.trim()) description.push(line.trim());
+const MAX_INBOUND_TEXT = 20000;
+const MAX_DATA_FIELDS = 50;
+const MAX_FIELD_NAME = 100;
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function safeFieldName(value) {
+  const name = String(value ?? "").trim().slice(0, MAX_FIELD_NAME);
+  if (!name || UNSAFE_KEYS.has(name)) return "";
+  return name;
+}
+
+// Build a plain data object from untrusted name/value pairs without allowing
+// prototype keys to be written.
+function toSafeData(entries) {
+  const fields = new Map();
+  for (const [rawName, rawValue] of entries) {
+    if (fields.size >= MAX_DATA_FIELDS) break;
+    const name = safeFieldName(rawName);
+    if (name) fields.set(name, String(rawValue ?? "").slice(0, 1000));
   }
-  return { data, description: description.join(" ") };
+  return Object.fromEntries(fields);
+}
+
+// Parses "**Name:** value" lines with plain string operations (no backtracking regex).
+function parseDataLines(message = "") {
+  const entries = [];
+  const description = [];
+  for (const rawLine of String(message).slice(0, MAX_INBOUND_TEXT).split("\n")) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (line.startsWith("**")) {
+      const end = line.indexOf(":**", 2);
+      if (end > 2) {
+        entries.push([line.slice(2, end), line.slice(end + 3).trim()]);
+        continue;
+      }
+    }
+    description.push(line);
+  }
+  return { data: toSafeData(entries), description: description.join(" ") };
+}
+
+// Case-insensitive "prefix: rest" match using string operations.
+function afterPrefix(text, prefix) {
+  if (text.length <= prefix.length || text.slice(0, prefix.length).toLowerCase() !== prefix.toLowerCase()) return null;
+  const rest = text.slice(prefix.length).trim();
+  return rest || null;
 }
 
 function strikeEventFromReason(reason = "") {
@@ -215,15 +263,18 @@ function strikeEventFromReason(reason = "") {
 
 // Maps Cleanuparr notification titles (NotificationPublisher.cs) to event types.
 function classifyTitle(title = "") {
-  const text = String(title).trim();
-  const strike = text.match(/^Strike received with reason:\s*(\S+)/i);
-  if (strike) return { eventType: strikeEventFromReason(strike[1]), reason: strike[1] };
-  const deleted = text.match(/^Deleting item from queue with reason:\s*(.+)$/i);
-  if (deleted) return { eventType: "QueueItemDeleted", reason: deleted[1] };
-  const cleaned = text.match(/^Cleaned item from download client with reason:\s*(.+)$/i);
-  if (cleaned) return { eventType: "DownloadCleaned", reason: cleaned[1] };
-  const stopped = text.match(/^Stopped item in download client with reason:\s*(.+)$/i);
-  if (stopped) return { eventType: "DownloadStopped", reason: stopped[1] };
+  const text = String(title).slice(0, 500).trim();
+  const strike = afterPrefix(text, "Strike received with reason:");
+  if (strike) {
+    const reason = strike.split(/\s/)[0];
+    return { eventType: strikeEventFromReason(reason), reason };
+  }
+  const deleted = afterPrefix(text, "Deleting item from queue with reason:");
+  if (deleted) return { eventType: "QueueItemDeleted", reason: deleted };
+  const cleaned = afterPrefix(text, "Cleaned item from download client with reason:");
+  if (cleaned) return { eventType: "DownloadCleaned", reason: cleaned };
+  const stopped = afterPrefix(text, "Stopped item in download client with reason:");
+  if (stopped) return { eventType: "DownloadStopped", reason: stopped };
   if (/^(Category changed|Tag added)$/i.test(text)) return { eventType: "CategoryChanged" };
   if (/^Search triggered$/i.test(text)) return { eventType: "SearchTriggered" };
   if (/^Download grabbed$/i.test(text)) return { eventType: "SearchItemGrabbed" };
@@ -251,15 +302,16 @@ function parseInboundPayload(body = {}) {
   if (embed) {
     title = title || embed.title || "";
     description = embed.description || "";
-    for (const field of Array.isArray(embed.fields) ? embed.fields : []) {
-      if (field?.name) data[String(field.name)] = String(field.value ?? "");
-    }
+    const fields = Array.isArray(embed.fields) ? embed.fields : [];
+    data = toSafeData(fields.filter((field) => field?.name).map((field) => [field.name, field.value]));
   } else {
     const parsed = parseDataLines(message);
     data = parsed.data;
     description = parsed.description;
   }
-  if (payload.data && typeof payload.data === "object") data = { ...data, ...payload.data };
+  if (payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)) {
+    data = toSafeData([...Object.entries(data), ...Object.entries(payload.data)]);
+  }
   if (!payload.data && !embed && pick(payload, "Description")) description = pick(payload, "Description");
   const classified = classifyTitle(title);
   const eventType = normalizeEventType(pick(payload, "EventType", "Event", "Type")) || classified.eventType;

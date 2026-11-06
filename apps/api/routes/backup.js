@@ -13,7 +13,7 @@ const taskstate = require("../logging/taskstate");
 const taskName = require("../logging/taskName");
 const sanitizeFilename = require("../utils/sanitizer");
 const { getBackupDir } = require("../utils/storage-paths");
-const { assertPathInside, fileRateLimit } = require("../utils/security");
+const { assertPathInside, safeJoin, fileRateLimit } = require("../utils/security");
 const db = require("../db");
 const { addAuditEntry } = require("../classes/admin-history");
 const { tables } = require("../global/backup_tables");
@@ -680,9 +680,21 @@ const discardFirstRunUpload = multer({
   limits: { fileSize: 1024 * 1024 * 512 },
 });
 
+// Only remove uploads that multer wrote under our own upload directories.
 function unlinkQuietly(filePath) {
   if (!filePath) return;
-  fs.unlink(filePath, () => {});
+  const name = path.basename(String(filePath));
+  for (const root of [firstRunTempDir, getBackupDir()]) {
+    if (path.resolve(String(filePath)) !== path.resolve(root, name)) continue;
+    let safePath;
+    try {
+      safePath = safeJoin(root, name);
+    } catch {
+      return;
+    }
+    fs.unlink(safePath, () => {});
+    return;
+  }
 }
 
 async function firstRunRestoreHandler(req, res) {

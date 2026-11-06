@@ -46,19 +46,24 @@ function maskRule(rule) {
   };
 }
 
+const HEADER_NAME = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
+const UNSAFE_HEADER_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 // Blank URL / header values from the browser mean "keep what is saved".
 function mergeSecrets(incoming = [], saved = []) {
   const byId = new Map(saved.map((rule) => [rule.id, rule]));
   return (Array.isArray(incoming) ? incoming : []).slice(0, rulesLib.MAX_RULES).map((raw, index) => {
     const previous = byId.get(String(raw?.id || ""));
     const rows = Array.isArray(raw?.headers) ? raw.headers : Object.entries(raw?.headers || {}).map(([name, value]) => ({ name, value }));
-    const headers = {};
+    const headers = new Map();
     for (const row of rows) {
       const name = String(row?.name || "").trim();
-      if (!name) continue;
-      headers[name] = row.value ? String(row.value) : previous?.headers?.[name] || "";
+      // RFC 7230 token characters only; this also rules out prototype keys like "__proto__".
+      if (!name || name.length > 256 || !HEADER_NAME.test(name) || UNSAFE_HEADER_KEYS.has(name.toLowerCase())) continue;
+      const saved = previous?.headers && Object.prototype.hasOwnProperty.call(previous.headers, name) ? previous.headers[name] : "";
+      headers.set(name, row.value ? String(row.value) : String(saved || ""));
     }
-    return rulesLib.normalizeRule({ ...raw, url: raw?.url || previous?.url || "", headers }, index);
+    return rulesLib.normalizeRule({ ...raw, url: raw?.url || previous?.url || "", headers: Object.fromEntries(headers) }, index);
   });
 }
 

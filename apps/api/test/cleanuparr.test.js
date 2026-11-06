@@ -149,3 +149,23 @@ test("fetchStats reports a rejected API key", async () => {
     axios.request = original;
   }
 });
+
+test("parseInboundPayload ignores prototype keys in inbound data", () => {
+  const event = cleanuparr.parseInboundPayload({
+    title: "Strike received with reason: Stalled",
+    message: "**__proto__:** polluted\n**Hash:** ABC",
+    data: JSON.parse('{"__proto__": {"polluted": true}, "constructor": "x", "Item": "Movie"}'),
+  });
+  assert.equal(event.hash, "abc");
+  assert.equal(event.data.Item, "Movie");
+  assert.equal(Object.prototype.hasOwnProperty.call(event.data, "__proto__"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(event.data, "constructor"), false);
+  assert.equal({}.polluted, undefined);
+});
+
+test("classifyTitle parses reasons after long whitespace", () => {
+  const started = Date.now();
+  const result = cleanuparr.classifyTitle(`Deleting item from queue with reason:${" ".repeat(400)}x`);
+  assert.equal(result.eventType, "QueueItemDeleted");
+  assert.ok(Date.now() - started < 500);
+});
