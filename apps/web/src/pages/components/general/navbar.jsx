@@ -21,6 +21,7 @@ import VersionCard from "./version-card";
 import { OPEN_WHATS_NEW_EVENT } from "../../../lib/events";
 import { Trans, useTranslation } from "react-i18next";
 import baseUrl from "../../../lib/baseurl";
+import { toSafeHttpUrl } from "../../../lib/safe-url";
 import socket from "../../../socket";
 import { slugifyUserName } from "../../../lib/userProfile";
 import Config from "../../../lib/config";
@@ -344,7 +345,7 @@ export default function Navbar() {
   const jellyfinAvatar = jellyfinUserId
     ? `${baseUrl}/proxy/Users/Images/Primary/?id=${encodeURIComponent(jellyfinUserId)}${jellyfinImageTag ? `&tag=${encodeURIComponent(jellyfinImageTag)}` : ""}&fillWidth=160&quality=80`
     : "";
-  const avatarSrc = jellyfinAvatar || (canUploadAvatar ? customAvatar : "");
+  const avatarSrc = toSafeHttpUrl(jellyfinAvatar || (canUploadAvatar ? customAvatar : ""), { allowDataImage: true });
   const activeThemePreset = findMatchingThemePreset(themeDraft);
   const hasThemeDraftChanges = JSON.stringify(themeColorFields(themeDraft)) !== JSON.stringify(themeColorFields(customTheme));
   const visibleThemePresets = useMemo(() => filterThemePresets(themeQuery, themeGroup), [themeQuery, themeGroup]);
@@ -999,7 +1000,10 @@ export default function Navbar() {
 
     const reader = new FileReader();
     reader.onload = () => {
-      const nextAvatar = reader.result;
+      const nextAvatar = toSafeHttpUrl(typeof reader.result === "string" ? reader.result : "", { allowDataImage: true });
+      if (!nextAvatar) {
+        return;
+      }
       localStorage.setItem("jellyglance_account_avatar", nextAvatar);
       setCustomAvatar(nextAvatar);
     };
