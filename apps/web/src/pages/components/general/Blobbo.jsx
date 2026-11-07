@@ -6,7 +6,7 @@ import { askBlobbo, ALL_CHIPS, STARTER_CHIPS } from "../../../lib/blobbo-intents
 import { BLOBBO_HIDDEN_KEY, BLOBBO_SETTING_EVENT, isBlobboHidden } from "../../../lib/blobbo-settings";
 import { BLOBBO_LOOKS, getLook, lookAssets, resolveLook } from "../../../lib/blobbo-looks";
 import { BLOBBO_PREFS_EVENT, clearHistory, getFlag, getHistory, getPrefs, rememberQuestion, setFlag, setPref, speak } from "../../../lib/blobbo-prefs";
-import { OPEN_WHATS_NEW_EVENT } from "../../../lib/events";
+import { OPEN_BLOBBO_CHAT_EVENT, OPEN_WHATS_NEW_EVENT } from "../../../lib/events";
 import { fetchActiveSessions, getCachedActiveSessions, subscribeActiveSessions } from "../../../lib/session-cache";
 import { BLOBBO_REACT_DURATION_MS, decideSessionReaction, sessionKeys } from "../../../lib/blobbo-session-react";
 import BlobboLook from "./BlobboLook";
@@ -211,6 +211,14 @@ export default function Blobbo({ enabled = true, defaultOpen = false }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, hidden, messages.length]);
+
+  useEffect(() => {
+    if (!enabled || hidden) return undefined;
+    const onOpenChat = () => openChat();
+    window.addEventListener(OPEN_BLOBBO_CHAT_EVENT, onOpenChat);
+    return () => window.removeEventListener(OPEN_BLOBBO_CHAT_EVENT, onOpenChat);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, hidden, messages.length]);
 
