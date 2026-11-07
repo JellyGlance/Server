@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { findReleaseNotes, formatDisplayVersion, getReleaseChannel, isBetaVersion } from "../src/lib/release-channel.js";
+import { findReleaseNotes, formatDisplayVersion, getReleaseChannel, getVersionLine, isBetaVersion, isVersionLine } from "../src/lib/release-channel.js";
 
 const NOTES = {
   "1.4.2-beta": [{ title: "Beta notes" }],
@@ -32,5 +32,21 @@ describe("release channel", () => {
     assert.equal(findReleaseNotes(NOTES, "1.4.2-beta")[0].title, "Beta notes");
     assert.equal(findReleaseNotes(NOTES, "1.4.0")[0].title, "Stable notes");
     assert.equal(findReleaseNotes(NOTES, "9.9.9"), null);
+  });
+
+  test("version line strips beta stamps the same way What's New does", () => {
+    assert.equal(getVersionLine("1.4.2-beta.4"), "1.4.2");
+    assert.equal(getVersionLine("v1.4.2-beta"), "1.4.2");
+    assert.equal(getVersionLine("1.4.2"), "1.4.2");
+    assert.equal(getVersionLine(""), "");
+  });
+
+  test("1.4.2 line matches stamped betas but not later versions", () => {
+    for (const version of ["1.4.2", "1.4.2-beta", "1.4.2-beta.2", "v1.4.2-beta.4", "1.4.2.beta.1"]) {
+      assert.equal(isVersionLine(version, "1.4.2"), true, version);
+    }
+    for (const version of ["1.4.3", "1.5.0", "1.4.1", "1.4.3-beta", "2.0.0", ""]) {
+      assert.equal(isVersionLine(version, "1.4.2"), false, version);
+    }
   });
 });

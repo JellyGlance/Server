@@ -42,3 +42,16 @@ export function findReleaseNotes(notesByVersion, version) {
   const base = normalized.replace(PRERELEASE_PATTERN, "");
   return Array.isArray(notes[base]) ? notes[base] : null;
 }
+
+export function getVersionLine(version) {
+  const normalized = normalizeVersion(version);
+  if (!normalized) return "";
+  return normalized.replace(PRERELEASE_PATTERN, "");
+}
+
+export function isVersionLine(version, line) {
+  const base = getVersionLine(version);
+  const target = getVersionLine(line);
+  return Boolean(base) && Boolean(target) && base === target;
+}
+

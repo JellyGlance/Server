@@ -11,11 +11,9 @@ import RocketLineIcon from "remixicon-react/RocketLineIcon";
 import ChatCheckLineIcon from "remixicon-react/ChatCheckLineIcon";
 import GroupLineIcon from "remixicon-react/GroupLineIcon";
 import axios from "../../../lib/axios_instance";
-import { APP_VERSION_STORAGE_KEY, OPEN_WHATS_NEW_EVENT } from "../../../lib/events";
+import { APP_VERSION_STORAGE_KEY, OPEN_WHATS_NEW_EVENT, WHATS_NEW_DISMISSED_EVENT, WHATS_NEW_SEEN_VERSION_KEY } from "../../../lib/events";
 import releaseNotes from "../../../whats-new.json";
 import { findReleaseNotes, formatDisplayVersion, isBetaVersion } from "../../../lib/release-channel";
-
-const SEEN_VERSION_KEY = "jellyglance_whats_new_seen_version";
 
 const iconMap = {
   magic: MagicLineIcon,
@@ -54,7 +52,7 @@ export default function WhatsNewModal({ enabled = true }) {
     const cachedVersion = localStorage.getItem(APP_VERSION_STORAGE_KEY);
     if (cachedVersion) {
       setVersion(cachedVersion);
-      if (localStorage.getItem(SEEN_VERSION_KEY) !== cachedVersion) {
+      if (localStorage.getItem(WHATS_NEW_SEEN_VERSION_KEY) !== cachedVersion) {
         setShow(true);
       }
       return;
@@ -69,7 +67,7 @@ export default function WhatsNewModal({ enabled = true }) {
         if (!nextVersion) return;
 
         setVersion(nextVersion);
-        if (localStorage.getItem(SEEN_VERSION_KEY) !== nextVersion) {
+        if (localStorage.getItem(WHATS_NEW_SEEN_VERSION_KEY) !== nextVersion) {
           setShow(true);
         }
       })
@@ -104,9 +102,10 @@ export default function WhatsNewModal({ enabled = true }) {
 
   function closeModal() {
     if (version) {
-      localStorage.setItem(SEEN_VERSION_KEY, version);
+      localStorage.setItem(WHATS_NEW_SEEN_VERSION_KEY, version);
     }
     setShow(false);
+    window.dispatchEvent(new Event(WHATS_NEW_DISMISSED_EVENT));
   }
 
   const notes = getNotes(version);
