@@ -44,101 +44,10 @@ router.get("/wrapped/years", async (req, res) => {
   }
 });
 
-const WRAPPED_PERIODS = new Set(["week", "month", "year"]);
+const { buildWrapped: buildWrappedRecap } = require("../classes/wrapped-recap");
 
-// Resolve the requested period to a local-time anchor date. `year` keeps the
-// original year-in-review links working; `date` is any day inside the period.
-function wrappedPeriod(query = {}) {
-  const period = WRAPPED_PERIODS.has(String(query.period)) ? String(query.period) : "year";
-  let anchor = /^\d{4}-\d{2}-\d{2}$/.test(String(query.date || "")) ? String(query.date) : null;
-  if (!anchor) {
-    const year = clampInt(query.year, new Date().getFullYear(), 2000, 2100);
-    anchor = year === new Date().getFullYear() || period !== "year" ? new Date().toISOString().slice(0, 10) : `${year}-01-01`;
-  }
-  return { period, anchor };
-}
-
-async function buildWrapped(req) {
-  const { period, anchor } = wrappedPeriod(req.query);
-  const { userId } = scopedUserId(req);
-  // Period bounds as local calendar dates; the queries below convert them with the server time zone.
-  const range = await q(
-    `SELECT to_char(date_trunc($1::text, $2::timestamp), 'YYYY-MM-DD') AS start,
-            to_char(date_trunc($1::text, $2::timestamp) + ('1 ' || $1::text)::interval - interval '1 day', 'YYYY-MM-DD') AS end,
-            to_char(date_trunc($1::text, $2::timestamp) + ('1 ' || $1::text)::interval, 'YYYY-MM-DD') AS next_start`,
-    [period, anchor]
-  );
-  const { start, end, next_start: nextStart } = range[0];
-  const base = `FROM jf_playback_activity a
-      WHERE a."ActivityDateInserted" >= ($2::timestamp AT TIME ZONE $1::text)
-        AND a."ActivityDateInserted" < ($3::timestamp AT TIME ZONE $1::text)
-        AND ($4::text IS NULL OR a."UserId" = $4)`;
-  const params = [TZ, start, nextStart, userId];
-
-  const [totals, topShows, topMovies, busiestDay, weekdays, hours, months, days, binge, genres, topUsers, topClients] = await Promise.all([
-    q(`SELECT COUNT(*)::int AS plays, COALESCE(SUM(a."PlaybackDuration"),0)::bigint AS seconds,
-              COUNT(DISTINCT a."UserId")::int AS users,
-              COUNT(DISTINCT COALESCE(a."EpisodeId", a."NowPlayingItemId"))::int AS titles,
-              MIN(a."ActivityDateInserted") AS first_play, MAX(a."ActivityDateInserted") AS last_play,
-              COUNT(DISTINCT (a."ActivityDateInserted" AT TIME ZONE $1)::date)::int AS active_days ${base}`, params),
-    q(`SELECT a."SeriesName" AS name, MAX(a."NowPlayingItemId") AS item_id, COUNT(*)::int AS plays,
-              SUM(a."PlaybackDuration")::bigint AS seconds ${base} AND a."SeriesName" IS NOT NULL
-       GROUP BY a."SeriesName" ORDER BY seconds DESC LIMIT 5`, params),
-    q(`SELECT a."NowPlayingItemName" AS name, a."NowPlayingItemId" AS item_id, COUNT(*)::int AS plays,
-              SUM(a."PlaybackDuration")::bigint AS seconds ${base} AND a."SeriesName" IS NULL
-       GROUP BY a."NowPlayingItemName", a."NowPlayingItemId" ORDER BY seconds DESC LIMIT 5`, params),
-    q(`SELECT (a."ActivityDateInserted" AT TIME ZONE $1)::date AS day, COUNT(*)::int AS plays,
-              SUM(a."PlaybackDuration")::bigint AS seconds ${base}
-       GROUP BY day ORDER BY seconds DESC LIMIT 1`, params),
-    q(`SELECT EXTRACT(ISODOW FROM a."ActivityDateInserted" AT TIME ZONE $1)::int AS dow,
-              SUM(a."PlaybackDuration")::bigint AS seconds ${base} GROUP BY dow ORDER BY dow`, params),
-    q(`SELECT EXTRACT(HOUR FROM a."ActivityDateInserted" AT TIME ZONE $1)::int AS hour,
-              SUM(a."PlaybackDuration")::bigint AS seconds ${base} GROUP BY hour ORDER BY hour`, params),
-    q(`SELECT EXTRACT(MONTH FROM a."ActivityDateInserted" AT TIME ZONE $1)::int AS month,
-              COUNT(*)::int AS plays, SUM(a."PlaybackDuration")::bigint AS seconds ${base} GROUP BY month ORDER BY month`, params),
-    q(`SELECT to_char((a."ActivityDateInserted" AT TIME ZONE $1)::date, 'YYYY-MM-DD') AS day,
-              COUNT(*)::int AS plays, SUM(a."PlaybackDuration")::bigint AS seconds ${base} GROUP BY day ORDER BY day`, params),
-    q(`SELECT a."SeriesName" AS name, (a."ActivityDateInserted" AT TIME ZONE $1)::date AS day,
-              COUNT(DISTINCT a."EpisodeId")::int AS episodes, SUM(a."PlaybackDuration")::bigint AS seconds
-         ${base} AND a."SeriesName" IS NOT NULL AND a."EpisodeId" IS NOT NULL
-       GROUP BY a."SeriesName", day ORDER BY episodes DESC, seconds DESC LIMIT 1`, params),
-    q(`SELECT g.genre AS name, SUM(a."PlaybackDuration")::bigint AS seconds ${base.replace("WHERE", `
-         JOIN jf_library_items i ON i."Id" = a."NowPlayingItemId"
-         CROSS JOIN LATERAL jsonb_array_elements_text(COALESCE(i."Genres", '[]'::jsonb)) AS g(genre)
-       WHERE`)}
-       GROUP BY g.genre ORDER BY seconds DESC LIMIT 5`, params),
-    q(`SELECT a."UserName" AS name, a."UserId" AS id, COUNT(*)::int AS plays, SUM(a."PlaybackDuration")::bigint AS seconds
-         ${base} GROUP BY a."UserName", a."UserId" ORDER BY seconds DESC LIMIT 5`, params),
-    q(`SELECT a."Client" AS name, COUNT(*)::int AS plays ${base} AND a."Client" IS NOT NULL
-       GROUP BY a."Client" ORDER BY plays DESC LIMIT 3`, params),
-  ]);
-
-  let userName = null;
-  if (userId) {
-    const rows = await q(`SELECT "Name" AS name FROM jf_users WHERE "Id" = $1`, [userId]);
-    userName = rows[0]?.name || null;
-  }
-
-  return {
-    period,
-    year: Number(start.slice(0, 4)),
-    start,
-    end,
-    userId,
-    userName,
-    totals: totals[0],
-    topShows,
-    topMovies,
-    busiestDay: busiestDay[0] || null,
-    weekdays,
-    hours,
-    months,
-    days,
-    longestBinge: binge[0] || null,
-    genres,
-    topUsers: userId ? [] : topUsers,
-    topClients,
-  };
+function buildWrapped(req) {
+  return buildWrappedRecap({ ...req.query, userId: scopedUserId(req).userId });
 }
 
 router.get("/wrapped", async (req, res) => {
@@ -158,6 +67,75 @@ router.get("/wrapped/card", async (req, res) => {
     res.send(png);
   } catch (error) {
     res.status(503).json({ error: error.message || "Unable to render the recap card" });
+  }
+});
+
+// Taste Map: genre and decade clusters per user plus household overlaps. Users who can view
+// everyone get the household; everyone else only their own linked media-server user.
+router.get("/taste-map", async (req, res) => {
+  try {
+    const { canViewAllUsers, ownMediaUserId } = require("../classes/stats-access");
+    const { buildTasteMap } = require("../classes/taste-map");
+    const admin = canViewAllUsers(req);
+    const userId = admin ? (req.query.userId ? String(req.query.userId) : null) : ownMediaUserId(req.user);
+    if (!admin && !userId) return res.json({ days: 0, scoped: true, users: [], overlaps: [], sharedGenres: [] });
+    const days = clampInt(req.query.days, 365, 7, 3650);
+    res.json(await buildTasteMap({ userId, admin, days }));
+  } catch (error) {
+    res.status(503).json({ error: error.message || "Unable to build the taste map" });
+  }
+});
+
+// Scheduled recap delivery (email and/or webhook). Admins manage anyone's; everyone else only
+// their own linked media-server user, and only by email.
+function deliveryScope(req) {
+  const { canViewAllUsers, ownMediaUserId } = require("../classes/stats-access");
+  return { admin: canViewAllUsers(req), userId: ownMediaUserId(req.user) };
+}
+
+function deliveryError(res, error) {
+  res.status(error.statusCode || 503).json({ error: error.message || "Recap delivery failed" });
+}
+
+router.get("/wrapped/delivery", async (req, res) => {
+  try {
+    const delivery = require("../classes/wrapped-delivery");
+    const { getAppSettings, getNewsletterSettings, validateSmtpSettings } = require("../classes/smtp-mailer");
+    const scope = deliveryScope(req);
+    const subscriptions = await delivery.listSubscriptions(scope);
+    const webhooks = scope.admin ? await q(`SELECT id, name, webhook_type AS type, enabled FROM webhooks ORDER BY lower(name)`) : [];
+    const smtpReady = !validateSmtpSettings(getNewsletterSettings(await getAppSettings()));
+    res.json({ subscriptions, webhooks, smtpReady, admin: scope.admin, ownUserId: scope.userId });
+  } catch (error) {
+    deliveryError(res, error);
+  }
+});
+
+router.post("/wrapped/delivery", async (req, res) => {
+  try {
+    const { saveSubscription } = require("../classes/wrapped-delivery");
+    res.json(await saveSubscription(req.body || {}, deliveryScope(req)));
+  } catch (error) {
+    deliveryError(res, error);
+  }
+});
+
+router.delete("/wrapped/delivery/:id", async (req, res) => {
+  try {
+    const { deleteSubscription } = require("../classes/wrapped-delivery");
+    await deleteSubscription(String(req.params.id), deliveryScope(req));
+    res.json({ ok: true });
+  } catch (error) {
+    deliveryError(res, error);
+  }
+});
+
+router.post("/wrapped/delivery/:id/send", async (req, res) => {
+  try {
+    const { sendNow } = require("../classes/wrapped-delivery");
+    res.json(await sendNow(String(req.params.id), deliveryScope(req)));
+  } catch (error) {
+    deliveryError(res, error);
   }
 });
 
@@ -261,6 +239,21 @@ router.get("/streams", async (req, res) => {
     });
   } catch (error) {
     res.status(503).json({ error: error.message || "Unable to build stream insights" });
+  }
+});
+
+// Device profiles: one card per playback device. Device-level history spans every user, so this
+// follows the stats-access rule and is only for people who can view all users.
+router.get("/devices", async (req, res) => {
+  try {
+    const { canViewAllUsers } = require("../classes/stats-access");
+    if (!canViewAllUsers(req)) return res.status(403).json({ error: "Only server admins can see this." });
+    const { buildDeviceProfiles } = require("../classes/device-profiles");
+    const days = clampInt(req.query.days, 90, 1, 3650);
+    const sort = ["recent", "plays", "transcode"].includes(req.query.sort) ? req.query.sort : "recent";
+    res.json(await buildDeviceProfiles({ days, sort }));
+  } catch (error) {
+    res.status(503).json({ error: error.message || "Unable to build device profiles" });
   }
 });
 

@@ -1008,6 +1008,43 @@
       }
     }
   },
+  "/api/widgets/cleanuparr": {
+    "get": {
+      "tags": [
+        "Widgets"
+      ],
+      "summary": "Cleanuparr strikes, removals and health",
+      "description": "Cleanuparr strikes, removals and health",
+      "parameters": [
+        {
+          "name": "x-api-token",
+          "in": "header",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "authorization",
+          "in": "header",
+          "type": "string",
+          "description": "Bearer session token also works"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Cleanuparr strikes, removals and health"
+        },
+        "401": {
+          "description": "Unauthorized"
+        },
+        "403": {
+          "description": "Forbidden"
+        },
+        "503": {
+          "description": "Unable to load widget"
+        }
+      }
+    }
+  },
   "/api/widgets/transcodes": {
     "get": {
       "tags": [

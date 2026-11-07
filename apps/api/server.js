@@ -42,9 +42,14 @@ const jellystatRouter = require("./routes/jellystat");
 const logRouter = require("./routes/logging");
 const utilsRouter = require("./routes/utils");
 const webhooksRouter = require("./routes/webhooks");
+const cleanuparrInboundRouter = require("./routes/cleanuparr-inbound");
 const newsletterRouter = require("./routes/newsletter");
 const insightsRouter = require("./routes/insights");
+const opsCopilotRouter = require("./routes/ops-copilot");
+const incompleteSeasonsRouter = require("./routes/incomplete-seasons");
+const subtitleGapRouter = require("./routes/subtitle-gap");
 const alertsRouter = require("./routes/alerts");
+const webhookOutRouter = require("./routes/webhook-out");
 const { publicRouter: publicStatusRouter, adminRouter: publicStatusAdminRouter } = require("./routes/public-status");
 const thresholdAlerts = require("./classes/threshold-alerts");
 
@@ -381,6 +386,7 @@ app.get("/webhook-cards/:id.jpg", fileRateLimit, (req, res) => {
   res.setHeader("Cache-Control", "public, max-age=600");
   return res.end(card.buffer);
 });
+app.use("/cleanuparr", apiRateLimit, cleanuparrInboundRouter);
 app.use("/api", apiRateLimit, authenticate, restrictApiKeyScope, authorizeApiRoute, commandCenterRouter, apiRouter, () => {
   /*  #swagger.tags = ['API']*/
 }); // mount the API router at /api, with JWT middleware
@@ -390,7 +396,11 @@ app.use("/sync", apiRateLimit, authenticate, restrictApiKeyScope, requirePermiss
 app.use("/insights-data/library-health", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"));
 app.use("/insights-data/streams", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"));
 app.use("/insights-data", apiRateLimit, authenticate, restrictApiKeyScope, insightsRouter);
+app.use("/ops-copilot", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), opsCopilotRouter);
+app.use("/incomplete-seasons", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), incompleteSeasonsRouter);
+app.use("/subtitle-gap", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), subtitleGapRouter);
 app.use("/alerts-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), alertsRouter);
+app.use("/webhook-out-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), webhookOutRouter);
 app.use("/status-data/admin", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), publicStatusAdminRouter);
 app.use("/status-data", apiRateLimit, publicStatusRouter);
 app.use("/stats", apiRateLimit, authenticate, restrictApiKeyScope, statsRouter, () => {
@@ -770,6 +780,16 @@ function authorizeApiRoute(req, res, next) {
   ) {
     if (!["Owner", "Admin"].includes(req.user?.role)) {
       return res.status(403).json({ message: "Admin role required" });
+    }
+    next();
+    return;
+  }
+
+
+  // Primary owner username/password changes must stay Owner-only (GHSA-fcf4-f825-3347).
+  if (pathName === "/updatecredentials" || pathName === "/updatepassword") {
+    if (req.user?.role !== "Owner") {
+      return res.status(403).json({ message: "Owner role required" });
     }
     next();
     return;

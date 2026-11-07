@@ -5,6 +5,17 @@ import Config from "../../../lib/config";
 import "../../css/sessions.css";
 import ErrorBoundary from "../general/ErrorBoundary";
 import SessionCard from "./session-card";
+import SessionWall from "./session-wall";
+
+const SESSION_VIEW_KEY = "jellyglance_sessions_view";
+
+function getStoredSessionView() {
+  try {
+    return localStorage.getItem(SESSION_VIEW_KEY) === "wall" ? "wall" : "cards";
+  } catch {
+    return "cards";
+  }
+}
 
 import socket from "../../../socket";
 import {
@@ -37,6 +48,7 @@ function canManageSessions(config) {
 
 function Sessions({ surface = "home" }) {
   const [data, setData] = useState(() => getCachedActiveSessions());
+  const [view, setView] = useState(() => getStoredSessionView());
   const [ipPrivacy, setIpPrivacy] = useState(() => getActiveSessionIpPrivacy());
   const [config, setConfig] = useState(() => {
     try {
@@ -100,39 +112,36 @@ function Sessions({ surface = "home" }) {
     }
   }, [config]);
 
-  if (!config && !data) {
-    return (
-      <div className="sessions-widget sessions-widget-loading">
-        <h1 className="my-3">
-          Active Sessions
-        </h1>
-        <div className="sessions-loading-strip" aria-hidden="true">
-          <span />
-          <span />
-        </div>
-      </div>
-    );
-  }
+  const changeView = (nextView) => {
+    setView(nextView);
+    try {
+      localStorage.setItem(SESSION_VIEW_KEY, nextView);
+    } catch {
+      // ignore storage errors
+    }
+  };
 
-  if ((!data && config) || data.length === 0) {
-    return (
-      <div className="sessions-widget sessions-widget-empty">
-        <h1>
-          Active Sessions
-        </h1>
-        <div className="sessions-empty-state">
-          No Active Sessions Found
-        </div>
-      </div>
-    );
+  // Nobody playing (or nothing loaded yet): render nothing so the section disappears.
+  if (!Array.isArray(data) || data.length === 0) {
+    return null;
   }
 
   return (
     <div className="sessions-widget">
-      <h1 className="my-3">
-        Active Sessions
-      </h1>
-      <div className="sessions-container">
+      <div className="sessions-widget-header">
+        <h1 className="my-3">
+          Active Sessions
+        </h1>
+        <div className="sessions-view-toggle" role="group" aria-label="Session layout">
+          <button type="button" className={view === "cards" ? "is-active" : ""} aria-pressed={view === "cards"} onClick={() => changeView("cards")}>
+            Cards
+          </button>
+          <button type="button" className={view === "wall" ? "is-active" : ""} aria-pressed={view === "wall"} onClick={() => changeView("wall")}>
+            Wall
+          </button>
+        </div>
+      </div>
+      {view === "wall" ? <SessionWall sessions={data} /> : <div className="sessions-container">
         {data &&
           data.length > 0 &&
           data
@@ -148,7 +157,7 @@ function Sessions({ surface = "home" }) {
                 />
               </ErrorBoundary>
             ))}
-      </div>
+      </div>}
     </div>
   );
 }

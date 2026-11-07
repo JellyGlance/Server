@@ -1,3 +1,4 @@
+import { selfhstIconUrl } from "./selfhst-icons";
 import React from "react";
 import {
   siAndroid,
@@ -24,7 +25,7 @@ import {
   siVivaldi,
 } from "simple-icons";
 
-const selfHostedIconUrl = (slug) => `https://cdn.jsdelivr.net/gh/selfhst/icons/svg/${slug}.svg`;
+const selfHostedIconUrl = (slug) => selfhstIconUrl(slug);
 
 const iconMap = [
   { match: ["home assistant", "hacs"], icon: siHomeassistant },

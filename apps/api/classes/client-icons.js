@@ -19,6 +19,7 @@ const ICON_MAP = [
   { match: ["nzbget"], slug: "nzbget", source: "selfhst", color: "#2E7D32" },
   { match: ["rtorrent"], slug: "rtorrent", source: "selfhst", color: "#0084C7" },
   { match: ["autobrr"], slug: "autobrr", source: "selfhst", color: "#F97316" },
+  { match: ["cleanuparr"], slug: "cleanuparr", source: "selfhst", color: "#38BDF8" },
   { match: ["jellyseerr"], slug: "jellyseerr", source: "selfhst", color: "#FF7A59" },
   { match: ["overseerr"], slug: "overseerr", source: "selfhst", color: "#5A66F0" },
   { match: ["seerr"], slug: "seerr", source: "selfhst", color: "#6366F1" },

@@ -27,6 +27,7 @@ import Loading from "./general/loading";
 import ItemOptions from "./item-info/item-options";
 import { Trans, useTranslation } from "react-i18next";
 import baseUrl from "../../lib/baseurl";
+import { toSafeHttpUrl } from "../../lib/safe-url";
 import GlobalStats from "./general/globalStats";
 import ErrorBoundary from "./general/ErrorBoundary.jsx";
 
@@ -178,7 +179,7 @@ function ItemInfo() {
 
   const canOps = ["Owner", "Admin"].includes(config?.settings?.auth?.role);
   const jellyfinWeb = String(config?.hostUrl || "").replace(/\/+$/, "");
-  const jellyfinOpenUrl = jellyfinWeb ? `${jellyfinWeb}/web/#/details?id=${encodeURIComponent(Id)}` : "";
+  const jellyfinOpenUrl = toSafeHttpUrl(jellyfinWeb ? `${jellyfinWeb}/web/#/details?id=${encodeURIComponent(Id)}` : "");
   const watchingNow = (Array.isArray(liveSessions) ? liveSessions : [])
     .filter((session) => {
       const item = session?.NowPlayingItem;
@@ -199,17 +200,20 @@ function ItemInfo() {
   const tmdbId = getProviderId(providerIds, ["Tmdb", "TMDb", "TheMovieDb"]);
   const tvdbId = getProviderId(seriesProviderIds, ["Tvdb", "TVDB", "TheTVDB"]);
   const rottenId = getProviderId(providerIds, ["RottenTomatoes", "Rotten Tomatoes"]);
-  const jellyfinUrl =
+  const jellyfinUrl = toSafeHttpUrl(
     data.JellyfinUrl ||
-    ((config?.settings?.EXTERNAL_URL ?? config?.hostUrl) && `${config.settings?.EXTERNAL_URL ?? config.hostUrl}/web/index.html#!/details?id=${itemId}`);
+      ((config?.settings?.EXTERNAL_URL ?? config?.hostUrl) && `${config.settings?.EXTERNAL_URL ?? config.hostUrl}/web/index.html#!/details?id=${itemId}`) ||
+      ""
+  );
   const rottenLink = rottenId
     ? `https://www.rottentomatoes.com/m/${rottenId}`
     : `https://www.rottentomatoes.com/search?search=${encodeURIComponent(`${data.Name || title} ${data.ProductionYear || ""}`.trim())}`;
   const arrLinks = data.ArrLinks || [];
+  const seerrUrl = toSafeHttpUrl(glance?.request?.openUrl);
   const actionLinks = [
     jellyfinUrl && { label: "Open in Jellyfin", url: jellyfinUrl, primary: true },
-    ...arrLinks.map((link) => ({ label: link.matched ? `Open in ${link.name}` : `Find in ${link.name}`, url: link.url })),
-  ].filter(Boolean);
+    ...arrLinks.map((link) => ({ label: link.matched ? `Open in ${link.name}` : `Find in ${link.name}`, url: toSafeHttpUrl(link.url) })),
+  ].filter((link) => link && link.url);
   const studio = Array.isArray(data.Studios) ? data.Studios[0]?.Name || data.Studios[0] : null;
   const qualityProfile = data.Type === "Movie" ? "Main Quality" : data.Type;
   const status = data.archived ? "Archived" : "Downloaded";
@@ -274,7 +278,7 @@ function ItemInfo() {
                   {data.ProductionYear ? <span>{data.ProductionYear}</span> : null}
                   <span>{ticksToTimeString(data.RunTimeTicks)}</span>
                   {jellyfinUrl ? (
-                    <a href={jellyfinUrl} target="_blank" rel="noreferrer" title="Open in Jellyfin">
+                    <a href={encodeURI(jellyfinUrl)} target="_blank" rel="noreferrer" title="Open in Jellyfin">
                       <ExternalLinkFillIcon size={22} />
                     </a>
                   ) : null}
@@ -389,12 +393,12 @@ function ItemInfo() {
                   </button>
                 ) : null}
                 {jellyfinOpenUrl ? (
-                  <a href={jellyfinOpenUrl} target="_blank" rel="noreferrer">
+                  <a href={encodeURI(jellyfinOpenUrl)} target="_blank" rel="noreferrer">
                     {t("FEATURES.OPS.OPEN_JELLYFIN")}
                   </a>
                 ) : null}
-                {glance.request?.openUrl ? (
-                  <a href={glance.request.openUrl} target="_blank" rel="noreferrer">
+                {seerrUrl ? (
+                  <a href={encodeURI(seerrUrl)} target="_blank" rel="noreferrer">
                     {t("FEATURES.GLANCE.OPEN_SEERR")}
                   </a>
                 ) : null}
@@ -440,7 +444,7 @@ function ItemInfo() {
 
             <div className="item-action-row">
               {actionLinks.map((link) => (
-                <a key={`${link.label}-${link.url}`} href={link.url} target="_blank" rel="noreferrer" className={`item-action-link ${link.primary ? "is-primary" : ""}`}>
+                <a key={`${link.label}-${link.url}`} href={encodeURI(link.url)} target="_blank" rel="noreferrer" className={`item-action-link ${link.primary ? "is-primary" : ""}`}>
                   <ExternalLinkFillIcon size={16} />
                   {link.label}
                 </a>
@@ -506,7 +510,7 @@ function ItemInfo() {
           </ErrorBoundary>
         </Tab>
         <Tab eventKey="tabOptions" title="Options" className="bg-transparent">
-          <ItemOptions itemid={Id} />
+          <ItemOptions itemid={Id} itemName={data?.SeriesName || data?.Name} />
         </Tab>
       </Tabs>
     </div>

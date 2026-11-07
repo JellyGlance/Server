@@ -7,6 +7,7 @@ import Tab from "react-bootstrap/Tab";
 import Tabs from "react-bootstrap/Tabs";
 import TimerLineIcon from "remixicon-react/TimerLineIcon";
 import ActiveTimesModal, { describeActiveTimes } from "./ActiveTimesModal";
+import QuietHoursPanel, { isHeldByQuietHours } from "./QuietHoursPanel";
 import ServerLineIcon from "remixicon-react/ServerLineIcon";
 import PlayCircleLineIcon from "remixicon-react/PlayCircleLineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
@@ -143,6 +144,7 @@ export default function ServerManagement() {
     schedules: {},
     timeZone: "",
   });
+  const [quiet, setQuiet] = useState(null);
   const [editing, setEditing] = useState(null);
   const [busyAction, setBusyAction] = useState("");
   const [message, setMessage] = useState(null);
@@ -213,7 +215,17 @@ export default function ServerManagement() {
     }
   }
 
+  async function loadQuietHours() {
+    try {
+      const response = await axios.get("/server-tasks/quiet-hours");
+      setQuiet(response.data || null);
+    } catch {
+      setQuiet(null);
+    }
+  }
+
   function refreshAll() {
+    loadQuietHours();
     loadStatus();
     loadArr();
     loadActiveTimes();
@@ -404,6 +416,7 @@ export default function ServerManagement() {
                 <strong>{runningCount}</strong>
               </div>
             </article>
+            <QuietHoursPanel quiet={quiet} onSaved={setQuiet} />
           </section>
 
           <section className="server-management-section">
@@ -443,6 +456,7 @@ export default function ServerManagement() {
               ) : null}
               {visibleTasks.map((task) => {
                 const key = `jellyfin:${task.id}`;
+                const held = quiet?.active && isHeldByQuietHours(quiet, task);
                 return (
                   <article
                     key={task.id}
@@ -459,6 +473,14 @@ export default function ServerManagement() {
                       </small>
                     </div>
                     <div className="server-task-actions">
+                      {held ? (
+                        <em
+                          className="quiet-hours-chip"
+                          title="Scheduled runs are held until quiet hours end. Run still starts it now."
+                        >
+                          In quiet hours
+                        </em>
+                      ) : null}
                       <em>{formatTaskState(task)}</em>
                       <ActiveTimesButton
                         schedule={activeTimes.schedules[key]}

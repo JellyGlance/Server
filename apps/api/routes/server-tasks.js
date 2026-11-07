@@ -5,6 +5,7 @@ const axios = require("axios");
 const db = require("../db");
 const configClass = require("../classes/config");
 const { getIntegrations } = require("../classes/integration-store");
+const quietHours = require("../classes/quiet-hours");
 
 const router = express.Router();
 const USER_AGENT = "JellyGlance";
@@ -288,6 +289,117 @@ router.post("/arr/run", async (req, res) => {
   }
 });
 
+
+// ---------------------------------------------------------------------------
+// Quiet hours: hold library scans and intro/credits detection during a nightly (or peak) window.
+// Jobs that start inside the window are stopped and recorded as deferred; once the window ends each
+// deferred job runs once (or, with runDeferred off, simply waits for its next Jellyfin schedule).
+// Jobs started by hand from JellyGlance are never stopped.
+
+async function readQuietHours() {
+  const { rows } = await db.query('SELECT settings FROM app_config WHERE "ID" = 1');
+  const stored = rows[0]?.settings?.QuietHours || {};
+  return { config: quietHours.normalizeQuietHours(stored), deferred: Array.isArray(stored.deferred) ? stored.deferred : [], lastDeferredRunAt: stored.lastDeferredRunAt || null };
+}
+
+async function writeQuietHours(state) {
+  const value = { ...state.config, deferred: state.deferred || [], lastDeferredRunAt: state.lastDeferredRunAt || null };
+  await db.query(
+    `
+      UPDATE app_config
+      SET settings = (COALESCE(settings, '{}'::json)::jsonb || jsonb_build_object('QuietHours', $1::jsonb))::json
+      WHERE "ID" = 1
+    `,
+    [JSON.stringify(value)]
+  );
+  new configClass().clearCache();
+}
+
+function quietHoursView(state, now = new Date()) {
+  const active = quietHours.isInQuietHours(state.config, now);
+  return {
+    ...state.config,
+    effectiveTimeZone: state.config.timeZone || quietHours.serverTimeZone(),
+    serverTimeZone: quietHours.serverTimeZone(),
+    active,
+    nextChangeAt: quietHours.nextChange(state.config, now),
+    deferred: state.deferred,
+    lastDeferredRunAt: state.lastDeferredRunAt,
+    now: now.toISOString(),
+  };
+}
+
+let quietTickRunning = false;
+
+async function quietHoursTick() {
+  if (quietTickRunning) return;
+  quietTickRunning = true;
+  try {
+    const state = await readQuietHours();
+    const { config } = state;
+    if (!config.enabled && !state.deferred.length) return;
+    const active = quietHours.isInQuietHours(config);
+    let changed = false;
+
+    if (config.enabled && active) {
+      const tasks = await jellyfinRequest("/ScheduledTasks").catch(() => []);
+      for (const task of tasks || []) {
+        if (String(task.State || "").toLowerCase() !== "running") continue;
+        if (!quietHours.isHeld(config, task) || quietHours.isManualRun(task.Id)) continue;
+        try {
+          await jellyfinRequest(`/ScheduledTasks/Running/${encodeURIComponent(task.Id)}`, "delete");
+          console.log(`[QUIET HOURS] Deferred Jellyfin job "${task.Name}" until quiet hours end`);
+          if (!state.deferred.some((entry) => entry.id === task.Id)) {
+            state.deferred.push({ id: task.Id, name: task.Name, kind: quietHours.classifyTask(task), deferredAt: new Date().toISOString() });
+          }
+          changed = true;
+        } catch (error) {
+          console.error(`[QUIET HOURS] Could not stop Jellyfin job "${task.Name}":`, error.message);
+        }
+      }
+    } else if (state.deferred.length) {
+      if (config.runDeferred) {
+        for (const entry of state.deferred) {
+          try {
+            await jellyfinRequest(`/ScheduledTasks/Running/${encodeURIComponent(entry.id)}`, "post");
+            console.log(`[QUIET HOURS] Ran deferred Jellyfin job "${entry.name}"`);
+          } catch (error) {
+            console.error(`[QUIET HOURS] Deferred Jellyfin job "${entry.name}" failed to start:`, error.message);
+          }
+        }
+        state.lastDeferredRunAt = new Date().toISOString();
+      }
+      state.deferred = [];
+      changed = true;
+    }
+    if (changed) await writeQuietHours(state);
+  } catch (error) {
+    console.error("[QUIET HOURS] Tick failed:", error.message);
+  } finally {
+    quietTickRunning = false;
+  }
+}
+
+router.get("/quiet-hours", async (req, res) => {
+  try {
+    res.json(quietHoursView(await readQuietHours()));
+  } catch (error) {
+    res.status(503).json({ error: error.message || "Unable to load quiet hours" });
+  }
+});
+
+router.put("/quiet-hours", async (req, res) => {
+  try {
+    const state = await readQuietHours();
+    state.config = quietHours.normalizeQuietHours(req.body || {}, state.config);
+    if (req.body?.clearDeferred) state.deferred = [];
+    await writeQuietHours(state);
+    res.json(quietHoursView(state));
+  } catch (error) {
+    res.status(503).json({ error: error.message || "Unable to save quiet hours" });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Scheduler: runs tasks inside their active times and (for Jellyfin) stops runs outside them.
 
@@ -389,7 +501,9 @@ async function schedulerTick() {
 if (process.env.NODE_ENV !== "test") {
   const interval = setInterval(schedulerTick, 5 * 60 * 1000);
   interval.unref?.();
+  const quietInterval = setInterval(quietHoursTick, 60 * 1000);
+  quietInterval.unref?.();
 }
 
 module.exports = router;
-module.exports._internal = { isAllowedNow, normalizeWeek, nextAllowedStart, effectiveSchedule };
+module.exports._internal = { quietHoursTick, isAllowedNow, normalizeWeek, nextAllowedStart, effectiveSchedule };

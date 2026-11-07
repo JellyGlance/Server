@@ -792,7 +792,20 @@
       "NEW_TORRENT": "Torrent mới",
       "MAGNET_DOWNLOAD": "Tải qua magnet",
       "TORRENT_DOWNLOAD": "Tải qua torrent",
-      "QUEUED": "Đang chờ"
+      "QUEUED": "Đang chờ",
+      "CLEANUPARR": "Cleanuparr",
+      "CLEANUPARR_WINDOW": "Last {{hours}} hours",
+      "CLEANUPARR_STRIKES": "Strikes",
+      "CLEANUPARR_REMOVALS": "Removed",
+      "CLEANUPARR_CLEANED": "Cleaned",
+      "CLEANUPARR_EVENTS": "Events",
+      "CLEANUPARR_ATTENTION": "Needs attention",
+      "CLEANUPARR_HEALTHY": "All clients and arrs healthy",
+      "CLEANUPARR_UNHEALTHY": "Unhealthy: {{names}}",
+      "CLEANUPARR_UNREACHABLE": "{{name}} unreachable: {{error}}",
+      "CLEANUPARR_NO_EVENTS": "No notifications received yet. Point Cleanuparr's Gotify provider at JellyGlance from Integrations.",
+      "CLEANUPARR_HANDLING": "Cleanuparr: {{reason}}",
+      "CLEANUPARR_INTERVENTION": "Needs you"
     },
     "MY_GLANCE": {
       "TITLE": "Glance của tôi",
@@ -1220,5 +1233,23 @@
     "COPY_INVITE": "Sao chép liên kết mời {{code}}",
     "OPEN_INVITE": "Mở lời mời {{code}}",
     "DELETE_INVITE": "Xóa lời mời {{code}}"
+  },
+  "BLOBBO_TIPS": {
+    "HOME": "Active sessions live on Home. Peek there to see who is watching right now.",
+    "HOME_LINK": "Go to Home",
+    "LIBRARIES": "Looking for a show or film? Libraries has everything grouped by type.",
+    "LIBRARIES_LINK": "Open Libraries",
+    "RECENT": "Fresh arrivals land in Recently added.",
+    "RECENT_LINK": "See what is new",
+    "INTEGRATIONS": "Connect Wizarr, Tdarr or Maintainerr under 3rd party apps.",
+    "INTEGRATIONS_LINK": "Open 3rd party apps",
+    "SETTINGS": "Tweak themes, notifications and more in Settings.",
+    "SETTINGS_LINK": "Open Settings",
+    "FIND": "Ask me “find Dune” and I'll look through every library for you.",
+    "FIND_LINK": "Open Libraries",
+    "BUFFERING": "If someone says it keeps buffering, ask me “why is this buffering?”",
+    "BUFFERING_LINK": "Open Active transcodes",
+    "INSIGHTS": "Insights finds duplicates, unwatched giants and transcode trends.",
+    "INSIGHTS_LINK": "Open Insights"
   }
 }

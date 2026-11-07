@@ -1,0 +1,38 @@
+.disk-forecast {
+  --df-accent: var(--secondary-color);
+  margin: 0 0 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--surface-border-color);
+  border-left: 3px solid var(--df-accent);
+  border-radius: 12px;
+  background: var(--surface-color);
+  color: var(--text-color);
+}
+.disk-forecast.tone-warn { --df-accent: #f59e0b; }
+.disk-forecast.tone-danger { --df-accent: #ef4444; }
+.disk-forecast.tone-ok { --df-accent: #22c55e; }
+.disk-forecast.tone-muted { --df-accent: var(--subtle-text-color); }
+.disk-forecast-head { display: flex; align-items: center; gap: 0.45rem; color: var(--muted-text-color); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
+.disk-forecast-confidence { margin-left: auto; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(255, 255, 255, 0.07); font-size: 0.66rem; letter-spacing: 0.06em; }
+.disk-forecast-body { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.9rem 1.5rem; margin-top: 0.55rem; }
+.disk-forecast-value { color: var(--df-accent); font-size: var(--jg-type-display); font-weight: 950; line-height: 1.05; }
+.disk-forecast-caption { color: var(--muted-text-color); font-size: 0.85rem; }
+.disk-forecast-range { margin-top: 0.2rem; color: var(--subtle-text-color); font-size: 0.75rem; }
+.disk-forecast-stats { display: grid; grid-template-columns: repeat(4, minmax(5.5rem, auto)); gap: 0.35rem 1.2rem; margin: 0; }
+.disk-forecast-stats dt { color: var(--subtle-text-color); font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+.disk-forecast-stats dd { margin: 0; font-weight: 800; font-variant-numeric: tabular-nums; }
+.disk-forecast-bar { height: 6px; margin-top: 0.75rem; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.disk-forecast-bar span { display: block; height: 100%; border-radius: inherit; background: var(--df-accent); }
+.disk-forecast-libraries { margin-top: 0.8rem; display: grid; gap: 0.3rem; }
+.disk-forecast-subhead { color: var(--subtle-text-color); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+.disk-forecast-lib { display: grid; grid-template-columns: minmax(6rem, 10rem) 1fr auto; align-items: center; gap: 0.6rem; font-size: 0.8rem; }
+.disk-forecast-lib-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.disk-forecast-lib-bar { height: 5px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); }
+.disk-forecast-lib-bar span { display: block; height: 100%; border-radius: inherit; background: var(--primary-color); }
+.disk-forecast-lib-value { color: var(--muted-text-color); font-variant-numeric: tabular-nums; }
+.disk-forecast-note { margin: 0.7rem 0 0; color: var(--subtle-text-color); font-size: 0.72rem; }
+@media (max-width: 640px) {
+  .disk-forecast-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .disk-forecast-lib { grid-template-columns: 1fr auto; }
+  .disk-forecast-lib-bar { grid-column: 1 / -1; grid-row: 2; }
+}

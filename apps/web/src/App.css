@@ -512,6 +512,110 @@ select option:hover {
   }
 }
 
+
+.meet-blobbo-modal {
+  --bs-modal-width: min(440px, calc(100vw - 28px));
+}
+
+.meet-blobbo-modal .modal-content {
+  overflow: hidden;
+  border: 1px solid var(--surface-border-color);
+  border-radius: 16px;
+  background: #1e1e1e;
+  color: #f8fafc;
+  box-shadow: 0 26px 72px rgba(0, 0, 0, 0.5);
+}
+
+.meet-blobbo-modal .modal-body {
+  position: relative;
+  display: grid;
+  gap: 18px;
+  padding: 22px 20px 18px;
+}
+
+.meet-blobbo-hero {
+  display: grid;
+  justify-items: center;
+  padding: 8px 28px 0;
+  text-align: center;
+}
+
+.meet-blobbo-character {
+  display: grid;
+  place-items: center;
+  width: 168px;
+  height: 168px;
+  margin-bottom: 8px;
+}
+
+.meet-blobbo-hero span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--primary-light-color, #e8a0a0);
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.meet-blobbo-hero h2 {
+  margin: 6px 0 8px !important;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 780 !important;
+  line-height: 1.1;
+}
+
+.meet-blobbo-hero p {
+  margin: 0;
+  color: #aab8cc;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.meet-blobbo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.meet-blobbo-cta {
+  background: #c90000 !important;
+  border-color: #c90000 !important;
+  color: #fff !important;
+  font-weight: 760;
+  border-radius: 999px !important;
+  padding: 8px 16px !important;
+}
+
+.meet-blobbo-cta:hover,
+.meet-blobbo-cta:focus {
+  background: #e10a0a !important;
+  border-color: #e10a0a !important;
+  color: #fff !important;
+}
+
+.meet-blobbo-skip {
+  color: #9cabbe !important;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+
+.meet-blobbo-skip:hover,
+.meet-blobbo-skip:focus {
+  color: #f8fafc !important;
+}
+
+@media (max-width: 720px) {
+  .meet-blobbo-modal {
+    --bs-modal-width: calc(100vw - 18px);
+  }
+}
+
 .pwa-install-banner {
   position: fixed;
   z-index: 40;
@@ -523,10 +627,28 @@ select option:hover {
   align-items: center;
   max-width: min(420px, calc(100vw - 32px));
   padding: 12px 14px;
+}
+
+/* Blobbo publishes --jg-blobbo-strip-w while mounted; sit beside its bottom strip rather than under it. */
+:root:has(.blobbo) .pwa-install-banner {
+  right: calc(20px + var(--jg-blobbo-strip-w, 76px) + 12px);
+  bottom: 20px;
+  max-width: min(420px, calc(100vw - 52px - var(--jg-blobbo-strip-w, 76px)));
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   background: rgba(11, 17, 23, 0.94);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* While Blobbo's tour/tip card or chat is open it owns the corner; defer the install banner until it closes. */
+:root:has(.blobbo-teaser, .blobbo--open, .meet-blobbo-modal) .pwa-install-banner {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pwa-install-banner {
+  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .pwa-install-banner span {
@@ -554,4 +676,31 @@ select option:hover {
     min-height: var(--jg-touch-min, 44px);
     padding: 0 16px;
   }
+}
+
+.release-channel-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  background: rgba(251, 191, 36, 0.14);
+  color: #fcd34d;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.whats-new-hero .release-channel-badge {
+  display: flex;
+  width: fit-content;
+  margin: 8px 0 0;
+}
+
+.version-channel-badge {
+  margin: 4px 0 2px;
 }

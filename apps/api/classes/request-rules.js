@@ -14,7 +14,10 @@ const DEFAULT_RULES = {
   requestAsSeerrUser: false,
   autoApproveAll: false,
   users: {},
+  routes: [],
 };
+
+const routing = require("./request-routing");
 
 let tableReady = null;
 function ensureTable() {
@@ -31,7 +34,23 @@ function ensureTable() {
            status text,
            created_at timestamptz NOT NULL DEFAULT NOW()
          );
-         CREATE INDEX IF NOT EXISTS jg_request_log_user_idx ON jg_request_log (user_key, media_type, created_at);`
+         CREATE INDEX IF NOT EXISTS jg_request_log_user_idx ON jg_request_log (user_key, media_type, created_at);
+         CREATE TABLE IF NOT EXISTS jg_request_routing_log (
+           id bigserial PRIMARY KEY,
+           user_key text,
+           user_name text,
+           media_type text,
+           media_id text,
+           title text,
+           genres jsonb,
+           route_id text,
+           route_name text,
+           decision text NOT NULL,
+           outcome text,
+           seerr_request_id text,
+           created_at timestamptz NOT NULL DEFAULT NOW()
+         );
+         CREATE INDEX IF NOT EXISTS jg_request_routing_log_created_idx ON jg_request_routing_log (created_at DESC);`
       )
       .catch((error) => {
         tableReady = null;
@@ -95,6 +114,7 @@ function normalizeRules(input = {}) {
     requestAsSeerrUser: Boolean(input.requestAsSeerrUser ?? DEFAULT_RULES.requestAsSeerrUser),
     autoApproveAll: Boolean(input.autoApproveAll ?? DEFAULT_RULES.autoApproveAll),
     users,
+    routes: routing.normalizeRoutes(input.routes),
   };
 }
 
@@ -195,4 +215,40 @@ async function allUsage(rules) {
   return rows;
 }
 
-module.exports = { getRules, saveRules, checkQuota, usage, logRequest, shouldAutoApprove, allUsage, userKey, isAdmin };
+// Combine smart routing rules with the older per-person / everyone switches.
+// Returns { approve: bool, decision: "approve"|"hold", route, source }.
+function routeRequest(rules, user, { mediaType, genres = [] } = {}) {
+  const match = routing.decide(rules.routes || [], { userKey: userKey(user), mediaType: mediaType === "tv" ? "tv" : "movie", genres });
+  if (match.action) return { approve: match.action === "approve", decision: match.action, route: match.route, source: "rule" };
+  const approve = shouldAutoApprove(rules, user);
+  return { approve, decision: approve ? "approve" : "hold", route: null, source: "default" };
+}
+
+async function logRouting(user, entry = {}) {
+  await ensureTable();
+  await db.query(
+    `INSERT INTO jg_request_routing_log (user_key, user_name, media_type, media_id, title, genres, route_id, route_name, decision, outcome, seerr_request_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+    [
+      userKey(user),
+      userName(user),
+      entry.mediaType === "tv" ? "tv" : "movie",
+      entry.mediaId == null ? null : String(entry.mediaId),
+      entry.title || null,
+      JSON.stringify(entry.genres || []),
+      entry.route?.id || null,
+      entry.route?.name || null,
+      entry.decision,
+      entry.outcome || null,
+      entry.seerrRequestId == null ? null : String(entry.seerrRequestId),
+    ]
+  );
+}
+
+async function routingLog(limit = 100) {
+  await ensureTable();
+  const { rows } = await db.query(`SELECT * FROM jg_request_routing_log ORDER BY created_at DESC LIMIT $1`, [Math.min(500, Math.max(1, Number(limit) || 100))]);
+  return rows;
+}
+
+module.exports = { routeRequest, logRouting, routingLog, getRules, saveRules, checkQuota, usage, logRequest, shouldAutoApprove, allUsage, userKey, isAdmin };

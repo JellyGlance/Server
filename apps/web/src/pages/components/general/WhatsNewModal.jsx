@@ -11,10 +11,9 @@ import RocketLineIcon from "remixicon-react/RocketLineIcon";
 import ChatCheckLineIcon from "remixicon-react/ChatCheckLineIcon";
 import GroupLineIcon from "remixicon-react/GroupLineIcon";
 import axios from "../../../lib/axios_instance";
-import { APP_VERSION_STORAGE_KEY, OPEN_WHATS_NEW_EVENT } from "../../../lib/events";
+import { APP_VERSION_STORAGE_KEY, OPEN_WHATS_NEW_EVENT, WHATS_NEW_DISMISSED_EVENT, WHATS_NEW_SEEN_VERSION_KEY } from "../../../lib/events";
 import releaseNotes from "../../../whats-new.json";
-
-const SEEN_VERSION_KEY = "jellyglance_whats_new_seen_version";
+import { findReleaseNotes, formatDisplayVersion, isBetaVersion } from "../../../lib/release-channel";
 
 const iconMap = {
   magic: MagicLineIcon,
@@ -30,7 +29,7 @@ const iconMap = {
 };
 
 function getNotes(version) {
-  return releaseNotes[version] || [
+  return findReleaseNotes(releaseNotes, version) || [
     {
       icon: MagicLineIcon,
       title: "JellyGlance updated",
@@ -43,10 +42,6 @@ function resolveIcon(icon) {
   return iconMap[icon] || MagicLineIcon;
 }
 
-function formatDisplayVersion(version) {
-  return `v${String(version || "").replace(/-beta\.\d+$/i, "").replace(/^v/i, "")}`;
-}
-
 export default function WhatsNewModal({ enabled = true }) {
   const [version, setVersion] = useState("");
   const [show, setShow] = useState(false);
@@ -57,7 +52,7 @@ export default function WhatsNewModal({ enabled = true }) {
     const cachedVersion = localStorage.getItem(APP_VERSION_STORAGE_KEY);
     if (cachedVersion) {
       setVersion(cachedVersion);
-      if (localStorage.getItem(SEEN_VERSION_KEY) !== cachedVersion) {
+      if (localStorage.getItem(WHATS_NEW_SEEN_VERSION_KEY) !== cachedVersion) {
         setShow(true);
       }
       return;
@@ -72,7 +67,7 @@ export default function WhatsNewModal({ enabled = true }) {
         if (!nextVersion) return;
 
         setVersion(nextVersion);
-        if (localStorage.getItem(SEEN_VERSION_KEY) !== nextVersion) {
+        if (localStorage.getItem(WHATS_NEW_SEEN_VERSION_KEY) !== nextVersion) {
           setShow(true);
         }
       })
@@ -107,9 +102,10 @@ export default function WhatsNewModal({ enabled = true }) {
 
   function closeModal() {
     if (version) {
-      localStorage.setItem(SEEN_VERSION_KEY, version);
+      localStorage.setItem(WHATS_NEW_SEEN_VERSION_KEY, version);
     }
     setShow(false);
+    window.dispatchEvent(new Event(WHATS_NEW_DISMISSED_EVENT));
   }
 
   const notes = getNotes(version);
@@ -123,8 +119,9 @@ export default function WhatsNewModal({ enabled = true }) {
         <div className="whats-new-hero">
           <span>
             <MagicLineIcon size={17} />
-            What&apos;s new
+            What&apos;s new{isBetaVersion(version) ? " (beta)" : ""}
           </span>
+          {isBetaVersion(version) ? <em className="release-channel-badge">Beta channel</em> : null}
           <h2>JellyGlance {formatDisplayVersion(version)}</h2>
           <p>A quick look at the newest bits before you dive back in.</p>
         </div>

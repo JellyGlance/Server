@@ -176,6 +176,10 @@ class WebhookManager {
 
     async triggerEventWebhooks(eventType, data = {}, webhookIds = null) {
         try {
+            if (!webhookIds && !data?.test) {
+                // Outbound webhook rules run alongside the classic webhooks and never block them.
+                require('./webhook-out').dispatch(eventType, data).catch(() => {});
+            }
             if (!webhookIds && eventType !== 'playback_digest') {
                 await this.flushQuietHoursDigest();
             }
@@ -565,6 +569,10 @@ class WebhookManager {
     }
 
     getDefaultTitle(data = {}) {
+        if (data.event === 'wrapped_recap') {
+            return data.title || 'Wrapped recap';
+        }
+
         if (data.event === 'playback_digest') {
             return data.integrationEvent || 'Overnight playback digest';
         }

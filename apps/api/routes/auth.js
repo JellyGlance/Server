@@ -141,6 +141,24 @@ function queueSetupJellyfinTasks() {
   startNextTask();
 }
 
+
+function assertMediaServerLoginAllowed(config) {
+  // First-run (state < 2) may use media-server login to bootstrap the owner.
+  // After setup, only the quick-connect auth mode may issue tokens this way —
+  // otherwise local/OIDC instances would accept any Jellyfin/Emby password (GHSA-cc95-rjqv-xcr8).
+  if (config.state != null && config.state < 2) {
+    return null;
+  }
+  const mode = config.settings?.auth?.mode;
+  if (mode === "quick-connect") {
+    return null;
+  }
+  return {
+    status: 403,
+    errorMessage: "Media server sign-in is disabled. Use the configured authentication method instead.",
+  };
+}
+
 async function getQuickConnectConfig() {
   const config = await new configClass().getConfig();
 
@@ -417,6 +435,12 @@ router.post("/jellyfin-quick-connect/initiate", async (req, res) => {
       return;
     }
 
+    const mediaAuthBlock = assertMediaServerLoginAllowed(config);
+    if (mediaAuthBlock) {
+      res.status(mediaAuthBlock.status).json({ errorMessage: mediaAuthBlock.errorMessage });
+      return;
+    }
+
     const response = await axios.post(joinSafeHttpUrl(config.host, "/QuickConnect/Initiate"), null, {
       headers: getJellyfinAuthHeaders(),
       timeout: 12000,
@@ -459,6 +483,12 @@ router.post("/jellyfin-quick-connect/status", async (req, res) => {
 
     if (config.errorMessage) {
       res.status(400).json({ errorMessage: config.errorMessage });
+      return;
+    }
+
+    const mediaAuthBlock = assertMediaServerLoginAllowed(config);
+    if (mediaAuthBlock) {
+      res.status(mediaAuthBlock.status).json({ errorMessage: mediaAuthBlock.errorMessage });
       return;
     }
 
@@ -557,6 +587,12 @@ router.post("/jellyfin-quick-connect/complete", async (req, res) => {
       return;
     }
 
+    const mediaAuthBlock = assertMediaServerLoginAllowed(config);
+    if (mediaAuthBlock) {
+      res.status(mediaAuthBlock.status).json({ errorMessage: mediaAuthBlock.errorMessage });
+      return;
+    }
+
     const response = await authenticateWithQuickConnect(config.host, secret);
     const jellyfinUser = response?.data?.User;
     if (!jellyfinUser?.Id) {
@@ -589,6 +625,12 @@ router.post("/media-server-login", async (req, res) => {
     }
     if (config.errorMessage) {
       res.status(400).json({ errorMessage: config.errorMessage });
+      return;
+    }
+
+    const mediaAuthBlock = assertMediaServerLoginAllowed(config);
+    if (mediaAuthBlock) {
+      res.status(mediaAuthBlock.status).json({ errorMessage: mediaAuthBlock.errorMessage });
       return;
     }
 

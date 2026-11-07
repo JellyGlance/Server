@@ -416,7 +416,10 @@ export default function SettingsAbout() {
                   <GitBranchLineIcon />
                   Version
                 </dt>
-                <dd>{data.current_version}</dd>
+                <dd>
+                  {data.current_version}
+                  {data.current_version && /-(alpha|beta|rc|pre|preview)/i.test(data.current_version) ? <span className="release-channel-badge">Beta channel</span> : null}
+                </dd>
               </div>
               <div className={data.update_available ? "is-update" : ""}>
                 <dt>

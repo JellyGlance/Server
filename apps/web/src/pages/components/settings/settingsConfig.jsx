@@ -22,6 +22,9 @@ import i18n from "i18next";
 import { FONT_WEIGHT_OPTIONS, getStoredFontWeight, saveFontWeightPreference } from "../../../lib/appearance";
 import { languages } from "../../../lib/languages.js";
 import { navData } from "../../../lib/navdata";
+import { isBlobboHidden, setBlobboHidden } from "../../../lib/blobbo-settings";
+import { BLOBBO_PREFS_EVENT, getPrefs, setPref } from "../../../lib/blobbo-prefs";
+import { BLOBBO_LOOKS, getLook, lookAssets, resolveLook } from "../../../lib/blobbo-looks";
 import { DEFAULT_THEME, THEME_GROUPS, THEME_PRESETS, filterThemePresets, findMatchingThemePreset, getStoredTheme, resetTheme, saveTheme, themeColorFields } from "../../../lib/theme";
 import {
   applyNavOrder,
@@ -328,6 +331,18 @@ export default function SettingsConfig() {
   const [submissionMessage, setsubmissionMessage] = useState("");
   const [submissionMessageExternal, setsubmissionMessageExternal] = useState("");
   const [twelve_hr, set12hr] = useState(localStorage.getItem("12hr") === "true");
+  const [blobboHidden, setBlobboHiddenState] = useState(isBlobboHidden);
+  const updateBlobboHidden = (next) => {
+    setBlobboHidden(next);
+    setBlobboHiddenState(next);
+  };
+  const [blobboPrefs, setBlobboPrefs] = useState(getPrefs);
+  useEffect(() => {
+    const sync = () => setBlobboPrefs(getPrefs());
+    window.addEventListener(BLOBBO_PREFS_EVENT, sync);
+    return () => window.removeEventListener(BLOBBO_PREFS_EVENT, sync);
+  }, []);
+  const blobboLook = resolveLook(blobboPrefs);
   const [fontWeight, setFontWeight] = useState(() => getStoredFontWeight());
   const [theme, setTheme] = useState(() => getStoredTheme());
   const [themeDraft, setThemeDraft] = useState(() => getStoredTheme());
@@ -512,6 +527,33 @@ export default function SettingsConfig() {
                     </option>
                   ))}
                 </Form.Select>
+              </Col>
+            </Form.Group>
+            <Form.Group as={Row} className="mb-0 mt-3">
+              <Form.Label column htmlFor="blobbo-visibility">Blobbo helper</Form.Label>
+              <Col sm="10">
+                <Form.Select id="blobbo-visibility" value={blobboHidden ? "hidden" : "shown"} onChange={(event) => updateBlobboHidden(event.target.value === "hidden")}>
+                  <option value="shown">Show Blobbo (Shift+A to say hello)</option>
+                  <option value="hidden">Hide Blobbo</option>
+                </Form.Select>
+              </Col>
+            </Form.Group>
+            <Form.Group as={Row} className="mb-3">
+              <Form.Label column htmlFor="blobbo-look">Blobbo look</Form.Label>
+              <Col sm="10">
+                <div className="d-flex align-items-center gap-3">
+                  <img src={lookAssets(blobboLook.id).thumb} alt="" width="48" height="48" />
+                  <Form.Select id="blobbo-look" value={blobboPrefs.look || "auto"} onChange={(event) => setPref("look", event.target.value === "auto" ? null : event.target.value)}>
+                    <option value="auto">Auto: dress for the season (today: {getLook(resolveLook({ ...blobboPrefs, look: null }).id).label})</option>
+                    <optgroup label="Seasonal">
+                      {BLOBBO_LOOKS.filter((l) => l.kind === "seasonal").map((l) => <option key={l.id} value={l.id}>{l.emoji} {l.label}</option>)}
+                    </optgroup>
+                    <optgroup label="Costumes">
+                      {BLOBBO_LOOKS.filter((l) => l.kind === "costume").map((l) => <option key={l.id} value={l.id}>{l.emoji} {l.label}</option>)}
+                    </optgroup>
+                  </Form.Select>
+                </div>
+                <Form.Text muted>Pick a costume to keep it on. Choose Auto to let Blobbo follow the calendar again (Halloween, winter, Valentine&rsquo;s, summer, New Year and more).</Form.Text>
               </Col>
             </Form.Group>
           </div>
