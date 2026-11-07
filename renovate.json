@@ -1,54 +1,103 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended"
+  ],
   "timezone": "Europe/London",
   "platformCommit": "enabled",
   "dependencyDashboard": true,
   "prConcurrentLimit": 10,
   "prHourlyLimit": 0,
   "semanticCommits": "enabled",
-  "enabledManagers": ["npm", "dockerfile", "docker-compose", "github-actions"],
+  "enabledManagers": [
+    "npm",
+    "dockerfile",
+    "docker-compose",
+    "github-actions"
+  ],
   "packageRules": [
     {
-      "matchManagers": ["npm"],
-      "addLabels": ["dependencies", "npm"]
+      "matchManagers": [
+        "npm"
+      ],
+      "addLabels": [
+        "dependencies",
+        "npm"
+      ]
     },
     {
-      "matchManagers": ["npm"],
-      "matchDepTypes": ["dependencies"],
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "dependencies"
+      ],
       "groupName": "production-dependencies",
       "semanticCommitType": "chore",
       "semanticCommitScope": "deps"
     },
     {
-      "matchManagers": ["npm"],
-      "matchDepTypes": ["devDependencies"],
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "devDependencies"
+      ],
       "groupName": "development-dependencies",
       "semanticCommitType": "chore",
       "semanticCommitScope": "deps-dev"
     },
     {
-      "matchManagers": ["dockerfile", "docker-compose"],
-      "addLabels": ["dependencies", "docker"]
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
+      "addLabels": [
+        "dependencies",
+        "docker"
+      ]
     },
     {
-      "matchManagers": ["github-actions"],
-      "addLabels": ["dependencies", "github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "addLabels": [
+        "dependencies",
+        "github-actions"
+      ],
       "pinDigests": true
     },
     {
       "description": "Look up aquasecurity/trivy-action tags over plain Git. The aquasecurity org has a GitHub IP allow list that rejects GitHub App tokens on the API, so the default github-tags lookup returns no result.",
-      "matchManagers": ["github-actions"],
-      "matchDepNames": ["aquasecurity/trivy-action"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepNames": [
+        "aquasecurity/trivy-action"
+      ],
       "overrideDatasource": "git-tags",
       "overridePackageName": "https://github.com/aquasecurity/trivy-action"
     },
     {
       "description": "Keep the node-arm (linux/arm/v7) Dockerfile stage on Node 22: node:24+ images publish no linux/arm/v7 variant. Digest updates are still allowed.",
-      "matchManagers": ["dockerfile"],
-      "matchPackageNames": ["node"],
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchPackageNames": [
+        "node"
+      ],
       "matchCurrentValue": "/^22-/",
       "allowedVersions": "<23"
+    },
+    {
+      "description": "Keep the bundled Postgres on 16 (the documented, tested version). Postgres 18 images moved PGDATA to /var/lib/postgresql, so a major bump also breaks the existing volume mount. See #383.",
+      "matchManagers": [
+        "docker-compose"
+      ],
+      "matchPackageNames": [
+        "postgres"
+      ],
+      "allowedVersions": "<17"
     }
   ]
 }

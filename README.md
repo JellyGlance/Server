@@ -274,6 +274,8 @@ Connect these under **Settings > Integrations**. See the [integration directory]
 
 Create a `docker-compose.yml` (or start from the one in this repo):
 
+> **Postgres version:** PostgreSQL 16 is the recommended and tested version. If you choose Postgres 18 instead, note that the official 18+ images store data under `/var/lib/postgresql` (not `/var/lib/postgresql/data`), so mount the volume at `/var/lib/postgresql` or set `PGDATA` explicitly. Do not change the major version of an existing database volume without a dump and restore.
+
 ```yaml
 services:
   jellyglance-db:
