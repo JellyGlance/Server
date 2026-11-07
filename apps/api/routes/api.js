@@ -4620,11 +4620,17 @@ async function purgeLibraryItems(id, withActivity, purgeAll = false) {
   }
 
   if (episodeIds.length > 0) {
-    await db.deleteBulk("jf_library_episodes", episodeIds);
+    const result = await db.deleteBulk("jf_library_episodes", episodeIds);
+    if (result?.Result !== "SUCCESS") {
+      throw new Error(`Failed to purge jf_library_episodes: ${result?.message}`);
+    }
   }
 
   if (seasonIds.length > 0) {
-    await db.deleteBulk("jf_library_seasons", seasonIds);
+    const result = await db.deleteBulk("jf_library_seasons", seasonIds);
+    if (result?.Result !== "SUCCESS") {
+      throw new Error(`Failed to purge jf_library_seasons: ${result?.message}`);
+    }
   }
 
   items_query = items_query.replace("select *", "delete");

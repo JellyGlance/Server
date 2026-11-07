@@ -11,7 +11,7 @@ You need Node.js 22 or newer and a PostgreSQL database.
    ```sh
    docker run -d --name jellyglance-db -p 5432:5432 \
      -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mypassword -e POSTGRES_DB=jellyglance \
-     postgres:18-alpine
+     postgres:16-alpine
    ```
 
 2. Copy `apps/api/.env.example` to `apps/api/.env` and fill in `POSTGRES_*` and a long random `JWT_SECRET`.
