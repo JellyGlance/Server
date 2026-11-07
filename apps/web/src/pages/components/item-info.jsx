@@ -278,7 +278,7 @@ function ItemInfo() {
                   {data.ProductionYear ? <span>{data.ProductionYear}</span> : null}
                   <span>{ticksToTimeString(data.RunTimeTicks)}</span>
                   {jellyfinUrl ? (
-                    <a href={jellyfinUrl} target="_blank" rel="noreferrer" title="Open in Jellyfin">
+                    <a href={encodeURI(jellyfinUrl)} target="_blank" rel="noreferrer" title="Open in Jellyfin">
                       <ExternalLinkFillIcon size={22} />
                     </a>
                   ) : null}
@@ -393,12 +393,12 @@ function ItemInfo() {
                   </button>
                 ) : null}
                 {jellyfinOpenUrl ? (
-                  <a href={jellyfinOpenUrl} target="_blank" rel="noreferrer">
+                  <a href={encodeURI(jellyfinOpenUrl)} target="_blank" rel="noreferrer">
                     {t("FEATURES.OPS.OPEN_JELLYFIN")}
                   </a>
                 ) : null}
                 {seerrUrl ? (
-                  <a href={seerrUrl} target="_blank" rel="noreferrer">
+                  <a href={encodeURI(seerrUrl)} target="_blank" rel="noreferrer">
                     {t("FEATURES.GLANCE.OPEN_SEERR")}
                   </a>
                 ) : null}
@@ -444,7 +444,7 @@ function ItemInfo() {
 
             <div className="item-action-row">
               {actionLinks.map((link) => (
-                <a key={`${link.label}-${link.url}`} href={link.url} target="_blank" rel="noreferrer" className={`item-action-link ${link.primary ? "is-primary" : ""}`}>
+                <a key={`${link.label}-${link.url}`} href={encodeURI(link.url)} target="_blank" rel="noreferrer" className={`item-action-link ${link.primary ? "is-primary" : ""}`}>
                   <ExternalLinkFillIcon size={16} />
                   {link.label}
                 </a>

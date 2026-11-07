@@ -5,6 +5,10 @@
  */
 const DATA_IMAGE = /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i;
 
+function encodeSafeUrl(value) {
+  return encodeURI(value);
+}
+
 export function toSafeHttpUrl(raw, options = {}) {
   if (typeof raw !== "string") {
     return "";
@@ -20,7 +24,7 @@ export function toSafeHttpUrl(raw, options = {}) {
     try {
       const parsedData = new URL(value);
       if (parsedData.protocol === "data:" && DATA_IMAGE.test(value)) {
-        return value;
+        return encodeSafeUrl(value);
       }
     } catch {
       return "";
@@ -28,21 +32,16 @@ export function toSafeHttpUrl(raw, options = {}) {
     return "";
   }
 
-  const scheme = value.split(":", 1)[0].toLowerCase();
-  if (scheme === "javascript" || scheme === "vbscript" || scheme === "data") {
-    return "";
-  }
-
   try {
     const parsed = new URL(value, "https://localhost");
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return "";
+    if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+      if (value.startsWith("/") && !value.startsWith("//")) {
+        return encodeSafeUrl(`${parsed.pathname}${parsed.search}${parsed.hash}`);
+      }
+      return encodeSafeUrl(parsed.href);
     }
-    if (value.startsWith("/") && !value.startsWith("//")) {
-      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-    }
-    return parsed.href;
   } catch {
     return "";
   }
+  return "";
 }

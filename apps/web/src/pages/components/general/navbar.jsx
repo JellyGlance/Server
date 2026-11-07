@@ -1054,7 +1054,7 @@ export default function Navbar() {
           <img src={projectText} alt="JellyGlance" />
         </Link>
         <button className="mobile-app-account" type="button" onClick={() => setShowAccount(true)} aria-label="Open account settings">
-          {avatarSrc ? <img src={avatarSrc} alt="" onError={(event) => (event.currentTarget.style.display = "none")} /> : <AccountCircleLineIcon />}
+          {avatarSrc ? <img src={encodeURI(avatarSrc)} alt="" onError={(event) => (event.currentTarget.style.display = "none")} /> : <AccountCircleLineIcon />}
         </button>
       </div>
 
@@ -1132,7 +1132,7 @@ export default function Navbar() {
             >
               <span className="account-nav-avatar">
                 {avatarSrc ? (
-                  <img src={avatarSrc} alt="" onError={(event) => (event.currentTarget.style.display = "none")} />
+                  <img src={encodeURI(avatarSrc)} alt="" onError={(event) => (event.currentTarget.style.display = "none")} />
                 ) : (
                   <AccountCircleLineIcon />
                 )}
@@ -1233,7 +1233,7 @@ export default function Navbar() {
               <button className="navitem account-navitem p-2" type="button" onClick={() => setShowAccount(true)}>
                 <span className="account-nav-avatar">
                   {avatarSrc ? (
-                    <img src={avatarSrc} alt="" onError={(event) => (event.currentTarget.style.display = "none")} />
+                    <img src={encodeURI(avatarSrc)} alt="" onError={(event) => (event.currentTarget.style.display = "none")} />
                   ) : (
                     <AccountCircleLineIcon />
                   )}
@@ -1277,7 +1277,7 @@ export default function Navbar() {
           <div className="profile-modal-main">
           <div className="profile-modal-identity">
             <div className="profile-modal-avatar">
-              {avatarSrc ? <img src={avatarSrc} alt="" onError={(event) => (event.currentTarget.style.display = "none")} /> : <AccountCircleLineIcon />}
+              {avatarSrc ? <img src={encodeURI(avatarSrc)} alt="" onError={(event) => (event.currentTarget.style.display = "none")} /> : <AccountCircleLineIcon />}
             </div>
             <div className="profile-modal-copy">
               <strong>{accountName}</strong>
