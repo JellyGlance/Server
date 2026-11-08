@@ -97,7 +97,7 @@
       "matchPackageNames": [
         "postgres"
       ],
-      "allowedVersions": ">=18 <19"
+      "allowedVersions": "/^18([.-]|$)/"
     }
   ]
 }
