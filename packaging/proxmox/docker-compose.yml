@@ -2,7 +2,7 @@
 # or: docker compose -f /mnt/user/appdata/jellyglance/docker-compose.yml up -d
 services:
   jellyglance-db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: jellyglance-db
     restart: unless-stopped
     shm_size: "1gb"
@@ -10,8 +10,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-jellyglance}
+    # Postgres 18 uses PGDATA=/var/lib/postgresql/18/docker.
+    # Fresh installs only: dump/restore before reusing data from another major version.
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - ./postgres:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready --dbname=$${POSTGRES_DB:-jellyglance} --username=$${POSTGRES_USER:-postgres}"]
       interval: 10s

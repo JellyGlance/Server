@@ -90,14 +90,14 @@
       "allowedVersions": "<23"
     },
     {
-      "description": "Keep the bundled Postgres on 16 (the documented, tested version). Postgres 18 images moved PGDATA to /var/lib/postgresql, so a major bump also breaks the existing volume mount. See #383.",
+      "description": "Keep the documented Compose Postgres image on major 18. Allow 18.x updates, but require an explicit migration review before 19+. See #383.",
       "matchManagers": [
         "docker-compose"
       ],
       "matchPackageNames": [
         "postgres"
       ],
-      "allowedVersions": "<17"
+      "allowedVersions": ">=18 <19"
     }
   ]
 }
