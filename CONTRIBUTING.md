@@ -4,15 +4,18 @@ Thanks for helping out! Bugs and feature requests go in the [issue tracker](http
 
 ## Run it locally
 
-You need Node.js 22 or newer and a PostgreSQL database.
+You need Node.js 22 or newer and a PostgreSQL database. Use `postgres:18-alpine` for new local databases.
 
 1. Start a database. The quickest way is Docker:
 
    ```sh
    docker run -d --name jellyglance-db -p 5432:5432 \
      -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mypassword -e POSTGRES_DB=jellyglance \
-     postgres:16-alpine
+     -v jellyglance-dev-postgres:/var/lib/postgresql \
+     postgres:18-alpine
    ```
+
+   Postgres 18 defaults to `PGDATA=/var/lib/postgresql/18/docker`. Mount persistent data at `/var/lib/postgresql`, not the old `/var/lib/postgresql/data` path. Never switch an existing volume between major versions by changing the image tag or mount: dump with the old version and restore into a fresh Postgres 18 volume first.
 
 2. Copy `apps/api/.env.example` to `apps/api/.env` and fill in `POSTGRES_*` and a long random `JWT_SECRET`.
 3. Install and run everything with one command:
