@@ -1361,6 +1361,20 @@
 
 .session-card-body:has(.session-card-layout) {
   padding-right: 14px !important;
+  padding-left: 14px !important;
+}
+
+/* Poster fills the full card height and never shrinks under the text column. */
+.session-card-main:has(.session-card-layout) .session-card-banner-image {
+  flex: 0 0 120px;
+  width: 120px;
+  align-self: stretch;
+}
+
+.session-card-main:has(.session-card-layout) .session-card-item-image {
+  height: 100%;
+  min-height: 176px;
+  border-radius: 16px 0 0 16px !important;
 }
 
 .session-card:has(.session-card-layout) .card-device-image-overlay {
@@ -1484,7 +1498,8 @@
 
 .session-card-layout .session-timecode {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
   margin-top: auto !important;
   padding-top: 2px;
   color: #cbd5e1;
@@ -1494,4 +1509,34 @@
 
 .session-card .progress-custom {
   background: linear-gradient(90deg, #8b5cf6, #ec4899);
+}
+
+.session-card-layout .session-timecode-value {
+  flex: 0 0 auto;
+}
+
+.session-card-layout .session-progress-inline {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .session-card-main:has(.session-card-layout) .session-card-banner-image {
+    flex-basis: clamp(72px, 18vw, 96px);
+    width: clamp(72px, 18vw, 96px);
+  }
+
+  .session-card-main:has(.session-card-layout) .session-card-item-image {
+    min-height: clamp(124px, 31vw, 154px);
+    border-radius: 12px 0 0 12px !important;
+  }
+
+  .session-card-body:has(.session-card-layout) {
+    padding-left: 10px !important;
+  }
+
+  .session-card-layout .session-timecode {
+    gap: 8px;
+  }
 }
