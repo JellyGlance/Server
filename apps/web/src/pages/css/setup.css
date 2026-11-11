@@ -932,17 +932,6 @@
   filter: brightness(1.08);
 }
 
-.quick-connect-link-hint {
-  margin-top: -10px;
-  overflow: hidden;
-  color: #6b7280;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 10.5px;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .quick-connect-code-chip {
   display: flex;
   width: 100%;
