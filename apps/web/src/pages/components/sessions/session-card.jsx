@@ -378,7 +378,6 @@ function SessionCard(props) {
                 {isTranscoding ? <span className="is-transcoding">Transcoding</span> : <span>Direct</span>}
               </div>
               {transcodeReason ? <p className="session-popout-reason">{transcodeReason}</p> : null}
-              {canManage && isTranscoding ? <TranscodeExplainer session={session} defaultOpen /> : null}
               <h2>{title}</h2>
               <p>{subtitle}</p>
               <div className="session-popout-progress" aria-label={`Playback progress ${Math.round(progressPercent)} percent`}>
@@ -397,6 +396,11 @@ function SessionCard(props) {
               </div>
             </div>
           </div>
+          {canManage && isTranscoding ? (
+            <div className="session-popout-transcode">
+              <TranscodeExplainer session={session} defaultOpen />
+            </div>
+          ) : null}
           <div className="session-popout-grid">
             <div className="session-popout-detail">
               <span>Viewer</span>

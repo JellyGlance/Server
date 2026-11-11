@@ -1540,3 +1540,112 @@
     gap: 8px;
   }
 }
+
+/* Cards view: every card in a row is the same height. The grid stretches the
+   cards; the card is a flex column and its dark body fills it, so a shorter
+   card no longer shows a strip of backdrop under its content. */
+.sessions-container {
+  align-items: stretch;
+}
+
+.session-card {
+  height: 100%;
+}
+
+.session-card-main:has(.session-card-layout) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.session-card-main:has(.session-card-layout) > .row {
+  flex: 1 1 auto;
+  height: auto;
+  flex-wrap: nowrap;
+}
+
+/* Posters fill the whole left side of the card, top to bottom, cropped to fit.
+   The card's overflow: hidden keeps its rounded left corners. */
+.session-card-main:has(.session-card-layout) .session-card-banner-image {
+  display: flex;
+  align-self: stretch;
+  min-width: 120px;
+  padding: 0 !important;
+}
+
+.session-card-main:has(.session-card-layout) .session-card-item-image {
+  display: block;
+  width: 100% !important;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 0 !important;
+}
+
+/* Device, audio and the other fields wrap (two lines at most) instead of
+   being cut off; the full text stays in the tooltip. */
+.session-card-layout .session-field-value {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-overflow: clip;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* The transcode pill stays compact and wraps inside the card. */
+.session-card-layout .transcode-explainer.is-compact {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.session-card-layout .transcode-explainer-chip {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.25;
+}
+
+/* Session details: the transcode hints get their own section under the
+   poster and title instead of sitting inside the title block. */
+.session-popout-transcode {
+  padding: 14px 38px 4px;
+  background: rgba(7, 9, 13, 0.92);
+}
+
+.session-popout-transcode .transcode-explainer {
+  margin-top: 0;
+}
+
+.session-popout-transcode .transcode-explainer-detail {
+  max-height: min(260px, 40vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .session-card-main:has(.session-card-layout) .session-card-banner-image {
+    min-width: clamp(72px, 18vw, 96px);
+  }
+
+  .session-card-main:has(.session-card-layout) .session-card-item-image {
+    width: 100% !important;
+    height: 100%;
+    min-height: 100%;
+  }
+
+  .session-popout-transcode {
+    padding: 12px 18px 4px;
+  }
+
+  .session-card-layout .session-field-value {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+}
