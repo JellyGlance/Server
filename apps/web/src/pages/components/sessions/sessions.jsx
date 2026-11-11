@@ -12,6 +12,17 @@ import { orderSessions } from "../../../lib/session-order";
 
 const SESSION_VIEW_KEY = "jellyglance_sessions_view";
 
+const SESSION_DENSITY_KEY = "jellyglance_sessions_density";
+const DENSITY_LABELS = { detailed: "Detailed", simple: "Simple" };
+
+function getStoredSessionDensity() {
+  try {
+    return localStorage.getItem(SESSION_DENSITY_KEY) === "simple" ? "simple" : "detailed";
+  } catch {
+    return "detailed";
+  }
+}
+
 function getStoredSessionView() {
   try {
     return localStorage.getItem(SESSION_VIEW_KEY) === "wall" ? "wall" : "cards";
@@ -56,6 +67,8 @@ const VIEW_LABELS = { auto: "Auto", cards: "Cards", wall: "Wall", list: "List", 
 function Sessions({ surface = "home", view: controlledView, onViewChange }) {
   const [data, setData] = useState(() => getCachedActiveSessions());
   const [storedView, setView] = useState(() => getStoredSessionView());
+  const [density, setDensity] = useState(() => getStoredSessionDensity());
+  const simple = density === "simple";
   const isControlled = Boolean(controlledView);
   const chosenView = isControlled ? controlledView : storedView;
   const [ipPrivacy, setIpPrivacy] = useState(() => getActiveSessionIpPrivacy());
@@ -121,6 +134,15 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
     }
   }, [config]);
 
+  const changeDensity = (nextDensity) => {
+    setDensity(nextDensity);
+    try {
+      localStorage.setItem(SESSION_DENSITY_KEY, nextDensity);
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   const changeView = (nextView) => {
     if (isControlled) {
       onViewChange?.(nextView);
@@ -144,12 +166,13 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
   const isDemo = data.some((session) => session?.IsDemo);
 
   return (
-    <div className="sessions-widget">
+    <div className={`sessions-widget${simple ? " is-simple" : ""}`}>
       <div className="sessions-widget-header">
         <h1 className="my-3">
           Active Sessions
           {isDemo ? <span className="home-demo-badge">Demo sessions</span> : null}
         </h1>
+        <div className="sessions-widget-controls">
         <div className="sessions-view-toggle" role="group" aria-label="Session layout">
           {viewOptions.map((option) => (
             <button
@@ -165,6 +188,22 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
             </button>
           ))}
         </div>
+        <div className="sessions-view-toggle sessions-density-toggle" role="group" aria-label="Session detail">
+          {Object.keys(DENSITY_LABELS).map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={density === option ? "is-active" : ""}
+              aria-pressed={density === option}
+              data-sessions-density={option}
+              title={option === "simple" ? "Poster, title, user and progress only" : "Show stream details"}
+              onClick={() => changeDensity(option)}
+            >
+              {DENSITY_LABELS[option]}
+            </button>
+          ))}
+        </div>
+        </div>
       </div>
       {view === "list" ? <SessionList sessions={data} /> : null}
       {view === "bandwidth" ? <SessionBandwidth sessions={data} /> : null}
@@ -177,6 +216,7 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
               hideIpAddress={hideIpAddress}
               kiosk={surface === "kiosk"}
               canManage={canManage}
+              simple={simple}
               stitch={stitchByItemId.get(session.NowPlayingItem?.Id) || null}
             />
           </ErrorBoundary>

@@ -1354,30 +1354,30 @@
   padding-top: 12px;
 }
 
-.session-card-main:has(.session-card-layout) {
+.session-card-main.has-card-layout {
   height: auto;
   min-height: 176px;
 }
 
-.session-card-body:has(.session-card-layout) {
+.session-card-body.has-card-layout {
   padding-right: 14px !important;
   padding-left: 14px !important;
 }
 
 /* Poster fills the full card height and never shrinks under the text column. */
-.session-card-main:has(.session-card-layout) .session-card-banner-image {
+.session-card-main.has-card-layout .session-card-banner-image {
   flex: 0 0 120px;
   width: 120px;
   align-self: stretch;
 }
 
-.session-card-main:has(.session-card-layout) .session-card-item-image {
+.session-card-main.has-card-layout .session-card-item-image {
   height: 100%;
   min-height: 176px;
   border-radius: 16px 0 0 16px !important;
 }
 
-.session-card:has(.session-card-layout) .card-device-image-overlay {
+.session-card.has-card-layout .card-device-image-overlay {
   display: none;
 }
 
@@ -1522,17 +1522,17 @@
 }
 
 @media (max-width: 900px) {
-  .session-card-main:has(.session-card-layout) .session-card-banner-image {
+  .session-card-main.has-card-layout .session-card-banner-image {
     flex-basis: clamp(72px, 18vw, 96px);
     width: clamp(72px, 18vw, 96px);
   }
 
-  .session-card-main:has(.session-card-layout) .session-card-item-image {
+  .session-card-main.has-card-layout .session-card-item-image {
     min-height: clamp(124px, 31vw, 154px);
     border-radius: 12px 0 0 12px !important;
   }
 
-  .session-card-body:has(.session-card-layout) {
+  .session-card-body.has-card-layout {
     padding-left: 10px !important;
   }
 
@@ -1552,13 +1552,13 @@
   height: 100%;
 }
 
-.session-card-main:has(.session-card-layout) {
+.session-card-main.has-card-layout {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
 }
 
-.session-card-main:has(.session-card-layout) > .row {
+.session-card-main.has-card-layout > .row {
   flex: 1 1 auto;
   height: auto;
   flex-wrap: nowrap;
@@ -1567,7 +1567,7 @@
 /* Posters fill the whole left side of the card, top to bottom, cropped (never
    squashed) with background-size: cover. The card's overflow: hidden keeps its
    rounded left corners. */
-.session-card-main:has(.session-card-layout) .session-card-banner-image {
+.session-card-main.has-card-layout .session-card-banner-image {
   display: flex;
   flex: 0 0 120px !important;
   align-self: stretch;
@@ -1589,7 +1589,7 @@
    width. Without this, Bootstrap's .col (flex-shrink: 0) plus .w-100 made it a
    full card width wide next to the 120px poster, so long content pushed it
    past the card's right edge and the title and "Ends" time were clipped. */
-.session-card-main:has(.session-card-layout) > .row > .col:not(.session-card-banner-image) {
+.session-card-main.has-card-layout > .row > .col:not(.session-card-banner-image) {
   flex: 1 1 0% !important;
   width: auto !important;
   min-width: 0;
@@ -1648,7 +1648,7 @@
 }
 
 @media (max-width: 900px) {
-  .session-card-main:has(.session-card-layout) .session-card-banner-image {
+  .session-card-main.has-card-layout .session-card-banner-image {
     flex-basis: 96px !important;
     width: 96px;
     max-width: 96px !important;
@@ -1662,4 +1662,112 @@
     -webkit-line-clamp: 3;
     line-clamp: 3;
   }
+}
+
+/* Cards grid: columns share the panel's full width (1fr), so the left and
+   right gutters match and the last card in a row never runs past the panel.
+   The old tracks were capped at 496px and packed to the left. */
+.sessions-widget,
+.sessions-container {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sessions-container {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap: 18px;
+}
+
+.sessions-container > * {
+  min-width: 0;
+}
+
+.sessions-container .session-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* No Bootstrap gutters or negative margins inside a card. */
+.session-card-main.has-card-layout > .row {
+  --bs-gutter-x: 0;
+  --bs-gutter-y: 0;
+  margin: 0 !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Titles are cut with an ellipsis only; the full title shows on hover. */
+.session-card-head .session-title {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.session-card-head .session-title a {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Simple look: poster, title, episode, user and progress only. */
+.session-card.is-simple .session-card-body {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.session-card.is-simple .session-card-layout {
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.session-card.is-simple {
+  min-height: 132px;
+}
+
+.session-simple-ends {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sessions-widget.is-simple .session-wall-meta,
+.sessions-widget.is-simple .session-list-device,
+.sessions-widget.is-simple .session-list-method {
+  display: none !important;
+}
+
+.sessions-widget.is-simple .session-list-row {
+  grid-template-columns: minmax(5rem, 0.8fr) minmax(0, 2fr) minmax(4rem, 0.8fr);
+}
+
+.sessions-density-toggle {
+  margin-left: 8px;
+}
+
+@media (max-width: 900px) {
+  .sessions-container {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sessions-widget.is-simple .session-list-row {
+    grid-template-columns: minmax(0, 1fr) 5.5rem;
+  }
+}
+
+.sessions-widget-controls {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sessions-widget-controls .sessions-density-toggle {
+  margin-left: 0;
 }

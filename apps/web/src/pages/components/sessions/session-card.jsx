@@ -201,6 +201,7 @@ const SESSION_MESSAGE_TEMPLATE_GROUPS = [...new Set(SESSION_MESSAGE_TEMPLATES.ma
 function SessionCard(props) {
   const session = props.data.session;
   const hideIpAddress = Boolean(props.hideIpAddress);
+  const simple = Boolean(props.simple);
   const canManage = Boolean(props.canManage) && !props.kiosk;
   const nowPlaying = session.NowPlayingItem;
   const playState = session.PlayState;
@@ -324,7 +325,7 @@ function SessionCard(props) {
 
   return (
     <Card
-      className="session-card"
+      className={`session-card has-card-layout${simple ? " is-simple" : ""}`}
       style={cardStyle}
       role="button"
       tabIndex={0}
@@ -608,7 +609,7 @@ function SessionCard(props) {
           </button>
         </Modal.Footer>
       </Modal>
-      <div style={cardBgStyle} className="session-card-main rounded-top">
+      <div style={cardBgStyle} className="session-card-main has-card-layout rounded-top">
         <Row className="h-100 p-0 m-0">
           <Col className="session-card-banner-image">
             {props.data.session.NowPlayingItem.Type === "Audio" ? (
@@ -629,13 +630,13 @@ function SessionCard(props) {
             )}
           </Col>
           <Col className="w-100 h-100 m-0 px-0">
-            <Card.Body className="session-card-body w-100 h-100">
+            <Card.Body className="session-card-body has-card-layout w-100 h-100">
               <Container className="h-100 d-flex flex-column justify-content-between g-0 session-card-layout">
                 <div className="session-card-head">
                   <div className="session-title-copy">
                     <Card.Text className="session-title">
                       <span className="session-play-state">{playState.IsPaused ? <PauseFillIcon /> : <PlayFillIcon />}</span>
-                      <Link to={`/libraries/item/${nowPlaying.Id}`} target="_blank" className="item-name">
+                      <Link to={`/libraries/item/${nowPlaying.Id}`} target="_blank" className="item-name" title={title}>
                         {title}
                       </Link>
                     </Card.Text>
@@ -663,6 +664,8 @@ function SessionCard(props) {
                   </Tooltip>
                 </div>
 
+                {!simple ? (
+                <>
                 <div className="session-pills">
                   {getSessionPills(session).map((pill) => (
                     <span key={pill.key} className={`session-pill${pill.tone ? ` is-${pill.tone}` : ""}`}>
@@ -700,6 +703,8 @@ function SessionCard(props) {
                 </div>
                 {canManage && isTranscoding ? <TranscodeExplainer session={session} compact /> : null}
                 <SessionGlanceStrip stitch={props.stitch} />
+                </>
+                ) : null}
 
                 <div className="session-timecode">
                   <span className="session-timecode-value">{formatTicks(progress.positionTicks)}</span>
@@ -721,6 +726,7 @@ function SessionCard(props) {
                   </div>
                   <span className="session-timecode-value">{progress.runtimeTicks ? formatTicks(progress.runtimeTicks) : ""}</span>
                 </div>
+                {simple && timeLeft ? <div className="session-simple-ends">{timeLeft}</div> : null}
               </Container>
             </Card.Body>
           </Col>
