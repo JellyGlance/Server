@@ -46,6 +46,40 @@ function lastStreamPart(value) {
 }
 
 // Short, client-agnostic pills: playback method, resolution/codec and bitrate.
+// Simple card art, best first: an episode's still, a movie's backdrop, then
+// the series backdrop, then the poster. A failed image steps to the next one.
+function getSessionArtSources(item, root) {
+  const backdrop = (id, label) => id && { label, url: `${root}/proxy/Items/Images/Backdrop?id=${id}&fillWidth=720&quality=60` };
+  const primary = (id, label) => id && { label, url: `${root}/proxy/Items/Images/Primary?id=${id}&fillWidth=720&quality=60` };
+  const parentId = item.SeriesId || item.ParentBackdropItemId || item.AlbumId;
+  const list =
+    item.Type === "Episode"
+      ? [primary(item.Id, "episode still"), backdrop(item.SeriesId, "series backdrop"), primary(item.SeriesId, "series poster")]
+      : [
+          backdrop(item.Id, `${(item.Type || "item").toLowerCase()} backdrop`),
+          backdrop(parentId, "parent backdrop"),
+          primary(item.AlbumId, "album art"),
+          primary(item.Id, "poster"),
+        ];
+  return list.filter(Boolean).filter((source, index, all) => all.findIndex((other) => other.url === source.url) === index);
+}
+
+function SessionCardArt({ sources }) {
+  const [index, setIndex] = useState(0);
+  const source = sources[index];
+  if (!source) return null;
+  return (
+    <img
+      className="session-card-art"
+      src={source.url}
+      data-art-source={source.label}
+      alt=""
+      decoding="async"
+      onError={() => setIndex((value) => value + 1)}
+    />
+  );
+}
+
 // Short transcode badge for the compact card: first reason + how many more,
 // e.g. "Video ⟳ +1". The full reasons sit in the badge's tooltip.
 const TRANSCODE_SHORT = {
@@ -312,6 +346,7 @@ function SessionCard(props) {
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState("");
 
+  const simple = Boolean(props.simple);
   const badgesRef = useRef(null);
   const badgesMoreRef = useRef(null);
   // The transcode badge already says "Transcode"/"Audio transcode", so the
@@ -321,7 +356,7 @@ function SessionCard(props) {
     (pill) => !(showTranscodeBadge && ((pill.key === "method" && pill.tone === "warn") || pill.key === "audio")),
   );
   const badgeKey = [showTranscodeBadge ? "explainer" : "", ...badgePills.map((pill) => pill.label)].join("|");
-  useBadgeOverflow(badgesRef, badgesMoreRef, badgeKey);
+  useBadgeOverflow(badgesRef, badgesMoreRef, simple ? "simple" : badgeKey);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => setLoadBackdrop(true));
@@ -380,6 +415,7 @@ function SessionCard(props) {
   const transcodeBadgeTip = transcodeExplained
     ? [summarizeTranscode(transcodeExplained), ...transcodeExplained.causes.map((cause) => cause.label)].filter((v, i, all) => all.indexOf(v) === i).join(" · ")
     : "";
+  const artSources = simple ? getSessionArtSources(nowPlaying, baseUrl) : [];
   const cardSubtitle =
     nowPlaying.Type === "Episode"
       ? [`S${nowPlaying.ParentIndexNumber ?? "?"} E${nowPlaying.IndexNumber ?? "?"}`, nowPlaying.Name].filter(Boolean).join(" · ")
@@ -440,8 +476,8 @@ function SessionCard(props) {
 
   return (
     <Card
-      className="session-card has-card-layout"
-      style={cardStyle}
+      className={`session-card has-card-layout${simple ? " is-simple-card" : ""}`}
+      style={simple ? undefined : cardStyle}
       role="button"
       tabIndex={0}
       onClick={handleCardClick}
@@ -724,7 +760,7 @@ function SessionCard(props) {
           </button>
         </Modal.Footer>
       </Modal>
-      <div style={cardBgStyle} className="session-card-main has-card-layout rounded-top">
+      <div style={simple ? undefined : cardBgStyle} className="session-card-main has-card-layout rounded-top">
         <Row className="h-100 p-0 m-0">
           <Col className="session-card-banner-image">
             {props.data.session.NowPlayingItem.Type === "Audio" ? (
@@ -747,7 +783,13 @@ function SessionCard(props) {
               />
             )}
           </Col>
-          <Col className="w-100 h-100 m-0 px-0">
+          <Col className={`w-100 h-100 m-0 px-0${simple ? " session-card-art-area" : ""}`}>
+            {simple ? (
+              <>
+                <SessionCardArt key={artSources.map((source) => source.url).join("|")} sources={artSources} />
+                <span className="session-card-art-shade" aria-hidden="true" />
+              </>
+            ) : null}
             <Card.Body className="session-card-body has-card-layout w-100 h-100">
               <Container className="h-100 d-flex flex-column justify-content-between g-0 session-card-layout">
                 <div className="session-card-head">
@@ -764,6 +806,21 @@ function SessionCard(props) {
                   </div>
                 </div>
 
+                {simple ? (
+                  <div className="session-pills">
+                    {isTranscoding ? (
+                      <Tooltip title={[transcodeBadgeTip, transcodeReason].filter(Boolean).join(" — ") || "Transcoding"}>
+                        <span className="session-pill session-state-chip is-warn" tabIndex={0}>
+                          {session.TranscodingInfo.IsVideoDirect === false ? "Transcode" : "Audio transcode"}
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      <span className="session-pill session-state-chip is-ok">
+                        {playState.PlayMethod === "DirectStream" ? "Direct stream" : "Direct play"}
+                      </span>
+                    )}
+                  </div>
+                ) : (
                 <div className="session-pills" ref={badgesRef}>
                   {showTranscodeBadge && transcodeExplained ? (
                     <Tooltip title={[transcodeBadgeTip, transcodeReason].filter(Boolean).join(" — ")}>
@@ -779,7 +836,13 @@ function SessionCard(props) {
                   ))}
                   <span className="session-pill session-pill-more" ref={badgesMoreRef} style={{ display: "none" }} />
                 </div>
+                )}
 
+                {simple ? (
+                  <div className="session-fields">
+                    <SessionField label="Left" value={timeLeft || <Trans i18nKey="ERROR_MESSAGES.N/A" />} />
+                  </div>
+                ) : (
                 <div className="session-fields">
                   <SessionField label="Device" value={session.DeviceName} />
                   {nowPlaying.AudioStream ? (
@@ -806,11 +869,13 @@ function SessionCard(props) {
                     />
                   ) : null}
                 </div>
+                )}
 
                 <div className="session-card-foot">
                   <Tooltip title={session.UserName}>
-                    <Link to={`/users/${session.UserId}`} className="session-user-chip is-avatar-only" aria-label={session.UserName}>
+                    <Link to={`/users/${session.UserId}`} className="session-user-chip has-name" aria-label={session.UserName}>
                       <SessionUserAvatar session={session} />
+                      <span className="session-user-name">{session.UserName}</span>
                     </Link>
                   </Tooltip>
                   <div className="session-timecode">

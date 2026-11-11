@@ -2135,3 +2135,134 @@
     border-radius: 12px 0 0 12px;
   }
 }
+
+/* Bottom row in both looks: avatar and display name (ellipsis, full name in
+   the tooltip), then the progress. */
+.session-card.has-card-layout .session-user-chip.has-name {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 38%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+.session-card.has-card-layout .session-user-chip.has-name .session-card-user-image {
+  flex: 0 0 24px;
+}
+
+.session-card.has-card-layout .session-user-chip.has-name .session-user-name {
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  overflow-x: clip;
+  overflow-y: visible;
+  color: #e2e8f0 !important;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Simple look: the same compact card and poster as Detailed, with less text.
+   The art (episode still, backdrop, then poster) covers the area to the right
+   of the poster, under a dark shade so the text stays readable. */
+.session-card.is-simple-card .session-card-art-area {
+  position: relative;
+  overflow: hidden;
+  background: #0b1119;
+}
+
+.session-card.is-simple-card .session-card-art,
+.session-card.is-simple-card .session-card-art-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.session-card.is-simple-card .session-card-art {
+  z-index: 0;
+  display: block;
+  object-fit: cover;
+}
+
+.session-card.is-simple-card .session-card-art-shade {
+  z-index: 1;
+  background:
+    linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 55%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.86) 0%, rgba(0, 0, 0, 0.76) 60%, rgba(0, 0, 0, 0.7) 100%);
+  pointer-events: none;
+}
+
+.session-card.is-simple-card .session-card-art-area > .session-card-body {
+  position: relative;
+  z-index: 2;
+}
+
+.session-card.is-simple-card .session-card-layout {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.session-card.is-simple-card .session-card-head .session-subtitle,
+.session-card.is-simple-card .session-field-label {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.session-card.is-simple-card .session-state-chip {
+  text-shadow: none;
+  cursor: default;
+}
+
+.session-card.is-simple-card .session-card-layout > .session-fields {
+  margin-top: auto !important;
+}
+
+.session-card.is-simple-card .session-card-layout > .session-card-foot {
+  margin-top: 0 !important;
+}
+
+/* Clean rounded edges on both looks. The card's background used to paint
+   under its translucent 1px border, so the art showed through as a thin line
+   along the top edge. The background now stops inside the border and every
+   inner layer uses the inner radius (16px - 1px border). */
+.session-card.has-card-layout {
+  isolation: isolate;
+  background-clip: padding-box !important;
+}
+
+.session-card.has-card-layout .session-card-main {
+  overflow: hidden;
+  border-radius: 15px !important;
+}
+
+.session-card.has-card-layout .session-card-banner-image {
+  border-radius: 15px 0 0 15px;
+}
+
+.session-card.is-simple-card .session-card-art-area {
+  border-radius: 0 15px 15px 0;
+}
+
+/* The progress times never get cut; on narrow cards the name gives way
+   (ellipsis, full name in the tooltip) and the bar shrinks. */
+.session-card.has-card-layout .session-card-layout .session-card-foot .session-timecode {
+  flex: 1 0 auto;
+}
+
+.session-card.has-card-layout .session-card-foot .session-timecode-value {
+  flex: 0 0 auto;
+}
+
+.session-card.has-card-layout .session-card-foot .session-progress-inline {
+  flex: 1 1 24px;
+  min-width: 24px;
+}

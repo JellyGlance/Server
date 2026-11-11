@@ -5,7 +5,6 @@ import Config from "../../../lib/config";
 import "../../css/sessions.css";
 import ErrorBoundary from "../general/ErrorBoundary";
 import SessionCard from "./session-card";
-import SessionCardClassic from "./session-card-classic";
 import SessionWall from "./session-wall";
 import { SessionBandwidth, SessionList } from "./session-views";
 import { resolveSessionsView } from "../../../lib/home-settings";
@@ -197,7 +196,7 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
               className={density === option ? "is-active" : ""}
               aria-pressed={density === option}
               data-sessions-density={option}
-              title={option === "simple" ? "The original session card" : "The newer session card"}
+              title={option === "simple" ? "Compact card on the artwork" : "Compact card with poster and details"}
               onClick={() => changeDensity(option)}
             >
               {DENSITY_LABELS[option]}
@@ -209,10 +208,11 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
       {view === "list" ? <SessionList sessions={data} /> : null}
       {view === "bandwidth" ? <SessionBandwidth sessions={data} /> : null}
       {view === "wall" ? <SessionWall sessions={data} /> : null}
-      {view === "cards" && simple ? <div className="sessions-container sessions-classic">
+      {view === "cards" && simple ? <div className="sessions-container sessions-detailed sessions-simple-cards">
         {orderSessions(data).map((session) => (
           <ErrorBoundary key={session.Id}>
-            <SessionCardClassic
+            <SessionCard
+              simple
               data={{ session: session, base_url: config?.base_url }}
               hideIpAddress={hideIpAddress}
               kiosk={surface === "kiosk"}
