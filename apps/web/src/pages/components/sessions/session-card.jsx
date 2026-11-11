@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Card from "react-bootstrap/Card";
 import Row from "react-bootstrap/Row";
@@ -230,6 +230,37 @@ function SessionUserAvatar({ session }) {
   );
 }
 
+// The poster column is 2/3 as wide as the card is tall, so a 2:3 poster fills
+// it top to bottom with nothing cropped. CSS can't size a column from its own
+// stretched height, so this measures the card and sets --session-poster-w.
+// A wider poster can only make the text taller, so the width only moves one
+// way and settles after a pass or two; it is capped so the text keeps room.
+function usePosterFill(ref) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const height = el.clientHeight;
+      const width = el.clientWidth;
+      if (!height || !width) return;
+      const next = Math.max(96, Math.min(Math.round(width * 0.4), Math.round((height * 2) / 3)));
+      const current = parseFloat(el.style.getPropertyValue("--session-poster-w")) || 0;
+      if (next !== current) el.style.setProperty("--session-poster-w", `${next}px`);
+    };
+    const observer = new ResizeObserver(() => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    });
+    observer.observe(el);
+    update();
+    return () => {
+      observer.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [ref]);
+}
+
 function SessionCard(props) {
   const session = props.data.session;
   const hideIpAddress = Boolean(props.hideIpAddress);
@@ -248,6 +279,9 @@ function SessionCard(props) {
   const [messageWhen, setMessageWhen] = useState(() => defaultMessageDateTime(15));
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState("");
+
+  const mainRef = useRef(null);
+  usePosterFill(mainRef);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => setLoadBackdrop(true));
@@ -640,7 +674,7 @@ function SessionCard(props) {
           </button>
         </Modal.Footer>
       </Modal>
-      <div style={cardBgStyle} className="session-card-main has-card-layout rounded-top">
+      <div ref={mainRef} style={cardBgStyle} className="session-card-main has-card-layout rounded-top">
         <Row className="h-100 p-0 m-0">
           <Col className="session-card-banner-image">
             {props.data.session.NowPlayingItem.Type === "Audio" ? (
@@ -652,15 +686,23 @@ function SessionCard(props) {
                 decoding="async"
               />
             ) : (
-              // The whole Primary poster (series poster for episodes) in a 2:3 panel;
-              // other shapes letterbox instead of being cropped.
-              <img
-                className="session-card-poster"
-                src={`${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=360&fillWidth=240&quality=60`}
-                loading="lazy"
-                decoding="async"
-                alt=""
-              />
+              // The whole Primary poster (series poster for episodes), never cropped.
+              // When the card is taller than the poster can be at the widest
+              // column allowed, a blurred copy fills the space under it.
+              <>
+                <span
+                  className="session-card-poster-fill"
+                  aria-hidden="true"
+                  style={{ backgroundImage: `url(${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=360&fillWidth=240&quality=60)` }}
+                />
+                <img
+                  className="session-card-poster"
+                  src={`${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=360&fillWidth=240&quality=60`}
+                  loading="lazy"
+                  decoding="async"
+                  alt=""
+                />
+              </>
             )}
           </Col>
           <Col className="w-100 h-100 m-0 px-0">
@@ -680,12 +722,6 @@ function SessionCard(props) {
                       </Card.Text>
                     </Tooltip>
                   </div>
-                  <Tooltip title={session.UserName}>
-                    <Link to={`/users/${session.UserId}`} className="session-user-chip">
-                      <SessionUserAvatar session={session} />
-                      <span className="session-user-name">{session.UserName}</span>
-                    </Link>
-                  </Tooltip>
                 </div>
 
                 <div className="session-pills">
@@ -726,25 +762,33 @@ function SessionCard(props) {
                 {canManage && isTranscoding ? <TranscodeExplainer session={session} compact /> : null}
                 <SessionGlanceStrip stitch={props.stitch} />
 
-                <div className="session-timecode">
-                  <span className="session-timecode-value">{formatTicks(progress.positionTicks)}</span>
-                  <div
-                    className="progress-bar session-progress-inline"
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={Math.round(progressPercent)}
-                  >
-                    {progressPercent > 0 ? <div className="progress-custom" style={{ width: `${progressPercent}%` }} /> : null}
-                    {isTranscoding && transcodePercent !== null ? (
-                      <div
-                        className="progress-transcode"
-                        style={{ width: `${transcodePercent}%` }}
-                        aria-label={`Transcode progress ${Math.round(transcodePercent)} percent`}
-                      />
-                    ) : null}
+                <div className="session-card-foot">
+                  <Tooltip title={session.UserName}>
+                    <Link to={`/users/${session.UserId}`} className="session-user-chip">
+                      <SessionUserAvatar session={session} />
+                      <span className="session-user-name">{session.UserName}</span>
+                    </Link>
+                  </Tooltip>
+                  <div className="session-timecode">
+                    <span className="session-timecode-value">{formatTicks(progress.positionTicks)}</span>
+                    <div
+                      className="progress-bar session-progress-inline"
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(progressPercent)}
+                    >
+                      {progressPercent > 0 ? <div className="progress-custom" style={{ width: `${progressPercent}%` }} /> : null}
+                      {isTranscoding && transcodePercent !== null ? (
+                        <div
+                          className="progress-transcode"
+                          style={{ width: `${transcodePercent}%` }}
+                          aria-label={`Transcode progress ${Math.round(transcodePercent)} percent`}
+                        />
+                      ) : null}
+                    </div>
+                    <span className="session-timecode-value">{progress.runtimeTicks ? formatTicks(progress.runtimeTicks) : ""}</span>
                   </div>
-                  <span className="session-timecode-value">{progress.runtimeTicks ? formatTicks(progress.runtimeTicks) : ""}</span>
                 </div>
               </Container>
             </Card.Body>

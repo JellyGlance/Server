@@ -1852,7 +1852,7 @@
 }
 
 .session-card.has-card-layout .session-card-layout {
-  gap: 10px;
+  gap: 8px;
   padding-top: 12px;
   padding-bottom: 12px;
 }
@@ -1950,39 +1950,73 @@
   margin: 0;
 }
 
-.session-card.has-card-layout .session-card-layout .session-timecode {
+/* Footer: the user chip sits beside the play time and progress; they wrap
+   onto two lines when the card is narrow. It stays at the bottom of the card. */
+.session-card.has-card-layout .session-card-layout > .session-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
   margin-top: auto !important;
+  min-width: 0;
+}
+
+.session-card.has-card-layout .session-card-foot .session-user-chip {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
+.session-card.has-card-layout .session-card-layout .session-card-foot .session-timecode {
+  flex: 1 1 120px;
+  min-width: 0;
+  margin-top: 0 !important;
   padding-top: 0;
 }
 
-/* Detailed card poster: the whole poster in a 2:3 panel at the top of the
-   column, never cropped or stretched; other shapes letterbox. The card grows
-   to fit it and the grid keeps cards in a row the same height. */
+/* Detailed card poster: the column is --session-poster-w wide (2/3 of the
+   card height, set by usePosterFill) and as tall as the card, so the whole 2:3
+   poster fills it exactly: no crop, no stretch, no empty block below. Images
+   that aren't 2:3 letterbox by a pixel or two. */
 .session-card.has-card-layout .session-card-banner-image {
+  position: relative;
   display: block;
-  flex: 0 0 120px !important;
-  align-self: flex-start;
-  width: 120px;
-  max-width: 120px !important;
-  aspect-ratio: 2 / 3;
+  flex: 0 0 var(--session-poster-w, 120px) !important;
+  align-self: stretch;
+  width: var(--session-poster-w, 120px);
+  max-width: none !important;
+  min-height: 0;
   overflow: hidden;
   padding: 0 !important;
-  border-radius: 16px 0 0 0;
+  border-radius: 16px 0 0 16px;
   background: #0b1119;
 }
 
 .session-card.has-card-layout .session-card-poster {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  max-height: 100%;
+  aspect-ratio: 2 / 3;
   object-fit: contain;
+}
+
+/* Last resort, only visible when the card is taller than 1.5x the widest
+   poster column allowed (40% of the card): a blurred, darkened copy of the
+   same poster fills the space under the sharp one instead of a black block. */
+.session-card.has-card-layout .session-card-poster-fill {
+  position: absolute;
+  inset: -16px;
+  background-position: center;
+  background-size: cover;
+  filter: blur(14px) brightness(0.45) saturate(1.1);
+  transform: scale(1.05);
 }
 
 @media (max-width: 900px) {
   .session-card.has-card-layout .session-card-banner-image {
-    flex-basis: 96px !important;
-    width: 96px;
-    max-width: 96px !important;
-    border-radius: 12px 0 0 0;
+    border-radius: 12px 0 0 12px;
   }
 }
