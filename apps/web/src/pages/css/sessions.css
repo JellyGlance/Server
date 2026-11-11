@@ -1569,9 +1569,7 @@
   flex-wrap: nowrap;
 }
 
-/* Posters fill the whole left side of the card, top to bottom, cropped (never
-   squashed) with background-size: cover. The card's overflow: hidden keeps its
-   rounded left corners. */
+/* Poster column (the 2:3 panel itself is set further down). */
 .session-card-main.has-card-layout .session-card-banner-image:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   flex: 0 0 120px !important;
@@ -1581,14 +1579,6 @@
   padding: 0 !important;
 }
 
-.session-card-poster:not(:where(.sessions-classic, .sessions-classic *)) {
-  width: 100%;
-  min-height: 100%;
-  background-color: #0b1119;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
 
 /* The text column takes the rest of the row and may shrink below its content
    width. Without this, Bootstrap's .col (flex-shrink: 0) plus .w-100 made it a
@@ -1851,5 +1841,148 @@
 
   .sessions-classic .session-details-list {
     max-height: none;
+  }
+}
+
+/* Detailed card (.has-card-layout): title gets the full width (up to two lines),
+   the user sits on its own row, fields are one column of label + value, and one
+   10px gap separates every block inside an evenly padded body. */
+.session-card.has-card-layout .session-card-body {
+  padding: 0 14px !important;
+}
+
+.session-card.has-card-layout .session-card-layout {
+  gap: 10px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.session-card.has-card-layout .session-card-layout > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.session-card.has-card-layout .session-card-head {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.session-card.has-card-layout .session-title-copy {
+  overflow: visible;
+}
+
+.session-card.has-card-layout .session-card-head .session-title {
+  align-items: flex-start;
+  overflow: visible;
+  white-space: normal;
+}
+
+.session-card.has-card-layout .session-card-head .session-play-state {
+  flex: 0 0 18px;
+  margin-top: 1px;
+}
+
+.session-card.has-card-layout .session-card-head .session-title a {
+  display: -webkit-box;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.session-card.has-card-layout .session-user-chip {
+  align-self: flex-start;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.session-card.has-card-layout .session-user-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-card.has-card-layout .session-user-initials {
+  display: inline-flex;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(var(--primary-rgb), 0.55);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.session-card.has-card-layout .session-fields {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
+.session-card.has-card-layout .session-field {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: baseline;
+}
+
+.session-card.has-card-layout .session-field-value {
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+}
+
+.session-card.has-card-layout .transcode-explainer.is-compact {
+  margin: 0;
+}
+
+.session-card.has-card-layout .session-glance-strip {
+  margin: 0;
+}
+
+.session-card.has-card-layout .session-card-layout .session-timecode {
+  margin-top: auto !important;
+  padding-top: 0;
+}
+
+/* Detailed card poster: the whole poster in a 2:3 panel at the top of the
+   column, never cropped or stretched; other shapes letterbox. The card grows
+   to fit it and the grid keeps cards in a row the same height. */
+.session-card.has-card-layout .session-card-banner-image {
+  display: block;
+  flex: 0 0 120px !important;
+  align-self: flex-start;
+  width: 120px;
+  max-width: 120px !important;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  padding: 0 !important;
+  border-radius: 16px 0 0 0;
+  background: #0b1119;
+}
+
+.session-card.has-card-layout .session-card-poster {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 900px) {
+  .session-card.has-card-layout .session-card-banner-image {
+    flex-basis: 96px !important;
+    width: 96px;
+    max-width: 96px !important;
+    border-radius: 12px 0 0 0;
   }
 }

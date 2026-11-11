@@ -198,6 +198,38 @@ const SESSION_MESSAGE_TEMPLATES = [
 
 const SESSION_MESSAGE_TEMPLATE_GROUPS = [...new Set(SESSION_MESSAGE_TEMPLATES.map((template) => template.group))];
 
+function userInitials(name) {
+  const words = String(name || "").trim().split(/[\s._-]+/).filter(Boolean);
+  if (!words.length) return "?";
+  const letters = words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0].slice(0, 2);
+  return letters.toUpperCase();
+}
+
+// The user's Jellyfin avatar through the image proxy, or their initials when
+// they have none or it fails to load. Live sessions say whether an image
+// exists (UserPrimaryImageTag); demo sessions don't, so those just try it.
+function SessionUserAvatar({ session }) {
+  const [failed, setFailed] = useState(false);
+  const mayHaveImage = session.UserPrimaryImageTag !== undefined || session.IsDemo;
+  if (!session.UserId || !mayHaveImage || failed) {
+    return (
+      <span className="session-card-user-image session-user-initials" aria-hidden="true">
+        {userInitials(session.UserName)}
+      </span>
+    );
+  }
+  return (
+    <img
+      className="session-card-user-image"
+      src={baseUrl + "/proxy/Users/Images/Primary?id=" + session.UserId + "&fillWidth=72&quality=55"}
+      loading="lazy"
+      decoding="async"
+      alt=""
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function SessionCard(props) {
   const session = props.data.session;
   const hideIpAddress = Boolean(props.hideIpAddress);
@@ -620,11 +652,14 @@ function SessionCard(props) {
                 decoding="async"
               />
             ) : (
-              // A background image crops to the column (cover) at any card height.
-              <div
+              // The whole Primary poster (series poster for episodes) in a 2:3 panel;
+              // other shapes letterbox instead of being cropped.
+              <img
                 className="session-card-poster"
-                aria-hidden="true"
-                style={{ backgroundImage: `url(${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=360&fillWidth=240&quality=60)` }}
+                src={`${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=360&fillWidth=240&quality=60`}
+                loading="lazy"
+                decoding="async"
+                alt=""
               />
             )}
           </Col>
@@ -647,17 +682,7 @@ function SessionCard(props) {
                   </div>
                   <Tooltip title={session.UserName}>
                     <Link to={`/users/${session.UserId}`} className="session-user-chip">
-                      {session.UserPrimaryImageTag !== undefined ? (
-                        <img
-                          className="session-card-user-image"
-                          src={baseUrl + "/proxy/Users/Images/Primary?id=" + session.UserId + "&fillWidth=72&quality=55"}
-                          loading="lazy"
-                          decoding="async"
-                          alt=""
-                        />
-                      ) : (
-                        <AccountCircleFillIcon className="session-card-user-image" />
-                      )}
+                      <SessionUserAvatar session={session} />
                       <span className="session-user-name">{session.UserName}</span>
                     </Link>
                   </Tooltip>
