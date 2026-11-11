@@ -966,6 +966,15 @@
   font-weight: 700;
   letter-spacing: 0.3em;
   user-select: all;
+  /* Fill the space next to Copy and centre the digits in it. The left padding
+     matches the letter-spacing trailing the last digit so they sit dead centre. */
+  display: flex;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  justify-content: center;
+  padding-left: 0.3em;
+  text-align: center;
 }
 
 .quick-connect-copy-button {
