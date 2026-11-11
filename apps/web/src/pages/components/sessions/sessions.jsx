@@ -6,6 +6,7 @@ import "../../css/sessions.css";
 import ErrorBoundary from "../general/ErrorBoundary";
 import SessionCard from "./session-card";
 import SessionWall from "./session-wall";
+import { orderSessions } from "../../../lib/session-order";
 
 const SESSION_VIEW_KEY = "jellyglance_sessions_view";
 
@@ -142,21 +143,17 @@ function Sessions({ surface = "home" }) {
         </div>
       </div>
       {view === "wall" ? <SessionWall sessions={data} /> : <div className="sessions-container">
-        {data &&
-          data.length > 0 &&
-          data
-            .sort((a, b) => a.Id.padStart(12, "0").localeCompare(b.Id.padStart(12, "0")))
-            .map((session) => (
-              <ErrorBoundary key={session.Id}>
-                <SessionCard
-                  data={{ session: session, base_url: config?.base_url }}
-                  hideIpAddress={hideIpAddress}
-                  kiosk={surface === "kiosk"}
-                  canManage={canManage}
-                  stitch={stitchByItemId.get(session.NowPlayingItem?.Id) || null}
-                />
-              </ErrorBoundary>
-            ))}
+        {orderSessions(data).map((session) => (
+          <ErrorBoundary key={session.Id}>
+            <SessionCard
+              data={{ session: session, base_url: config?.base_url }}
+              hideIpAddress={hideIpAddress}
+              kiosk={surface === "kiosk"}
+              canManage={canManage}
+              stitch={stitchByItemId.get(session.NowPlayingItem?.Id) || null}
+            />
+          </ErrorBoundary>
+        ))}
       </div>}
     </div>
   );

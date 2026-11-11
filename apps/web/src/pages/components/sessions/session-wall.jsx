@@ -1,4 +1,5 @@
 import baseUrl from "../../../lib/baseurl";
+import { orderSessions } from "../../../lib/session-order";
 
 function ticksToClock(ticks) {
   const totalSeconds = Math.max(0, Math.floor(Number(ticks || 0) / 10000000));
@@ -84,7 +85,7 @@ function SessionWallTile({ session }) {
 }
 
 function SessionWall({ sessions }) {
-  const list = Array.isArray(sessions) ? sessions.filter((session) => session?.NowPlayingItem) : [];
+  const list = orderSessions(sessions).filter((session) => session?.NowPlayingItem);
   if (list.length === 0) return null;
   return (
     <div className="session-wall-grid">
