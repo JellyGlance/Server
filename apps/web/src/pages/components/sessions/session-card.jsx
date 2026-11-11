@@ -21,8 +21,8 @@ import IpInfoModal from "../ip-info";
 import { Trans } from "react-i18next";
 import baseUrl from "../../../lib/baseurl";
 import axios from "../../../lib/axios_instance";
-import SessionGlanceStrip from "./session-glance-strip";
 import TranscodeExplainer from "./transcode-explainer";
+import { explainTranscode, summarizeTranscode } from "../../../lib/transcode-explainer";
 import { formatTicks, getSessionProgress } from "../../../lib/session-progress";
 
 function formatTranscodeReasons(session) {
@@ -46,6 +46,30 @@ function lastStreamPart(value) {
 }
 
 // Short, client-agnostic pills: playback method, resolution/codec and bitrate.
+// Short transcode badge for the compact card: first reason + how many more,
+// e.g. "Video ⟳ +1". The full reasons sit in the badge's tooltip.
+const TRANSCODE_SHORT = {
+  videoCodec: "Video",
+  audioCodec: "Audio",
+  audioChannels: "Channels",
+  bitrate: "Bitrate",
+  subtitles: "Subs",
+  container: "Container",
+  videoRange: "HDR",
+  videoProfile: "Profile",
+  resolution: "Res",
+  directPlayDisabled: "DP off",
+  error: "DP failed",
+};
+
+function shortTranscodeLabel(explained) {
+  if (!explained) return "";
+  const first = explained.causes[0];
+  const name = first ? TRANSCODE_SHORT[first.id] || first.label : explained.mode === "remux" ? "Remux" : "Transcode";
+  const more = explained.causes.length > 1 ? ` +${explained.causes.length - 1}` : "";
+  return `${name} ⟳${more}`;
+}
+
 function getSessionPills(session) {
   const item = session.NowPlayingItem || {};
   const transcoding = session.TranscodingInfo;
@@ -230,35 +254,43 @@ function SessionUserAvatar({ session }) {
   );
 }
 
-// The poster column is 2/3 as wide as the card is tall, so a 2:3 poster fills
-// it top to bottom with nothing cropped. CSS can't size a column from its own
-// stretched height, so this measures the card and sets --session-poster-w.
-// A wider poster can only make the text taller, so the width only moves one
-// way and settles after a pass or two; it is capped so the text keeps room.
-function usePosterFill(ref) {
+// Badges stay on one row: the ones that don't fit are hidden and a "+N" chip
+// lists them in its tooltip. Works on the DOM so a resize doesn't re-render.
+function useBadgeOverflow(rowRef, moreRef, contentKey) {
   useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    const row = rowRef.current;
+    const more = moreRef.current;
+    if (!row || !more || typeof ResizeObserver === "undefined") return undefined;
     let frame = 0;
     const update = () => {
       frame = 0;
-      const height = el.clientHeight;
-      const width = el.clientWidth;
-      if (!height || !width) return;
-      const next = Math.max(96, Math.min(Math.round(width * 0.4), Math.round((height * 2) / 3)));
-      const current = parseFloat(el.style.getPropertyValue("--session-poster-w")) || 0;
-      if (next !== current) el.style.setProperty("--session-poster-w", `${next}px`);
+      const items = [...row.children].filter((child) => child !== more);
+      items.forEach((item) => (item.style.display = ""));
+      more.style.display = "none";
+      if (row.scrollWidth <= row.clientWidth + 1) return;
+      more.style.display = "";
+      const limit = row.getBoundingClientRect().right - more.getBoundingClientRect().width - 6;
+      const hidden = [];
+      for (let i = items.length - 1; i >= 0; i -= 1) {
+        const fits = items.slice(0, i + 1).every((item) => item.getBoundingClientRect().right <= limit + 0.5);
+        if (fits) break;
+        items[i].style.display = "none";
+        hidden.unshift(items[i].textContent.trim());
+      }
+      more.textContent = `+${hidden.length}`;
+      more.title = hidden.join(", ");
+      more.setAttribute("aria-label", `${hidden.length} more: ${hidden.join(", ")}`);
     };
     const observer = new ResizeObserver(() => {
       if (!frame) frame = window.requestAnimationFrame(update);
     });
-    observer.observe(el);
+    observer.observe(row);
     update();
     return () => {
       observer.disconnect();
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [ref]);
+  }, [rowRef, moreRef, contentKey]);
 }
 
 function SessionCard(props) {
@@ -280,8 +312,16 @@ function SessionCard(props) {
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState("");
 
-  const mainRef = useRef(null);
-  usePosterFill(mainRef);
+  const badgesRef = useRef(null);
+  const badgesMoreRef = useRef(null);
+  // The transcode badge already says "Transcode"/"Audio transcode", so the
+  // matching method pills are dropped next to it.
+  const showTranscodeBadge = canManage && Boolean(session.TranscodingInfo) && Boolean(explainTranscode(session));
+  const badgePills = getSessionPills(session).filter(
+    (pill) => !(showTranscodeBadge && ((pill.key === "method" && pill.tone === "warn") || pill.key === "audio")),
+  );
+  const badgeKey = [showTranscodeBadge ? "explainer" : "", ...badgePills.map((pill) => pill.label)].join("|");
+  useBadgeOverflow(badgesRef, badgesMoreRef, badgeKey);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => setLoadBackdrop(true));
@@ -336,6 +376,16 @@ function SessionCard(props) {
       : nowPlaying.Type === "Audio" && nowPlaying.Artists?.length > 0
         ? nowPlaying.Artists[0]
         : nowPlaying.SeriesName || nowPlaying.Type;
+  const transcodeExplained = isTranscoding ? explainTranscode(session) : null;
+  const transcodeBadgeTip = transcodeExplained
+    ? [summarizeTranscode(transcodeExplained), ...transcodeExplained.causes.map((cause) => cause.label)].filter((v, i, all) => all.indexOf(v) === i).join(" · ")
+    : "";
+  const cardSubtitle =
+    nowPlaying.Type === "Episode"
+      ? [`S${nowPlaying.ParentIndexNumber ?? "?"} E${nowPlaying.IndexNumber ?? "?"}`, nowPlaying.Name].filter(Boolean).join(" · ")
+      : nowPlaying.Type === "Audio" && nowPlaying.Artists?.length > 0
+        ? nowPlaying.Artists[0]
+        : [nowPlaying.ProductionYear, nowPlaying.Type === "Movie" ? null : nowPlaying.Type].filter(Boolean).join(" · ") || nowPlaying.Type;
   const timecode = `${formatTicks(progress.positionTicks)}${progress.runtimeTicks ? `/${formatTicks(progress.runtimeTicks)}` : ""}`;
   const selectedMessageTemplate = SESSION_MESSAGE_TEMPLATES.find((item) => item.id === messageTemplateId) || SESSION_MESSAGE_TEMPLATES[0];
 
@@ -674,7 +724,7 @@ function SessionCard(props) {
           </button>
         </Modal.Footer>
       </Modal>
-      <div ref={mainRef} style={cardBgStyle} className="session-card-main has-card-layout rounded-top">
+      <div style={cardBgStyle} className="session-card-main has-card-layout rounded-top">
         <Row className="h-100 p-0 m-0">
           <Col className="session-card-banner-image">
             {props.data.session.NowPlayingItem.Type === "Audio" ? (
@@ -686,23 +736,15 @@ function SessionCard(props) {
                 decoding="async"
               />
             ) : (
-              // The whole Primary poster (series poster for episodes), never cropped.
-              // When the card is taller than the poster can be at the widest
-              // column allowed, a blurred copy fills the space under it.
-              <>
-                <span
-                  className="session-card-poster-fill"
-                  aria-hidden="true"
-                  style={{ backgroundImage: `url(${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=360&fillWidth=240&quality=60)` }}
-                />
-                <img
-                  className="session-card-poster"
-                  src={`${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=360&fillWidth=240&quality=60`}
-                  loading="lazy"
-                  decoding="async"
-                  alt=""
-                />
-              </>
+              // The whole Primary poster (series poster for episodes) in a 2:3
+              // panel that is exactly as tall as the card; never cropped.
+              <img
+                className="session-card-poster"
+                src={`${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=380&fillWidth=254&quality=60`}
+                loading="lazy"
+                decoding="async"
+                alt=""
+              />
             )}
           </Col>
           <Col className="w-100 h-100 m-0 px-0">
@@ -716,25 +758,30 @@ function SessionCard(props) {
                         {title}
                       </Link>
                     </Card.Text>
-                    <Tooltip title={`${session.DeviceName} · ${session.Client} ${session.ApplicationVersion}`}>
-                      <Card.Text className="session-subtitle">
-                        {[subtitle, session.Client && `${session.Client} ${session.ApplicationVersion || ""}`.trim()].filter(Boolean).join(" · ")}
-                      </Card.Text>
+                    <Tooltip title={`${cardSubtitle} · ${session.DeviceName} · ${session.Client} ${session.ApplicationVersion || ""}`.trim()}>
+                      <Card.Text className="session-subtitle">{cardSubtitle}</Card.Text>
                     </Tooltip>
                   </div>
                 </div>
 
-                <div className="session-pills">
-                  {getSessionPills(session).map((pill) => (
+                <div className="session-pills" ref={badgesRef}>
+                  {showTranscodeBadge && transcodeExplained ? (
+                    <Tooltip title={[transcodeBadgeTip, transcodeReason].filter(Boolean).join(" — ")}>
+                      <span className="session-transcode-badge">
+                        <TranscodeExplainer session={session} compact label={shortTranscodeLabel(transcodeExplained)} />
+                      </span>
+                    </Tooltip>
+                  ) : null}
+                  {badgePills.map((pill) => (
                     <span key={pill.key} className={`session-pill${pill.tone ? ` is-${pill.tone}` : ""}`}>
                       {pill.label}
                     </span>
                   ))}
+                  <span className="session-pill session-pill-more" ref={badgesMoreRef} style={{ display: "none" }} />
                 </div>
 
                 <div className="session-fields">
                   <SessionField label="Device" value={session.DeviceName} />
-                  <SessionField label="Left" value={timeLeft || <Trans i18nKey="ERROR_MESSAGES.N/A" />} />
                   {nowPlaying.AudioStream ? (
                     <SessionField
                       label="Audio"
@@ -742,7 +789,7 @@ function SessionCard(props) {
                       title={`${nowPlaying.AudioStream} ${nowPlaying.AudioBitrateStream || ""}`.trim()}
                     />
                   ) : null}
-                  {nowPlaying.SubtitleStream ? <SessionField label="Subtitles" value={nowPlaying.SubtitleStream} /> : null}
+                  <SessionField label="Left" value={timeLeft || <Trans i18nKey="ERROR_MESSAGES.N/A" />} />
                   {!hideIpAddress ? (
                     <SessionField
                       label="IP"
@@ -759,14 +806,11 @@ function SessionCard(props) {
                     />
                   ) : null}
                 </div>
-                {canManage && isTranscoding ? <TranscodeExplainer session={session} compact /> : null}
-                <SessionGlanceStrip stitch={props.stitch} />
 
                 <div className="session-card-foot">
                   <Tooltip title={session.UserName}>
-                    <Link to={`/users/${session.UserId}`} className="session-user-chip">
+                    <Link to={`/users/${session.UserId}`} className="session-user-chip is-avatar-only" aria-label={session.UserName}>
                       <SessionUserAvatar session={session} />
-                      <span className="session-user-name">{session.UserName}</span>
                     </Link>
                   </Tooltip>
                   <div className="session-timecode">

@@ -222,7 +222,7 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
           </ErrorBoundary>
         ))}
       </div> : null}
-      {view === "cards" && !simple ? <div className="sessions-container">
+      {view === "cards" && !simple ? <div className="sessions-container sessions-detailed">
         {orderSessions(data).map((session) => (
           <ErrorBoundary key={session.Id}>
             <SessionCard
