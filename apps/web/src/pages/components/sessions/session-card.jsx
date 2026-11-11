@@ -611,22 +611,22 @@ function SessionCard(props) {
       <div style={cardBgStyle} className="session-card-main rounded-top">
         <Row className="h-100 p-0 m-0">
           <Col className="session-card-banner-image">
-            <Card.Img
-              variant="top"
-              className={
-                props.data.session.NowPlayingItem.Type === "Audio"
-                  ? "stat-card-image-audio rounded-0 rounded-start"
-                  : "session-card-item-image"
-              }
-              src={
-                baseUrl +
-                "/proxy/Items/Images/Primary?id=" +
-                mediaItemId +
-                "&fillHeight=240&fillWidth=160&quality=45"
-              }
-              loading="lazy"
-              decoding="async"
-            />
+            {props.data.session.NowPlayingItem.Type === "Audio" ? (
+              <Card.Img
+                variant="top"
+                className="stat-card-image-audio rounded-0 rounded-start"
+                src={baseUrl + "/proxy/Items/Images/Primary?id=" + mediaItemId + "&fillHeight=240&fillWidth=160&quality=45"}
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              // A background image crops to the column (cover) at any card height.
+              <div
+                className="session-card-poster"
+                aria-hidden="true"
+                style={{ backgroundImage: `url(${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=360&fillWidth=240&quality=60)` }}
+              />
+            )}
           </Col>
           <Col className="w-100 h-100 m-0 px-0">
             <Card.Body className="session-card-body w-100 h-100">
