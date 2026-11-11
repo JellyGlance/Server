@@ -551,8 +551,14 @@ async function authenticate(req, res, next) {
     typeof authorization === "string" && authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
 
   if (extractedToken && extractedToken !== "null") {
+    let decoded;
     try {
-      const decoded = jwt.verify(extractedToken, JWT_SECRET, { algorithms: ["HS256"] });
+      decoded = jwt.verify(extractedToken, JWT_SECRET, { algorithms: ["HS256"] });
+    } catch (error) {
+      console.log("Invalid token");
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    try {
       if (!decoded || typeof decoded !== "object" || decoded.user == null) {
         return res.status(401).json({ message: "Invalid token" });
       }
@@ -565,8 +571,11 @@ async function authenticate(req, res, next) {
       req.permissions = access.permissions;
       return next(); // codeql[js/user-controlled-bypass]
     } catch (error) {
-      console.log("Invalid token");
-      return res.status(401).json({ message: "Invalid token" });
+      // A valid token whose role could not be looked up (database busy or down) is
+      // not an invalid token: answer 503 so the browser keeps it and retries,
+      // instead of 401, which signs the user out and loops back to the login page.
+      console.log("Token access lookup failed:", error.message);
+      return res.status(503).json({ message: "JellyGlance is busy, try again in a moment" });
     }
   }
 
@@ -643,14 +652,21 @@ function getTokenPermissions(user) {
   return DEFAULT_ROLE_PERMISSIONS.Owner;
 }
 
+// db.query() returns [] instead of throwing when a query fails; treat that as an
+// error so a lookup failure is never read as "no role".
+async function readAccessSettings() {
+  const result = await dbInstance.query('SELECT settings FROM app_config where "ID"=1');
+  if (!Array.isArray(result?.rows)) throw new Error("settings query failed");
+  return result.rows[0]?.settings || {};
+}
+
 async function resolveTokenAccess(user) {
   if (user === "internal") {
     return { user, permissions: DEFAULT_ROLE_PERMISSIONS.Owner };
   }
 
   if (user?.authMode === "quick-connect" && user?.id) {
-    const { rows } = await dbInstance.query('SELECT settings FROM app_config where "ID"=1');
-    const settings = rows[0]?.settings || {};
+    const settings = await readAccessSettings();
     const role = settings.userRoles?.[user.id] || (user.jellyfinUser?.isAdministrator ? "Admin" : "Viewer");
     const permissions = getRolePermissions(settings, role);
 
@@ -665,8 +681,7 @@ async function resolveTokenAccess(user) {
   }
 
   if (user?.authMode === "oidc" && user?.jellyfinUser?.id) {
-    const { rows } = await dbInstance.query('SELECT settings FROM app_config where "ID"=1');
-    const settings = rows[0]?.settings || {};
+    const settings = await readAccessSettings();
     const role = settings.userRoles?.[user.jellyfinUser.id] || (user.jellyfinUser?.isAdministrator ? "Admin" : "Viewer");
     const permissions = getRolePermissions(settings, role);
 
@@ -681,8 +696,9 @@ async function resolveTokenAccess(user) {
   }
 
   if (user?.authMode === "local") {
-    const { rows } = await dbInstance.query('SELECT "APP_USER", settings FROM app_config where "ID"=1');
-    const config = rows[0] || {};
+    const result = await dbInstance.query('SELECT "APP_USER", settings FROM app_config where "ID"=1');
+    if (!Array.isArray(result?.rows)) throw new Error("settings query failed");
+    const config = result.rows[0] || {};
     const settings = config.settings || {};
     const localUser = (settings.localUsers || []).find((item) => item.id === user.id || item.username === user.username);
     const role = user.id === 1 || config.APP_USER === user.username ? "Owner" : localUser?.role || user.role || "Viewer";

@@ -42,10 +42,16 @@ function buildPeakGrid(rows) {
   return { grid, max, total, busiest, quietest: total > 0 ? quietest : null };
 }
 
+// db.query() returns [] instead of throwing when a query fails.
+function rowsOf(result, label) {
+  if (!Array.isArray(result?.rows)) throw new Error(`${label} query failed`);
+  return result.rows;
+}
+
 async function getPeakHours({ db, days = 30 }) {
   const span = Math.min(Math.max(Number(days) || 30, 7), 365);
   const tz = homeTimeZone();
-  const { rows } = await db.query(
+  const rows = await db.query(
     `SELECT extract(isodow FROM "ActivityDateInserted" AT TIME ZONE $2)::int AS dow,
             extract(hour FROM "ActivityDateInserted" AT TIME ZONE $2)::int AS hour,
             count(*)::int AS plays
@@ -53,7 +59,7 @@ async function getPeakHours({ db, days = 30 }) {
       WHERE "ActivityDateInserted" > now() - make_interval(days => $1)
       GROUP BY 1, 2`,
     [span, tz]
-  );
+  ).then((result) => rowsOf(result, "Peak hours"));
   return { days: span, timeZone: tz, ...buildPeakGrid(rows) };
 }
 
@@ -103,7 +109,9 @@ const NEXT_EPISODES_SQL = `
    LIMIT 6`;
 
 async function getUpNext({ db, now = new Date() }) {
-  const { rows } = await db.query(`SELECT settings->'IntegrationData'->'calendar' AS calendar FROM app_config WHERE "ID"=1`);
+  const calendarResult = await db.query(`SELECT settings->'IntegrationData'->'calendar' AS calendar FROM app_config WHERE "ID"=1`);
+  if (!Array.isArray(calendarResult?.rows)) throw new Error("Up next query failed");
+  const rows = calendarResult.rows;
   const calendar = rows[0]?.calendar || null;
   const syncedAt = calendar?.syncedAt || null;
   const items = calendarItemsInWindow(calendar, { now });
@@ -111,7 +119,9 @@ async function getUpNext({ db, now = new Date() }) {
 
   // No airings in the next 24 hours (or the calendar cache is stale): fall back
   // to the next unwatched episode of each series the household is watching.
-  const { rows: next } = await db.query(NEXT_EPISODES_SQL);
+  const nextResult = await db.query(NEXT_EPISODES_SQL);
+  if (!Array.isArray(nextResult?.rows)) throw new Error("Up next query failed");
+  const next = nextResult.rows;
   return {
     source: "next-episodes",
     calendarSyncedAt: syncedAt,
@@ -160,11 +170,11 @@ async function getDiskForecastInputs({ db }) {
 }
 
 async function getLastPlayback({ db }) {
-  const { rows } = await db.query(
+  const rows = rowsOf(await db.query(
     `SELECT "UserName" AS "userName", "DeviceName" AS "deviceName", "Client" AS client,
             "NowPlayingItemName" AS title, "SeriesName" AS "seriesName", "ActivityDateInserted" AS "endedAt"
        FROM jf_playback_activity ORDER BY "ActivityDateInserted" DESC LIMIT 1`
-  );
+  ), "Last playback");
   return rows[0] || null;
 }
 
