@@ -495,18 +495,21 @@
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* Up next */
+/* Up next: compact tiles (16:9 still, then title, episode and who/when) that
+   fill the widget width in even columns. */
 .home-up-next-list {
   display: grid;
-  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 10px 16px;
 }
 
 .home-up-next-list article {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
+  grid-template-columns: 112px minmax(0, 1fr);
   align-items: center;
-  gap: 0.6rem;
-  min-height: 44px;
+  gap: 10px;
+  height: 63px;
+  min-width: 0;
 }
 
 .home-up-next-list article.is-loading {
@@ -516,29 +519,62 @@
 
 .home-up-next-list article > div {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
   min-width: 0;
 }
 
 .home-up-next-list strong,
-.home-up-next-list small {
-  overflow: hidden;
+.home-up-next-list small,
+.home-up-next-list em {
+  display: block;
+  overflow-x: clip;
+  overflow-y: visible;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.home-up-next-list strong {
+  font-size: 0.88rem;
+  line-height: 20px;
+}
+
 .home-up-next-list small,
 .home-up-next-list em {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.76rem;
   font-style: normal;
+  line-height: 17px;
 }
 
 .home-up-next-thumb {
+  position: relative;
   display: block;
-  width: 44px;
-  height: 44px;
+  width: 112px;
+  height: 63px;
   overflow: hidden;
   border-radius: 8px;
+  background: #0b1119;
+}
+
+.home-up-next-thumb > img,
+.home-up-next-thumb > canvas,
+.home-up-next-thumb > div,
+.home-up-next-thumb > .home-thumb-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.home-up-next-thumb > img {
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.home-up-next-thumb > img.is-loaded {
+  opacity: 1;
 }
 
 .home-thumb-fallback {

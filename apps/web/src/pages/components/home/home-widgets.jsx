@@ -2,6 +2,7 @@ import { Component, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Blurhash } from "react-blurhash";
 import axios from "../../../lib/axios_instance";
+import baseUrl from "../../../lib/baseurl";
 import { lookAssets } from "../../../lib/blobbo-looks";
 
 import CalendarEventLineIcon from "remixicon-react/CalendarEventLineIcon";
@@ -81,6 +82,40 @@ function SafeBlurhash({ hash }) {
     <HashBoundary>
       <Blurhash hash={hash} width="100%" height="100%" />
     </HashBoundary>
+  );
+}
+
+// Up next thumbnail: the episode still, then the series backdrop, then the
+// series poster, all through the image proxy. The blurhash only shows while
+// the real image loads (or when there is no image at all).
+function UpNextThumb({ item }) {
+  const sources = [
+    item.id && item.seriesId ? `${baseUrl}/proxy/Items/Images/Primary?id=${item.id}&fillWidth=256&quality=70` : null,
+    item.seriesId ? `${baseUrl}/proxy/Items/Images/Backdrop?id=${item.seriesId}&fillWidth=256&quality=70` : null,
+    item.seriesId ? `${baseUrl}/proxy/Items/Images/Primary?id=${item.seriesId}&fillWidth=256&quality=70` : null,
+  ].filter(Boolean);
+  const [index, setIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const src = sources[index];
+  return (
+    <span className="home-up-next-thumb">
+      {!loaded ? <SafeBlurhash hash={item.imageHash} /> : null}
+      {src ? (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className={loaded ? "is-loaded" : ""}
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            setLoaded(false);
+            setIndex((value) => value + 1);
+          }}
+        />
+      ) : null}
+    </span>
   );
 }
 
@@ -166,7 +201,11 @@ export function UpNextWidget({ data, error }) {
       {fromHistory ? (
         <p className="home-widget-note">
           {data.calendarSyncedAt
-            ? `Nothing airs in the next 24 hours in the cached calendar (last synced ${new Date(data.calendarSyncedAt).toLocaleDateString()}).`
+            ? data.calendarSyncPaused
+              ? `Calendar cached from ${new Date(data.calendarSyncedAt).toLocaleDateString()}; sync is paused in this demo.`
+              : data.calendarStale
+                ? `Calendar hasn't synced since ${new Date(data.calendarSyncedAt).toLocaleDateString()}; check the Arr Calendar Sync task.`
+                : "Nothing airs in the next 24 hours."
             : "No calendar connected."}{" "}
           Showing the next episode of shows watched recently.
         </p>
@@ -175,17 +214,15 @@ export function UpNextWidget({ data, error }) {
         {items.length ? (
           items.map((item) => (
             <article key={item.id}>
-              <span className="home-up-next-thumb">
-                <SafeBlurhash hash={item.imageHash} />
-              </span>
+              <UpNextThumb item={item} />
               <div>
                 <strong title={item.title}>{item.title}</strong>
-                <small>
+                <small title={[item.subtitle, item.episodeTitle].filter(Boolean).join(" · ")}>
                   {item.subtitle}
                   {item.episodeTitle ? ` · ${item.episodeTitle}` : ""}
                 </small>
+                <em>{fromHistory ? (item.lastWatchedBy ? `${item.lastWatchedBy} · ${timeAgo(item.lastWatchedAt)}` : "") : formatAiring(item.at)}</em>
               </div>
-              <em>{fromHistory ? (item.lastWatchedBy ? `${item.lastWatchedBy} · ${timeAgo(item.lastWatchedAt)}` : "") : formatAiring(item.at)}</em>
             </article>
           ))
         ) : data ? (

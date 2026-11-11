@@ -115,7 +115,9 @@ async function getUpNext({ db, now = new Date() }) {
   const calendar = rows[0]?.calendar || null;
   const syncedAt = calendar?.syncedAt || null;
   const items = calendarItemsInWindow(calendar, { now });
-  if (items.length) return { source: "calendar", calendarSyncedAt: syncedAt, items };
+  // Scheduled tasks are off in the demo, so the calendar is never refreshed.
+  const calendarSyncPaused = process.env.JG_DISABLE_SCHEDULED_TASKS === "1";
+  if (items.length) return { source: "calendar", calendarSyncedAt: syncedAt, calendarSyncPaused, items };
 
   // No airings in the next 24 hours (or the calendar cache is stale): fall back
   // to the next unwatched episode of each series the household is watching.
@@ -125,9 +127,11 @@ async function getUpNext({ db, now = new Date() }) {
   return {
     source: "next-episodes",
     calendarSyncedAt: syncedAt,
+    calendarSyncPaused,
     calendarStale: !syncedAt || new Date(now).getTime() - new Date(syncedAt).getTime() > 2 * DAY_MS,
     items: next.map((row) => ({
       id: row.episodeId,
+      seriesId: row.seriesId || null,
       title: row.seriesName,
       subtitle: `S${String(row.season).padStart(2, "0")}E${String(row.episode).padStart(2, "0")}`,
       episodeTitle: row.episodeTitle || "",
