@@ -1,23 +1,25 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>jellyglance-db</Name>
-  <Repository>postgres:16-alpine</Repository>
+  <Repository>postgres:18-alpine</Repository>
   <Registry>https://hub.docker.com/_/postgres</Registry>
   <Network>bridge</Network>
   <Privileged>false</Privileged>
   <Support>https://github.com/JellyGlance/Server/issues</Support>
   <Project>https://github.com/JellyGlance/Server</Project>
-  <Overview>PostgreSQL 16 companion for JellyGlance. Install on the same custom Docker network as jellyglance, then set JellyGlance POSTGRES_IP to jellyglance-db with matching credentials.</Overview>
-  <Description>Official postgres:16-alpine image, packaged as a one-click companion for JellyGlance.
+  <Overview>PostgreSQL 18 companion for JellyGlance. Install on the same custom Docker network as jellyglance, then set JellyGlance POSTGRES_IP to jellyglance-db with matching credentials.</Overview>
+  <Description>Official postgres:18-alpine image, packaged as a one-click companion for JellyGlance.
 
-Put both containers on one custom network. Match POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB with the jellyglance template. Skip this if you already run Postgres elsewhere.</Description>
+Put both containers on one custom network. Match POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB with the jellyglance template. Skip this if you already run Postgres elsewhere.
+
+Postgres 18 defaults to PGDATA=/var/lib/postgresql/18/docker. Mount data at /var/lib/postgresql, not the old /var/lib/postgresql/data path. Do not switch an existing volume between major versions by changing the image tag or mount: dump with the old version and restore into a fresh Postgres 18 volume first.</Description>
   <Category>Other:</Category>
   <WebUI></WebUI>
   <TemplateURL>https://raw.githubusercontent.com/JellyGlance/Server/main/packaging/unraid/templates/jellyglance-db.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/JellyGlance/Server/main/.github/assets/icon-b-512.png</Icon>
   <ExtraParams>--restart=unless-stopped --shm-size=1g</ExtraParams>
   <Shell>sh</Shell>
-  <Config Name="Database Data" Target="/var/lib/postgresql/data" Default="/mnt/user/appdata/jellyglance/postgres" Mode="rw" Description="Postgres data directory" Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="Database Data" Target="/var/lib/postgresql" Default="/mnt/user/appdata/jellyglance/postgres" Mode="rw" Description="Postgres 18 data root (PGDATA=/var/lib/postgresql/18/docker). Use a fresh volume or dump/restore from an older major version." Type="Path" Display="always" Required="true" Mask="false"/>
   <Config Name="POSTGRES_USER" Target="POSTGRES_USER" Default="postgres" Description="Postgres username" Type="Variable" Display="always" Required="true" Mask="false"/>
   <Config Name="POSTGRES_PASSWORD" Target="POSTGRES_PASSWORD" Default="" Description="Postgres password (must match JellyGlance)" Type="Variable" Display="always" Required="true" Mask="true"/>
   <Config Name="POSTGRES_DB" Target="POSTGRES_DB" Default="jellyglance" Description="Database name" Type="Variable" Display="always" Required="true" Mask="false"/>

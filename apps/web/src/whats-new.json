@@ -1,4 +1,16 @@
 {
+  "1.4.3": [
+    {
+      "icon": "speed",
+      "title": "Active Sessions Timings Fixed",
+      "body": "Active Sessions cards now read position, runtime, time left and the progress bar from the same playback values, so they always agree. The ETA field is now Left: it shows the time remaining, plus the clock time it ends while playing. Paused streams just show what's left instead of an end time that keeps moving. A stream that hasn't reported its position yet shows --:--:-- instead of NaN or Invalid Date, and an empty bar no longer shows a stray dot. The progress bar now sits between the two timestamps, and the poster fills the card with space before the text, so nothing crowds the artwork."
+    },
+    {
+      "icon": "shield",
+      "title": "Postgres 16 and Clearer Purge Errors",
+      "body": "The bundled Docker Compose files are pinned back to postgres:16-alpine, the recommended version. If you have moved to Postgres 18, the README covers its new data path. Purging items that were removed from Jellyfin now shows an error when it fails, instead of a success message. Purge only removes items a library sync has already marked as gone, so run a sync first."
+    }
+  ],
   "1.4.2": [
     {
       "icon": "shield",
