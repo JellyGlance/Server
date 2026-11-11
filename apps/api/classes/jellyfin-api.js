@@ -458,6 +458,10 @@ class JellyfinAPI {
   }
 
   async getSessions() {
+    const demoSessions = require("./demo-sessions");
+    if (demoSessions.isDemoSessionsEnabled()) {
+      return demoSessions.getDemoSessions(require("../db"));
+    }
     if (!this.configReady) {
       return [];
     }

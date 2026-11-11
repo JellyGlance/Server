@@ -82,6 +82,10 @@ class TaskScheduler {
   }
 
   async initializeTasks() {
+    if (process.env.JG_DISABLE_SCHEDULED_TASKS === "1") {
+      console.log("[TASK-SCHEDULER] Scheduled tasks are disabled (JG_DISABLE_SCHEDULED_TASKS=1)");
+      return;
+    }
     let canTaskSchedulerRun = false;
     const _config = new configClass();
 

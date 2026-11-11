@@ -6,6 +6,8 @@ import "../../css/sessions.css";
 import ErrorBoundary from "../general/ErrorBoundary";
 import SessionCard from "./session-card";
 import SessionWall from "./session-wall";
+import { SessionBandwidth, SessionList } from "./session-views";
+import { resolveSessionsView } from "../../../lib/home-settings";
 import { orderSessions } from "../../../lib/session-order";
 
 const SESSION_VIEW_KEY = "jellyglance_sessions_view";
@@ -47,9 +49,15 @@ function canManageSessions(config) {
   }
 }
 
-function Sessions({ surface = "home" }) {
+const VIEW_LABELS = { auto: "Auto", cards: "Cards", wall: "Wall", list: "List", bandwidth: "Bandwidth" };
+
+// Home passes view/onViewChange so the choice lives in the Home layout; other
+// pages keep the old Cards/Wall toggle stored on its own.
+function Sessions({ surface = "home", view: controlledView, onViewChange }) {
   const [data, setData] = useState(() => getCachedActiveSessions());
-  const [view, setView] = useState(() => getStoredSessionView());
+  const [storedView, setView] = useState(() => getStoredSessionView());
+  const isControlled = Boolean(controlledView);
+  const chosenView = isControlled ? controlledView : storedView;
   const [ipPrivacy, setIpPrivacy] = useState(() => getActiveSessionIpPrivacy());
   const [config, setConfig] = useState(() => {
     try {
@@ -114,6 +122,10 @@ function Sessions({ surface = "home" }) {
   }, [config]);
 
   const changeView = (nextView) => {
+    if (isControlled) {
+      onViewChange?.(nextView);
+      return;
+    }
     setView(nextView);
     try {
       localStorage.setItem(SESSION_VIEW_KEY, nextView);
@@ -127,22 +139,37 @@ function Sessions({ surface = "home" }) {
     return null;
   }
 
+  const view = resolveSessionsView(chosenView, data.length);
+  const viewOptions = isControlled ? ["auto", "cards", "wall", "list", "bandwidth"] : ["cards", "wall"];
+  const isDemo = data.some((session) => session?.IsDemo);
+
   return (
     <div className="sessions-widget">
       <div className="sessions-widget-header">
         <h1 className="my-3">
           Active Sessions
+          {isDemo ? <span className="home-demo-badge">Demo sessions</span> : null}
         </h1>
         <div className="sessions-view-toggle" role="group" aria-label="Session layout">
-          <button type="button" className={view === "cards" ? "is-active" : ""} aria-pressed={view === "cards"} onClick={() => changeView("cards")}>
-            Cards
-          </button>
-          <button type="button" className={view === "wall" ? "is-active" : ""} aria-pressed={view === "wall"} onClick={() => changeView("wall")}>
-            Wall
-          </button>
+          {viewOptions.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={chosenView === option ? "is-active" : ""}
+              aria-pressed={chosenView === option}
+              title={option === "auto" ? `Auto: showing ${VIEW_LABELS[view]}` : undefined}
+              onClick={() => changeView(option)}
+            >
+              {VIEW_LABELS[option]}
+              {option === "auto" && chosenView === "auto" ? <small> · {VIEW_LABELS[view]}</small> : null}
+            </button>
+          ))}
         </div>
       </div>
-      {view === "wall" ? <SessionWall sessions={data} /> : <div className="sessions-container">
+      {view === "list" ? <SessionList sessions={data} /> : null}
+      {view === "bandwidth" ? <SessionBandwidth sessions={data} /> : null}
+      {view === "wall" ? <SessionWall sessions={data} /> : null}
+      {view === "cards" ? <div className="sessions-container">
         {orderSessions(data).map((session) => (
           <ErrorBoundary key={session.Id}>
             <SessionCard
@@ -154,7 +181,7 @@ function Sessions({ surface = "home" }) {
             />
           </ErrorBoundary>
         ))}
-      </div>}
+      </div> : null}
     </div>
   );
 }
