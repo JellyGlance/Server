@@ -5,6 +5,7 @@ import Config from "../../../lib/config";
 import "../../css/sessions.css";
 import ErrorBoundary from "../general/ErrorBoundary";
 import SessionCard from "./session-card";
+import SessionCardClassic from "./session-card-classic";
 import SessionWall from "./session-wall";
 import { SessionBandwidth, SessionList } from "./session-views";
 import { resolveSessionsView } from "../../../lib/home-settings";
@@ -196,7 +197,7 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
               className={density === option ? "is-active" : ""}
               aria-pressed={density === option}
               data-sessions-density={option}
-              title={option === "simple" ? "Poster, title, user and progress only" : "Show stream details"}
+              title={option === "simple" ? "The original session card" : "The newer session card"}
               onClick={() => changeDensity(option)}
             >
               {DENSITY_LABELS[option]}
@@ -208,7 +209,20 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
       {view === "list" ? <SessionList sessions={data} /> : null}
       {view === "bandwidth" ? <SessionBandwidth sessions={data} /> : null}
       {view === "wall" ? <SessionWall sessions={data} /> : null}
-      {view === "cards" ? <div className="sessions-container">
+      {view === "cards" && simple ? <div className="sessions-container sessions-classic">
+        {orderSessions(data).map((session) => (
+          <ErrorBoundary key={session.Id}>
+            <SessionCardClassic
+              data={{ session: session, base_url: config?.base_url }}
+              hideIpAddress={hideIpAddress}
+              kiosk={surface === "kiosk"}
+              canManage={canManage}
+              stitch={stitchByItemId.get(session.NowPlayingItem?.Id) || null}
+            />
+          </ErrorBoundary>
+        ))}
+      </div> : null}
+      {view === "cards" && !simple ? <div className="sessions-container">
         {orderSessions(data).map((session) => (
           <ErrorBoundary key={session.Id}>
             <SessionCard
@@ -216,7 +230,6 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
               hideIpAddress={hideIpAddress}
               kiosk={surface === "kiosk"}
               canManage={canManage}
-              simple={simple}
               stitch={stitchByItemId.get(session.NowPlayingItem?.Id) || null}
             />
           </ErrorBoundary>

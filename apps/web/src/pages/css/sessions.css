@@ -1348,40 +1348,45 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Everything above is BETA's original card styling (818e7af^). Every rule below
+   is for the newer card and carries :not(:where(.sessions-classic, ...)), so the
+   original card shown by the Simple look (.sessions-classic) is untouched by it.
+   :where() keeps the specificity of these rules unchanged. */
+
 /* Active Sessions card: title + user first, status pills, consistent fields */
-.session-card-layout {
+.session-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
   gap: 7px;
   padding-top: 12px;
 }
 
-.session-card-main.has-card-layout {
+.session-card-main.has-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
   height: auto;
   min-height: 176px;
 }
 
-.session-card-body.has-card-layout {
+.session-card-body.has-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
   padding-right: 14px !important;
   padding-left: 14px !important;
 }
 
 /* Poster fills the full card height and never shrinks under the text column. */
-.session-card-main.has-card-layout .session-card-banner-image {
+.session-card-main.has-card-layout .session-card-banner-image:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 0 0 120px;
   width: 120px;
   align-self: stretch;
 }
 
-.session-card-main.has-card-layout .session-card-item-image {
+.session-card-main.has-card-layout .session-card-item-image:not(:where(.sessions-classic, .sessions-classic *)) {
   height: 100%;
   min-height: 176px;
   border-radius: 16px 0 0 16px !important;
 }
 
-.session-card.has-card-layout .card-device-image-overlay {
+.session-card.has-card-layout .card-device-image-overlay:not(:where(.sessions-classic, .sessions-classic *)) {
   display: none;
 }
 
-.session-card-head {
+.session-card-head:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1389,33 +1394,33 @@
   min-width: 0;
 }
 
-.session-card-head .session-title {
+.session-card-head .session-title:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.session-card-head .session-play-state {
+.session-card-head .session-play-state:not(:where(.sessions-classic, .sessions-classic *)) {
   width: 18px;
   height: 18px;
   flex-basis: 18px;
 }
 
-.session-card-head .session-play-state svg {
+.session-card-head .session-play-state svg:not(:where(.sessions-classic, .sessions-classic *)) {
   width: 12px;
   height: 12px;
 }
 
-.session-card-head .session-title a {
+.session-card-head .session-title a:not(:where(.sessions-classic, .sessions-classic *)) {
   font-size: 15px;
 }
 
-.session-card-head .session-subtitle {
+.session-card-head .session-subtitle:not(:where(.sessions-classic, .sessions-classic *)) {
   color: #94a3b8;
   font-weight: 600;
 }
 
-.session-user-chip {
+.session-user-chip:not(:where(.sessions-classic, .sessions-classic *)) {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -1428,20 +1433,20 @@
   text-decoration: none !important;
 }
 
-.session-user-chip .session-card-user-image {
+.session-user-chip .session-card-user-image:not(:where(.sessions-classic, .sessions-classic *)) {
   width: 22px;
   height: 22px;
   margin: 0;
   border-width: 1px;
 }
 
-.session-pills {
+.session-pills:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
 }
 
-.session-pill {
+.session-pill:not(:where(.sessions-classic, .sessions-classic *)) {
   display: inline-flex;
   align-items: center;
   padding: 1px 8px;
@@ -1455,26 +1460,26 @@
   white-space: nowrap;
 }
 
-.session-pill.is-ok {
+.session-pill.is-ok:not(:where(.sessions-classic, .sessions-classic *)) {
   border-color: rgba(52, 211, 153, 0.36);
   background: rgba(6, 78, 59, 0.34);
   color: #a7f3d0;
 }
 
-.session-pill.is-warn {
+.session-pill.is-warn:not(:where(.sessions-classic, .sessions-classic *)) {
   border-color: rgba(250, 204, 21, 0.4);
   background: rgba(113, 63, 18, 0.34);
   color: #fde68a;
 }
 
-.session-fields {
+.session-fields:not(:where(.sessions-classic, .sessions-classic *)) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2px 14px;
   min-width: 0;
 }
 
-.session-field {
+.session-field:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   gap: 6px;
   min-width: 0;
@@ -1482,12 +1487,12 @@
   line-height: 1.45;
 }
 
-.session-field-label {
+.session-field-label:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 0 0 auto;
   color: #8b95a7;
 }
 
-.session-field-value {
+.session-field-value:not(:where(.sessions-classic, .sessions-classic *)) {
   min-width: 0;
   overflow: hidden;
   color: #f1f5f9;
@@ -1496,7 +1501,7 @@
   white-space: nowrap;
 }
 
-.session-card-layout .session-timecode {
+.session-card-layout .session-timecode:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1507,36 +1512,36 @@
   font-weight: 600;
 }
 
-.session-card .progress-custom {
+.session-card .progress-custom:not(:where(.sessions-classic, .sessions-classic *)) {
   background: linear-gradient(90deg, #8b5cf6, #ec4899);
 }
 
-.session-card-layout .session-timecode-value {
+.session-card-layout .session-timecode-value:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 0 0 auto;
 }
 
-.session-card-layout .session-progress-inline {
+.session-card-layout .session-progress-inline:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
 }
 
 @media (max-width: 900px) {
-  .session-card-main.has-card-layout .session-card-banner-image {
+  .session-card-main.has-card-layout .session-card-banner-image:not(:where(.sessions-classic, .sessions-classic *)) {
     flex-basis: clamp(72px, 18vw, 96px);
     width: clamp(72px, 18vw, 96px);
   }
 
-  .session-card-main.has-card-layout .session-card-item-image {
+  .session-card-main.has-card-layout .session-card-item-image:not(:where(.sessions-classic, .sessions-classic *)) {
     min-height: clamp(124px, 31vw, 154px);
     border-radius: 12px 0 0 12px !important;
   }
 
-  .session-card-body.has-card-layout {
+  .session-card-body.has-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
     padding-left: 10px !important;
   }
 
-  .session-card-layout .session-timecode {
+  .session-card-layout .session-timecode:not(:where(.sessions-classic, .sessions-classic *)) {
     gap: 8px;
   }
 }
@@ -1544,21 +1549,21 @@
 /* Cards view: every card in a row is the same height. The grid stretches the
    cards; the card is a flex column and its dark body fills it, so a shorter
    card no longer shows a strip of backdrop under its content. */
-.sessions-container {
+.sessions-container:not(:where(.sessions-classic, .sessions-classic *)) {
   align-items: stretch;
 }
 
-.session-card {
+.session-card:not(:where(.sessions-classic, .sessions-classic *)) {
   height: 100%;
 }
 
-.session-card-main.has-card-layout {
+.session-card-main.has-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
 }
 
-.session-card-main.has-card-layout > .row {
+.session-card-main.has-card-layout > .row:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 1 1 auto;
   height: auto;
   flex-wrap: nowrap;
@@ -1567,7 +1572,7 @@
 /* Posters fill the whole left side of the card, top to bottom, cropped (never
    squashed) with background-size: cover. The card's overflow: hidden keeps its
    rounded left corners. */
-.session-card-main.has-card-layout .session-card-banner-image {
+.session-card-main.has-card-layout .session-card-banner-image:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   flex: 0 0 120px !important;
   align-self: stretch;
@@ -1576,7 +1581,7 @@
   padding: 0 !important;
 }
 
-.session-card-poster {
+.session-card-poster:not(:where(.sessions-classic, .sessions-classic *)) {
   width: 100%;
   min-height: 100%;
   background-color: #0b1119;
@@ -1589,22 +1594,22 @@
    width. Without this, Bootstrap's .col (flex-shrink: 0) plus .w-100 made it a
    full card width wide next to the 120px poster, so long content pushed it
    past the card's right edge and the title and "Ends" time were clipped. */
-.session-card-main.has-card-layout > .row > .col:not(.session-card-banner-image) {
+.session-card-main.has-card-layout > .row > .col:not(.session-card-banner-image):not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 1 1 0% !important;
   width: auto !important;
   min-width: 0;
 }
 
-.session-card-body,
-.session-card-layout,
-.session-card-head,
-.session-title-copy {
+.session-card-body:not(:where(.sessions-classic, .sessions-classic *)),
+.session-card-layout:not(:where(.sessions-classic, .sessions-classic *)),
+.session-card-head:not(:where(.sessions-classic, .sessions-classic *)),
+.session-title-copy:not(:where(.sessions-classic, .sessions-classic *)) {
   min-width: 0;
 }
 
 /* Device, audio and the other fields wrap (two lines at most) instead of
    being cut off; the full text stays in the tooltip. */
-.session-card-layout .session-field-value {
+.session-card-layout .session-field-value:not(:where(.sessions-classic, .sessions-classic *)) {
   display: -webkit-box;
   overflow: hidden;
   overflow-wrap: anywhere;
@@ -1616,12 +1621,12 @@
 }
 
 /* The transcode pill stays compact and wraps inside the card. */
-.session-card-layout .transcode-explainer.is-compact {
+.session-card-layout .transcode-explainer.is-compact:not(:where(.sessions-classic, .sessions-classic *)) {
   max-width: 100%;
   min-width: 0;
 }
 
-.session-card-layout .transcode-explainer-chip {
+.session-card-layout .transcode-explainer-chip:not(:where(.sessions-classic, .sessions-classic *)) {
   max-width: 100%;
   white-space: normal;
   text-align: left;
@@ -1630,16 +1635,16 @@
 
 /* Session details: the transcode hints get their own section under the
    poster and title instead of sitting inside the title block. */
-.session-popout-transcode {
+.session-popout-transcode:not(:where(.sessions-classic, .sessions-classic *)) {
   padding: 14px 38px 4px;
   background: rgba(7, 9, 13, 0.92);
 }
 
-.session-popout-transcode .transcode-explainer {
+.session-popout-transcode .transcode-explainer:not(:where(.sessions-classic, .sessions-classic *)) {
   margin-top: 0;
 }
 
-.session-popout-transcode .transcode-explainer-detail {
+.session-popout-transcode .transcode-explainer-detail:not(:where(.sessions-classic, .sessions-classic *)) {
   max-height: min(260px, 40vh);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -1648,17 +1653,17 @@
 }
 
 @media (max-width: 900px) {
-  .session-card-main.has-card-layout .session-card-banner-image {
+  .session-card-main.has-card-layout .session-card-banner-image:not(:where(.sessions-classic, .sessions-classic *)) {
     flex-basis: 96px !important;
     width: 96px;
     max-width: 96px !important;
   }
 
-  .session-popout-transcode {
+  .session-popout-transcode:not(:where(.sessions-classic, .sessions-classic *)) {
     padding: 12px 18px 4px;
   }
 
-  .session-card-layout .session-field-value {
+  .session-card-layout .session-field-value:not(:where(.sessions-classic, .sessions-classic *)) {
     -webkit-line-clamp: 3;
     line-clamp: 3;
   }
@@ -1667,29 +1672,29 @@
 /* Cards grid: columns share the panel's full width (1fr), so the left and
    right gutters match and the last card in a row never runs past the panel.
    The old tracks were capped at 496px and packed to the left. */
-.sessions-widget,
-.sessions-container {
+.sessions-widget:not(:where(.sessions-classic, .sessions-classic *)),
+.sessions-container:not(:where(.sessions-classic, .sessions-classic *)) {
   min-width: 0;
   max-width: 100%;
 }
 
-.sessions-container {
+.sessions-container:not(:where(.sessions-classic, .sessions-classic *)) {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
   gap: 18px;
 }
 
-.sessions-container > * {
+.sessions-container > *:not(:where(.sessions-classic, .sessions-classic *)) {
   min-width: 0;
 }
 
-.sessions-container .session-card {
+.sessions-container .session-card:not(:where(.sessions-classic, .sessions-classic *)) {
   width: 100%;
   max-width: 100%;
   min-width: 0;
 }
 
 /* No Bootstrap gutters or negative margins inside a card. */
-.session-card-main.has-card-layout > .row {
+.session-card-main.has-card-layout > .row:not(:where(.sessions-classic, .sessions-classic *)) {
   --bs-gutter-x: 0;
   --bs-gutter-y: 0;
   margin: 0 !important;
@@ -1698,12 +1703,12 @@
 }
 
 /* Titles are cut with an ellipsis only; the full title shows on hover. */
-.session-card-head .session-title {
+.session-card-head .session-title:not(:where(.sessions-classic, .sessions-classic *)) {
   overflow: hidden;
   min-width: 0;
 }
 
-.session-card-head .session-title a {
+.session-card-head .session-title a:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -1711,63 +1716,140 @@
   white-space: nowrap;
 }
 
-/* Simple look: poster, title, episode, user and progress only. */
-.session-card.is-simple .session-card-body {
-  padding-top: 12px;
-  padding-bottom: 12px;
-}
+/* Simple look in Wall and List: hide the device and playback method. */
 
-.session-card.is-simple .session-card-layout {
-  gap: 10px;
-  justify-content: space-between;
-}
 
-.session-card.is-simple {
-  min-height: 132px;
-}
 
-.session-simple-ends {
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.3;
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-.sessions-widget.is-simple .session-wall-meta,
-.sessions-widget.is-simple .session-list-device,
-.sessions-widget.is-simple .session-list-method {
+.sessions-widget.is-simple .session-wall-meta:not(:where(.sessions-classic, .sessions-classic *)),
+.sessions-widget.is-simple .session-list-device:not(:where(.sessions-classic, .sessions-classic *)),
+.sessions-widget.is-simple .session-list-method:not(:where(.sessions-classic, .sessions-classic *)) {
   display: none !important;
 }
 
-.sessions-widget.is-simple .session-list-row {
+.sessions-widget.is-simple .session-list-row:not(:where(.sessions-classic, .sessions-classic *)) {
   grid-template-columns: minmax(5rem, 0.8fr) minmax(0, 2fr) minmax(4rem, 0.8fr);
 }
 
-.sessions-density-toggle {
+.sessions-density-toggle:not(:where(.sessions-classic, .sessions-classic *)) {
   margin-left: 8px;
 }
 
 @media (max-width: 900px) {
-  .sessions-container {
+  .sessions-container:not(:where(.sessions-classic, .sessions-classic *)) {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .sessions-widget.is-simple .session-list-row {
+  .sessions-widget.is-simple .session-list-row:not(:where(.sessions-classic, .sessions-classic *)) {
     grid-template-columns: minmax(0, 1fr) 5.5rem;
   }
 }
 
-.sessions-widget-controls {
+.sessions-widget-controls:not(:where(.sessions-classic, .sessions-classic *)) {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  column-gap: 16px;
+  row-gap: 8px;
+  max-width: 100%;
 }
 
-.sessions-widget-controls .sessions-density-toggle {
+.sessions-widget-controls .sessions-density-toggle:not(:where(.sessions-classic, .sessions-classic *)) {
   margin-left: 0;
+}
+
+/* Header spacing: a clear gap under the title and toggles in every view, and
+   room between the view and Detailed/Simple groups; they wrap onto their own
+   lines on narrow screens instead of crowding. */
+.sessions-widget-header {
+  column-gap: 16px;
+  row-gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sessions-widget-header .sessions-view-toggle {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+/* Simple look: BETA's original card (.sessions-classic). Two changes from
+   BETA, asked for in the demo:
+   1. Posters show whole: a 2:3 panel with the image contained (letterboxed),
+      where BETA cropped a 120x176 box with object-fit: cover.
+   2. The card grows to fit its rows and transcode badges (BETA fixed the top
+      at 176px and hid what did not fit, so badges were cut off). Cards in a
+      row still share one height: the grid stretches them and the top part
+      takes up the extra space. */
+.sessions-classic .session-card-main {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  height: auto;
+}
+
+.sessions-classic .session-card-main > .row {
+  flex: 1 0 auto;
+  height: auto;
+  flex-wrap: nowrap;
+}
+
+.sessions-classic .session-card-banner-image {
+  flex: 0 0 120px !important;
+  align-self: flex-start;
+  width: 120px;
+  max-width: 120px !important;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 16px 0 0 0;
+  background: #0b1119;
+}
+
+.sessions-classic .session-card-item-image,
+.sessions-classic .stat-card-image-audio.rounded-0.rounded-start {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  border-radius: 0 !important;
+}
+
+.sessions-classic .session-card-main > .row > .col:not(.session-card-banner-image) {
+  flex: 1 1 0% !important;
+  width: auto !important;
+  min-width: 0;
+}
+
+.sessions-classic .session-details,
+.sessions-classic .session-details-list {
+  max-height: none;
+  overflow: visible;
+}
+
+.sessions-classic .transcode-explainer.is-compact {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.sessions-classic .transcode-explainer-chip {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.25;
+}
+
+@media (max-width: 900px) {
+  .sessions-classic .session-card-main {
+    height: auto;
+  }
+
+  .sessions-classic .session-card-banner-image {
+    flex-basis: clamp(72px, 18vw, 96px) !important;
+    width: clamp(72px, 18vw, 96px) !important;
+    max-width: clamp(72px, 18vw, 96px) !important;
+    border-radius: 12px 0 0 0;
+  }
+
+  .sessions-classic .session-details-list {
+    max-height: none;
+  }
 }
