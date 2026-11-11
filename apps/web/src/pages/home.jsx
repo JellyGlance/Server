@@ -1039,26 +1039,6 @@ export default function Home({ kioskMode = false }) {
           <button
             type="button"
             onClick={() => {
-              loadDashboardData();
-              setIsHomeActionsOpen(false);
-            }}
-          >
-            <RefreshLineIcon size={17} />
-            Dashboard
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              loadOperationsData(true);
-              setIsHomeActionsOpen(false);
-            }}
-          >
-            <RefreshLineIcon size={17} />
-            Ops
-          </button>
-          <button
-            type="button"
-            onClick={() => {
               setIsOrderingHome((current) => !current);
               setLayoutHistory([]);
               setShowLayoutOptions(false);
