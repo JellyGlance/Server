@@ -1,14 +1,29 @@
 {
-  "1.4.3": [
+  "1.4.3-beta": [
+    {
+      "icon": "movie",
+      "title": "Full Jellyfin Sync Finishes Again",
+      "body": "Full Jellyfin Sync no longer stops partway through Media Sync when a library has Live TV channels, extras or other items with no media files attached. Those items are skipped for file info and the rest of the sync carries on, so titles you removed from Jellyfin get marked as gone again and Purge Cached Library Items Only has something to clear. Run one full sync after updating, then purge."
+    },
+    {
+      "icon": "shield",
+      "title": "Postgres 18 Recommended",
+      "body": "Postgres 18 is the recommended database again. The bundled Docker Compose files, the Proxmox and Unraid packaging and the README all use postgres:18-alpine. Postgres 18 keeps its data under /var/lib/postgresql/18/docker, so mount the database volume at /var/lib/postgresql, not the old /var/lib/postgresql/data. Changing the image tag or the mount does not move existing data: dump it with your current version, restore it into a fresh Postgres 18 volume and check it before removing the old one. Purging items removed from Jellyfin still shows an error when it fails, instead of a success message."
+    },
+    {
+      "icon": "speed",
+      "title": "Active Sessions Wall Stays Put",
+      "body": "The Active Sessions wall on Home no longer shuffles its tiles every few seconds. Jellyfin reorders sessions on every progress update and the wall used to follow along. Wall and Cards now keep the same fixed order, so a tile only moves when someone starts or stops watching."
+    },
     {
       "icon": "speed",
       "title": "Active Sessions Timings Fixed",
       "body": "Active Sessions cards now read position, runtime, time left and the progress bar from the same playback values, so they always agree. The ETA field is now Left: it shows the time remaining, plus the clock time it ends while playing. Paused streams just show what's left instead of an end time that keeps moving. A stream that hasn't reported its position yet shows --:--:-- instead of NaN or Invalid Date, and an empty bar no longer shows a stray dot. The progress bar now sits between the two timestamps, and the poster fills the card with space before the text, so nothing crowds the artwork."
     },
     {
-      "icon": "shield",
-      "title": "Postgres 16 and Clearer Purge Errors",
-      "body": "The bundled Docker Compose files are pinned back to postgres:16-alpine, the recommended version. If you have moved to Postgres 18, the README covers its new data path. Purging items that were removed from Jellyfin now shows an error when it fails, instead of a success message. Purge only removes items a library sync has already marked as gone, so run a sync first."
+      "icon": "rocket",
+      "title": "One-Click Deploy and Updates",
+      "body": "The README Quick start now links a one-click deploy option. Under the hood, follow-redirects is on 1.16.3, eslint on 10.14.0 and the Renovate action on 46.3.13."
     }
   ],
   "1.4.2": [
