@@ -23,6 +23,7 @@ import baseUrl from "../../../lib/baseurl";
 import axios from "../../../lib/axios_instance";
 import SessionGlanceStrip from "./session-glance-strip";
 import TranscodeExplainer from "./transcode-explainer";
+import { formatTicks, getSessionProgress } from "../../../lib/session-progress";
 
 function formatTranscodeReasons(session) {
   const reasons = session?.TranscodingInfo?.TranscodeReasons;
@@ -84,46 +85,18 @@ function formatStreamDetail(value) {
     .trim();
 }
 
-function ticksToTimeString(ticks) {
-  // Convert ticks to seconds
-  const seconds = Math.floor(ticks / 10000000);
-  // Calculate hours, minutes, and remaining seconds
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-  // Format the time string as hh:MM:ss
-  const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${remainingSeconds
-    .toString()
-    .padStart(2, "0")}`;
-
-  return timeString;
+function formatClock(date) {
+  if (!date) return "";
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: JSON.parse(localStorage.getItem("12hr")),
+  });
 }
 
-function getETA(NowPlayingItem, PlayState) {
-  if (NowPlayingItem.ChannelType && NowPlayingItem.ChannelType === "TV") {
-    return NowPlayingItem.CurrentProgram.EndDate
-      ? new Date(NowPlayingItem.CurrentProgram.EndDate).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: JSON.parse(localStorage.getItem("12hr")),
-        })
-      : "";
-  }
-  let ticks = NowPlayingItem.RunTimeTicks - PlayState.PositionTicks;
-  return getETAFromTicks(ticks);
-}
-
-function getETAFromTicks(ticks) {
-  // Get current date
-  const currentDate = Date.now();
-
-  // Calculate ETA
-  const etaMillis = currentDate + ticks / 10000;
-  const eta = new Date(etaMillis);
-  const twelve_hr = JSON.parse(localStorage.getItem("12hr"));
-
-  // Return formated string in user locale
-  return eta.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: twelve_hr });
+function getLiveTvEnd(nowPlaying) {
+  const endDate = nowPlaying.CurrentProgram?.EndDate;
+  return endDate ? new Date(endDate) : null;
 }
 
 function SessionDetailItem({ label, value, wide = false }) {
@@ -264,12 +237,8 @@ function SessionCard(props) {
     backdropFilter: "blur(8px)",
     backgroundColor: "rgb(0, 0, 0, 0.46)",
   };
-  const progressPercent = nowPlaying.RunTimeTicks
-    ? Math.min(
-        100,
-        Math.max(0, (playState.PositionTicks / nowPlaying.RunTimeTicks) * 100)
-      )
-    : 0;
+  const progress = getSessionProgress(nowPlaying, playState);
+  const progressPercent = progress.percent;
   const rawTranscodePercent = Number(session.TranscodingInfo?.CompletionPercentage);
   const transcodePositionPercent = nowPlaying.RunTimeTicks
     ? Number(session.TranscodingInfo?.TranscodingPositionTicks) / nowPlaying.RunTimeTicks * 100
@@ -279,10 +248,15 @@ function SessionCard(props) {
     : Number.isFinite(transcodePositionPercent)
       ? Math.min(100, Math.max(0, transcodePositionPercent))
       : null;
-  const eta =
-    nowPlaying.RunTimeTicks || nowPlaying.ChannelType === "TV"
-      ? getETA(nowPlaying, playState)
-      : "";
+  const isLiveTv = nowPlaying.ChannelType === "TV";
+  const eta = formatClock(isLiveTv ? getLiveTvEnd(nowPlaying) : progress.endsAt);
+  const timeLeft = isLiveTv
+    ? eta && `Ends ${eta}`
+    : progress.remainingTicks === null
+      ? ""
+      : progress.isPaused
+        ? formatTicks(progress.remainingTicks)
+        : `${formatTicks(progress.remainingTicks)} · ends ${eta}`;
   const playbackMethod = playState.PlayMethod || "Unknown";
   const isTranscoding = Boolean(session.TranscodingInfo);
   const transcodeReason = formatTranscodeReasons(session);
@@ -296,7 +270,7 @@ function SessionCard(props) {
       : nowPlaying.Type === "Audio" && nowPlaying.Artists?.length > 0
         ? nowPlaying.Artists[0]
         : nowPlaying.SeriesName || nowPlaying.Type;
-  const timecode = `${ticksToTimeString(playState.PositionTicks)}${nowPlaying.RunTimeTicks ? `/${ticksToTimeString(nowPlaying.RunTimeTicks)}` : ""}`;
+  const timecode = `${formatTicks(progress.positionTicks)}${progress.runtimeTicks ? `/${formatTicks(progress.runtimeTicks)}` : ""}`;
   const selectedMessageTemplate = SESSION_MESSAGE_TEMPLATES.find((item) => item.id === messageTemplateId) || SESSION_MESSAGE_TEMPLATES[0];
 
   function fillMessageTemplate(template, when = messageWhen) {
@@ -419,7 +393,7 @@ function SessionCard(props) {
               </div>
               <div className="session-popout-time">
                 <strong>{timecode}</strong>
-                <span>{eta ? `Ends ${eta}` : "Live or unknown runtime"}</span>
+                <span>{eta ? `Ends ${eta}` : progress.isPaused && progress.remainingTicks !== null ? `${formatTicks(progress.remainingTicks)} left · paused` : "Live or unknown runtime"}</span>
               </div>
             </div>
           </div>
@@ -695,7 +669,7 @@ function SessionCard(props) {
 
                 <div className="session-fields">
                   <SessionField label="Device" value={session.DeviceName} />
-                  <SessionField label="ETA" value={eta || <Trans i18nKey="ERROR_MESSAGES.N/A" />} />
+                  <SessionField label="Left" value={timeLeft || <Trans i18nKey="ERROR_MESSAGES.N/A" />} />
                   {nowPlaying.AudioStream ? (
                     <SessionField
                       label="Audio"
@@ -724,33 +698,30 @@ function SessionCard(props) {
                 <SessionGlanceStrip stitch={props.stitch} />
 
                 <div className="session-timecode">
-                  <span className="session-timecode-value">{ticksToTimeString(playState.PositionTicks)}</span>
-                  <span className="session-timecode-value">{nowPlaying.RunTimeTicks ? ticksToTimeString(nowPlaying.RunTimeTicks) : ""}</span>
+                  <span className="session-timecode-value">{formatTicks(progress.positionTicks)}</span>
+                  <div
+                    className="progress-bar session-progress-inline"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(progressPercent)}
+                  >
+                    {progressPercent > 0 ? <div className="progress-custom" style={{ width: `${progressPercent}%` }} /> : null}
+                    {isTranscoding && transcodePercent !== null ? (
+                      <div
+                        className="progress-transcode"
+                        style={{ width: `${transcodePercent}%` }}
+                        aria-label={`Transcode progress ${Math.round(transcodePercent)} percent`}
+                      />
+                    ) : null}
+                  </div>
+                  <span className="session-timecode-value">{progress.runtimeTicks ? formatTicks(progress.runtimeTicks) : ""}</span>
                 </div>
               </Container>
             </Card.Body>
           </Col>
         </Row>
       </div>
-      <Row>
-        <Col>
-          <div className="progress-bar">
-            <div
-              className="progress-custom"
-              style={{
-                width: `${progressPercent}%`,
-              }}
-            ></div>
-            {isTranscoding && transcodePercent !== null ? (
-              <div
-                className="progress-transcode"
-                style={{ width: `${transcodePercent}%` }}
-                aria-label={`Transcode progress ${Math.round(transcodePercent)} percent`}
-              />
-            ) : null}
-          </div>
-        </Col>
-      </Row>
     </Card>
   );
 }
