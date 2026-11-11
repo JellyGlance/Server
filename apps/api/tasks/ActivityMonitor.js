@@ -311,7 +311,7 @@ async function ActivityMonitor(defaultInterval) {
       }
 
       // Demo sessions are for looking at Home only: no webhooks, no watchdog or history writes.
-      if (process.env.JG_DEMO_SESSIONS === "1") return;
+      if (require("../classes/demo-sessions").isDemoSessionsActive()) return;
 
       const { started: playbackStarted, ended: playbackEnded } = playbackNotifier.collect(SessionData);
       if (playbackStarted.length > 0) {

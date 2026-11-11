@@ -1103,10 +1103,10 @@ export default function Home({ kioskMode = false }) {
       {demoSessions && !kioskMode ? (
         <div className="home-demo-switch" role="group" aria-label="Demo sessions">
           <span className="home-demo-badge">Demo</span>
-          <span>Sessions from playback history:</span>
+          <span>Active sessions: live, or demo streams from playback history:</span>
           {demoSessions.modes.map((mode) => (
             <button key={mode} type="button" className={demoSessions.mode === mode ? "is-active" : ""} aria-pressed={demoSessions.mode === mode} onClick={() => changeDemoSessions(mode)}>
-              {mode === "idle" ? "Nobody" : mode}
+              {mode === "off" ? "Live" : mode === "idle" ? "Nobody" : mode}
             </button>
           ))}
         </div>

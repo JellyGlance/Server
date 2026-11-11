@@ -1,20 +1,25 @@
 // Demo Active Sessions for local copies of a production database.
 //
-// Turned on with JG_DEMO_SESSIONS=1. Instead of asking the media server, the
-// API builds a handful of sessions from real playback history in the local
+// JG_DEMO_SESSIONS=1 makes the switch available; it starts "off" (live
+// sessions) unless JG_DEMO_SESSIONS_MODE says otherwise. When on, the API builds a handful of sessions from real playback history in the local
 // database, so Home can be tried without a live server connection. Every
 // session carries IsDemo: true and an Id starting with "demo-".
 
 const TICKS_PER_SECOND = 10_000_000;
-const MODES = ["idle", "1", "3", "5"];
+const MODES = ["off", "idle", "1", "3", "5"];
 
-let mode = MODES.includes(process.env.JG_DEMO_SESSIONS_MODE) ? process.env.JG_DEMO_SESSIONS_MODE : "5";
+let mode = MODES.includes(process.env.JG_DEMO_SESSIONS_MODE) ? process.env.JG_DEMO_SESSIONS_MODE : "off";
 let cache = null;
 let cacheAt = 0;
 const startedAt = Date.now();
 
 function isDemoSessionsEnabled() {
   return process.env.JG_DEMO_SESSIONS === "1";
+}
+
+// True while demo sessions replace the live ones.
+function isDemoSessionsActive() {
+  return isDemoSessionsEnabled() && mode !== "off";
 }
 
 function getDemoSessionsMode() {
@@ -127,4 +132,4 @@ async function getDemoSessions(db, now = Date.now()) {
   return cache.slice(0, Number(mode)).map((row, index) => toSession(row, index, now));
 }
 
-module.exports = { isDemoSessionsEnabled, getDemoSessionsMode, setDemoSessionsMode, getDemoSessions, toSession, MODES };
+module.exports = { isDemoSessionsEnabled, isDemoSessionsActive, getDemoSessionsMode, setDemoSessionsMode, getDemoSessions, toSession, MODES };

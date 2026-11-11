@@ -92,6 +92,7 @@ function createTransport(newsletter) {
 }
 
 async function sendConfiguredMail({ to, subject, text, html, attachments = [] }) {
+  if (process.env.JG_DISABLE_NOTIFICATIONS === "1") throw new Error("Email is turned off on this copy (JG_DISABLE_NOTIFICATIONS=1)");
   const settings = await getAppSettings();
   const newsletter = getNewsletterSettings(settings);
   const validationError = validateSmtpSettings(newsletter);
