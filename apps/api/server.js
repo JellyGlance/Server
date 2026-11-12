@@ -764,7 +764,7 @@ function authorizeApiRoute(req, res, next) {
     return;
   }
 
-  if (pathName === "/sessions/stop" || pathName === "/sessions/message") {
+  if (pathName === "/sessions/stop" || pathName === "/sessions/message" || pathName === "/sessions/stop-with-message") {
     if (!["Owner", "Admin"].includes(req.user?.role)) {
       return res.status(403).json({ message: "Admin role required" });
     }

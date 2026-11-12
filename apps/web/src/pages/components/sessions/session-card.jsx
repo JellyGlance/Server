@@ -160,6 +160,15 @@ const SESSION_MESSAGE_TEMPLATES = [
 
 const SESSION_MESSAGE_TEMPLATE_GROUPS = [...new Set(SESSION_MESSAGE_TEMPLATES.map((template) => template.group))];
 
+const STOP_WITH_MESSAGE_PRESETS = [
+  { id: "maintenance", label: "Server maintenance", text: "The server is going down for maintenance. Playback will stop in a few seconds." },
+  { id: "too-many", label: "Too many streams", text: "This account has too many streams running. Playback will stop in a few seconds." },
+  { id: "direct-play", label: "Please use direct play", text: "Please switch to direct play. This transcode will be stopped in a few seconds." },
+  { id: "sharing", label: "Account sharing", text: "This session looks like account sharing. Playback will stop in a few seconds." },
+  { id: "custom", label: "Custom message", text: "" },
+];
+const STOP_WITH_MESSAGE_DELAY_MS = 5000;
+
 function userInitials(name) {
   const words = String(name || "").trim().split(/[\s._-]+/).filter(Boolean);
   if (!words.length) return "?";
@@ -210,6 +219,9 @@ function SessionCard(props) {
   const [messageWhen, setMessageWhen] = useState(() => defaultMessageDateTime(15));
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [stopMessageOpen, setStopMessageOpen] = useState(false);
+  const [stopMessagePresetId, setStopMessagePresetId] = useState("maintenance");
+  const [stopMessageText, setStopMessageText] = useState(STOP_WITH_MESSAGE_PRESETS[0].text);
 
   const simple = Boolean(props.simple);
   useEffect(() => {
@@ -475,6 +487,20 @@ function SessionCard(props) {
                 <StopCircleLineIcon size={17} />
                 Stop playback
               </button>
+              <button
+                type="button"
+                className="session-command is-stop-message"
+                disabled={actionBusy}
+                onClick={() => {
+                  setActionError("");
+                  setStopMessagePresetId("maintenance");
+                  setStopMessageText(STOP_WITH_MESSAGE_PRESETS[0].text);
+                  setStopMessageOpen(true);
+                }}
+              >
+                <StopCircleLineIcon size={17} />
+                Stop with message
+              </button>
             </div>
           ) : null}
         </Modal.Body>
@@ -603,6 +629,75 @@ function SessionCard(props) {
           >
             <ChatSmile2LineIcon size={17} />
             {actionBusy ? "Sending…" : "Send message"}
+          </button>
+        </Modal.Footer>
+      </Modal>
+      <Modal
+        show={stopMessageOpen}
+        onHide={() => setStopMessageOpen(false)}
+        centered
+        contentClassName="session-message-modal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Stop {session.UserName} with a message</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {actionError ? <p className="session-action-error">{actionError}</p> : null}
+          <p className="session-stop-message-lead">Jellyfin will show this on screen, then stop the stream after 5 seconds. This cannot be undone from here.</p>
+          <label className="session-message-select-label" htmlFor="stop-message-preset">Reason</label>
+          <select
+            id="stop-message-preset"
+            className="session-stop-message-preset"
+            value={stopMessagePresetId}
+            onChange={(event) => {
+              const preset = STOP_WITH_MESSAGE_PRESETS.find((item) => item.id === event.target.value) || STOP_WITH_MESSAGE_PRESETS[0];
+              setStopMessagePresetId(preset.id);
+              if (preset.id !== "custom") setStopMessageText(preset.text);
+            }}
+          >
+            {STOP_WITH_MESSAGE_PRESETS.map((preset) => (
+              <option key={preset.id} value={preset.id}>{preset.label}</option>
+            ))}
+          </select>
+          <textarea
+            className="session-message-text"
+            rows={4}
+            value={stopMessageText}
+            onChange={(event) => {
+              setStopMessagePresetId("custom");
+              setStopMessageText(event.target.value);
+            }}
+            placeholder="Write the on-screen message"
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <button type="button" className="session-command is-ghost" onClick={() => setStopMessageOpen(false)}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="session-command is-stop"
+            disabled={actionBusy || !stopMessageText.trim()}
+            onClick={async () => {
+              setActionBusy(true);
+              setActionError("");
+              try {
+                await axios.post(
+                  "/api/sessions/stop-with-message",
+                  { sessionId: session.Id, header: "JellyGlance", text: stopMessageText.trim(), delayMs: STOP_WITH_MESSAGE_DELAY_MS },
+                  { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+                );
+                setStopMessageOpen(false);
+                setSessionModalVisible(false);
+              } catch (error) {
+                setActionError(error?.response?.data?.error || "Unable to stop this session");
+              } finally {
+                setActionBusy(false);
+              }
+            }}
+          >
+            <StopCircleLineIcon size={17} />
+            {actionBusy ? "Stopping…" : "Confirm and stop"}
           </button>
         </Modal.Footer>
       </Modal>

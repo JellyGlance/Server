@@ -2363,3 +2363,29 @@
   z-index: 1;
   background: rgba(0, 0, 0, 0.46);
 }
+
+.session-command.is-stop-message {
+  border-color: rgba(248, 113, 113, 0.32);
+  color: #fecaca;
+}
+
+.session-command.is-stop-message:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.16);
+}
+
+.session-stop-message-lead {
+  margin: 0 0 0.75rem;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
+.session-stop-message-preset {
+  width: 100%;
+  min-height: 2.2rem;
+  margin: 0.25rem 0 0.7rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.55rem;
+  background: rgba(7, 10, 15, 0.9);
+  color: #f8fafc;
+}

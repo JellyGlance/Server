@@ -1,5 +1,6 @@
 // api.js
 const express = require("express");
+const { stopSessionWithMessage } = require("../classes/session-stop-message");
 const { mediaServerAuthHeaders, chooseServerType, withServerType, saveServerType, envServerType } = require("../classes/server-type");
 const { clientSettings } = require("../classes/client-config");
 const audiobookshelf = require("../classes/audiobookshelf");
@@ -8125,6 +8126,31 @@ router.post("/sessions/message", async (req, res) => {
   } catch (error) {
     console.error("Session message failed:", error);
     res.status(error.statusCode || error.response?.status || 500).send({ error: error.message || "Unable to send session message" });
+  }
+});
+
+router.post("/sessions/stop-with-message", async (req, res) => {
+  try {
+    const sessionId = String(req.body?.sessionId || "").trim();
+    const text = String(req.body?.text || "").trim();
+    if (!sessionId || !text) {
+      return res.status(400).send({ error: "Missing sessionId or message text" });
+    }
+    const result = await stopSessionWithMessage(
+      {
+        sessionId,
+        text,
+        header: req.body?.header || "JellyGlance",
+        delayMs: req.body?.delayMs,
+        timeoutMs: req.body?.timeoutMs,
+      },
+      { jellyfin: API }
+    );
+    await addAuditEntry(req, "session.stopped_with_message", { sessionId });
+    res.send(result);
+  } catch (error) {
+    console.error("Session stop-with-message failed:", error);
+    res.status(error.statusCode || error.response?.status || 500).send({ error: error.message || "Unable to stop the session" });
   }
 });
 
