@@ -10,6 +10,7 @@ import axios from "../../../lib/axios_instance";
 import NewsletterReportBuilder from "./NewsletterReportBuilder";
 import NewsletterTemplateManager from "./NewsletterTemplateManager";
 import { useTranslation } from "react-i18next";
+import { languages as languageOptions } from "../../../lib/languages";
 import "../../css/settings/settings.css";
 
 const emptySettings = {
@@ -172,6 +173,8 @@ export default function NewsletterSettings() {
   const [recipientText, setRecipientText] = useState("");
   const [selfEmail, setSelfEmail] = useState("");
   const [selfEmailMessage, setSelfEmailMessage] = useState("");
+  const [availableLocales, setAvailableLocales] = useState([]);
+  const [previewLocale, setPreviewLocale] = useState("en-GB");
   const [preview, setPreview] = useState(null);
   const [activeTab, setActiveTab] = useState("campaigns");
   const [loading, setLoading] = useState(true);
@@ -218,6 +221,7 @@ export default function NewsletterSettings() {
     setEmailFonts(response.data?.fonts || []);
     setSelfEmail(response.data?.selfEmail || "");
     setSelfEmailMessage(response.data?.selfEmailMessage || "");
+    setAvailableLocales(response.data?.locales || []);
     const nextId = selectedCampaignId && nextCampaigns.some((campaign) => campaign.id === selectedCampaignId)
       ? selectedCampaignId
       : nextCampaigns[0]?.id || "";
@@ -250,6 +254,15 @@ export default function NewsletterSettings() {
   useEffect(() => {
     loadNewsletter();
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== "preview") return undefined;
+    const timer = setTimeout(() => {
+      generatePreview();
+    }, 200);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewLocale, activeTab]);
 
   function updateField(field, value) {
     setSettings((current) => ({ ...current, [field]: value }));
@@ -359,7 +372,10 @@ export default function NewsletterSettings() {
       setBusyAction("preview");
       const response = await axios.get("/newsletter/preview", {
         headers: headers(),
-        params: selectedCampaignId ? { campaignId: selectedCampaignId } : undefined,
+        params: {
+          locale: previewLocale,
+          ...(selectedCampaignId ? { campaignId: selectedCampaignId } : {}),
+        },
       });
       const nextPreview = normalizePreviewPayload(response.data);
       if (!nextPreview) {
@@ -870,6 +886,24 @@ export default function NewsletterSettings() {
             <div className="newsletter-preview-meta">
               <strong>{preview?.subject || "Newsletter preview"}</strong>
               <span>Generated {formatDate(preview?.generatedAt)}</span>
+              <Form.Group className="newsletter-preview-locale">
+                <Form.Label>Preview language</Form.Label>
+                <Form.Select
+                  value={previewLocale}
+                  onChange={(event) => {
+                    setPreviewLocale(event.target.value);
+                  }}
+                >
+                  {(availableLocales.length ? availableLocales : languageOptions.map((language) => language.id)).map((locale) => {
+                    const language = languageOptions.find((item) => item.id === locale);
+                    return (
+                      <option key={locale} value={locale}>
+                        {language?.description || locale}
+                      </option>
+                    );
+                  })}
+                </Form.Select>
+              </Form.Group>
             </div>
             <div className="newsletter-preview-frame">
               {previewHtml ? <iframe title={t("FEATURES.NEWSLETTER.PREVIEW_SUBJECT")} srcDoc={previewHtml} /> : <div className="newsletter-empty">{t("FEATURES.NEWSLETTER.PREVIEW_EMPTY")}</div>}

@@ -8,6 +8,7 @@ const { addAuditEntry } = require("../classes/admin-history");
 const campaigns = require("../classes/newsletter-campaigns");
 const newsletterTheme = require("../classes/newsletter-theme");
 const audience = require("../classes/newsletter-audience");
+const newsletterI18n = require("../classes/newsletter-i18n");
 const reportBuilder = require("../classes/newsletter-report-builder");
 const { encryptSecret, getIntegrations } = require("../classes/integration-store");
 const { isValidEmail } = require("../utils/security");
@@ -345,6 +346,8 @@ function buildNewsletterHtml(data, options = {}) {
     : { recentlyAdded: true, topWatched: true, activeUsers: true, repairSummary: true, ...(options.sections || {}) };
   const branding = newsletterTheme.normalizeBranding(options.branding || {});
   const logoSrc = branding.logoUrl || options.logoSrc || getLogoDataUri();
+  const { t, locale } = newsletterI18n.translator(options.locale);
+  data.locale = locale;
   const repairSummary = data.repairSummary || {};
   const totalRepairIssues =
     Number(repairSummary.missingPosters || 0) +
@@ -365,63 +368,63 @@ function buildNewsletterHtml(data, options = {}) {
   `;
   const sectionTitle = (title) => `<h2 style="color:${branding.heading};font-size:16px;margin:24px 0 10px;font-family:${branding.font};">${title}</h2>`;
   const recentlyAddedHtml = sections.recentlyAdded
-    ? `${sectionTitle("Recently Added")}${listHtml(
+    ? `${sectionTitle(t("RECENTLY_ADDED"))}${listHtml(
         data.recentlyAdded || [],
         (item) =>
           `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${escapeHtml([item.Type, item.ProductionYear, item.status].filter(Boolean).join(" · "))}</span></div>`,
-        "No new media this period."
+        t("NO_NEW_MEDIA")
       )}`
     : "";
   const continueWatchingHtml =
     perUser && sections.continueWatching
-      ? `${sectionTitle("Continue Watching")}${listHtml(
+      ? `${sectionTitle(t("CONTINUE_WATCHING"))}${listHtml(
           data.continueWatching || [],
           (item) =>
             `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${escapeHtml(item.Type || "")}</span></div>`,
-          "Nothing in progress."
+          t("NOTHING_IN_PROGRESS")
         )}`
       : "";
   const myRequestsHtml =
     perUser && sections.myRequests
-      ? `${sectionTitle("My Requests")}${listHtml(
+      ? `${sectionTitle(t("MY_REQUESTS"))}${listHtml(
           data.myRequests || [],
           (item) =>
             `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${escapeHtml([item.Type, item.status].filter(Boolean).join(" · "))}</span></div>`,
-          "No requests for this account."
+          t("NO_REQUESTS")
         )}`
       : "";
   const topWatchedHtml =
     !perUser && sections.topWatched
-      ? `${sectionTitle("Most Watched")}${listHtml(
+      ? `${sectionTitle(t("TOP_WATCHED"))}${listHtml(
           topWatched,
           (item) =>
             `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${item.Plays} plays · ${formatWatchTime(item.WatchSeconds)}</span></div>`,
-          "No watch activity yet."
+          t("NO_WATCH_ACTIVITY")
         )}`
       : "";
   const activeUsersHtml =
     !perUser && sections.activeUsers
-      ? `${sectionTitle("Active Viewers")}${listHtml(
+      ? `${sectionTitle(t("ACTIVE_VIEWERS"))}${listHtml(
           data.activeUsers || [],
           (item) =>
             `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${item.Plays} plays · ${formatWatchTime(item.WatchSeconds)}</span></div>`,
-          "No active viewers this period."
+          t("NO_ACTIVE_VIEWERS")
         )}`
       : "";
   const repairHtml =
     !perUser && sections.repairSummary
-      ? `${sectionTitle("Repair Snapshot")}<p style="color:#9fb0c7;font-size:14px;margin:0;">Missing posters ${repairSummary.missingPosters || 0} · logos ${repairSummary.missingLogos || 0} · runtime ${repairSummary.missingRuntime || 0} · unmatched imports ${repairSummary.unmatchedImports || 0}</p>`
+      ? `${sectionTitle(t("REPAIR"))}<p style="color:#9fb0c7;font-size:14px;margin:0;">${t("MISSING_LINE", { posters: repairSummary.missingPosters || 0, logos: repairSummary.missingLogos || 0, runtime: repairSummary.missingRuntime || 0, unmatched: repairSummary.unmatchedImports || 0 })}</p>`
       : "";
   const customHtml = sections.customHtml ? `<div style="margin-top:20px;">${sections.customHtml}</div>` : "";
   const metricRow = perUser
-    ? `${metricBox("Continue", String((data.continueWatching || []).length), "In progress")}
-       ${metricBox("Requests", String((data.myRequests || []).length), "Your Seerr queue", "#a78bfa")}
-       ${metricBox("New", String((data.recentlyAdded || []).length), "Recently added", "#34d399")}
-       ${metricBox("For", escapeHtml(data.personName || "You"), "Personal digest", "#fbbf24")}`
-    : `${metricBox("Plays", totalPlays.toLocaleString(), "Top titles this week")}
-       ${metricBox("Watch", formatWatchTime(totalWatchSeconds), "Across top titles", "#a78bfa")}
-       ${metricBox("New", String((data.recentlyAdded || []).length), "Recently added items", "#34d399")}
-       ${metricBox("Repair", String(totalRepairIssues), "Open metadata issues", "#fbbf24")}`;
+    ? `${metricBox(t("CONTINUE"), String((data.continueWatching || []).length), t("IN_PROGRESS"))}
+       ${metricBox(t("REQUESTS"), String((data.myRequests || []).length), t("SEERR_QUEUE"), "#a78bfa")}
+       ${metricBox(t("NEW"), String((data.recentlyAdded || []).length), t("RECENTLY_ADDED_SHORT"), "#34d399")}
+       ${metricBox(t("FOR"), escapeHtml(data.personName || t("YOU")), t("PERSONAL_DIGEST"), "#fbbf24")}`
+    : `${metricBox(t("PLAYS"), totalPlays.toLocaleString(), t("TOP_TITLES"))}
+       ${metricBox(t("WATCH"), formatWatchTime(totalWatchSeconds), t("ACROSS_TITLES"), "#a78bfa")}
+       ${metricBox(t("NEW"), String((data.recentlyAdded || []).length), t("RECENTLY_ADDED_ITEMS"), "#34d399")}
+       ${metricBox(t("REPAIR_METRIC"), String(totalRepairIssues), t("OPEN_ISSUES"), "#fbbf24")}`;
   const bodyHtml = perUser
     ? `${continueWatchingHtml}${myRequestsHtml}${recentlyAddedHtml}${customHtml}`
     : `${recentlyAddedHtml}${topWatchedHtml}${activeUsersHtml}${repairHtml}${customHtml}`;
@@ -430,8 +433,8 @@ function buildNewsletterHtml(data, options = {}) {
     bodyHtml,
     metricHtml: `<table width="100%" cellpadding="0" cellspacing="0"><tr>${metricRow}</tr></table>`,
     subject: escapeHtml(data.subject),
-    campaignName: escapeHtml(options.campaignName || "JellyGlance Newsletter"),
-    generatedAt: `Generated ${escapeHtml(formatDate(data.generatedAt))}`,
+    campaignName: escapeHtml(options.campaignName || t("DEFAULT_CAMPAIGN")),
+    generatedAt: t("GENERATED", { date: escapeHtml(formatDate(data.generatedAt)) }),
     logoSrc,
     branding,
     htmlBody: options.htmlBody || "",
@@ -596,6 +599,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
                 sections,
                 perUser: true,
                 ...templateRenderOptions(campaign),
+                locale: newsletterI18n.localeForRecipient(delivery.person),
               }),
           attachments,
         });
@@ -652,21 +656,29 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
     ? await reportBuilder.renderReport(campaign.sections.report, { campaignName: campaign.name, logoSrc: "cid:jellyglance-logo", ...templateRenderOptions(campaign) })
     : null;
   if (built) data.subject = built.subject;
-  const result = await transporter.sendMail({
-    from,
-    to: targets,
-    subject: data.subject,
-    text: built ? built.text : buildNewsletterText(data),
-    html: built
+  const directory = await campaigns.listAudienceDirectory().catch(() => []);
+  const directoryByEmail = new Map(directory.filter((user) => user.email).map((user) => [user.email, user]));
+  let result = { messageId: null };
+  for (const email of targets) {
+    const locale = newsletterI18n.localeForRecipient(directoryByEmail.get(email) || { email });
+    const html = built
       ? built.html
       : buildNewsletterHtml(data, {
           logoSrc: "cid:jellyglance-logo",
           campaignName: campaign?.name,
           sections,
           ...templateRenderOptions(campaign),
-        }),
-    attachments,
-  });
+          locale,
+        });
+    result = await transporter.sendMail({
+      from,
+      to: [email],
+      subject: data.subject,
+      text: built ? built.text : buildNewsletterText(data),
+      html,
+      attachments,
+    });
+  }
 
   await addNewsletterHistory(req, {
     ok: true,
@@ -780,7 +792,7 @@ router.get("/preview", async (req, res) => {
         sections,
         campaignName,
         perUser: data.perUser,
-        ...templateRenderOptions(campaign, { template: previewTemplate, assetBase: publicAssetBase(req) }),
+        ...templateRenderOptions(campaign, { template: previewTemplate, assetBase: publicAssetBase(req), locale: req.query?.locale || req.body?.locale }),
       }),
       text: buildNewsletterText(data),
     });
@@ -875,6 +887,7 @@ router.get("/campaigns", async (req, res) => {
       timeZone: audienceOptions.timeZone,
       fonts: audienceOptions.fonts || [],
       selfEmail: selfEmail || "",
+      locales: newsletterI18n.listLocales(),
       selfEmailMessage: selfEmail ? "" : audience.NO_SELF_EMAIL_MESSAGE,
     });
   } catch (error) {
@@ -956,6 +969,7 @@ router.post("/templates/preview", async (req, res) => {
       branding: req.body?.branding || {},
       htmlBody: req.body?.htmlBody || "",
       assetBase: publicAssetBase(req),
+      locale: req.body?.locale || req.query?.locale,
     });
     res.json({ html, subject: data.subject, generatedAt: data.generatedAt, preview: true });
   } catch (error) {

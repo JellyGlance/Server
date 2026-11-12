@@ -2621,6 +2621,13 @@
   margin-top: 4px;
 }
 
+.newsletter-preview-locale {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  max-width: 280px;
+}
+
 .newsletter-test-send {
   display: grid;
   gap: 8px;
