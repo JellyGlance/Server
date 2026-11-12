@@ -61,3 +61,38 @@ test("stored html_body placeholders and fallback injection are used when renderi
   assert.match(wrapped, /Live content/);
   assert.ok(!wrapped.includes("{{body}}"));
 });
+
+test("auto seasonal themes match Blobbo Halloween and winter windows", () => {
+  const at = (y, m, d) => new Date(y, m - 1, d, 12);
+  assert.equal(theme.autoSeasonalTheme(at(2026, 10, 19)), "base");
+  assert.equal(theme.autoSeasonalTheme(at(2026, 10, 20)), "halloween");
+  assert.equal(theme.autoSeasonalTheme(at(2026, 10, 31)), "halloween");
+  assert.equal(theme.autoSeasonalTheme(at(2026, 11, 12)), "base");
+  assert.equal(theme.autoSeasonalTheme(at(2026, 12, 1)), "winter");
+  assert.equal(theme.autoSeasonalTheme(at(2026, 12, 30)), "winter");
+  assert.equal(theme.autoSeasonalTheme(at(2026, 12, 31)), "base");
+});
+
+test("seasonal theme can be chosen automatically or by hand", () => {
+  const halloween = theme.resolveSeasonalTheme({ theme: "auto" }, new Date(2026, 9, 31, 12));
+  assert.equal(halloween.id, "halloween");
+  assert.equal(halloween.source, "auto");
+
+  const forced = theme.resolveSeasonalTheme({ theme: "winter" }, new Date(2026, 6, 1, 12));
+  assert.equal(forced.id, "winter");
+  assert.equal(forced.source, "manual");
+
+  const classic = theme.resolveSeasonalTheme({ theme: "base" }, new Date(2026, 9, 31, 12));
+  assert.equal(classic.id, "base");
+
+  const html = theme.wrapEmailDocument({
+    bodyHtml: "<p>Spooky</p>",
+    subject: "Halloween digest",
+    branding: { theme: "halloween" },
+    assetBase: "http://example.test",
+  });
+  assert.match(html, /#f97316/);
+  assert.match(html, /#160b08/);
+  assert.match(html, /http:\/\/example.test\/blobbo\/looks\/halloween-still.png/);
+  assert.match(html, /Spooky/);
+});

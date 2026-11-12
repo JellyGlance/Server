@@ -6,6 +6,7 @@ import FileCopyLineIcon from "remixicon-react/FileCopyLineIcon";
 import MailSettingsLineIcon from "remixicon-react/MailSettingsLineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
 import axios from "../../../lib/axios_instance";
+import { autoLook } from "../../../lib/blobbo-looks";
 
 const DEFAULT_FONTS = [
   { id: "arial", label: "Arial" },
@@ -26,7 +27,7 @@ export const emptyBranding = {
   mode: "dark",
   fontId: "arial",
   footer: "",
-  theme: "base",
+  theme: "auto",
 };
 
 export const emptyTemplate = {
@@ -170,6 +171,9 @@ export default function NewsletterTemplateManager({ templates, fonts, onChange, 
   }
 
   const fontOptions = fonts?.length ? fonts : DEFAULT_FONTS;
+  const autoId = autoLook();
+  const autoThemeLabel = autoId === "halloween" ? "Auto (Halloween)" : autoId === "winter" ? "Auto (Winter)" : "Auto (Classic)";
+
 
   return (
     <div className="newsletter-settings-grid newsletter-templates">
@@ -222,6 +226,16 @@ export default function NewsletterTemplateManager({ templates, fonts, onChange, 
                 <option value="dark">Dark</option>
                 <option value="light">Light</option>
               </Form.Select>
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Seasonal theme</Form.Label>
+              <Form.Select value={draft.branding.theme || "auto"} onChange={(event) => updateBranding("theme", event.target.value)}>
+                <option value="auto">{autoThemeLabel}</option>
+                <option value="base">Classic</option>
+                <option value="halloween">Halloween</option>
+                <option value="winter">Winter</option>
+              </Form.Select>
+              <Form.Text>Halloween and winter follow Blobbo&apos;s calendar, or you can pick one by hand.</Form.Text>
             </Form.Group>
             <Form.Group>
               <Form.Label>Accent colour</Form.Label>

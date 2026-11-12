@@ -36,6 +36,83 @@ const MODE_PALETTES = {
   },
 };
 
+
+const SEASONAL_THEMES = {
+  halloween: {
+    id: "halloween",
+    label: "Halloween",
+    background: "#160b08",
+    surface: "#24140f",
+    text: "#fff7ed",
+    heading: "#fff7ed",
+    muted: "#fdba74",
+    border: "#7c2d12",
+    card: "#1c0f0b",
+    accent: "#f97316",
+    image: "/blobbo/looks/halloween-still.png",
+  },
+  winter: {
+    id: "winter",
+    label: "Winter",
+    background: "#0b1520",
+    surface: "#132233",
+    text: "#e0f2fe",
+    heading: "#f0f9ff",
+    muted: "#7dd3fc",
+    border: "#1e3a5f",
+    card: "#0f1b2a",
+    accent: "#38bdf8",
+    image: "/blobbo/looks/winter-still.png",
+  },
+};
+
+// Same windows as Blobbo's calendar: Halloween 20-31 Oct, winter 1-30 Dec
+// (31 Dec is Blobbo's New Year look, so the newsletter stays on classic).
+function autoSeasonalTheme(date = new Date()) {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  if (month === 10 && day >= 20) return "halloween";
+  if (month === 12 && day <= 30) return "winter";
+  return "base";
+}
+
+function resolveSeasonalTheme(input = {}, date = new Date()) {
+  const requested = String(input.theme || input.seasonalTheme || "auto").toLowerCase();
+  let id = "base";
+  let source = "manual";
+  if (requested === "halloween" || requested === "winter") {
+    id = requested;
+  } else if (requested === "base" || requested === "classic" || requested === "none") {
+    id = "base";
+  } else {
+    id = autoSeasonalTheme(date);
+    source = "auto";
+  }
+  return { id, source, palette: SEASONAL_THEMES[id] || null };
+}
+
+function applySeasonalBranding(input = {}, date = new Date(), options = {}) {
+  const branding = normalizeBranding(input);
+  const seasonal = resolveSeasonalTheme(branding, date);
+  const next = { ...branding, theme: String(input.theme || "auto"), resolvedTheme: seasonal.id, seasonalSource: seasonal.source };
+  if (seasonal.palette) {
+    next.background = seasonal.palette.background;
+    next.surface = seasonal.palette.surface;
+    next.text = seasonal.palette.text;
+    next.heading = seasonal.palette.heading;
+    next.muted = seasonal.palette.muted;
+    next.border = seasonal.palette.border;
+    next.card = seasonal.palette.card;
+    next.accent = seasonal.palette.accent;
+    const image = seasonal.palette.image;
+    const base = String(options.assetBase || "").replace(/\/$/, "");
+    next.seasonalImage = image ? `${base}${image}` : "";
+  } else {
+    next.seasonalImage = "";
+  }
+  return next;
+}
+
 function safeHex(value, fallback) {
   const raw = String(value || "").trim();
   if (HEX.test(raw)) return raw.toLowerCase();
@@ -124,8 +201,10 @@ function wrapEmailDocument({
   branding = {},
   htmlBody = "",
   kickerColor,
+  date,
+  assetBase = "",
 } = {}) {
-  const theme = normalizeBranding(branding);
+  const theme = applySeasonalBranding(branding, date, { assetBase });
   const logo = logoHtml(theme, logoSrc);
   const footer = footerHtml(theme);
   const defaultDocument = `<!doctype html>
@@ -138,6 +217,7 @@ function wrapEmailDocument({
             <tr><td style="height:4px;background:${kickerColor || theme.accent};font-size:0;line-height:0;">&nbsp;</td></tr>
             <tr>
               <td style="padding:28px 28px 12px;">
+                ${theme.seasonalImage ? `<img src="${theme.seasonalImage}" alt="${theme.resolvedTheme}" width="640" height="180" style="display:block;width:100%;max-width:640px;height:180px;object-fit:cover;object-position:center;margin:0 0 16px;border-radius:12px;" />` : ""}
                 ${logo}
                 <div style="color:${theme.muted};font-size:12px;font-weight:800;text-transform:uppercase;">${campaignName}</div>
                 <h1 style="margin:8px 0 6px;color:${theme.heading};font-size:28px;font-family:${theme.font};">${subject}</h1>
@@ -186,4 +266,8 @@ module.exports = {
   wrapEmailDocument,
   footerHtml,
   logoHtml,
+  SEASONAL_THEMES,
+  autoSeasonalTheme,
+  resolveSeasonalTheme,
+  applySeasonalBranding,
 };

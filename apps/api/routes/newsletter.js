@@ -322,6 +322,13 @@ function listHtml(items, rowBuilder, emptyText) {
   return `<div>${items.map(rowBuilder).join("")}</div>`;
 }
 
+function publicAssetBase(req) {
+  const host = req?.get?.("x-forwarded-host") || req?.get?.("host") || req?.headers?.host;
+  if (!host) return "";
+  const proto = req?.get?.("x-forwarded-proto") || req?.protocol || "http";
+  return `${proto}://${host}`;
+}
+
 function templateRenderOptions(campaign, extras = {}) {
   const template = extras.template || campaign?.template || {};
   return {
@@ -428,6 +435,8 @@ function buildNewsletterHtml(data, options = {}) {
     logoSrc,
     branding,
     htmlBody: options.htmlBody || "",
+    date: options.date,
+    assetBase: options.assetBase || "",
   });
 }
 
@@ -771,7 +780,7 @@ router.get("/preview", async (req, res) => {
         sections,
         campaignName,
         perUser: data.perUser,
-        ...templateRenderOptions(campaign, { template: previewTemplate }),
+        ...templateRenderOptions(campaign, { template: previewTemplate, assetBase: publicAssetBase(req) }),
       }),
       text: buildNewsletterText(data),
     });
@@ -799,7 +808,7 @@ router.post("/report/preview", async (req, res) => {
       logoSrc: getLogoDataUri(),
       personData,
       perUser: type === "per-user",
-      ...templateRenderOptions(campaign, { branding: req.body?.branding, htmlBody: req.body?.htmlBody }),
+      ...templateRenderOptions(campaign, { branding: req.body?.branding, htmlBody: req.body?.htmlBody, assetBase: publicAssetBase(req) }),
     });
     res.json({ ...built, report: true });
   } catch (error) {
@@ -946,6 +955,7 @@ router.post("/templates/preview", async (req, res) => {
       campaignName: String(req.body?.name || "Template preview"),
       branding: req.body?.branding || {},
       htmlBody: req.body?.htmlBody || "",
+      assetBase: publicAssetBase(req),
     });
     res.json({ html, subject: data.subject, generatedAt: data.generatedAt, preview: true });
   } catch (error) {

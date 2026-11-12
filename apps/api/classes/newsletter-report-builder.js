@@ -438,7 +438,7 @@ function renderBlockText(block, data) {
   }
 }
 
-async function renderReport(input, { campaignName, logoSrc = "", personData = null, perUser = false, branding = {}, htmlBody = "" } = {}) {
+async function renderReport(input, { campaignName, logoSrc = "", personData = null, perUser = false, branding = {}, htmlBody = "", date, assetBase = "" } = {}) {
   const report = normalizeReport(input);
   const theme = newsletterTheme.normalizeBranding({
     ...branding,
@@ -467,6 +467,8 @@ async function renderReport(input, { campaignName, logoSrc = "", personData = nu
     branding: theme,
     htmlBody,
     kickerColor: accent,
+    date,
+    assetBase,
   });
   const text = [subject, `Covering the ${periodLabel(report.periodDays)}`, greeting, ...rendered.flatMap((block) => block.text), "", report.footer]
     .filter((line) => line !== undefined)
