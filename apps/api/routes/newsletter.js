@@ -271,6 +271,9 @@ async function fetchUserSeerrRequests(userName) {
           Name: media.title || media.name || row.title || "Request",
           Type: media.mediaType || row.type || "Request",
           status: row.status,
+          Id: row.id || media.jellyfinId || media.tmdbId || "",
+          requestId: row.id,
+          mediaId: media.jellyfinId || media.mediaId || "",
         });
       }
     } catch {
@@ -306,11 +309,17 @@ async function buildUserNewsletterData(person) {
     continueWatching: continueItems.map(normalizeJellyfinMediaItem).map((item) => ({
       Name: item.seriesName || item.name,
       Type: item.type,
+      Id: item.imageId || item.seriesId || item.id,
+      ItemId: item.id,
+      PrimaryImageHash: item.primaryImageHash || "",
     })),
     myRequests: requests,
     recentlyAdded: recentItems.map(normalizeJellyfinMediaItem).map((item) => ({
       Name: item.seriesName || item.name,
       Type: item.type,
+      Id: item.imageId || item.seriesId || item.id,
+      ItemId: item.id,
+      PrimaryImageHash: item.primaryImageHash || "",
     })),
     topWatched: [],
     activeUsers: [],
@@ -335,6 +344,9 @@ function templateRenderOptions(campaign, extras = {}) {
   return {
     branding: extras.branding || template.branding || {},
     htmlBody: extras.htmlBody != null ? extras.htmlBody : template.htmlBody || "",
+    lastSentAt: extras.lastSentAt != null ? extras.lastSentAt : campaign?.lastSentAt || campaign?.last_sent_at || null,
+    settings: extras.settings,
+    publicBase: extras.publicBase,
     ...extras,
   };
 }
@@ -581,7 +593,8 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
               logoSrc: "cid:jellyglance-logo",
               personData: data,
               perUser: true,
-              ...templateRenderOptions(campaign),
+              ...templateRenderOptions(campaign, { assetBase: publicAssetBase(req), settings: await getSettings().catch(() => ({})) }),
+              locale: newsletterI18n.localeForRecipient(delivery.person),
             })
           : null;
         if (built) data.subject = built.subject;
@@ -652,22 +665,32 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
     ...(campaign?.sections || {}),
     ...(campaign?.template?.blocks || {}),
   };
-  const built = reportEnabled(campaign)
-    ? await reportBuilder.renderReport(campaign.sections.report, { campaignName: campaign.name, logoSrc: "cid:jellyglance-logo", ...templateRenderOptions(campaign) })
+  const reportOptions = templateRenderOptions(campaign, { assetBase: publicAssetBase(req), settings: await getSettings().catch(() => ({})) });
+  const builtDefault = reportEnabled(campaign)
+    ? await reportBuilder.renderReport(campaign.sections.report, { campaignName: campaign.name, logoSrc: "cid:jellyglance-logo", ...reportOptions, locale: newsletterI18n.FALLBACK_LOCALE })
     : null;
-  if (built) data.subject = built.subject;
+  if (builtDefault) data.subject = builtDefault.subject;
   const directory = await campaigns.listAudienceDirectory().catch(() => []);
   const directoryByEmail = new Map(directory.filter((user) => user.email).map((user) => [user.email, user]));
   let result = { messageId: null };
   for (const email of targets) {
     const locale = newsletterI18n.localeForRecipient(directoryByEmail.get(email) || { email });
+    const built = reportEnabled(campaign)
+      ? await reportBuilder.renderReport(campaign.sections.report, {
+          campaignName: campaign.name,
+          logoSrc: "cid:jellyglance-logo",
+          ...reportOptions,
+          locale,
+        })
+      : null;
+    if (built) data.subject = built.subject;
     const html = built
       ? built.html
       : buildNewsletterHtml(data, {
           logoSrc: "cid:jellyglance-logo",
           campaignName: campaign?.name,
           sections,
-          ...templateRenderOptions(campaign),
+          ...reportOptions,
           locale,
         });
     result = await transporter.sendMail({
@@ -779,7 +802,8 @@ router.get("/preview", async (req, res) => {
             logoSrc: getLogoDataUri(),
             personData: campaign.type === "per-user" ? data : null,
             perUser: campaign.type === "per-user",
-            ...templateRenderOptions(campaign),
+            ...templateRenderOptions(campaign, { assetBase: publicAssetBase(req), settings: await getSettings().catch(() => ({})) }),
+            locale: req.query?.locale || req.body?.locale,
           });
           return res.json({ ...built, report: true });
         }
@@ -820,7 +844,13 @@ router.post("/report/preview", async (req, res) => {
       logoSrc: getLogoDataUri(),
       personData,
       perUser: type === "per-user",
-      ...templateRenderOptions(campaign, { branding: req.body?.branding, htmlBody: req.body?.htmlBody, assetBase: publicAssetBase(req) }),
+      ...templateRenderOptions(campaign, {
+        branding: req.body?.branding,
+        htmlBody: req.body?.htmlBody,
+        assetBase: publicAssetBase(req),
+        settings: await getSettings().catch(() => ({})),
+      }),
+      locale: req.body?.locale || req.query?.locale,
     });
     res.json({ ...built, report: true });
   } catch (error) {

@@ -13,16 +13,16 @@ import { moveBlockBy, reorderBlocks } from "../../../lib/newsletter-report-block
 export const BLOCK_LIBRARY = [
   { type: "intro", label: "Intro message", text: "A heading and a short welcome.", fields: ["title", "text"] },
   { type: "stats", label: "Headline stats", text: "Plays, watch time, viewers and new items.", fields: ["title", "period"] },
-  { type: "recentlyAdded", label: "Recently added", text: "Newest items, optionally from one library.", fields: ["title", "limit", "library", "addedType"] },
-  { type: "topWatched", label: "Most watched", text: "Top titles by plays.", fields: ["title", "limit", "period", "mediaType"] },
+  { type: "recentlyAdded", label: "Recently added", text: "Newest items, optionally from one library.", fields: ["title", "limit", "library", "addedType", "style"] },
+  { type: "topWatched", label: "Most watched", text: "Top titles by plays.", fields: ["title", "limit", "period", "mediaType", "style"] },
   { type: "activeUsers", label: "Top viewers", text: "Who watched the most.", fields: ["title", "limit", "period"] },
   { type: "topClients", label: "Apps and devices", text: "Bar chart of the apps people used.", fields: ["title", "limit", "period"] },
   { type: "playMethods", label: "Play methods", text: "Direct play, direct stream and transcode split.", fields: ["title", "period"] },
   { type: "activityByDay", label: "Plays per day", text: "Daily bar chart (up to 31 days).", fields: ["title", "period"] },
   { type: "libraryOverview", label: "Library overview", text: "Item counts and new items per library.", fields: ["title", "limit", "period"] },
   { type: "repairSummary", label: "Repair snapshot", text: "Missing posters, logos and runtimes.", fields: ["title"] },
-  { type: "continueWatching", label: "Continue watching", text: "Per-user campaigns only.", fields: ["title", "limit"], perUser: true },
-  { type: "myRequests", label: "My requests", text: "Per-user campaigns only (Seerr).", fields: ["title", "limit"], perUser: true },
+  { type: "continueWatching", label: "Continue watching", text: "Per-user campaigns only.", fields: ["title", "limit", "style"], perUser: true },
+  { type: "myRequests", label: "My requests", text: "Per-user campaigns only (Seerr).", fields: ["title", "limit", "style"], perUser: true },
   { type: "text", label: "Text", text: "Free text. **bold** and blank lines for paragraphs.", fields: ["title", "text"] },
   { type: "customHtml", label: "Custom HTML", text: "Raw HTML dropped into the email.", fields: ["title", "html"] },
   { type: "divider", label: "Divider", text: "A thin line between sections.", fields: [] },
@@ -38,7 +38,7 @@ function newBlock(type, { title = "", options = {} } = {}) {
     type,
     enabled: true,
     title,
-    options: { limit: 8, periodDays: null, mediaType: "all", libraryId: "", text: "", html: "", ...options },
+    options: { limit: 8, periodDays: null, mediaType: "all", libraryId: "", text: "", html: "", style: "list", ...options },
   };
 }
 
@@ -172,11 +172,23 @@ function BlockFields({ block, fields, libraries, onChange }) {
           <Form.Control as="textarea" rows={4} className="report-code" value={block.options?.html || ""} onChange={(event) => setOption("html", event.target.value)} />
         </Form.Group>
       ) : null}
+      {fields.includes("style") ? (
+        <Form.Group>
+          <Form.Label>Layout</Form.Label>
+          <Form.Select value={block.options?.style || "list"} onChange={(event) => setOption("style", event.target.value)}>
+            <option value="list">List</option>
+            <option value="cards">Poster cards</option>
+          </Form.Select>
+          {block.options?.style === "cards" ? (
+            <Form.Text>Posters use the public JellyGlance URL when it is set, or this preview&apos;s address. Titles still show if no public URL is configured.</Form.Text>
+          ) : null}
+        </Form.Group>
+      ) : null}
     </div>
   );
 }
 
-export default function NewsletterReportBuilder({ report: reportInput, onChange, campaignType, campaignName, campaignId }) {
+export default function NewsletterReportBuilder({ report: reportInput, onChange, campaignType, campaignName, campaignId, previewLocale = "en-GB" }) {
   const report = useMemo(() => normalizeReportDraft(reportInput), [reportInput]);
   const [libraries, setLibraries] = useState([]);
   const [addType, setAddType] = useState("stats");
@@ -202,7 +214,7 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
       setPreviewError("");
       const response = await axios.post(
         "/newsletter/report/preview",
-        { report: { ...nextReport, enabled: true }, type: perUser ? "per-user" : "global", campaignName, campaignId: campaignId || undefined },
+        { report: { ...nextReport, enabled: true }, type: perUser ? "per-user" : "global", campaignName, campaignId: campaignId || undefined, locale: previewLocale },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}`, "Content-Type": "application/json" } }
       );
       setPreview(response.data);
@@ -218,7 +230,7 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
     timer.current = setTimeout(() => refreshPreview(report), 700);
     return () => clearTimeout(timer.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [report, campaignType, campaignName]);
+  }, [report, campaignType, campaignName, previewLocale]);
 
   const update = (changes) => onChange({ ...report, ...changes });
   const updateBlocks = (blocks) => update({ blocks });

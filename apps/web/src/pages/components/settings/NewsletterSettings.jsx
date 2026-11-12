@@ -800,6 +800,7 @@ export default function NewsletterSettings() {
             campaignType={campaignDraft.type}
             campaignName={campaignDraft.name}
             campaignId={selectedCampaignId}
+            previewLocale={previewLocale}
             onChange={(report) => setCampaignDraft((current) => ({ ...current, sections: { ...current.sections, report } }))}
           />
         </Tab>

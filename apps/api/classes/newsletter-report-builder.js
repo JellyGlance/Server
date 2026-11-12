@@ -1,4 +1,6 @@
 const newsletterTheme = require("./newsletter-theme");
+const newsletterI18n = require("./newsletter-i18n");
+const publicUrl = require("./newsletter-public-url");
 /* Newsletter report builder: renders an ordered list of configurable blocks into email-safe HTML and plain text. */
 const db = require("../db");
 
@@ -21,6 +23,24 @@ const REPORT_BLOCK_TYPES = [
 ];
 
 const PER_USER_BLOCKS = new Set(["continueWatching", "myRequests"]);
+
+const BLOCK_DEFAULT_TITLE_KEYS = {
+  intro: "",
+  stats: "AT_A_GLANCE",
+  recentlyAdded: "RECENTLY_ADDED",
+  topWatched: "MOST_WATCHED",
+  activeUsers: "TOP_VIEWERS",
+  topClients: "TOP_APPS",
+  playMethods: "HOW_PLAYED",
+  activityByDay: "PLAYS_PER_DAY",
+  libraryOverview: "LIBRARY_OVERVIEW",
+  repairSummary: "REPAIR",
+  continueWatching: "CONTINUE_WATCHING",
+  myRequests: "MY_REQUESTS",
+  text: "",
+  customHtml: "",
+  divider: "",
+};
 
 const BLOCK_DEFAULT_TITLES = {
   intro: "",
@@ -65,20 +85,39 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
-function formatDate(value) {
-  if (!value) return "Unknown";
-  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
+function formatDate(value, locale = "en-GB") {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale || "en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(date);
 }
 
-function formatWatchTime(seconds) {
+function formatWatchTime(seconds, locale = "en-GB") {
   const total = Number(seconds || 0);
   const hours = Math.floor(total / 3600);
-  if (hours >= 1) return `${hours.toLocaleString("en-GB")}h ${Math.round((total % 3600) / 60)}m`;
-  return `${Math.round(total / 60).toLocaleString("en-GB")}m`;
+  if (hours >= 1) return `${hours.toLocaleString(locale || "en-GB")}h ${Math.round((total % 3600) / 60)}m`;
+  return `${Math.round(total / 60).toLocaleString(locale || "en-GB")}m`;
 }
 
 function safeColor(value, fallback = DEFAULT_REPORT.accentColor) {
   return /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
+}
+
+function identityT(key, vars = {}) {
+  if (key === "PERIOD_1") return "last 24 hours";
+  if (key === "PERIOD_WEEK") return "last week";
+  if (key === "PERIOD_30") return "last 30 days";
+  if (key === "PERIOD_DAYS") return `last ${vars.count} days`;
+  if (key === "TITLES_COUNT") return `${vars.count} titles`;
+  if (key === "PLAYS_COUNT") return `${vars.count} plays`;
+  if (key === "PLAYS_COUNT_ONE") return `${vars.count} play`;
+  if (key === "VIEWER_COUNT") return `${vars.count} viewers`;
+  if (key === "VIEWER_COUNT_ONE") return `${vars.count} viewer`;
+  if (key === "ITEMS_COUNT") return `${vars.count} items`;
+  if (key === "NEW_COUNT") return `${vars.count} new`;
+  if (key === "COVERING") return `Covering the ${vars.period} · generated ${vars.date}`;
+  if (key === "HI") return `Hi ${vars.name},`;
+  return BLOCK_DEFAULT_TITLES[key] || key;
 }
 
 function normalizeBlock(block = {}, index = 0) {
@@ -118,10 +157,10 @@ function normalizeReport(report = {}) {
   };
 }
 
-function reportSubject(report, { campaignName, periodDays }) {
+function reportSubject(report, { campaignName, periodDays, locale }) {
   return String(report.subject || DEFAULT_REPORT.subject)
     .replace(/\{campaign\}/g, campaignName || "JellyGlance")
-    .replace(/\{date\}/g, formatDate(new Date()))
+    .replace(/\{date\}/g, formatDate(new Date(), locale))
     .replace(/\{period\}/g, `${periodDays} days`)
     .trim();
 }
@@ -172,7 +211,7 @@ async function blockData(block, period, context) {
       if (block.options.mediaType === "movies") where += ` AND i."Type" = 'Movie'`;
       if (block.options.mediaType === "shows") where += ` AND i."Type" = 'Series'`;
       const items = await queryRows(
-        `SELECT i."Name", i."Type", i."ProductionYear", i."DateCreated", l."Name" AS "Library"
+        `SELECT i."Id", i."Name", i."Type", i."ProductionYear", i."DateCreated", i."PrimaryImageHash", l."Name" AS "Library"
          FROM jf_library_items i LEFT JOIN jf_libraries l ON l."Id" = i."ParentId"
          ${where} ORDER BY i."DateCreated" DESC NULLS LAST LIMIT $1`,
         params
@@ -181,12 +220,22 @@ async function blockData(block, period, context) {
     }
     case "topWatched": {
       const items = await queryRows(
-        `SELECT COALESCE(NULLIF("SeriesName", ''), NULLIF("NowPlayingItemName", ''), 'Unknown item') AS "Name",
-                count(*)::int AS "Plays", COALESCE(sum("PlaybackDuration"), 0)::bigint AS "WatchSeconds",
-                count(DISTINCT NULLIF("UserName", ''))::int AS "Viewers"
-         FROM jf_playback_activity
-         WHERE "ActivityDateInserted" >= now() - make_interval(days => $1) ${MEDIA_FILTER[block.options.mediaType]}
-         GROUP BY 1 ORDER BY 2 DESC, 3 DESC LIMIT $2`,
+        `SELECT ranked."Name", ranked."Id", ranked."Plays", ranked."WatchSeconds", ranked."Viewers",
+                i."PrimaryImageHash", i."Type"
+           FROM (
+             SELECT COALESCE(NULLIF(a."SeriesName", ''), NULLIF(a."NowPlayingItemName", ''), 'Unknown item') AS "Name",
+                    MAX(COALESCE(e."SeriesId", a."NowPlayingItemId")) AS "Id",
+                    count(*)::int AS "Plays",
+                    COALESCE(sum(a."PlaybackDuration"), 0)::bigint AS "WatchSeconds",
+                    count(DISTINCT NULLIF(a."UserName", ''))::int AS "Viewers"
+               FROM jf_playback_activity a
+               LEFT JOIN jf_library_episodes e ON e."EpisodeId" = a."EpisodeId"
+              WHERE a."ActivityDateInserted" >= now() - make_interval(days => $1) ${MEDIA_FILTER[block.options.mediaType]}
+              GROUP BY 1
+              ORDER BY 3 DESC, 4 DESC
+              LIMIT $2
+           ) ranked
+           LEFT JOIN jf_library_items i ON i."Id" = ranked."Id"`,
         [days, limit]
       );
       return { days, items };
@@ -266,215 +315,345 @@ async function blockData(block, period, context) {
   }
 }
 
-function periodLabel(days) {
-  if (days === 1) return "last 24 hours";
-  if (days === 7) return "last week";
-  if (days === 30) return "last 30 days";
-  return `last ${days} days`;
+function periodLabel(days, t = identityT) {
+  if (Number(days) === 1) return t("PERIOD_1");
+  if (Number(days) === 7) return t("PERIOD_WEEK");
+  if (Number(days) === 30) return t("PERIOD_30");
+  return t("PERIOD_DAYS", { count: Number(days) || 0 });
 }
 
-function textToHtml(text) {
-  return escapeHtml(text)
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .split(/\n{2,}/)
-    .map((paragraph) => `<p style="margin:0 0 10px;color:#c9d6e8;font-size:14px;line-height:1.6;">${paragraph.replace(/\n/g, "<br/>")}</p>`)
-    .join("");
+function defaultTitle(block, t = identityT) {
+  if (block.title) return block.title;
+  const key = BLOCK_DEFAULT_TITLE_KEYS[block.type];
+  if (key) {
+    const translated = t(key);
+    if (translated && translated !== key) return translated;
+  }
+  return BLOCK_DEFAULT_TITLES[block.type] || "";
 }
 
-function titleHtml(title, accent, subtitle = "") {
+function themeOf(ctx) {
+  return ctx.theme || newsletterTheme.normalizeBranding({ accent: ctx.accent });
+}
+
+function titleHtml(title, ctx, subtitle = "") {
   if (!title) return "";
-  return `<h2 style="margin:26px 0 10px;color:#f4f8ff;font-size:17px;border-left:3px solid ${accent};padding-left:10px;">${escapeHtml(title)}${
-    subtitle ? ` <span style="color:#7f93ad;font-size:12px;font-weight:600;">${escapeHtml(subtitle)}</span>` : ""
+  const theme = themeOf(ctx);
+  const accent = ctx.accent || theme.accent;
+  return `<h2 style="margin:26px 0 10px;color:${theme.heading};font-size:17px;border-left:3px solid ${accent};padding-left:10px;">${escapeHtml(title)}${
+    subtitle ? ` <span style="color:${theme.muted};font-size:12px;font-weight:600;">${escapeHtml(subtitle)}</span>` : ""
   }</h2>`;
 }
 
-function emptyHtml(text) {
-  return `<p style="color:#8fa3bd;margin:0;font-size:14px;">${escapeHtml(text)}</p>`;
+function emptyHtml(text, ctx = {}) {
+  const theme = themeOf(ctx);
+  return `<p style="color:${theme.muted};margin:0;font-size:14px;">${escapeHtml(text)}</p>`;
 }
 
-function rowsHtml(items, render) {
+function itemIdOf(item) {
+  return item?.Id || item?.id || item?.itemId || item?.item_id || item?.imageId || item?.SeriesId || item?.seriesId || "";
+}
+
+function requestIdOf(item) {
+  return item?.requestId || item?.RequestId || item?.id || item?.Id || "";
+}
+
+function hasPosterHint(item) {
+  const hash = item?.PrimaryImageHash ?? item?.primaryImageHash ?? item?.ImageTagsPrimary;
+  if (hash === "") return false;
+  return Boolean(itemIdOf(item));
+}
+
+function hrefFor(item, ctx, kind) {
+  if (kind === "request") return publicUrl.requestsHref(ctx.publicBase, requestIdOf(item)) || publicUrl.requestsHref(ctx.publicBase);
+  return publicUrl.itemHref(ctx.publicBase, itemIdOf(item));
+}
+
+function wrapLink(inner, href, color) {
+  if (!href) return inner;
+  return `<a href="${escapeHtml(href)}" style="color:${color || "inherit"};text-decoration:none;">${inner}</a>`;
+}
+
+function rowsHtml(items, render, ctx) {
+  const theme = themeOf(ctx);
   return items
     .map(
       (item, index) =>
-        `<tr><td style="padding:9px 0;border-bottom:1px solid #243246;color:#7f93ad;font-size:13px;width:26px;vertical-align:top;">${index + 1}</td><td style="padding:9px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;">${render(item)}</td></tr>`
+        `<tr><td style="padding:9px 0;border-bottom:1px solid ${theme.border};color:${theme.muted};font-size:13px;width:26px;vertical-align:top;">${index + 1}</td><td style="padding:9px 0;border-bottom:1px solid ${theme.border};color:${theme.text};font-size:14px;">${render(item)}</td></tr>`
     )
     .join("");
 }
 
-function listTable(items, render, empty) {
-  if (!items?.length) return emptyHtml(empty);
-  return `<table width="100%" cellpadding="0" cellspacing="0">${rowsHtml(items, render)}</table>`;
+function listTable(items, render, empty, ctx) {
+  if (!items?.length) return emptyHtml(empty, ctx);
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${rowsHtml(items, render, ctx)}</table>`;
 }
 
-function barsHtml(items, accent, { valueKey = "Plays", suffix = "plays" } = {}) {
-  if (!items?.length) return emptyHtml("No activity in this period.");
+function fallbackPoster(item, ctx) {
+  const theme = themeOf(ctx);
+  const letter = String(item?.Name || "?").trim().slice(0, 1).toUpperCase() || "?";
+  return `<table width="160" cellpadding="0" cellspacing="0" role="presentation" style="width:160px;max-width:100%;"><tr><td align="center" valign="middle" style="height:240px;background:${theme.card};border:1px solid ${theme.border};border-radius:10px;color:${theme.muted};font-size:28px;font-weight:800;">${escapeHtml(letter)}<div style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin-top:8px;">${escapeHtml(ctx.t ? ctx.t("NO_ARTWORK") : "No artwork")}</div></td></tr></table>`;
+}
+
+function posterImage(item, ctx, href) {
+  const theme = themeOf(ctx);
+  const src = hasPosterHint(item) ? publicUrl.posterSrc(ctx.publicBase, itemIdOf(item), { width: 240, quality: 80 }) : "";
+  const alt = item?.Name || "";
+  const img = src
+    ? `<img src="${escapeHtml(src)}" width="160" alt="${escapeHtml(alt)}" style="display:block;width:160px;max-width:100%;height:auto;border:1px solid ${theme.border};border-radius:10px;background:${theme.card};" />`
+    : fallbackPoster(item, ctx);
+  return wrapLink(img, href);
+}
+
+function cardsHtml(items, ctx, { kind = "item", metaFor } = {}) {
+  const theme = themeOf(ctx);
+  if (!items?.length) return emptyHtml(ctx.empty || "", ctx);
+  const cells = items.map((item) => {
+    const href = hrefFor(item, ctx, kind);
+    const title = wrapLink(`<strong style="color:${theme.heading};">${escapeHtml(item.Name || "")}</strong>`, href, theme.heading);
+    const metaText = metaFor ? metaFor(item) : "";
+    return `<td width="33%" valign="top" style="padding:0 8px 16px 0;width:33%;">
+      ${posterImage(item, ctx, href)}
+      <p style="margin:8px 0 0;font-size:14px;line-height:1.35;color:${theme.text};">${title}${metaText ? `<br /><span style="color:${theme.muted};font-size:12px;">${escapeHtml(metaText)}</span>` : ""}</p>
+    </td>`;
+  });
+  const rows = [];
+  for (let index = 0; index < cells.length; index += 3) {
+    const row = cells.slice(index, index + 3);
+    while (row.length < 3) row.push(`<td width="33%" style="padding:0 8px 16px 0;width:33%;font-size:0;line-height:0;">&nbsp;</td>`);
+    rows.push(`<tr>${row.join("")}</tr>`);
+  }
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${rows.join("")}</table>`;
+}
+
+function itemListOrCards(items, ctx, { kind = "item", render, empty, metaFor }) {
+  if (ctx.style === "cards") {
+    return cardsHtml(items, { ...ctx, empty }, { kind, metaFor });
+  }
+  return listTable(items, render, empty, ctx);
+}
+
+function barsHtml(items, ctx, { valueKey = "Plays", suffix = "plays" } = {}) {
+  const theme = themeOf(ctx);
+  const t = ctx.t || identityT;
+  if (!items?.length) return emptyHtml(t("NO_ACTIVITY_PERIOD"), ctx);
   const max = Math.max(...items.map((item) => Number(item[valueKey] || 0)), 1);
-  return `<table width="100%" cellpadding="0" cellspacing="0">${items
+  const accent = ctx.accent || theme.accent;
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${items
     .map((item) => {
       const value = Number(item[valueKey] || 0);
       const width = Math.max(2, Math.round((value / max) * 100));
+      const label = value === 1 ? suffix.replace(/s$/, "") : suffix;
       return `<tr>
-        <td style="padding:5px 10px 5px 0;color:#c9d6e8;font-size:13px;white-space:nowrap;width:110px;">${escapeHtml(item.Name)}</td>
-        <td style="padding:5px 0;"><table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td style="padding:5px 10px 5px 0;color:${theme.text};font-size:13px;white-space:nowrap;width:110px;">${escapeHtml(item.Name)}</td>
+        <td style="padding:5px 0;"><table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>
           <td style="width:${width}%;background:${accent};height:12px;border-radius:6px;font-size:0;line-height:0;">&nbsp;</td>
           <td style="width:${100 - width}%;font-size:0;line-height:0;">&nbsp;</td>
         </tr></table></td>
-        <td style="padding:5px 0 5px 10px;color:#9fb0c7;font-size:12px;white-space:nowrap;text-align:right;width:70px;">${value.toLocaleString("en-GB")} ${value === 1 ? suffix.replace(/s$/, "") : suffix}</td>
+        <td style="padding:5px 0 5px 10px;color:${theme.muted};font-size:12px;white-space:nowrap;text-align:right;width:70px;">${value.toLocaleString(ctx.locale || "en-GB")} ${escapeHtml(label)}</td>
       </tr>`;
     })
     .join("")}</table>`;
 }
 
-function statTiles(tiles, accent) {
+function statTiles(tiles, ctx) {
+  const theme = themeOf(ctx);
+  const accent = ctx.accent || theme.accent;
   const cells = tiles
     .map(
       ([label, value, detail], index) => `<td style="width:25%;padding:5px;vertical-align:top;">
-        <div style="background:#121a24;border:1px solid #27364a;border-radius:14px;padding:13px;">
-          <div style="color:#8fa3bd;font-size:11px;font-weight:800;text-transform:uppercase;">${escapeHtml(label)}</div>
+        <div style="background:${theme.card};border:1px solid ${theme.border};border-radius:14px;padding:13px;">
+          <div style="color:${theme.muted};font-size:11px;font-weight:800;text-transform:uppercase;">${escapeHtml(label)}</div>
           <div style="color:${index === 0 ? accent : ["#a78bfa", "#34d399", "#fbbf24"][index - 1] || accent};font-size:24px;font-weight:900;line-height:1.1;margin:6px 0 3px;">${escapeHtml(value)}</div>
-          <div style="color:#9fb0c7;font-size:12px;">${escapeHtml(detail)}</div>
+          <div style="color:${theme.muted};font-size:12px;">${escapeHtml(detail)}</div>
         </div></td>`
     )
     .join("");
-  return `<table width="100%" cellpadding="0" cellspacing="0"><tr>${cells}</tr></table>`;
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>${cells}</tr></table>`;
 }
 
-function meta(parts) {
+function meta(parts, ctx) {
+  const theme = themeOf(ctx);
   const text = parts.filter((part) => part !== null && part !== undefined && part !== "").join(" · ");
-  return text ? ` <span style="color:#8fa3bd;">${escapeHtml(text)}</span>` : "";
+  return text ? ` <span style="color:${theme.muted};">${escapeHtml(text)}</span>` : "";
 }
 
-function renderBlock(block, data, accent) {
-  const title = block.title || BLOCK_DEFAULT_TITLES[block.type];
-  const sub = data.days ? periodLabel(data.days) : "";
+function playsLabel(count, t) {
+  return Number(count) === 1 ? t("PLAYS_COUNT_ONE", { count }) : t("PLAYS_COUNT", { count });
+}
+
+function viewersLabel(count, t) {
+  return Number(count) === 1 ? t("VIEWER_COUNT_ONE", { count }) : t("VIEWER_COUNT", { count });
+}
+
+function renderBlock(block, data, ctx = {}) {
+  const t = ctx.t || identityT;
+  const locale = ctx.locale || "en-GB";
+  const title = defaultTitle(block, t);
+  const sub = data.days ? periodLabel(data.days, t) : "";
+  const style = block.options?.style || "list";
+  const env = { ...ctx, t, locale, style, accent: ctx.accent };
   switch (block.type) {
     case "intro":
-      return `${block.title ? `<h2 style="margin:18px 0 8px;color:#f4f8ff;font-size:20px;">${escapeHtml(block.title)}</h2>` : ""}${textToHtml(block.options.text)}`;
+      return `${block.title ? `<h2 style="margin:18px 0 8px;color:${themeOf(env).heading};font-size:20px;">${escapeHtml(block.title)}</h2>` : ""}${textToHtml(block.options.text, env)}`;
     case "text":
-      return `${titleHtml(block.title, accent)}${textToHtml(block.options.text)}`;
+      return `${titleHtml(block.title, env)}${textToHtml(block.options.text, env)}`;
     case "customHtml":
-      return `${titleHtml(block.title, accent)}<div>${block.options.html}</div>`;
+      return `${titleHtml(block.title, env)}<div>${block.options.html}</div>`;
     case "divider":
-      return `<div style="border-top:1px solid #27364a;margin:22px 0;"></div>`;
+      return `<div style="border-top:1px solid ${themeOf(env).border};margin:22px 0;"></div>`;
     case "stats":
-      return `${titleHtml(title, accent, sub)}${statTiles(
+      return `${titleHtml(title, env, sub)}${statTiles(
         [
-          ["Plays", Number(data.plays || 0).toLocaleString("en-GB"), `${Number(data.titles || 0)} titles`],
-          ["Watch time", formatWatchTime(data.seconds), "Total played"],
-          ["Viewers", String(Number(data.viewers || 0)), "Watched something"],
-          ["New", String(Number(data.added || 0)), "Items added"],
+          [t("PLAYS"), Number(data.plays || 0).toLocaleString(locale), t("TITLES_COUNT", { count: Number(data.titles || 0) })],
+          [t("WATCH_TIME"), formatWatchTime(data.seconds, locale), t("TOTAL_PLAYED")],
+          [t("VIEWERS"), String(Number(data.viewers || 0)), t("WATCHED_SOMETHING")],
+          [t("NEW"), String(Number(data.added || 0)), t("ITEMS_ADDED")],
         ],
-        accent
+        env
       )}`;
     case "recentlyAdded":
-      return `${titleHtml(title, accent)}${listTable(
-        data.items,
-        (item) => `<strong>${escapeHtml(item.Name)}</strong>${meta([item.Type, item.ProductionYear, item.Library])}`,
-        "No new media this period."
-      )}`;
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "item",
+        empty: t("NO_NEW_MEDIA"),
+        metaFor: (item) => [item.Type, item.ProductionYear, item.Library].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([item.Type, item.ProductionYear, item.Library], env)}`,
+      })}`;
     case "topWatched":
-      return `${titleHtml(title, accent, sub)}${listTable(
-        data.items,
-        (item) => `<strong>${escapeHtml(item.Name)}</strong>${meta([`${item.Plays} plays`, formatWatchTime(item.WatchSeconds), item.Viewers ? `${item.Viewers} viewer${item.Viewers === 1 ? "" : "s"}` : ""])}`,
-        "No watch activity in this period."
-      )}`;
+      return `${titleHtml(title, env, sub)}${itemListOrCards(data.items, env, {
+        kind: "item",
+        empty: t("NO_WATCH_ACTIVITY_PERIOD"),
+        metaFor: (item) => [playsLabel(item.Plays, t), formatWatchTime(item.WatchSeconds, locale), item.Viewers ? viewersLabel(item.Viewers, t) : ""].filter(Boolean).join(" · "),
+        render: (item) =>
+          `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([playsLabel(item.Plays, t), formatWatchTime(item.WatchSeconds, locale), item.Viewers ? viewersLabel(item.Viewers, t) : ""], env)}`,
+      })}`;
     case "activeUsers":
-      return `${titleHtml(title, accent, sub)}${listTable(
+      return `${titleHtml(title, env, sub)}${listTable(
         data.items,
-        (item) => `<strong>${escapeHtml(item.Name)}</strong>${meta([`${item.Plays} plays`, formatWatchTime(item.WatchSeconds)])}`,
-        "No viewers in this period."
+        (item) => `<strong>${escapeHtml(item.Name)}</strong>${meta([playsLabel(item.Plays, t), formatWatchTime(item.WatchSeconds, locale)], env)}`,
+        t("NO_VIEWERS_PERIOD"),
+        env
       )}`;
     case "topClients":
-      return `${titleHtml(title, accent, sub)}${barsHtml(data.items, accent)}`;
+      return `${titleHtml(title, env, sub)}${barsHtml(data.items, env, { suffix: t("PLAYS_WORD") || "plays" })}`;
     case "playMethods":
-      return `${titleHtml(title, accent, sub)}${barsHtml(data.items, accent)}`;
+      return `${titleHtml(title, env, sub)}${barsHtml(data.items, env, { suffix: t("PLAYS_WORD") || "plays" })}`;
     case "activityByDay":
-      return `${titleHtml(title, accent, sub)}${barsHtml(data.items, accent)}`;
+      return `${titleHtml(title, env, sub)}${barsHtml(data.items, env, { suffix: t("PLAYS_WORD") || "plays" })}`;
     case "libraryOverview":
-      return `${titleHtml(title, accent)}${listTable(
+      return `${titleHtml(title, env)}${listTable(
         data.items,
-        (item) => `<strong>${escapeHtml(item.Name)}</strong>${meta([`${Number(item.Items || 0).toLocaleString("en-GB")} items`, item.New ? `${item.New} new` : ""])}`,
-        "No libraries synced yet."
+        (item) => `<strong>${escapeHtml(item.Name)}</strong>${meta([t("ITEMS_COUNT", { count: Number(item.Items || 0).toLocaleString(locale) }), item.New ? t("NEW_COUNT", { count: item.New }) : ""], env)}`,
+        t("NO_LIBRARIES"),
+        env
       )}`;
     case "repairSummary":
-      return `${titleHtml(title, accent)}${statTiles(
+      return `${titleHtml(title, env)}${statTiles(
         [
-          ["Posters", String(Number(data.missingPosters || 0)), "Missing"],
-          ["Logos", String(Number(data.missingLogos || 0)), "Missing"],
-          ["Runtime", String(Number(data.missingRuntime || 0)), "Missing"],
+          [t("POSTERS"), String(Number(data.missingPosters || 0)), t("MISSING")],
+          [t("LOGOS"), String(Number(data.missingLogos || 0)), t("MISSING")],
+          [t("RUNTIME"), String(Number(data.missingRuntime || 0)), t("MISSING")],
         ],
-        accent
+        env
       )}`;
     case "continueWatching":
-      return `${titleHtml(title, accent)}${listTable(data.items, (item) => `<strong>${escapeHtml(item.Name)}</strong>${meta([item.Type])}`, "Nothing in progress.")}`;
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "item",
+        empty: t("NOTHING_IN_PROGRESS"),
+        metaFor: (item) => item.Type || "",
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([item.Type], env)}`,
+      })}`;
     case "myRequests":
-      return `${titleHtml(title, accent)}${listTable(data.items, (item) => `<strong>${escapeHtml(item.Name)}</strong>${meta([item.Type, item.status])}`, "No requests.")}`;
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "request",
+        empty: t("NO_REQUESTS_GENERIC"),
+        metaFor: (item) => [item.Type, item.status].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "request"), themeOf(env).heading)}${meta([item.Type, item.status], env)}`,
+      })}`;
     default:
       return "";
   }
 }
 
-function renderBlockText(block, data) {
-  const title = block.title || BLOCK_DEFAULT_TITLES[block.type];
+function renderBlockText(block, data, ctx = {}) {
+  const t = ctx.t || identityT;
+  const locale = ctx.locale || "en-GB";
+  const title = defaultTitle(block, t);
   const lines = title ? ["", title.toUpperCase()] : [""];
   switch (block.type) {
     case "intro":
     case "text":
       return [...lines, block.options.text];
     case "stats":
-      return [...lines, `Plays: ${data.plays || 0}`, `Watch time: ${formatWatchTime(data.seconds)}`, `Viewers: ${data.viewers || 0}`, `New items: ${data.added || 0}`];
+      return [...lines, `${t("PLAYS")}: ${data.plays || 0}`, `${t("WATCH_TIME")}: ${formatWatchTime(data.seconds, locale)}`, `${t("VIEWERS")}: ${data.viewers || 0}`, `${t("NEW")}: ${data.added || 0}`];
     case "repairSummary":
-      return [...lines, `Missing posters: ${data.missingPosters || 0}`, `Missing logos: ${data.missingLogos || 0}`, `Missing runtime: ${data.missingRuntime || 0}`];
+      return [...lines, `${t("POSTERS")}: ${data.missingPosters || 0}`, `${t("LOGOS")}: ${data.missingLogos || 0}`, `${t("RUNTIME")}: ${data.missingRuntime || 0}`];
     case "customHtml":
     case "divider":
       return [];
     default:
       return [
         ...lines,
-        ...(data.items || []).map((item) =>
-          `- ${item.Name}${item.Plays != null ? `: ${item.Plays} play${item.Plays === 1 ? "" : "s"}` : ""}${item.Items != null ? `: ${item.Items} items` : ""}${item.Type ? ` (${item.Type})` : ""}`
-        ),
+        ...(data.items || []).map((item) => {
+          const href = block.type === "myRequests" ? hrefFor(item, ctx, "request") : hrefFor(item, ctx, "item");
+          return `- ${item.Name}${item.Plays != null ? `: ${playsLabel(item.Plays, t)}` : ""}${item.Items != null ? `: ${t("ITEMS_COUNT", { count: item.Items })}` : ""}${item.Type ? ` (${item.Type})` : ""}${href ? ` ${href}` : ""}`;
+        }),
       ];
   }
 }
 
-async function renderReport(input, { campaignName, logoSrc = "", personData = null, perUser = false, branding = {}, htmlBody = "", date, assetBase = "" } = {}) {
+function textToHtml(value, ctx = {}) {
+  const theme = themeOf(ctx);
+  const text = String(value || "");
+  if (!text.trim()) return "";
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .split(/\n{2,}/)
+    .map((paragraph) => `<p style="margin:0 0 10px;color:${theme.text};font-size:14px;line-height:1.6;">${paragraph.replace(/\n/g, "<br/>")}</p>`)
+    .join("");
+}
+
+async function renderReport(input, { campaignName, logoSrc = "", personData = null, perUser = false, branding = {}, htmlBody = "", date, assetBase = "", publicBase = "", settings = {}, locale, lastSentAt = null } = {}) {
   const report = normalizeReport(input);
   const theme = newsletterTheme.normalizeBranding({
     ...branding,
     accent: branding.accent || branding.accentColor || report.accentColor,
     footer: branding.footer || report.footer || "",
   });
+  const { t, locale: resolvedLocale } = newsletterI18n.translator(locale);
+  const resolvedBase = publicUrl.resolvePublicBase({ assetBase, publicBase, settings });
   const accent = theme.accent;
-  const context = { personData };
+  const context = { personData, lastSentAt, publicBase: resolvedBase };
   const blocks = report.blocks.filter((block) => block.enabled && (perUser || !PER_USER_BLOCKS.has(block.type)));
+  const renderCtx = { accent, theme, t, locale: resolvedLocale, publicBase: resolvedBase };
   const rendered = await Promise.all(
     blocks.map(async (block) => {
       const data = await blockData(block, report.periodDays, context);
-      return { html: renderBlock(block, data, accent), text: renderBlockText(block, data) };
+      return { html: renderBlock(block, data, renderCtx), text: renderBlockText(block, data, renderCtx) };
     })
   );
-  const subject = reportSubject(report, { campaignName, periodDays: report.periodDays });
-  const greeting = personData?.personName ? `Hi ${personData.personName},` : "";
+  const subject = reportSubject(report, { campaignName, periodDays: report.periodDays, locale: resolvedLocale });
+  const greeting = personData?.personName ? t("HI", { name: personData.personName }) : "";
+  const covering = t("COVERING", { period: periodLabel(report.periodDays, t), date: formatDate(new Date(), resolvedLocale) });
   const inner = `${greeting ? `<p style="margin:14px 0 10px;color:${theme.text};font-size:15px;">${escapeHtml(greeting)}</p>` : ""}
-            ${rendered.map((block) => block.html).join("\n") || emptyHtml("This report has no blocks yet. Add some in the report builder.")}`;
+            ${rendered.map((block) => block.html).join("\n") || emptyHtml(t("NO_BLOCKS"), { theme, accent })}`;
   const html = newsletterTheme.wrapEmailDocument({
     bodyHtml: inner,
     subject: escapeHtml(subject),
     campaignName: escapeHtml(campaignName || "JellyGlance report"),
-    generatedAt: `Covering the ${escapeHtml(periodLabel(report.periodDays))} · generated ${escapeHtml(formatDate(new Date()))}`,
+    generatedAt: covering,
     logoSrc: report.showLogo ? (theme.logoUrl || logoSrc) : "",
     branding: theme,
     htmlBody,
     kickerColor: accent,
     date,
-    assetBase,
+    assetBase: resolvedBase || assetBase,
   });
-  const text = [subject, `Covering the ${periodLabel(report.periodDays)}`, greeting, ...rendered.flatMap((block) => block.text), "", report.footer]
+  const text = [subject, covering, greeting, ...rendered.flatMap((block) => block.text), "", report.footer]
     .filter((line) => line !== undefined)
     .join("\n")
     .trim();
-  return { subject, html, text, generatedAt: new Date().toISOString() };
+  return { subject, html, text, generatedAt: new Date().toISOString(), publicBase: resolvedBase };
 }
 
 async function listReportLibraries() {
@@ -485,7 +664,16 @@ module.exports = {
   REPORT_BLOCK_TYPES,
   PER_USER_BLOCKS,
   DEFAULT_REPORT,
+  BLOCK_DEFAULT_TITLES,
+  BLOCK_DEFAULT_TITLE_KEYS,
   normalizeReport,
+  normalizeBlock,
   renderReport,
+  renderBlock,
+  renderBlockText,
+  cardsHtml,
   listReportLibraries,
+  periodLabel,
+  formatDate,
+  formatWatchTime,
 };
