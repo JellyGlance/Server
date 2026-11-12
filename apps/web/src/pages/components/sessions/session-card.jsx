@@ -367,16 +367,12 @@ function SessionCard(props) {
     if (!messageOpen) setTemplateMenuOpen(false);
   }, [messageOpen]);
 
-  const cardStyle = {
+  // Detailed backdrop: only behind the text column (never under the poster),
+  // blurred by the image server instead of a CSS backdrop filter.
+  const backdropStyle = {
     backgroundImage: loadBackdrop
-      ? `url(/proxy/Items/Images/Backdrop?id=${mediaItemId}&fillWidth=560&quality=38), linear-gradient(135deg, var(--primary-color), #0b1119)`
+      ? `url(${baseUrl}/proxy/Items/Images/Backdrop?id=${mediaItemId}&fillWidth=560&quality=38&blur=12), linear-gradient(135deg, var(--primary-color), #0b1119)`
       : "linear-gradient(135deg, rgba(var(--primary-rgb), 0.28), #0b1119)",
-    backgroundSize: "cover",
-  };
-
-  const cardBgStyle = {
-    backdropFilter: "blur(8px)",
-    backgroundColor: "rgb(0, 0, 0, 0.46)",
   };
   const progress = getSessionProgress(nowPlaying, playState);
   const progressPercent = progress.percent;
@@ -477,7 +473,7 @@ function SessionCard(props) {
   return (
     <Card
       className={`session-card has-card-layout${simple ? " is-simple-card" : ""}`}
-      style={simple ? undefined : cardStyle}
+
       role="button"
       tabIndex={0}
       onClick={handleCardClick}
@@ -760,7 +756,7 @@ function SessionCard(props) {
           </button>
         </Modal.Footer>
       </Modal>
-      <div style={simple ? undefined : cardBgStyle} className="session-card-main has-card-layout rounded-top">
+      <div className="session-card-main has-card-layout rounded-top">
         <Row className="h-100 p-0 m-0">
           <Col className="session-card-banner-image">
             {props.data.session.NowPlayingItem.Type === "Audio" ? (
@@ -772,8 +768,8 @@ function SessionCard(props) {
                 decoding="async"
               />
             ) : (
-              // The whole Primary poster (series poster for episodes) in a 2:3
-              // panel that is exactly as tall as the card; never cropped.
+              // The Primary poster (series poster for episodes) filling a 2:3
+              // panel exactly as tall as the card (object-fit: cover).
               <img
                 className="session-card-poster"
                 src={`${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=380&fillWidth=254&quality=60`}
@@ -783,13 +779,18 @@ function SessionCard(props) {
               />
             )}
           </Col>
-          <Col className={`w-100 h-100 m-0 px-0${simple ? " session-card-art-area" : ""}`}>
+          <Col className="w-100 h-100 m-0 px-0 session-card-art-area">
             {simple ? (
               <>
                 <SessionCardArt key={artSources.map((source) => source.url).join("|")} sources={artSources} />
                 <span className="session-card-art-shade" aria-hidden="true" />
               </>
-            ) : null}
+            ) : (
+              <>
+                <span className="session-card-backdrop" style={backdropStyle} aria-hidden="true" />
+                <span className="session-card-backdrop-shade" aria-hidden="true" />
+              </>
+            )}
             <Card.Body className="session-card-body has-card-layout w-100 h-100">
               <Container className="h-100 d-flex flex-column justify-content-between g-0 session-card-layout">
                 <div className="session-card-head">

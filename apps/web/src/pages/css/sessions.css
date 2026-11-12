@@ -2174,7 +2174,7 @@
 /* Simple look: the same compact card and poster as Detailed, with less text.
    The art (episode still, backdrop, then poster) covers the area to the right
    of the poster, under a dark shade so the text stays readable. */
-.session-card.is-simple-card .session-card-art-area {
+.session-card.has-card-layout .session-card-art-area {
   position: relative;
   overflow: hidden;
   background: #0b1119;
@@ -2202,7 +2202,7 @@
   pointer-events: none;
 }
 
-.session-card.is-simple-card .session-card-art-area > .session-card-body {
+.session-card.has-card-layout .session-card-art-area > .session-card-body {
   position: relative;
   z-index: 2;
 }
@@ -2248,7 +2248,7 @@
   border-radius: 15px 0 0 15px;
 }
 
-.session-card.is-simple-card .session-card-art-area {
+.session-card.has-card-layout .session-card-art-area {
   border-radius: 0 15px 15px 0;
 }
 
@@ -2277,7 +2277,7 @@
     border-radius: 11px 0 0 11px;
   }
 
-  .session-card.is-simple-card .session-card-art-area {
+  .session-card.has-card-layout .session-card-art-area {
     border-radius: 0 11px 11px 0;
   }
 }
@@ -2288,4 +2288,65 @@
   .session-card.has-card-layout .session-card-foot .session-timecode-value:last-child {
     display: none;
   }
+}
+
+/* Card edges, both looks. The card itself is a solid dark box with a solid
+   border; no art, accent gradient or theme colour is painted under the
+   poster. (The accent gradient + backdrop used to sit on the card itself and
+   bled through the anti-aliased edge of the poster's rounded corner, and the
+   hover state turned the border accent-coloured.) The backdrop now lives
+   only in the text column, to the right of the poster. */
+.session-card.has-card-layout {
+  overflow: hidden;
+  border-color: #1d232c !important;
+  background: #0b1119 !important;
+  background-clip: padding-box !important;
+}
+
+.session-card.has-card-layout:hover {
+  transform: none;
+  border-color: #1d232c !important;
+}
+
+/* Keyboard focus keeps a ring, but a neutral one instead of the accent. */
+.session-card.has-card-layout:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 3px;
+}
+
+.session-card.has-card-layout .session-card-main {
+  background: transparent;
+}
+
+.session-card.has-card-layout .session-card-banner-image {
+  background: #0b1119;
+}
+
+.session-card.has-card-layout .session-card-poster {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  /* Fill the wrapper edge to edge. Jellyfin returns posters a pixel or two
+     off 2:3 (254x374 for Rivals), so "contain" left a 1-2px strip along the
+     top/bottom or sides where whatever sat behind the poster showed through
+     as a thin coloured line. "cover" trims at most ~1px of the poster. */
+  object-fit: cover;
+}
+
+.session-card.has-card-layout .session-card-backdrop,
+.session-card.has-card-layout .session-card-backdrop-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.session-card.has-card-layout .session-card-backdrop {
+  z-index: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.session-card.has-card-layout .session-card-backdrop-shade {
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.46);
 }
