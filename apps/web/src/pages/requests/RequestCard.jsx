@@ -4,6 +4,7 @@
 // poster). Both share the surface, chips and avatars. The poster fills its own frame
 // edge to edge; the backdrop and its shade sit only behind the text column.
 import { useState } from "react";
+import CheckLineIcon from "remixicon-react/CheckLineIcon";
 import CheckboxCircleLineIcon from "remixicon-react/CheckboxCircleLineIcon";
 import CloseCircleLineIcon from "remixicon-react/CloseCircleLineIcon";
 import Edit2LineIcon from "remixicon-react/Edit2LineIcon";
@@ -103,20 +104,35 @@ function ProgressDots({ request }) {
   );
 }
 
-function Surface({ item, view, className = "", onOpen, children }) {
+function Surface({ item, view, className = "", onOpen, selection, children }) {
   return (
     <article
-      className={`rq-card is-${view} ${className}`.trim()}
+      className={`rq-card is-${view} ${className}${selection?.selected ? " is-selected" : ""}`.trim()}
       role="button"
       tabIndex={0}
-      onClick={onOpen}
+      onClick={selection ? selection.onToggle : onOpen}
       onKeyDown={(event) => {
         if ((event.key === "Enter" || event.key === " ") && event.target === event.currentTarget) {
           event.preventDefault();
-          onOpen();
+          (selection ? selection.onToggle : onOpen)();
         }
       }}
     >
+      {selection ? (
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={selection.selected}
+          aria-label={`Select ${item.title}`}
+          className="rq-select"
+          onClick={(event) => {
+            event.stopPropagation();
+            selection.onToggle();
+          }}
+        >
+          {selection.selected ? <CheckLineIcon size={16} /> : null}
+        </button>
+      ) : null}
       <div className="rq-poster">
         <RequestPoster request={item} />
       </div>
@@ -138,7 +154,7 @@ function Action({ title, icon: Icon, tone = "", showLabel = false, disabled, onC
   );
 }
 
-export function RequestCard({ request, view = "list", canManage, readOnly, busy, progress, compact, onOpen, onAction, onEdit, onOpenSeerr }) {
+export function RequestCard({ request, view = "list", canManage, readOnly, busy, progress, compact, selection, onOpen, onAction, onEdit, onOpenSeerr }) {
   const chip = requestStatusChip(request);
   const age = getRequestAge(request.createdAt);
   const name = getRequesterName(request);
@@ -150,7 +166,7 @@ export function RequestCard({ request, view = "list", canManage, readOnly, busy,
   const isCard = view === "cards";
 
   return (
-    <Surface item={request} view={isCard ? "cards" : "list"} className={chip.key === "failed" ? "is-failed" : ""} onOpen={() => onOpen(request)}>
+    <Surface item={request} view={isCard ? "cards" : "list"} className={chip.key === "failed" ? "is-failed" : ""} selection={selection} onOpen={() => onOpen(request)}>
       <div className="rq-body">
         <strong className="rq-title" title={heading}>{heading}</strong>
         <div className="rq-chips">

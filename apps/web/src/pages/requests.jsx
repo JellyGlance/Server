@@ -29,6 +29,9 @@ import "./css/integrations.css";
 import RequestTimeline from "./requests/RequestTimeline";
 import RequestRulesModal from "./requests/RequestRulesModal";
 import RequestDiscover from "./requests/RequestDiscover";
+import { BulkBar, BulkDialog } from "./requests/BulkActions";
+import { isSelectable, pruneSelection, resultSummary } from "./requests/bulk";
+import CheckboxMultipleLineIcon from "remixicon-react/CheckboxMultipleLineIcon";
 import { readQueueView, saveQueueView } from "./requests/view";
 import { discoverSectionFromSearch } from "./requests/discover-grid";
 import TrailerDialog from "./requests/TrailerDialog";
@@ -195,6 +198,10 @@ export default function Requests() {
   const [blockedIds, setBlockedIds] = useState(() => new Set());
   const [progress, setProgress] = useState({ items: {}, simulated: false });
   const [trailer, setTrailer] = useState(null);
+  // Bulk actions: select mode, the picked request ids, and the confirm dialog's run.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkRun, setBulkRun] = useState(null);
   const [issues, setIssues] = useState([]);
   const [issuesLoading, setIssuesLoading] = useState(false);
   const [issuesError, setIssuesError] = useState("");
@@ -213,6 +220,24 @@ export default function Requests() {
   const canManageRequests = currentRole === "Owner" || currentRole === "Admin";
   // Set by the API when the Seerr connection is read-only (demo); admin write controls go away.
   const readOnly = Boolean(data.readOnly || seerrReadOnly);
+  const bulkAvailable = canManageRequests && !readOnly && pageSection === "queue";
+  useEffect(() => {
+    if (!bulkAvailable && selectMode) {
+      setSelectMode(false);
+      setSelectedIds(new Set());
+    }
+  }, [bulkAvailable, selectMode]);
+  useEffect(() => {
+    setSelectedIds((current) => (current.size ? pruneSelection(current, data.requests) : current));
+  }, [data.requests]);
+  const toggleSelected = useCallback((id) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
   const narrow = useNarrowScreen();
   const phone = useNarrowScreen("(max-width: 699px)");
   const boardView = queueView === "cards" ? "cards" : "list";
@@ -1039,6 +1064,21 @@ export default function Requests() {
               <RefreshLineIcon size={16} className={loading || issuesLoading ? "is-spinning" : ""} />
               <span>{pageSection === "queue" && data.syncedAt ? formatSyncedAgo(data.syncedAt) : "Refresh"}</span>
             </button>
+            {bulkAvailable ? (
+              <button
+                type="button"
+                className={`rq-tool${selectMode ? " is-active" : ""}`}
+                aria-pressed={selectMode}
+                title="Select several requests"
+                onClick={() => {
+                  setSelectMode((value) => !value);
+                  setSelectedIds(new Set());
+                }}
+              >
+                <CheckboxMultipleLineIcon size={16} />
+                <span>Select</span>
+              </button>
+            ) : null}
             {pageSection === "queue" ? (
               <div className="rq-view-toggle" role="group" aria-label={t("FEATURES.REQUESTS.QUEUE_VIEW")}>
                 <button type="button" className={boardView === "cards" ? "" : "is-active"} aria-pressed={boardView === "list"} onClick={() => setQueueView("list")} title={t("FEATURES.REQUESTS.LIST_VIEW")} aria-label={t("FEATURES.REQUESTS.LIST_VIEW")}>
@@ -1265,10 +1305,23 @@ export default function Requests() {
             </button>
           </div>
         ) : null}
+        {selectMode && bulkAvailable ? (
+          <BulkBar
+            selected={visibleRequests.filter((request) => selectedIds.has(request.id))}
+            total={visibleRequests.filter(isSelectable).length}
+            onClear={() => {
+              setSelectMode(false);
+              setSelectedIds(new Set());
+            }}
+            onSelectAll={() => setSelectedIds(new Set(visibleRequests.filter(isSelectable).map((request) => request.id)))}
+            onRun={(action, requests) => setBulkRun({ action, requests })}
+          />
+        ) : null}
         {visibleRequests.map((request) => (
           <RequestCard
             key={request.id}
             request={request}
+            selection={selectMode && bulkAvailable && isSelectable(request) ? { selected: selectedIds.has(request.id), onToggle: () => toggleSelected(request.id) } : undefined}
             view={boardView}
             canManage={canManageRequests}
             readOnly={readOnly}
@@ -1746,6 +1799,16 @@ export default function Requests() {
           </>
         ) : null}
       </Modal>
+      <BulkDialog
+        run={bulkRun}
+        onHide={() => setBulkRun(null)}
+        onFinished={(result) => {
+          setActionMessage(resultSummary(result));
+          setSelectedIds(new Set());
+          loadRequests(true);
+        }}
+      />
+
       <TrailerDialog target={trailer} onHide={() => setTrailer(null)} />
 
       <Modal show={Boolean(selectedIssue)} onHide={() => setSelectedIssue(null)} centered size="lg" contentClassName="requests-modal">

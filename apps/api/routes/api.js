@@ -5,6 +5,7 @@ const { clientSettings } = require("../classes/client-config");
 const audiobookshelf = require("../classes/audiobookshelf");
 const requestDiscover = require("../classes/request-discover");
 const requestProgress = require("../classes/request-progress");
+const requestBulk = require("../classes/request-bulk");
 const requestTrailer = require("../classes/request-trailer");
 const requestCalendar = require("../classes/request-calendar");
 const quietHours = require("../classes/quiet-hours");
@@ -5023,6 +5024,39 @@ router.post("/requests/:requestId/actions", async (req, res) => {
   } catch (error) {
     console.error("Seerr request action failed:", error);
     res.status(error.statusCode || 503).send({ error: error.message || "Unable to update request" });
+  }
+});
+
+// Several requests at once: approve, decline or retry. Same per-request actions as the
+// single route, run one by one, each with its own result. Refused up front (before any
+// Seerr call) in a read-only setup and for anyone who isn't a server admin.
+router.post("/requests/bulk", async (req, res) => {
+  try {
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Read-only demo: Seerr changes are blocked.", readOnly: true });
+      return;
+    }
+    if (!require("../classes/request-rules").isAdmin(req.user)) {
+      res.status(403).send({ error: "Only server admins can change several requests at once" });
+      return;
+    }
+    const { action, items } = requestBulk.normalizeBulkInput(req.body);
+    const summary = await requestBulk.runBulk({
+      action,
+      items,
+      runOne: async (item) => {
+        if (action === "retry") {
+          // Same as the single Retry button: nudge the *arr grab first, then Seerr.
+          await require("../classes/command-center").retryFailedGrab(item).catch(() => {});
+        }
+        await runSeerrRequestAction({ requestId: item.requestId, sourceId: item.sourceId, action });
+      },
+    });
+    clearRequestCache();
+    res.send(summary);
+  } catch (error) {
+    if (error.statusCode !== 400) console.error("Bulk request action failed:", error);
+    res.status(error.statusCode || 503).send({ error: error.message || "Unable to update requests" });
   }
 });
 
