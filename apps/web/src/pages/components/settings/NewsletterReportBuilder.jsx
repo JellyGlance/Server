@@ -24,6 +24,7 @@ export const BLOCK_LIBRARY = [
   { type: "continueWatching", label: "Continue watching", text: "Per-user campaigns only.", fields: ["title", "limit", "style"], perUser: true },
   { type: "myRequests", label: "My requests", text: "Per-user campaigns only (Seerr).", fields: ["title", "limit", "style"], perUser: true },
   { type: "forYou", label: "For you", text: "Picks and because-you-watched rows. Per-user campaigns only.", fields: ["title", "limit", "style"], perUser: true },
+  { type: "wrappedRecap", label: "Wrapped recap", text: "Hours watched, top shows and films, and the busiest day.", fields: ["title", "limit", "wrappedPeriod", "style"] },
   { type: "text", label: "Text", text: "Free text. **bold** and blank lines for paragraphs.", fields: ["title", "text"] },
   { type: "customHtml", label: "Custom HTML", text: "Raw HTML dropped into the email.", fields: ["title", "html"] },
   { type: "divider", label: "Divider", text: "A thin line between sections.", fields: [] },
@@ -171,6 +172,16 @@ function BlockFields({ block, fields, libraries, onChange }) {
         <Form.Group className="report-block-wide">
           <Form.Label>HTML</Form.Label>
           <Form.Control as="textarea" rows={4} className="report-code" value={block.options?.html || ""} onChange={(event) => setOption("html", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("wrappedPeriod") ? (
+        <Form.Group>
+          <Form.Label>Recap period</Form.Label>
+          <Form.Select value={block.options?.wrappedPeriod || "week"} onChange={(event) => setOption("wrappedPeriod", event.target.value)}>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+            <option value="year">This year</option>
+          </Form.Select>
         </Form.Group>
       ) : null}
       {fields.includes("style") ? (

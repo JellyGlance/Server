@@ -93,3 +93,28 @@ describe("newsletter for-you block", () => {
     assert.match(de, /F\u00fcr dich ausgew\u00e4hlt|Noch keine Vorschl/);
   });
 });
+
+describe("newsletter wrapped recap block", () => {
+  it("renders hours, top shows and films, and the busiest day for a chosen period", () => {
+    const block = reportBuilder.normalizeBlock({ type: "wrappedRecap", options: { wrappedPeriod: "month", style: "list" } });
+    assert.equal(block.options.wrappedPeriod, "month");
+    const html = reportBuilder.renderBlock(block, {
+      period: "month",
+      start: "2026-11-01",
+      year: 2026,
+      totals: { plays: 12, seconds: 3600 * 8 },
+      busiestDay: { day: "2026-11-08", plays: 5, seconds: 7200 },
+      topShows: [{ Name: "The Crown", Id: "s1", Plays: 4, WatchSeconds: 3600 }],
+      topMovies: [{ Name: "Arrival", Id: "m1", Plays: 2, WatchSeconds: 1800 }],
+    }, ctx());
+    assert.match(html, /Your recap|November 2026|Nov 2026/);
+    assert.match(html, /Hours watched/);
+    assert.match(html, /Busiest day/);
+    assert.match(html, /The Crown/);
+    assert.match(html, /Arrival/);
+    assert.match(html, /Top shows/);
+    assert.match(html, /Top films/);
+    const empty = reportBuilder.renderBlock(block, { period: "week", start: "2026-11-09", totals: { plays: 0, seconds: 0 }, topShows: [], topMovies: [] }, ctx({ locale: "de-DE" }));
+    assert.match(empty, /Dein R\u00fcckblick|Keine Wiedergaben/);
+  });
+});

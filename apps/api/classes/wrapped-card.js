@@ -135,4 +135,4 @@ async function renderWrappedCard(data) {
   return sharp(Buffer.from(buildSvg(data))).png({ compressionLevel: 9 }).toBuffer();
 }
 
-module.exports = { renderWrappedCard, buildSvg };
+module.exports = { renderWrappedCard, buildSvg, hours, dayLabel, periodTitle, MONTHS, WEEKDAYS };

@@ -2,6 +2,8 @@ const newsletterTheme = require("./newsletter-theme");
 const newsletterI18n = require("./newsletter-i18n");
 const publicUrl = require("./newsletter-public-url");
 const { buildForYou } = require("./for-you");
+const { buildWrapped } = require("./wrapped-recap");
+const wrappedCard = require("./wrapped-card");
 /* Newsletter report builder: renders an ordered list of configurable blocks into email-safe HTML and plain text. */
 const db = require("../db");
 
@@ -19,6 +21,7 @@ const REPORT_BLOCK_TYPES = [
   "continueWatching",
   "myRequests",
   "forYou",
+  "wrappedRecap",
   "text",
   "customHtml",
   "divider",
@@ -40,6 +43,7 @@ const BLOCK_DEFAULT_TITLE_KEYS = {
   continueWatching: "CONTINUE_WATCHING",
   myRequests: "MY_REQUESTS",
   forYou: "FOR_YOU",
+  wrappedRecap: "WRAPPED",
   text: "",
   customHtml: "",
   divider: "",
@@ -59,6 +63,7 @@ const BLOCK_DEFAULT_TITLES = {
   continueWatching: "Continue watching",
   myRequests: "My requests",
   forYou: "Picked for you",
+  wrappedRecap: "Your recap",
   text: "",
   customHtml: "",
   divider: "",
@@ -141,6 +146,7 @@ function normalizeBlock(block = {}, index = 0) {
       text: String(options.text || "").slice(0, 8000),
       html: String(options.html || "").slice(0, 20000),
       style: ["list", "cards"].includes(options.style) ? options.style : "list",
+      wrappedPeriod: ["week", "month", "year"].includes(options.wrappedPeriod) ? options.wrappedPeriod : "week",
     },
   };
 }
@@ -319,6 +325,16 @@ async function blockData(block, period, context) {
       const data = await buildForYou(userId, { pickLimit: limit, becauseLimit: Math.max(6, limit) });
       return { days, picks: (data.picks || []).slice(0, limit), because: data.because || [], topGenres: data.topGenres || [] };
     }
+    case "wrappedRecap": {
+      const period = block.options.wrappedPeriod || "week";
+      const userId = context.personData?.userId || context.personData?.UserId || null;
+      const data = await buildWrapped({ period, userId });
+      return {
+        ...data,
+        topShows: (data.topShows || []).slice(0, limit).map((row) => ({ ...row, Name: row.name, Id: row.item_id || row.itemId, Plays: row.plays, WatchSeconds: row.seconds })),
+        topMovies: (data.topMovies || []).slice(0, limit).map((row) => ({ ...row, Name: row.name, Id: row.item_id || row.itemId, Plays: row.plays, WatchSeconds: row.seconds })),
+      };
+    }
     default:
       return { days };
   }
@@ -329,6 +345,16 @@ function periodLabel(days, t = identityT) {
   if (Number(days) === 7) return t("PERIOD_WEEK");
   if (Number(days) === 30) return t("PERIOD_30");
   return t("PERIOD_DAYS", { count: Number(days) || 0 });
+}
+
+function wrappedHeading(data, t, locale) {
+  if (data.period === "week") return t("WRAPPED_PERIOD_WEEK", { date: formatDate(data.start, locale) });
+  if (data.period === "month") {
+    const date = data.start ? new Date(data.start) : new Date();
+    const month = Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat(locale || "en-GB", { month: "long" }).format(date) : "";
+    return t("WRAPPED_PERIOD_MONTH", { month, year: data.year || date.getFullYear() });
+  }
+  return t("WRAPPED_PERIOD_YEAR", { year: data.year || new Date().getFullYear() });
 }
 
 function defaultTitle(block, t = identityT) {
@@ -604,6 +630,35 @@ function renderBlock(block, data, ctx = {}) {
         .join("");
       return `${picks}${because}`;
     }
+    case "wrappedRecap": {
+      const heading = title || t("WRAPPED");
+      const periodText = wrappedHeading(data, t, locale) || wrappedCard.periodTitle(data);
+      const busiest = data.busiestDay?.day ? formatDate(data.busiestDay.day, locale) : t("WRAPPED_EMPTY");
+      const hoursValue = wrappedCard.hours(data.totals?.seconds);
+      const hasActivity = Number(data.totals?.seconds || 0) > 0 || Number(data.totals?.plays || 0) > 0;
+      if (!hasActivity) return `${titleHtml(heading, env, periodText)}${emptyHtml(t("WRAPPED_EMPTY"), env)}`;
+      const tiles = statTiles(
+        [
+          [t("WRAPPED_HOURS"), String(hoursValue), t("TOTAL_PLAYED")],
+          [t("PLAYS"), Number(data.totals?.plays || 0).toLocaleString(locale), t("WATCHED_SOMETHING")],
+          [t("WRAPPED_BUSIEST"), busiest, data.busiestDay ? playsLabel(data.busiestDay.plays || 0, t) : ""],
+        ],
+        env
+      );
+      const shows = `${titleHtml(t("WRAPPED_TOP_SHOWS"), env)}${itemListOrCards(data.topShows || [], env, {
+        kind: "item",
+        empty: t("WRAPPED_EMPTY"),
+        metaFor: (item) => [playsLabel(item.Plays || item.plays, t), formatWatchTime(item.WatchSeconds || item.seconds, locale)].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name || item.name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([playsLabel(item.Plays || item.plays, t), formatWatchTime(item.WatchSeconds || item.seconds, locale)], env)}`,
+      })}`;
+      const films = `${titleHtml(t("WRAPPED_TOP_FILMS"), env)}${itemListOrCards(data.topMovies || [], env, {
+        kind: "item",
+        empty: t("WRAPPED_EMPTY"),
+        metaFor: (item) => [playsLabel(item.Plays || item.plays, t), formatWatchTime(item.WatchSeconds || item.seconds, locale)].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name || item.name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([playsLabel(item.Plays || item.plays, t), formatWatchTime(item.WatchSeconds || item.seconds, locale)], env)}`,
+      })}`;
+      return `${titleHtml(heading, env, periodText)}${tiles}${shows}${films}`;
+    }
     default:
       return "";
   }
@@ -625,6 +680,17 @@ function renderBlockText(block, data, ctx = {}) {
     case "customHtml":
     case "divider":
       return [];
+    case "wrappedRecap":
+      return [
+        ...lines,
+        wrappedHeading(data, t, locale),
+        `${t("WRAPPED_HOURS")}: ${wrappedCard.hours(data.totals?.seconds)}`,
+        `${t("WRAPPED_BUSIEST")}: ${data.busiestDay?.day ? formatDate(data.busiestDay.day, locale) : t("WRAPPED_EMPTY")}`,
+        t("WRAPPED_TOP_SHOWS"),
+        ...((data.topShows || []).map((item) => `- ${item.Name || item.name}`)),
+        t("WRAPPED_TOP_FILMS"),
+        ...((data.topMovies || []).map((item) => `- ${item.Name || item.name}`)),
+      ];
     case "forYou":
       return [
         ...lines,
