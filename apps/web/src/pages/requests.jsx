@@ -20,6 +20,7 @@ import FilterOffLineIcon from "remixicon-react/FilterOffLineIcon";
 import InboxLineIcon from "remixicon-react/InboxLineIcon";
 import BugLineIcon from "remixicon-react/BugLineIcon";
 import StackLineIcon from "remixicon-react/StackLineIcon";
+import CompassDiscoverLineIcon from "remixicon-react/CompassDiscoverLineIcon";
 import { Modal } from "react-bootstrap";
 import axios from "../lib/axios_instance";
 import { cachedGet, clearApiCache } from "../lib/api-cache";
@@ -27,6 +28,7 @@ import "./css/integrations.css";
 import RequestTimeline from "./requests/RequestTimeline";
 import RequestSkeleton from "./requests/RequestSkeleton";
 import RequestRulesModal from "./requests/RequestRulesModal";
+import RequestDiscover from "./requests/RequestDiscover";
 import ScalesLineIcon from "remixicon-react/Scales3LineIcon";
 import { useTranslation } from "react-i18next";
 import {
@@ -243,7 +245,12 @@ export default function Requests() {
   const [editingRequestId, setEditingRequestId] = useState("");
   const [requestPreferences, setRequestPreferences] = useState({ is4k: false });
   const [userRequestFolders, setUserRequestFolders] = useState({ movieRootFolder: "", tvRootFolder: "" });
-  const [pageSection, setPageSection] = useState("queue");
+  const [pageSection, setPageSection] = useState(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "discover" ? "discover" : "queue"
+  );
+  const [discoverNonce, setDiscoverNonce] = useState(0);
+  const [seerrReadOnly, setSeerrReadOnly] = useState(false);
+  const [blockedIds, setBlockedIds] = useState(() => new Set());
   const [issues, setIssues] = useState([]);
   const [issuesLoading, setIssuesLoading] = useState(false);
   const [issueFilter, setIssueFilter] = useState("Open");
@@ -791,7 +798,13 @@ export default function Requests() {
       await loadRequests(true);
       runMediaSearch(true);
     } catch (error) {
-      setActionMessage(error.response?.data?.error || error.message || "Media request failed");
+      if (error.response?.data?.readOnly) {
+        // The Seerr connection is read-only: remember it for this title and say so plainly.
+        setBlockedIds((current) => new Set(current).add(result.id));
+        setActionMessage(`Demo: request blocked. ${result.title} was not sent; this Seerr connection is read-only.`);
+      } else {
+        setActionMessage(error.response?.data?.error || error.message || "Media request failed");
+      }
     } finally {
       setBusyAction("");
     }
@@ -971,25 +984,29 @@ export default function Requests() {
       <section className="requests-discovery">
         <div className="requests-discovery-head">
           <div>
-            <h2>{pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_TITLE") : t("FEATURES.REQUESTS.TITLE")}</h2>
+            <h2>{pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_TITLE") : pageSection === "discover" ? "Discover" : t("FEATURES.REQUESTS.TITLE")}</h2>
             <span>
-              {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : t("FEATURES.REQUESTS.INTRO")}
+              {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : pageSection === "discover" ? "Browse what Seerr suggests and request what is missing." : t("FEATURES.REQUESTS.INTRO")}
             </span>
           </div>
           <div className="requests-discovery-tools">
-            {canManageRequests ? (
-              <div className="requests-section-tabs" role="tablist" aria-label={t("FEATURES.REQUESTS.SECTIONS")}>
+            <div className="requests-section-tabs" role="tablist" aria-label={t("FEATURES.REQUESTS.SECTIONS")}>
                 <button type="button" role="tab" aria-selected={pageSection === "queue"} className={pageSection === "queue" ? "is-active" : ""} onClick={() => setPageSection("queue")}>
                   <InboxLineIcon size={16} />
                   {t("FEATURES.REQUESTS.QUEUE")}
                 </button>
+                <button type="button" role="tab" aria-selected={pageSection === "discover"} className={pageSection === "discover" ? "is-active" : ""} onClick={() => setPageSection("discover")}>
+                  <CompassDiscoverLineIcon size={16} />
+                  Discover
+                </button>
+                {canManageRequests ? (
                 <button type="button" role="tab" aria-selected={pageSection === "issues"} className={pageSection === "issues" ? "is-active" : ""} onClick={() => setPageSection("issues")}>
                   <BugLineIcon size={16} />
                   {t("FEATURES.REQUESTS.ISSUES")}
                   {issues.filter((issue) => issue.status === "Open").length ? <em>{issues.filter((issue) => issue.status === "Open").length}</em> : null}
                 </button>
+                ) : null}
               </div>
-            ) : null}
             {quota?.enabled && quota.usage && !quota.usage.unlimited ? (
               <span className="requests-quota-chip" title="Your request allowance">
                 <MovieLineIcon size={14} /> {quota.usage.movie.used}/{quota.usage.movie.limit}
@@ -1005,7 +1022,7 @@ export default function Requests() {
             <button
               type="button"
               className="requests-refresh-button"
-              onClick={() => (pageSection === "issues" ? loadIssues() : loadRequests(true))}
+              onClick={() => (pageSection === "issues" ? loadIssues() : pageSection === "discover" ? setDiscoverNonce((value) => value + 1) : loadRequests(true))}
               disabled={loading || issuesLoading}
               title={formatSyncedAgo(data.syncedAt) || "Refresh"}
             >
@@ -1198,7 +1215,7 @@ export default function Requests() {
           <div className="requests-discovery-empty">No Seerr results found.</div>
         ) : null}
           </>
-        ) : (
+        ) : pageSection === "issues" ? (
           <>
             <label className="requests-media-search">
               <SearchLineIcon size={18} />
@@ -1218,8 +1235,14 @@ export default function Requests() {
               <strong>{visibleIssues.length} shown from {issues.length}</strong>
             </nav>
           </>
-        )}
+        ) : null}
       </section>
+
+      {pageSection === "discover" ? (
+        <section className="requests-discover-board">
+          <RequestDiscover blockedIds={blockedIds} onOpen={openMediaResultDetail} onReadOnly={setSeerrReadOnly} nonce={discoverNonce} />
+        </section>
+      ) : null}
 
       {pageSection === "queue" ? (
       <section className={`requests-board is-${queueView}`}>
@@ -1582,8 +1605,10 @@ export default function Requests() {
                         {(() => {
                           const isAlreadyAvailable = selectedRequest.availability?.status === "Available";
                           const isAlreadyRequested = selectedRequest.requested && !isAlreadyAvailable;
+                          const isDemoBlocked = blockedIds.has(selectedRequest.id);
                           const requestDisabled =
                             Boolean(busyAction) ||
+                            isDemoBlocked ||
                             isAlreadyAvailable ||
                             isAlreadyRequested ||
                             Boolean(requestOptionsLoading[selectedRequest.id]) ||
@@ -1592,10 +1617,15 @@ export default function Requests() {
                           return (
                             <button type="button" disabled={requestDisabled} onClick={() => requestMedia(selectedRequest)}>
                               <ChatCheckFillIcon size={17} />
-                              {isAlreadyAvailable ? t("FEATURES.REQUESTS.AVAILABLE") : isAlreadyRequested ? t("FEATURES.REQUESTS.ALREADY_REQUESTED") : t("FEATURES.REQUESTS.REQUEST_THIS")}
+                              {isDemoBlocked ? "Demo: request blocked" : isAlreadyAvailable ? t("FEATURES.REQUESTS.AVAILABLE") : isAlreadyRequested ? t("FEATURES.REQUESTS.ALREADY_REQUESTED") : t("FEATURES.REQUESTS.REQUEST_THIS")}
                             </button>
                           );
                         })()}
+                        {blockedIds.has(selectedRequest.id) || seerrReadOnly ? (
+                          <small className="requests-options-status">
+                            {blockedIds.has(selectedRequest.id) ? "Nothing was sent. This Seerr connection is read-only in the demo." : "Demo: this Seerr connection is read-only, so requests are blocked."}
+                          </small>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}

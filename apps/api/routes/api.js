@@ -3,6 +3,7 @@ const express = require("express");
 const { mediaServerAuthHeaders, chooseServerType, withServerType, saveServerType, envServerType } = require("../classes/server-type");
 const { clientSettings } = require("../classes/client-config");
 const audiobookshelf = require("../classes/audiobookshelf");
+const requestDiscover = require("../classes/request-discover");
 const quietHours = require("../classes/quiet-hours");
 const fs = require("fs");
 const path = require("path");
@@ -4766,6 +4767,26 @@ router.get("/requests/search", async (req, res) => {
   }
 });
 
+router.get("/requests/discover", async (req, res) => {
+  try {
+    const source = await requestDiscover.getSeerrSource(req.query?.sourceId);
+    res.send(await requestDiscover.getDiscoverRows(source));
+  } catch (error) {
+    console.error("Seerr discover rows failed:", getAxiosErrorMessage(error));
+    res.status(error.statusCode || 503).send({ error: error.message || "Unable to load discover rows" });
+  }
+});
+
+router.get("/requests/discover/row", async (req, res) => {
+  try {
+    const source = await requestDiscover.getSeerrSource(req.query?.sourceId);
+    res.send(await requestDiscover.getDiscoverRow(source, String(req.query?.key || ""), { page: req.query?.page, chipId: req.query?.chipId }));
+  } catch (error) {
+    console.error("Seerr discover row failed:", getAxiosErrorMessage(error));
+    res.status(error.statusCode || 503).send({ error: error.message || "Unable to load discover row" });
+  }
+});
+
 router.get("/requests/media-detail", async (req, res) => {
   try {
     res.send(
@@ -4840,6 +4861,11 @@ router.get("/requests/:requestId/detail", async (req, res) => {
 
 router.post("/requests/media", async (req, res) => {
   try {
+    // A setup with read-only access to Seerr cannot file requests; say so without trying.
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Demo: request blocked. This Seerr connection is read-only.", readOnly: true });
+      return;
+    }
     const { getRequestPreferences, getUserRequestFolders, applyUserFolderOverride } = require("../classes/request-provider");
     const preferences = await getRequestPreferences();
     const userFolders = await getUserRequestFolders(req.user);
