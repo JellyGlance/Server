@@ -46,20 +46,21 @@ async function listHero({ itemId = "", libraryId = "", now } = {}) {
   }
   const lib = libraryClause("i", libraryId, params);
   const { rows } = await db.query(
-    `SELECT i."Id", i."Name", i."Type", i."PrimaryImageHash", i."ProductionYear", i."CommunityRating",
-            i."BackdropImageTags", i."Genres", l."Name" AS "Library",
-            COUNT(a."Id")::int AS plays
-       FROM jf_library_items i
-       LEFT JOIN jf_libraries l ON l."Id" = i."ParentId"
-       LEFT JOIN jf_playback_activity a
-         ON (a."NowPlayingItemId" = i."Id" OR a."EpisodeId" IN (
-              SELECT e."EpisodeId" FROM jf_library_episodes e WHERE e."SeriesId" = i."Id"
-            ))
-        AND a."ActivityDateInserted" >= now() - interval '7 days'
-      WHERE ${where}${lib}
-      GROUP BY i."Id", l."Name"
-      ORDER BY COUNT(a."Id") DESC, i."CommunityRating" DESC NULLS LAST, i."DateCreated" DESC
-      LIMIT 1`,
+    `WITH week AS (
+        SELECT COALESCE(e."SeriesId", a."NowPlayingItemId") AS item_id, COUNT(*)::int AS plays
+          FROM jf_playback_activity a
+          LEFT JOIN jf_library_episodes e ON e."EpisodeId" = COALESCE(a."EpisodeId", a."NowPlayingItemId")
+         WHERE a."ActivityDateInserted" >= now() - interval '7 days'
+         GROUP BY 1
+      )
+      SELECT i."Id", i."Name", i."Type", i."PrimaryImageHash", i."ProductionYear", i."CommunityRating",
+             i."BackdropImageTags", i."Genres", l."Name" AS "Library", COALESCE(week.plays, 0) AS plays
+        FROM jf_library_items i
+        LEFT JOIN week ON week.item_id = i."Id"
+        LEFT JOIN jf_libraries l ON l."Id" = i."ParentId"
+       WHERE ${where}${lib}
+       ORDER BY COALESCE(week.plays, 0) DESC, i."CommunityRating" DESC NULLS LAST, i."DateCreated" DESC
+       LIMIT 1`,
     params
   );
   const row = rows[0];
@@ -114,10 +115,8 @@ async function listTrendingWeek({ limit = 8, libraryId = "", days = 7 } = {}) {
             l."Name" AS "Library", COUNT(a."Id")::int AS "Plays",
             COALESCE(SUM(a."PlaybackDuration"), 0)::bigint AS "WatchSeconds"
        FROM jf_playback_activity a
-       JOIN jf_library_items i ON i."Id" = COALESCE(
-            (SELECT e."SeriesId" FROM jf_library_episodes e WHERE e."EpisodeId" = COALESCE(a."EpisodeId", a."NowPlayingItemId") LIMIT 1),
-            a."NowPlayingItemId"
-          )
+       LEFT JOIN jf_library_episodes e ON e."EpisodeId" = COALESCE(a."EpisodeId", a."NowPlayingItemId")
+       JOIN jf_library_items i ON i."Id" = COALESCE(e."SeriesId", a."NowPlayingItemId")
        LEFT JOIN jf_libraries l ON l."Id" = i."ParentId"
       WHERE a."ActivityDateInserted" >= now() - make_interval(days => $1)
         AND i.archived IS NOT TRUE
@@ -221,8 +220,9 @@ async function listQualityUpgrades({ limit = 8, libraryId = "" } = {}) {
        JOIN jf_item_info ii ON ii."Id" = i."Id"
        LEFT JOIN jf_libraries l ON l."Id" = i."ParentId"
       WHERE i.archived IS NOT TRUE AND i."Type" IN ('Movie', 'Video')${lib}
+        AND ii."MediaStreams"::text ~* '2160|4k|uhd|hdr|dovi|dolby.?vision'
       ORDER BY i."DateCreated" DESC NULLS LAST
-      LIMIT 400`,
+      LIMIT 80`,
     params.slice(0, -1)
   );
   const items = [];
@@ -286,10 +286,8 @@ async function listGenreChart({ days = 7, limit = 8, libraryId = "" } = {}) {
   const result = await db.query(
     `SELECT g.genre AS "Name", COUNT(*)::int AS "Plays"
        FROM jf_playback_activity a
-       JOIN jf_library_items i ON i."Id" = COALESCE(
-            (SELECT e."SeriesId" FROM jf_library_episodes e WHERE e."EpisodeId" = COALESCE(a."EpisodeId", a."NowPlayingItemId") LIMIT 1),
-            a."NowPlayingItemId"
-          )
+       LEFT JOIN jf_library_episodes e ON e."EpisodeId" = COALESCE(a."EpisodeId", a."NowPlayingItemId")
+       JOIN jf_library_items i ON i."Id" = COALESCE(e."SeriesId", a."NowPlayingItemId")
        CROSS JOIN LATERAL jsonb_array_elements_text(COALESCE(i."Genres", '[]'::jsonb)) AS g(genre)
       WHERE a."ActivityDateInserted" >= now() - make_interval(days => $1)
         AND i.archived IS NOT TRUE${lib}
@@ -310,23 +308,24 @@ async function listHiddenGem({ libraryId = "", limit = 1 } = {}) {
   const params = [Number(limit) || 1];
   const lib = libraryClause("i", libraryId, params);
   const { rows } = await db.query(
-    `SELECT i."Id", i."Name", i."Type", i."PrimaryImageHash", i."ProductionYear",
-            i."CommunityRating", l."Name" AS "Library", COALESCE(p.plays, 0)::int AS "Plays"
-       FROM jf_library_items i
-       LEFT JOIN jf_libraries l ON l."Id" = i."ParentId"
-       LEFT JOIN LATERAL (
-         SELECT count(*)::int AS plays
-           FROM jf_playback_activity a
-          WHERE a."NowPlayingItemId" = i."Id"
-             OR a."EpisodeId" IN (SELECT e."EpisodeId" FROM jf_library_episodes e WHERE e."SeriesId" = i."Id")
-       ) p ON TRUE
-      WHERE i.archived IS NOT TRUE
-        AND i."Type" IN ('Movie', 'Series')
-        AND i."CommunityRating" >= 7.5
-        AND i."DateCreated" < now() - interval '90 days'${lib}
-        AND COALESCE(p.plays, 0) <= 3
-      ORDER BY i."CommunityRating" DESC, COALESCE(p.plays, 0) ASC, i."Name"
-      LIMIT $1`,
+    `WITH play AS (
+        SELECT COALESCE(e."SeriesId", a."NowPlayingItemId") AS item_id, COUNT(*)::int AS plays
+          FROM jf_playback_activity a
+          LEFT JOIN jf_library_episodes e ON e."EpisodeId" = COALESCE(a."EpisodeId", a."NowPlayingItemId")
+         GROUP BY 1
+      )
+      SELECT i."Id", i."Name", i."Type", i."PrimaryImageHash", i."ProductionYear",
+             i."CommunityRating", l."Name" AS "Library", COALESCE(play.plays, 0)::int AS "Plays"
+        FROM jf_library_items i
+        LEFT JOIN play ON play.item_id = i."Id"
+        LEFT JOIN jf_libraries l ON l."Id" = i."ParentId"
+       WHERE i.archived IS NOT TRUE
+         AND i."Type" IN ('Movie', 'Series')
+         AND i."CommunityRating" >= 7.5
+         AND i."DateCreated" < now() - interval '90 days'${lib}
+         AND COALESCE(play.plays, 0) <= 3
+       ORDER BY i."CommunityRating" DESC, COALESCE(play.plays, 0) ASC, i."Name"
+       LIMIT $1`,
     params
   );
   return rows.map((row) => asItem(row, { CommunityRating: row.CommunityRating, Plays: row.Plays }));

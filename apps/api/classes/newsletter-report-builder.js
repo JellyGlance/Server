@@ -1115,7 +1115,7 @@ function renderBlockText(block, data, ctx = {}) {
     default:
       return [
         ...lines,
-        ...(data.items || []).map((item) => {
+        ...((Array.isArray(data.items) ? data.items : [])).map((item) => {
           const href = block.type === "myRequests" ? hrefFor(item, ctx, "request") : hrefFor(item, ctx, "item");
           return `- ${item.Name}${item.Plays != null ? `: ${playsLabel(item.Plays, t)}` : ""}${item.Items != null ? `: ${t("ITEMS_COUNT", { count: item.Items })}` : ""}${item.Type ? ` (${item.Type})` : ""}${href ? ` ${href}` : ""}`;
         }),
