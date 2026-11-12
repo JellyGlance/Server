@@ -3533,9 +3533,10 @@ async function buildSeerrRequests(options = {}) {
         params: { take: 100, skip: 0, filter: "all", sort: "added" },
       });
       const requests = Array.isArray(response.data?.results) ? response.data.results : Array.isArray(response.data) ? response.data : [];
-      // JG_READONLY_SEERR=1 (the demo, which only has a GET-only route to
-      // Seerr) skips the folder auto-repair, which writes back to Seerr.
-      if (!options.skipFolderRepair && !options.lightweight && process.env.JG_READONLY_SEERR !== "1") {
+      // JG_READONLY_SEERR=1 (a copy with a GET-only route to Seerr) and
+      // JG_SKIP_FOLDER_REPAIR=1 (a second copy beside a live install) skip the
+      // folder auto-repair, which writes back to Seerr.
+      if (!options.skipFolderRepair && !options.lightweight && process.env.JG_READONLY_SEERR !== "1" && process.env.JG_SKIP_FOLDER_REPAIR !== "1") {
         try {
           await repairSeerrRequestFolders(app, requests);
         } catch (error) {

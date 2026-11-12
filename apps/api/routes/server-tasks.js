@@ -498,7 +498,9 @@ async function schedulerTick() {
   }
 }
 
-if (process.env.NODE_ENV !== "test") {
+// JG_DISABLE_SERVER_AUTOMATION=1 stops the automatic Jellyfin/Arr job runs and quiet-hours
+// stops from this install (for a second copy that runs beside a live one).
+if (process.env.NODE_ENV !== "test" && process.env.JG_DISABLE_SERVER_AUTOMATION !== "1") {
   const interval = setInterval(schedulerTick, 5 * 60 * 1000);
   interval.unref?.();
   const quietInterval = setInterval(quietHoursTick, 60 * 1000);

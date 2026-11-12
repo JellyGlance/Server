@@ -1016,7 +1016,7 @@ async function scheduledTick() {
   }
 }
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "test" && process.env.JG_DISABLE_SERVER_AUTOMATION !== "1") {
   const firstRun = setTimeout(scheduledTick, 5 * 60 * 1000);
   const interval = setInterval(scheduledTick, 60 * 60 * 1000);
   firstRun.unref?.();

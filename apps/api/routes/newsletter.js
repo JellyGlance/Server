@@ -123,6 +123,8 @@ function validateSmtpSettings(newsletter) {
 }
 
 function createTransport(newsletter) {
+  // JG_DISABLE_NOTIFICATIONS=1 turns every outgoing email off (scheduled and manual).
+  if (process.env.JG_DISABLE_NOTIFICATIONS === "1") throw new Error("Email is turned off on this server (JG_DISABLE_NOTIFICATIONS=1)");
   return nodemailer.createTransport({
     host: newsletter.smtp.host,
     port: Number(newsletter.smtp.port || 587),
