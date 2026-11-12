@@ -306,6 +306,7 @@ async function buildUserNewsletterData(person) {
     subject: `Your JellyGlance digest - ${formatDate(new Date())}`,
     perUser: true,
     personName: person.name,
+    userId: person.userId || "",
     continueWatching: continueItems.map(normalizeJellyfinMediaItem).map((item) => ({
       Name: item.seriesName || item.name,
       Type: item.type,
@@ -579,6 +580,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
               subject: lastSubject || `Your JellyGlance digest - ${formatDate(new Date())}`,
               perUser: true,
               personName: delivery.person.name,
+              userId: delivery.person.userId || "",
               continueWatching: [],
               myRequests: [],
               recentlyAdded: [],
@@ -726,10 +728,27 @@ function reportEnabled(campaign) {
   return Boolean(campaign?.sections?.report?.enabled && campaign.sections.report.blocks?.length);
 }
 
+async function resolvePreviewPerson(campaign, userId) {
+  const people = await campaigns.resolvePerUserCampaignRecipients(campaign || { id: null }).catch(() => []);
+  const match = people.find((row) => String(row.userId) === String(userId || ""));
+  if (match?.userId) return match;
+  if (!userId && people[0]?.userId) return people[0];
+  const { rows } = await db
+    .query(
+      `SELECT a."UserId" AS "userId", COALESCE(NULLIF(MAX(a."UserName"), ''), MAX(u."Name"), a."UserId") AS name
+         FROM jf_playback_activity a
+         LEFT JOIN jf_users u ON u."Id" = a."UserId"
+        GROUP BY a."UserId"
+        ORDER BY SUM(a."PlaybackDuration") DESC
+        LIMIT 20`
+    )
+    .catch(() => ({ rows: [] }));
+  const fallback = rows.find((row) => String(row.userId) === String(userId || "")) || (!userId ? rows[0] : null);
+  return fallback || people[0] || { userId: userId || "", name: "Viewer" };
+}
+
 async function previewPersonData(campaign, userId) {
-  const people = await campaigns.resolvePerUserCampaignRecipients(campaign || { id: null });
-  const person = people.find((row) => String(row.userId) === String(userId || "")) || people[0] || { userId: "", name: "Viewer" };
-  return buildUserNewsletterData(person);
+  return buildUserNewsletterData(await resolvePreviewPerson(campaign, userId));
 }
 
 async function sendDueCampaigns(req = null) {
@@ -788,9 +807,8 @@ router.get("/preview", async (req, res) => {
       if (campaign) {
         campaignName = campaign.name;
         if (campaign.type === "per-user") {
-          const people = await campaigns.resolvePerUserCampaignRecipients(campaign);
-          const person = people.find((row) => String(row.userId) === String(req.query.userId || "")) || people[0] || { userId: "", name: "Viewer" };
-          data = person.userId ? await buildUserNewsletterData(person) : await buildUserNewsletterData({ userId: "", name: person.name });
+          const person = await resolvePreviewPerson(campaign, req.query.userId);
+          data = await buildUserNewsletterData(person.userId ? person : { userId: "", name: person.name || "Viewer" });
           sections = { ...campaigns.PER_USER_SECTIONS, ...(campaign.sections || {}), ...(campaign.template?.blocks || {}) };
         } else {
           sections = { ...sections, ...(campaign.sections || {}), ...(campaign.template?.blocks || {}) };

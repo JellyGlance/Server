@@ -1,6 +1,7 @@
 const newsletterTheme = require("./newsletter-theme");
 const newsletterI18n = require("./newsletter-i18n");
 const publicUrl = require("./newsletter-public-url");
+const { buildForYou } = require("./for-you");
 /* Newsletter report builder: renders an ordered list of configurable blocks into email-safe HTML and plain text. */
 const db = require("../db");
 
@@ -17,12 +18,13 @@ const REPORT_BLOCK_TYPES = [
   "repairSummary",
   "continueWatching",
   "myRequests",
+  "forYou",
   "text",
   "customHtml",
   "divider",
 ];
 
-const PER_USER_BLOCKS = new Set(["continueWatching", "myRequests"]);
+const PER_USER_BLOCKS = new Set(["continueWatching", "myRequests", "forYou"]);
 
 const BLOCK_DEFAULT_TITLE_KEYS = {
   intro: "",
@@ -37,6 +39,7 @@ const BLOCK_DEFAULT_TITLE_KEYS = {
   repairSummary: "REPAIR",
   continueWatching: "CONTINUE_WATCHING",
   myRequests: "MY_REQUESTS",
+  forYou: "FOR_YOU",
   text: "",
   customHtml: "",
   divider: "",
@@ -55,6 +58,7 @@ const BLOCK_DEFAULT_TITLES = {
   repairSummary: "Repair snapshot",
   continueWatching: "Continue watching",
   myRequests: "My requests",
+  forYou: "Picked for you",
   text: "",
   customHtml: "",
   divider: "",
@@ -310,6 +314,11 @@ async function blockData(block, period, context) {
       return { days, items: (context.personData?.continueWatching || []).slice(0, limit) };
     case "myRequests":
       return { days, items: (context.personData?.myRequests || []).slice(0, limit) };
+    case "forYou": {
+      const userId = context.personData?.userId || context.personData?.UserId || "";
+      const data = await buildForYou(userId, { pickLimit: limit, becauseLimit: Math.max(6, limit) });
+      return { days, picks: (data.picks || []).slice(0, limit), because: data.because || [], topGenres: data.topGenres || [] };
+    }
     default:
       return { days };
   }
@@ -570,6 +579,31 @@ function renderBlock(block, data, ctx = {}) {
         metaFor: (item) => [item.Type, item.status].filter(Boolean).join(" · "),
         render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "request"), themeOf(env).heading)}${meta([item.Type, item.status], env)}`,
       })}`;
+    case "forYou": {
+      const pickMeta = (item) => {
+        const genres = item.reasonGenres || [];
+        const reason = genres.length ? t("YOU_WATCH_A_LOT", { genres: genres.join(" & ") }) : item.reason || item.when || "";
+        return [item.Type || item.type, item.ProductionYear || item.year, reason].filter(Boolean).join(" · ");
+      };
+      const picks = `${titleHtml(title, env)}${itemListOrCards(data.picks || [], env, {
+        kind: "item",
+        empty: t("FOR_YOU_EMPTY"),
+        metaFor: pickMeta,
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name || item.name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([pickMeta(item)], env)}`,
+      })}`;
+      const because = (data.because || [])
+        .map((row) => {
+          const heading = t("BECAUSE_YOU_WATCHED", { title: row.seed?.name || row.seed?.Name || "" });
+          return `${titleHtml(heading, env, t("BECAUSE_YOU_WATCHED_SUB"))}${itemListOrCards(row.items || [], env, {
+            kind: "item",
+            empty: t("FOR_YOU_EMPTY"),
+            metaFor: (item) => [item.Type || item.type, item.ProductionYear || item.year].filter(Boolean).join(" · "),
+            render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name || item.name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([item.Type || item.type, item.ProductionYear || item.year], env)}`,
+          })}`;
+        })
+        .join("");
+      return `${picks}${because}`;
+    }
     default:
       return "";
   }
@@ -591,6 +625,12 @@ function renderBlockText(block, data, ctx = {}) {
     case "customHtml":
     case "divider":
       return [];
+    case "forYou":
+      return [
+        ...lines,
+        ...((data.picks || []).map((item) => `- ${item.Name || item.name}`)),
+        ...((data.because || []).flatMap((row) => [`${t("BECAUSE_YOU_WATCHED", { title: row.seed?.name || "" })}`, ...(row.items || []).map((item) => `- ${item.Name || item.name}`)])),
+      ];
     default:
       return [
         ...lines,

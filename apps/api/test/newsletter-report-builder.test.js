@@ -67,3 +67,29 @@ describe("newsletter report poster cards", () => {
     assert.doesNotMatch(html, /color:#f4f8ff/);
   });
 });
+
+describe("newsletter for-you block", () => {
+  it("is a per-user block and renders picks plus because-you-watched rows", () => {
+    assert.equal(reportBuilder.PER_USER_BLOCKS.has("forYou"), true);
+    assert.ok(reportBuilder.REPORT_BLOCK_TYPES.includes("forYou"));
+    const block = reportBuilder.normalizeBlock({ type: "forYou", options: { style: "cards", limit: 4 } });
+    const data = {
+      picks: [
+        { Id: "p1", Name: "Arrival", Type: "Movie", ProductionYear: 2016, PrimaryImageHash: "h", reasonGenres: ["Science Fiction", "Drama"] },
+      ],
+      because: [
+        { seed: { id: "s1", name: "Dune" }, items: [{ Id: "p2", Name: "Interstellar", Type: "Movie", ProductionYear: 2014, PrimaryImageHash: "i" }] },
+      ],
+    };
+    const html = reportBuilder.renderBlock(block, data, ctx({ locale: "en-GB" }));
+    assert.match(html, /Picked for you/);
+    assert.match(html, /Arrival/);
+    assert.match(html, /You watch a lot of Science Fiction &amp; Drama/);
+    assert.match(html, /Because you watched Dune/);
+    assert.match(html, /Interstellar/);
+    assert.match(html, /libraries\/item\/p1/);
+    assert.match(html, /proxy\/Items\/Images\/Primary/);
+    const de = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "forYou" }), { picks: [], because: [] }, ctx({ locale: "de-DE" }));
+    assert.match(de, /F\u00fcr dich ausgew\u00e4hlt|Noch keine Vorschl/);
+  });
+});
