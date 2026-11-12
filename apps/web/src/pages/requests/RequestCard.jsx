@@ -169,12 +169,12 @@ export function RequestCard({ request, view = "list", canManage, readOnly, busy,
       <div className="rq-actions" onClick={(event) => event.stopPropagation()}>
         {canWrite && chip.key === "pending" ? (
           <>
-            <Action title="Approve" icon={CheckboxCircleLineIcon} tone="is-primary" showLabel={isCard} disabled={busy} onClick={(event) => onAction(request, "approve", event)} />
+            <Action title="Approve" icon={CheckboxCircleLineIcon} tone="is-primary" showLabel={isCard && !compact} disabled={busy} onClick={(event) => onAction(request, "approve", event)} />
             <Action title="Decline" icon={CloseCircleLineIcon} disabled={busy} onClick={(event) => onAction(request, "decline", event)} />
           </>
         ) : null}
         {canWrite && request.requestId && chip.key === "failed" ? (
-          <Action title="Retry" icon={RefreshLineIcon} tone="is-primary" showLabel={isCard} disabled={busy} onClick={(event) => onAction(request, "retry", event)} />
+          <Action title="Retry" icon={RefreshLineIcon} tone="is-primary" showLabel={isCard && !compact} disabled={busy} onClick={(event) => onAction(request, "retry", event)} />
         ) : null}
         {canWrite && request.requestId ? <Action title="Edit routing" icon={Edit2LineIcon} disabled={busy} onClick={(event) => onEdit(request, event)} /> : null}
         {canManage && request.openUrl ? <Action title={`Open in ${request.source}`} icon={ExternalLinkLineIcon} onClick={(event) => onOpenSeerr(request, event)} /> : null}

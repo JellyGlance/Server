@@ -1231,11 +1231,11 @@
 
 /* Narrow rows keep the status and the bar; the type and age chips make way. */
 @media (max-width: 699px) {
-  .rq-card.is-list .rq-chips:has(.rq-dl) :is(.rq-age, .is-type) {
+  .rq-card .rq-chips:has(.rq-dl) :is(.rq-age, .is-type) {
     display: none;
   }
 
-  .rq-card.is-list .rq-dl {
+  .rq-card .rq-dl {
     margin-left: 0;
   }
 
@@ -1742,13 +1742,67 @@
 
   .rq-dots,
   .rq-requester time,
-  .rq-card.is-list .rq-chip-extra,
-  .rq-card.is-list .rq-chip.is-type .rq-chip-text {
+  .rq-card .rq-chip-extra,
+  .rq-card .rq-chip.is-type .rq-chip-text {
     display: none;
   }
 
-  .rq-card.is-list .rq-chip.is-type {
+  .rq-card .rq-chip.is-type {
     padding: 0 7px;
+  }
+}
+
+/* Phones: a card is a full-width, single-column card with a smaller 2:3 poster (96x144),
+   the same backdrop and shade, and the chips on one line like a row. */
+@media (max-width: 699px) {
+  .rq-board.is-cards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--rq-s3);
+  }
+
+  .rq-card.is-cards {
+    grid-template-columns: 96px minmax(0, 1fr);
+    height: 144px;
+  }
+
+  .rq-card.is-cards .rq-text {
+    grid-template-rows: minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .rq-card.is-cards .rq-body {
+    align-content: center;
+    gap: var(--rq-s2);
+    padding: 12px 12px 12px 16px;
+  }
+
+  .rq-card.is-cards .rq-title {
+    font-size: 15px;
+  }
+
+  .rq-card.is-cards .rq-chips {
+    flex-wrap: nowrap;
+    align-content: center;
+    gap: 8px;
+    height: 24px;
+  }
+
+  /* A download bar takes its own line under the status chip, as on wider cards. */
+  .rq-card.is-cards .rq-chips:has(.rq-dl) {
+    flex-wrap: wrap;
+    height: 56px;
+  }
+
+  .requests-page.rq .rq-card.is-cards .rq-requester {
+    padding-right: 4px;
+  }
+
+  .requests-page.rq .rq-text:has(.rq-action) .rq-requester-name {
+    max-width: calc(100% - 140px);
+  }
+
+  .requests-page.rq .rq-card.is-cards .rq-text:has(.rq-action) .rq-requester-name > span {
+    display: none;
   }
 }
 

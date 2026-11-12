@@ -29,6 +29,7 @@ import "./css/integrations.css";
 import RequestTimeline from "./requests/RequestTimeline";
 import RequestRulesModal from "./requests/RequestRulesModal";
 import RequestDiscover from "./requests/RequestDiscover";
+import { readQueueView, saveQueueView } from "./requests/view";
 import { discoverSectionFromSearch } from "./requests/discover-grid";
 import TrailerDialog from "./requests/TrailerDialog";
 import { trailerTarget } from "./requests/trailer";
@@ -136,8 +137,7 @@ function RequesterIdentity({ request }) {
 }
 
 // Cards turn into rows below 900px so nothing squashes.
-function useNarrowScreen() {
-  const query = "(max-width: 899px)";
+function useNarrowScreen(query = "(max-width: 899px)") {
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && Boolean(window.matchMedia?.(query).matches));
   useEffect(() => {
     const mql = window.matchMedia?.(query);
@@ -173,7 +173,11 @@ export default function Requests() {
   const searchInputRef = useRef(null);
   const [requesterFilter, setRequesterFilter] = useState("all");
   const [sortMode, setSortMode] = useState("newest");
-  const [queueView, setQueueView] = useState("list");
+  const [queueView, setQueueViewState] = useState(() => (typeof window !== "undefined" ? readQueueView(window.localStorage) : "cards"));
+  const setQueueView = useCallback((view) => {
+    setQueueViewState(view);
+    saveQueueView(window.localStorage, view);
+  }, []);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedRequestLoading, setSelectedRequestLoading] = useState(false);
   const [editingRequestId, setEditingRequestId] = useState("");
@@ -210,7 +214,8 @@ export default function Requests() {
   // Set by the API when the Seerr connection is read-only (demo); admin write controls go away.
   const readOnly = Boolean(data.readOnly || seerrReadOnly);
   const narrow = useNarrowScreen();
-  const boardView = queueView === "cards" && !narrow ? "cards" : "list";
+  const phone = useNarrowScreen("(max-width: 699px)");
+  const boardView = queueView === "cards" ? "cards" : "list";
   const seerrName = (data.sources || [])[0]?.name || "Seerr";
 
   useEffect(() => {
@@ -1034,7 +1039,7 @@ export default function Requests() {
               <RefreshLineIcon size={16} className={loading || issuesLoading ? "is-spinning" : ""} />
               <span>{pageSection === "queue" && data.syncedAt ? formatSyncedAgo(data.syncedAt) : "Refresh"}</span>
             </button>
-            {pageSection === "queue" && !narrow ? (
+            {pageSection === "queue" ? (
               <div className="rq-view-toggle" role="group" aria-label={t("FEATURES.REQUESTS.QUEUE_VIEW")}>
                 <button type="button" className={boardView === "cards" ? "" : "is-active"} aria-pressed={boardView === "list"} onClick={() => setQueueView("list")} title={t("FEATURES.REQUESTS.LIST_VIEW")} aria-label={t("FEATURES.REQUESTS.LIST_VIEW")}>
                   <FileList3LineIcon size={16} />
@@ -1269,7 +1274,7 @@ export default function Requests() {
             readOnly={readOnly}
             busy={Boolean(busyAction)}
             progress={progress.items[request.id]}
-            compact={narrow}
+            compact={boardView === "cards" ? phone : narrow}
             onOpen={openRequestDetail}
             onAction={runRequestAction}
             onEdit={openRequestEditor}
