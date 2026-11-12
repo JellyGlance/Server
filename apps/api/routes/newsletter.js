@@ -255,7 +255,7 @@ async function fetchUserSeerrRequests(userName) {
       const response = await axios.get(`${cleanUrl(app.values.url)}/api/v1/request`, {
         timeout: 12000,
         headers: { "X-Api-Key": app.values.secret },
-        params: { take: 40, skip: 0, sort: "added", skipCount: "false" },
+        params: { take: 40, skip: 0, sort: "added" },
       });
       const rows = response.data?.results || response.data || [];
       for (const row of Array.isArray(rows) ? rows : []) {
