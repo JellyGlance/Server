@@ -9,6 +9,7 @@ import ChatCheckFillIcon from "remixicon-react/ChatCheckFillIcon";
 import EyeLineIcon from "remixicon-react/EyeLineIcon";
 import ForbidLineIcon from "remixicon-react/ForbidLineIcon";
 import MovieLineIcon from "remixicon-react/MovieLineIcon";
+import PlayFillIcon from "remixicon-react/PlayFillIcon";
 import StarFillIcon from "remixicon-react/StarFillIcon";
 import Tv2LineIcon from "remixicon-react/Tv2LineIcon";
 import axios from "../../lib/axios_instance";
@@ -17,6 +18,7 @@ import BlobboEmpty from "./BlobboEmpty";
 import { countColumns, visibleTiles } from "./discover-grid";
 import { isPosterRatio, posterChain } from "./poster";
 import { StatusChip } from "./RequestCard";
+import { trailerTarget } from "./trailer";
 import "../css/request-discover.css";
 
 const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
@@ -126,7 +128,8 @@ function RequestState({ item, blocked, readOnly, onOpen }) {
   );
 }
 
-function DiscoverTile({ item, blocked, readOnly, onOpen }) {
+function DiscoverTile({ item, blocked, readOnly, onOpen, onTrailer }) {
+  const target = trailerTarget(item);
   const badge = BADGES[item.state];
   const meta = [item.year, item.mediaType === "tv" ? "TV" : "Movie"].filter(Boolean).join(" \u00b7 ");
   return (
@@ -145,6 +148,21 @@ function DiscoverTile({ item, blocked, readOnly, onOpen }) {
       <div className="rd-poster">
         <DiscoverPoster item={item} />
         {badge ? <StatusChip tone={badge.tone} label={badge.label} className="rd-badge" /> : null}
+        {target && onTrailer ? (
+          <button
+            type="button"
+            className="rd-play"
+            aria-label={`Play trailer for ${item.title}`}
+            title="Play trailer"
+            onClick={(event) => {
+              event.stopPropagation();
+              onTrailer(target);
+            }}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <PlayFillIcon size={16} />
+          </button>
+        ) : null}
         {item.rating ? (
           <span className="rd-rating" title="TMDB rating">
             <StarFillIcon size={11} />
@@ -171,7 +189,7 @@ function SkeletonTiles({ count }) {
 }
 
 // Items of one shelf, paged from Seerr as the rows are opened.
-function ItemTrack({ rowKey, chipId, sourceId, blockedIds, readOnly, onOpen, onSubtitle, nonce, cols }) {
+function ItemTrack({ rowKey, chipId, sourceId, blockedIds, readOnly, onOpen, onTrailer, onSubtitle, nonce, cols }) {
   const [state, setState] = useState({ items: [], page: 0, hasMore: false, loading: true, error: "" });
   const [rows, setRows] = useState(2);
 
@@ -232,7 +250,7 @@ function ItemTrack({ rowKey, chipId, sourceId, blockedIds, readOnly, onOpen, onS
   return (
     <div className="rd-track">
       {shown.map((item) => (
-        <DiscoverTile key={item.id} item={item} blocked={blockedIds.has(item.id)} readOnly={readOnly} onOpen={onOpen} />
+        <DiscoverTile key={item.id} item={item} blocked={blockedIds.has(item.id)} readOnly={readOnly} onOpen={onOpen} onTrailer={onTrailer} />
       ))}
       {more ? (
         <button type="button" className="rd-more" disabled={state.loading} onClick={() => setRows((current) => current + 2)}>
@@ -243,7 +261,7 @@ function ItemTrack({ rowKey, chipId, sourceId, blockedIds, readOnly, onOpen, onS
   );
 }
 
-function DiscoverRow({ row, sourceId, blockedIds, readOnly, onOpen, nonce }) {
+function DiscoverRow({ row, sourceId, blockedIds, readOnly, onOpen, onTrailer, nonce }) {
   const sectionRef = useRef(null);
   const gridRef = useRef(null);
   const cols = useColumns(gridRef);
@@ -289,7 +307,7 @@ function DiscoverRow({ row, sourceId, blockedIds, readOnly, onOpen, nonce }) {
     };
   }, [visible, row.kind, row.key, sourceId, nonce]);
 
-  const trackProps = { sourceId, blockedIds, readOnly, onOpen, nonce, cols };
+  const trackProps = { sourceId, blockedIds, readOnly, onOpen, onTrailer, nonce, cols };
   return (
     <section className="rd-row" ref={sectionRef} aria-label={row.title}>
       <header>
@@ -324,7 +342,7 @@ function DiscoverRow({ row, sourceId, blockedIds, readOnly, onOpen, nonce }) {
   );
 }
 
-export default function RequestDiscover({ blockedIds, onOpen, onReadOnly, readOnly = false, nonce = 0 }) {
+export default function RequestDiscover({ blockedIds, onOpen, onTrailer, onReadOnly, readOnly = false, nonce = 0 }) {
   const [state, setState] = useState({ loading: true, error: "", rows: [], sourceId: undefined, readOnly: false });
   const [attempt, setAttempt] = useState(0);
 
@@ -375,7 +393,7 @@ export default function RequestDiscover({ blockedIds, onOpen, onReadOnly, readOn
   return (
     <div className="rd-page">
       {state.rows.map((row) => (
-        <DiscoverRow key={row.key} row={row} sourceId={state.sourceId} blockedIds={blockedIds} readOnly={viewOnly} onOpen={onOpen} nonce={nonce} />
+        <DiscoverRow key={row.key} row={row} sourceId={state.sourceId} blockedIds={blockedIds} readOnly={viewOnly} onOpen={onOpen} onTrailer={onTrailer} nonce={nonce} />
       ))}
     </div>
   );

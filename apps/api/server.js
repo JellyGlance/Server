@@ -169,7 +169,7 @@ app.use((req, res, next) => {
       "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
       "connect-src 'self' ws: wss: http: https:",
-      "frame-src 'self'",
+      "frame-src 'self' https://www.youtube-nocookie.com",
       "frame-ancestors 'self'",
       "object-src 'none'",
       "base-uri 'self'",

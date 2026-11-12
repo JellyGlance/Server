@@ -5,6 +5,7 @@ const { clientSettings } = require("../classes/client-config");
 const audiobookshelf = require("../classes/audiobookshelf");
 const requestDiscover = require("../classes/request-discover");
 const requestProgress = require("../classes/request-progress");
+const requestTrailer = require("../classes/request-trailer");
 const requestCalendar = require("../classes/request-calendar");
 const quietHours = require("../classes/quiet-hours");
 const fs = require("fs");
@@ -4821,6 +4822,23 @@ router.get("/requests/discover/row", async (req, res) => {
   } catch (error) {
     console.error("Seerr discover row failed:", getAxiosErrorMessage(error));
     res.status(error.statusCode || 503).send({ error: error.message || "Unable to load discover row" });
+  }
+});
+
+// The trailer for a title, from the video list Seerr already holds (a GET to Seerr, cached).
+router.get("/requests/trailer", async (req, res) => {
+  try {
+    const mediaType = String(req.query?.mediaType || "").toLowerCase();
+    const mediaId = Number(req.query?.mediaId);
+    if (!["movie", "tv"].includes(mediaType) || !Number.isInteger(mediaId) || mediaId <= 0) {
+      return res.status(400).send({ error: "A valid movie or TV result is required" });
+    }
+    const source = await requestDiscover.getSeerrSource(req.query?.sourceId);
+    const details = await fetchSeerrMediaDetails(source, { mediaType, tmdbId: mediaId });
+    res.send({ trailer: requestTrailer.pickTrailer(details?.relatedVideos) });
+  } catch (error) {
+    console.error("Seerr trailer lookup failed:", getAxiosErrorMessage(error));
+    res.status(error.statusCode || 503).send({ error: error.message || "Unable to look up the trailer" });
   }
 });
 

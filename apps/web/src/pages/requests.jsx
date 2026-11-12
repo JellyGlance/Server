@@ -29,6 +29,9 @@ import "./css/integrations.css";
 import RequestTimeline from "./requests/RequestTimeline";
 import RequestRulesModal from "./requests/RequestRulesModal";
 import RequestDiscover from "./requests/RequestDiscover";
+import TrailerDialog from "./requests/TrailerDialog";
+import { trailerTarget } from "./requests/trailer";
+import PlayCircleLineIcon from "remixicon-react/PlayCircleLineIcon";
 import RequestCalendar from "./requests/RequestCalendar";
 import CalendarLineIcon from "remixicon-react/CalendarLineIcon";
 import { RequestCard, IssueCard, RequestPoster, RequestSkeleton, RequesterAvatar, StatusChip, DownloadProgress } from "./requests/RequestCard";
@@ -182,6 +185,7 @@ export default function Requests() {
   const [seerrReadOnly, setSeerrReadOnly] = useState(false);
   const [blockedIds, setBlockedIds] = useState(() => new Set());
   const [progress, setProgress] = useState({ items: {}, simulated: false });
+  const [trailer, setTrailer] = useState(null);
   const [issues, setIssues] = useState([]);
   const [issuesLoading, setIssuesLoading] = useState(false);
   const [issuesError, setIssuesError] = useState("");
@@ -1203,7 +1207,7 @@ export default function Requests() {
 
       {pageSection === "discover" ? (
         <section className="requests-discover-board">
-          <RequestDiscover blockedIds={blockedIds} onOpen={openMediaResultDetail} onReadOnly={setSeerrReadOnly} readOnly={readOnly} nonce={discoverNonce} />
+          <RequestDiscover blockedIds={blockedIds} onOpen={openMediaResultDetail} onTrailer={setTrailer} onReadOnly={setSeerrReadOnly} readOnly={readOnly} nonce={discoverNonce} />
         </section>
       ) : null}
 
@@ -1382,6 +1386,12 @@ export default function Requests() {
                     </div>
                   ) : null}
                   <div className="requests-detail-actions">
+                    {trailerTarget(selectedRequest) ? (
+                      <button type="button" onClick={() => setTrailer(trailerTarget(selectedRequest))}>
+                        <PlayCircleLineIcon size={17} />
+                        Trailer
+                      </button>
+                    ) : null}
                     {!selectedRequest.isSearchResult && canManageRequests && !readOnly && selectedRequest.status === "Pending" ? (
                       <>
                         <button type="button" disabled={Boolean(busyAction)} onClick={(event) => runRequestAction(selectedRequest, "approve", event)}>
@@ -1700,6 +1710,8 @@ export default function Requests() {
           </>
         ) : null}
       </Modal>
+      <TrailerDialog target={trailer} onHide={() => setTrailer(null)} />
+
       <Modal show={Boolean(selectedIssue)} onHide={() => setSelectedIssue(null)} centered size="lg" contentClassName="requests-modal">
         {selectedIssue ? (
           <>

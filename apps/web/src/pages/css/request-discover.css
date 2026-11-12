@@ -151,6 +151,32 @@
   line-height: 20px;
 }
 
+.rd-poster .rd-play {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(11, 17, 25, 0.86);
+  box-shadow: none;
+  color: #fff;
+  transform: none;
+}
+
+.rd-poster .rd-play:hover,
+.rd-poster .rd-play:focus-visible {
+  border-color: rgba(147, 197, 253, 0.7);
+  background: rgba(30, 58, 95, 0.92);
+  transform: none;
+}
+
 .rd-tile strong {
   overflow: hidden;
   color: #fff;
