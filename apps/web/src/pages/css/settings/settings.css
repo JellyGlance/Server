@@ -2613,6 +2613,72 @@
   font-weight: 750;
 }
 
+.newsletter-schedule {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: start;
+  margin-top: 4px;
+}
+
+.newsletter-schedule-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.newsletter-schedule .newsletter-help {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.newsletter-chip-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.newsletter-chip-fieldset legend {
+  margin-bottom: 8px;
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.newsletter-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.newsletter-chip-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(5, 8, 13, 0.72);
+  color: #d8e1ee;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.newsletter-chip-row label.is-on {
+  border-color: rgba(var(--primary-light-rgb), 0.56);
+  background: rgba(var(--primary-rgb), 0.28);
+  color: #fff;
+}
+
+.newsletter-chip-row input {
+  margin: 0;
+  accent-color: var(--primary-light-color);
+}
+
 .newsletter-recipient-box {
   margin-top: 12px;
 }
@@ -3798,7 +3864,9 @@
 
   .newsletter-layout,
   .newsletter-settings-grid,
-  .newsletter-form-grid {
+  .newsletter-form-grid,
+  .newsletter-schedule,
+  .newsletter-schedule-fields {
     grid-template-columns: 1fr;
   }
 

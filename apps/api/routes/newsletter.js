@@ -842,12 +842,20 @@ router.post("/send", async (req, res) => {
 router.get("/campaigns", async (_req, res) => {
   try {
     const schemaReady = await campaigns.isCampaignSchemaReady();
+    const audienceOptions = await campaigns.listAudienceOptions().catch(() => ({
+      roles: [],
+      users: [],
+      timeZone: process.env.TZ || "UTC",
+    }));
     res.json({
       schemaReady,
       campaigns: schemaReady ? await campaigns.listCampaigns() : [],
       templates: schemaReady ? await campaigns.listTemplates() : [],
       history: schemaReady ? await campaigns.listHistory({ limit: 30 }) : [],
       legacyFallback: !schemaReady,
+      roles: audienceOptions.roles,
+      users: audienceOptions.users,
+      timeZone: audienceOptions.timeZone,
     });
   } catch (error) {
     console.error("List newsletter campaigns failed:", error);

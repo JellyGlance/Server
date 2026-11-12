@@ -1,4 +1,8 @@
 const { randomUUID } = require("crypto");
+const { getSettings } = require("./admin-history");
+const { normalizeAccessRoles } = require("./role-permissions");
+const schedule = require("./newsletter-schedule");
+const audience = require("./newsletter-audience");
 const db = require("../db");
 const { normalizeReport } = require("./newsletter-report-builder");
 
@@ -180,8 +184,8 @@ async function createCampaign(input = {}) {
       type,
       input.ownerUserId || null,
       input.templateId || null,
-      input.scheduleCron || null,
-      ["manual", "weekly", "monthly"].includes(input.frequency) ? input.frequency : "manual",
+      schedule.resolveScheduleFields(input).scheduleCron,
+      schedule.resolveScheduleFields(input).frequency,
       Boolean(input.enabled),
       JSON.stringify(input.audience || { recipients: [], roles: [] }),
       JSON.stringify(sections),
@@ -199,8 +203,10 @@ async function updateCampaign(id, input = {}) {
     type: isCampaignType(input.type) ? input.type : current.type,
     ownerUserId: input.ownerUserId !== undefined ? input.ownerUserId : current.ownerUserId,
     templateId: input.templateId !== undefined ? input.templateId : current.templateId,
-    scheduleCron: input.scheduleCron !== undefined ? input.scheduleCron : current.scheduleCron,
-    frequency: ["manual", "weekly", "monthly"].includes(input.frequency) ? input.frequency : current.frequency,
+    ...(() => {
+      const resolved = schedule.resolveScheduleFields(input, current);
+      return { scheduleCron: resolved.scheduleCron, frequency: resolved.frequency };
+    })(),
     enabled: input.enabled !== undefined ? Boolean(input.enabled) : current.enabled,
     audience: input.audience !== undefined ? input.audience : current.audience,
     sections:
@@ -209,9 +215,6 @@ async function updateCampaign(id, input = {}) {
         : current.sections,
   };
 
-  if (next.frequency === "weekly" && !next.scheduleCron) next.scheduleCron = "0 9 * * 1";
-  if (next.frequency === "monthly" && !next.scheduleCron) next.scheduleCron = "0 9 1 * *";
-  if (next.frequency === "manual") next.scheduleCron = null;
 
   await db.query(
     `
@@ -372,30 +375,50 @@ async function upsertSubscription({ userId, campaignId, optedIn = true, extraRec
   return getSubscriptionsForUser(userId);
 }
 
-async function resolveCampaignRecipients(campaign) {
-  const recipients = new Set();
-  const audience = campaign.audience || {};
-  (audience.recipients || []).forEach((email) => {
-    if (email) recipients.add(String(email).trim().toLowerCase());
-  });
-
-  const { rows: subs } = await db.query(
-    `
-    SELECT extra_recipients, opted_in, user_id
-    FROM newsletter_subscriptions
-    WHERE campaign_id=$1 AND opted_in=true
-    `,
-    [campaign.id]
-  );
-
-  for (const sub of subs) {
-    const extras = typeof sub.extra_recipients === "string" ? JSON.parse(sub.extra_recipients) : sub.extra_recipients || [];
-    extras.forEach((email) => {
-      if (email) recipients.add(String(email).trim().toLowerCase());
-    });
+async function listAudienceDirectory() {
+  const settings = await getSettings().catch(() => ({}));
+  let jellyfinUsers = [];
+  try {
+    const API = require("./api-loader");
+    jellyfinUsers = await API.getUsers(false).catch(() => []);
+  } catch {
+    jellyfinUsers = [];
   }
+  return audience.buildDirectoryUsers({
+    jellyfinUsers,
+    localUsers: settings.localUsers || [],
+    userRoles: settings.userRoles || {},
+    excludedUsers: settings.ExcludedUsers || [],
+  });
+}
 
-  return [...recipients].filter(Boolean);
+async function listAudienceOptions() {
+  const settings = await getSettings().catch(() => ({}));
+  const directory = await listAudienceDirectory();
+  return {
+    roles: (normalizeAccessRoles(settings) || audience.PICKABLE_ROLES).filter((role) => role !== "Disabled"),
+    users: audience.summariseDirectory(directory),
+    timeZone: schedule.DEFAULT_TIME_ZONE,
+  };
+}
+
+async function resolveCampaignRecipients(campaign, options = {}) {
+  const directory = options.directory || (await listAudienceDirectory());
+  let subscriptions = options.subscriptions;
+  if (!subscriptions) {
+    const { rows: subs } = await db
+      .query(
+        `
+        SELECT extra_recipients, opted_in, user_id
+        FROM newsletter_subscriptions
+        WHERE campaign_id=$1
+        `,
+        [campaign.id]
+      )
+      .catch(() => ({ rows: [] }));
+    subscriptions = subs;
+  }
+  return audience.resolveAudienceRecipients({ campaign, directory, subscriptions });
 }
 
 function userEmail(user, extras = []) {
@@ -434,18 +457,13 @@ async function resolvePerUserCampaignRecipients(campaign) {
   return people;
 }
 
-function campaignDue(campaign, now = new Date()) {
-  if (!campaign.enabled || campaign.frequency === "manual") return false;
-  const last = campaign.lastSentAt ? new Date(campaign.lastSentAt).getTime() : 0;
-  const ms = now.getTime() - last;
-  if (campaign.frequency === "weekly") return ms >= 6.5 * 24 * 3600 * 1000;
-  if (campaign.frequency === "monthly") return ms >= 28 * 24 * 3600 * 1000;
-  return false;
+function campaignDue(campaign, now = new Date(), options = {}) {
+  return schedule.campaignDue(campaign, now, options);
 }
 
-async function listDueCampaigns() {
+async function listDueCampaigns(now = new Date(), options = {}) {
   const campaigns = await listCampaigns({ includePersonal: true });
-  return campaigns.filter((campaign) => campaignDue(campaign));
+  return campaigns.filter((item) => campaignDue(item, now, options));
 }
 
 module.exports = {
@@ -468,4 +486,6 @@ module.exports = {
   resolvePerUserCampaignRecipients,
   listDueCampaigns,
   campaignDue,
+  listAudienceDirectory,
+  listAudienceOptions,
 };

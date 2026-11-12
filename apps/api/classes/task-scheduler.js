@@ -64,7 +64,7 @@ class TaskScheduler {
         ...TaskList.IntegrationHealthCheck,
       },
       NewsletterCampaigns: {
-        Interval: 60,
+        Interval: 5,
         ...TaskList.NewsletterCampaigns,
       },
       WrappedRecaps: {
@@ -166,6 +166,14 @@ class TaskScheduler {
             this.defaultIntervals[taskEnumKey].Interval = taskSettings.Interval;
           } else {
             taskSettings.Interval = this.defaultIntervals[taskEnumKey].Interval;
+          }
+
+          // Newsletter campaigns used to run hourly. The due check is now a
+          // cron match with last-sent dedupe, so the inherited 60-minute
+          // default becomes a check every five minutes.
+          if (taskEnumKey === "NewsletterCampaigns" && Number(this.defaultIntervals[taskEnumKey].Interval) === 60) {
+            this.defaultIntervals[taskEnumKey].Interval = 5;
+            taskSettings.Interval = 5;
           }
 
           if (!settings.Tasks) {
