@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "總播放",
     "LAST_PLAYED": "上次播放",
     "LAST_ACTIVITY": "上次活動",
-    "TRACKED": "已追蹤"
+    "TRACKED": "已追蹤",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "過去 24 小時",

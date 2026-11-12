@@ -189,7 +189,12 @@
     "TOTAL_PLAYBACK": "Redare totală",
     "LAST_PLAYED": "Ultima redare",
     "LAST_ACTIVITY": "Ultima activitate",
-    "TRACKED": "Urmărită"
+    "TRACKED": "Urmărită",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Ultimele 24 de ore",

@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Samlet afspilning",
     "LAST_PLAYED": "Senest afspillet",
     "LAST_ACTIVITY": "Seneste aktivitet",
-    "TRACKED": "Sporet"
+    "TRACKED": "Sporet",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Seneste 24 timer",

@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "एकूण प्लेबॅक",
     "LAST_PLAYED": "शेवटचे प्ले केलेले",
     "LAST_ACTIVITY": "शेवटचा क्रियाकलाप",
-    "TRACKED": "ट्रॅक केलेले"
+    "TRACKED": "ट्रॅक केलेले",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "मागील 24 तास",

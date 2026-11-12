@@ -189,7 +189,12 @@
     "TOTAL_PLAYBACK": "Укупно репродукција",
     "LAST_PLAYED": "Последња репродукција",
     "LAST_ACTIVITY": "Последња активност",
-    "TRACKED": "Праћено"
+    "TRACKED": "Праћено",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Последња 24 сата",

@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "মোট প্লেব্যাক",
     "LAST_PLAYED": "শেষ চালানো",
     "LAST_ACTIVITY": "শেষ কার্যকলাপ",
-    "TRACKED": "ট্র্যাক করা"
+    "TRACKED": "ট্র্যাক করা",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "গত ২৪ ঘণ্টা",

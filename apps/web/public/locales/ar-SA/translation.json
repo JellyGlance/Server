@@ -192,7 +192,12 @@
     "TOTAL_PLAYBACK": "إجمالي التشغيل",
     "LAST_PLAYED": "آخر تشغيل",
     "LAST_ACTIVITY": "آخر نشاط",
-    "TRACKED": "متتبَّع"
+    "TRACKED": "متتبَّع",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "آخر 24 ساعة",

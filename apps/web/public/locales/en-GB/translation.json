@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Total Playback",
     "LAST_PLAYED": "Last Played",
     "LAST_ACTIVITY": "Last Activity",
-    "TRACKED": "Tracked"
+    "TRACKED": "Tracked",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Last 24 Hours",

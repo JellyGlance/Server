@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "총 재생",
     "LAST_PLAYED": "마지막 재생",
     "LAST_ACTIVITY": "마지막 활동",
-    "TRACKED": "추적됨"
+    "TRACKED": "추적됨",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "최근 24시간",

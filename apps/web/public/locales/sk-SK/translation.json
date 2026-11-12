@@ -190,7 +190,12 @@
     "TOTAL_PLAYBACK": "Celkové prehrávanie",
     "LAST_PLAYED": "Naposledy prehrané",
     "LAST_ACTIVITY": "Posledná aktivita",
-    "TRACKED": "Sledované"
+    "TRACKED": "Sledované",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Posledných 24 hodín",

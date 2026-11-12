@@ -27,6 +27,31 @@ export function formatFileSize(sizeInBytes) {
   return `${sizeInPB.toFixed(2)} PB`;
 }
 
+function formatCompactSizeValue(value, unit) {
+  const formatted = value >= 10 ? value.toFixed(0) : value.toFixed(1);
+  return `${formatted} ${unit}`;
+}
+
+// Shorter than formatFileSize so overview tiles do not clip values such as "268.25 GB".
+export function formatCompactLibrarySize(size) {
+  if (size == null || size === "") {
+    return UNKNOWN_LIBRARY_SIZE;
+  }
+  const bytes = typeof size === "number" ? size : Number(size);
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return UNKNOWN_LIBRARY_SIZE;
+  }
+  const sizeInKB = bytes / 1024;
+  if (sizeInKB < 1024) return formatCompactSizeValue(sizeInKB, "KB");
+  const sizeInMB = sizeInKB / 1024;
+  if (sizeInMB < 1024) return formatCompactSizeValue(sizeInMB, "MB");
+  const sizeInGB = sizeInMB / 1024;
+  if (sizeInGB < 1024) return formatCompactSizeValue(sizeInGB, "GB");
+  const sizeInTB = sizeInGB / 1024;
+  if (sizeInTB < 1024) return formatCompactSizeValue(sizeInTB, "TB");
+  return formatCompactSizeValue(sizeInTB / 1024, "PB");
+}
+
 // A missing, non-numeric, zero or negative size is unknown or empty — never "0.00 KB".
 export function formatLibrarySize(size) {
   if (size == null || size === "") {
@@ -88,3 +113,54 @@ export function formatLastPlayedLabel(lastActivity) {
   const suffix = optionalTranslation("USERS_PAGE.AGO").toLocaleLowerCase();
   return [prefix, duration, suffix].filter(Boolean).join(" ");
 }
+
+export function formatCompactDurationFromSeconds(seconds) {
+  const total = Math.max(0, Math.floor(Number(seconds) || 0));
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+
+  if (days) {
+    return hours ? `${days}d ${hours}h` : `${days}d`;
+  }
+  if (hours) {
+    return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
+  }
+  return `${minutes}m`;
+}
+
+export function formatCompactDurationFromTicks(ticks) {
+  if (ticks == null || ticks === "") {
+    return "0m";
+  }
+  const value = typeof ticks === "number" ? ticks : Number(ticks);
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0m";
+  }
+  return formatCompactDurationFromSeconds(Math.floor(value / 10000000));
+}
+
+function formatCount(value) {
+  const number = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(number)) {
+    return "0";
+  }
+  return number.toLocaleString();
+}
+
+// Tiles shown on overview cards. Episodes and Seasons only apply to TV libraries.
+export function libraryCardStatTiles({ collectionType, plays, episodeCount, librarySize, files, seasonCount, totalTimeTicks, playbackSeconds }) {
+  const type = String(collectionType || "").toLowerCase();
+  const isTv = type === "tvshows";
+
+  return [
+    { key: "plays", labelKey: "LIBRARY_CARD.PLAYS", value: formatCount(plays) },
+    isTv ? { key: "episodes", labelKey: "EPISODES", value: formatCount(episodeCount) } : null,
+    { key: "size", labelKey: "LIBRARY_CARD.SIZE", value: formatCompactLibrarySize(librarySize) },
+    { key: "files", labelKey: "LIBRARY_CARD.FILES", value: formatCount(files) },
+    isTv ? { key: "seasons", labelKey: "SEASONS", value: formatCount(seasonCount) } : null,
+    { key: "totalTime", labelKey: "LIBRARY_CARD.TIME", value: formatCompactDurationFromTicks(totalTimeTicks) },
+    { key: "playback", labelKey: "LIBRARY_CARD.PLAYBACK", value: formatCompactDurationFromSeconds(playbackSeconds) },
+  ].filter(Boolean);
+}
+

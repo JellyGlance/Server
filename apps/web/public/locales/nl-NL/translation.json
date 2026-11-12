@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Totale weergave",
     "LAST_PLAYED": "Laatst afgespeeld",
     "LAST_ACTIVITY": "Laatste activiteit",
-    "TRACKED": "Gevolgd"
+    "TRACKED": "Gevolgd",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Afgelopen 24 uur",

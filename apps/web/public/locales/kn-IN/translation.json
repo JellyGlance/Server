@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "ಒಟ್ಟು ಪ್ಲೇಬ್ಯಾಕ್",
     "LAST_PLAYED": "ಕೊನೆಯದಾಗಿ ಪ್ಲೇ ಮಾಡಿದ್ದು",
     "LAST_ACTIVITY": "ಕೊನೆಯ ಚಟುವಟಿಕೆ",
-    "TRACKED": "ಟ್ರ್ಯಾಕ್ ಮಾಡಲಾಗಿದೆ"
+    "TRACKED": "ಟ್ರ್ಯಾಕ್ ಮಾಡಲಾಗಿದೆ",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "ಕಳೆದ 24 ಗಂಟೆಗಳು",

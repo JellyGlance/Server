@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Kabuuang Playback",
     "LAST_PLAYED": "Huling Na-play",
     "LAST_ACTIVITY": "Huling Aktibidad",
-    "TRACKED": "Sinusubaybayan"
+    "TRACKED": "Sinusubaybayan",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Huling 24 Oras",

@@ -190,7 +190,12 @@
     "TOTAL_PLAYBACK": "Bendras atkūrimas",
     "LAST_PLAYED": "Paskutinį kartą paleista",
     "LAST_ACTIVITY": "Paskutinė veikla",
-    "TRACKED": "Sekama"
+    "TRACKED": "Sekama",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Paskutinės 24 valandos",

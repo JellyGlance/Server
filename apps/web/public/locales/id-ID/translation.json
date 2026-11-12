@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Total Pemutaran",
     "LAST_PLAYED": "Terakhir Diputar",
     "LAST_ACTIVITY": "Aktivitas Terakhir",
-    "TRACKED": "Dilacak"
+    "TRACKED": "Dilacak",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "24 Jam Terakhir",

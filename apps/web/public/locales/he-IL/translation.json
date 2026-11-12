@@ -190,7 +190,12 @@
     "TOTAL_PLAYBACK": "סך הניגון",
     "LAST_PLAYED": "הושמע לאחרונה",
     "LAST_ACTIVITY": "פעילות אחרונה",
-    "TRACKED": "במעקב"
+    "TRACKED": "במעקב",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "24 השעות האחרונות",

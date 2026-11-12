@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Ümumi oxutma",
     "LAST_PLAYED": "Son oxudulan",
     "LAST_ACTIVITY": "Son fəaliyyət",
-    "TRACKED": "İzlənilir"
+    "TRACKED": "İzlənilir",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Son 24 saat",

@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Durée totale de lecture",
     "LAST_PLAYED": "Dernière lecture",
     "LAST_ACTIVITY": "Dernière activité",
-    "TRACKED": "Suivi"
+    "TRACKED": "Suivi",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "24 dernières heures",

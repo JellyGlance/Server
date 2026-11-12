@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Jumla ya Uchezaji",
     "LAST_PLAYED": "Ilichezwa Mwisho",
     "LAST_ACTIVITY": "Shughuli ya Mwisho",
-    "TRACKED": "Inafuatiliwa"
+    "TRACKED": "Inafuatiliwa",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Saa 24 Zilizopita",

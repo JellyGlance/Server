@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Συνολική αναπαραγωγή",
     "LAST_PLAYED": "Τελευταία αναπαραγωγή",
     "LAST_ACTIVITY": "Τελευταία δραστηριότητα",
-    "TRACKED": "Παρακολουθείται"
+    "TRACKED": "Παρακολουθείται",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Τελευταίες 24 ώρες",

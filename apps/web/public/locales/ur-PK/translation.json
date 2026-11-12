@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "کل پلے بیک",
     "LAST_PLAYED": "آخری بار چلایا گیا",
     "LAST_ACTIVITY": "آخری سرگرمی",
-    "TRACKED": "ٹریک شدہ"
+    "TRACKED": "ٹریک شدہ",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "پچھلے 24 گھنٹے",

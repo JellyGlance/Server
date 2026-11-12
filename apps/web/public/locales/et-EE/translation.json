@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Esitus kokku",
     "LAST_PLAYED": "Viimati esitatud",
     "LAST_ACTIVITY": "Viimane tegevus",
-    "TRACKED": "Jälgitud"
+    "TRACKED": "Jälgitud",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Viimased 24 tundi",

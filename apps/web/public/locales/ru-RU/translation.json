@@ -190,7 +190,12 @@
     "TOTAL_PLAYBACK": "Всего воспроизведений",
     "LAST_PLAYED": "Последнее воспроизведение",
     "LAST_ACTIVITY": "Последняя активность",
-    "TRACKED": "Отслеживается"
+    "TRACKED": "Отслеживается",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "За 24 часа",

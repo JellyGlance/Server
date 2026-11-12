@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "合計再生時間",
     "LAST_PLAYED": "最終再生",
     "LAST_ACTIVITY": "最終アクティビティ",
-    "TRACKED": "追跡済み"
+    "TRACKED": "追跡済み",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "過去 24 時間",

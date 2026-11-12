@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "کل پخش",
     "LAST_PLAYED": "آخرین پخش",
     "LAST_ACTIVITY": "آخرین فعالیت",
-    "TRACKED": "ردیابی‌شده"
+    "TRACKED": "ردیابی‌شده",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "۲۴ ساعت گذشته",

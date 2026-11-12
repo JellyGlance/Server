@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Toistoaika yhteensä",
     "LAST_PLAYED": "Viimeksi toistettu",
     "LAST_ACTIVITY": "Viimeisin toiminta",
-    "TRACKED": "Seurattu"
+    "TRACKED": "Seurattu",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Viimeiset 24 tuntia",

@@ -8,85 +8,67 @@ import { Trans } from "react-i18next";
 import i18next from "i18next";
 import baseUrl from "../../../lib/baseurl";
 import { libraryTypeMeta } from "../../../lib/library-types";
-import { formatLastPlayedLabel, formatLibrarySize } from "./library-card-format";
+import { formatLastPlayedLabel, libraryCardStatTiles } from "./library-card-format";
 
 function LibraryCard(props) {
   const [imageLoaded, setImageLoaded] = useState(true);
   const libraryMeta = libraryTypeMeta(props.data.CollectionType);
   const TypeIcon = libraryMeta.icon;
   const libraryIcon = <TypeIcon size={"50%"} color="white" />;
+  const typeChipIcon = <TypeIcon size={13} color="white" />;
   const default_image=<div className="default_library_image default_library_image_hover d-flex justify-content-center align-items-center">{libraryIcon} </div>;
   const typeLabel = libraryMeta.name;
-  const primaryItemCount = props.data.CollectionType === "tvshows" ? props.data.Episode_Count : props.data.Library_Count;
-  const primaryItemLabel = props.data.CollectionType === "tvshows" ? i18next.t("EPISODES") : libraryMeta.units;
+  const scanLabel = props.scanning ? "Scanning..." : "Scan library";
+  const statTiles = libraryCardStatTiles({
+    collectionType: props.data.CollectionType,
+    plays: props.data.Plays,
+    episodeCount: props.data.Episode_Count,
+    librarySize: props.metadata && props.metadata.Size,
+    files: props.metadata && props.metadata.files,
+    seasonCount: props.data.Season_Count,
+    totalTimeTicks: props.data && props.data.total_play_time,
+    playbackSeconds: props.data.total_playback_duration,
+  });
 
-  function formatTotalWatchTime(seconds) {
-    const days = Math.floor(seconds / 86400); // 1 day = 86400 seconds
-    const hours = Math.floor((seconds % 86400) / 3600); // 1 hour = 3600 seconds
-    const minutes = Math.floor(((seconds % 86400) % 3600) / 60); // 1 minute = 60 seconds
-
-    const units = {
-      months: [i18next.t("UNITS.MONTH"), i18next.t("UNITS.MONTHS")],
-      days: [i18next.t("UNITS.DAY"), i18next.t("UNITS.DAYS")],
-      hours: [i18next.t("UNITS.HOUR"), i18next.t("UNITS.HOURS")],
-      minutes: [i18next.t("UNITS.MINUTE"), i18next.t("UNITS.MINUTES")]
-    };
-    
-    let formattedTime = '';
-    if (days) {
-      formattedTime += `${days} ${days > 1 ? units.days[1] : units.days[0]}`;
+  function handleScan(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (props.onScan && !props.scanDisabled && !props.scanning) {
+      props.onScan();
     }
-    
-    if (hours) {
-      formattedTime += ` ${hours} ${hours > 1 ?  units.hours[1] : units.hours[0]}`;
-    }
-    
-    if (minutes) {      formattedTime += ` ${minutes} ${minutes > 1 ?  units.minutes[1] : units.minutes[0]}`;
-    }
-    
-    if (!days && !hours && !minutes) {
-      formattedTime =`0 ${units.minutes[1]}`;
-    }
-    
-    return formattedTime;
-    
   }
-  function ticksToTimeString(ticks) {
-    const seconds = Math.floor(ticks / 10000000);
-    const months = Math.floor(seconds / (86400 * 30)); // 1 month = 86400 seconds
-    const days = Math.floor((seconds % (86400 * 30)) / 86400); // 1 day = 86400 seconds
-    const hours = Math.floor((seconds % 86400) / 3600); // 1 hour = 3600 seconds
-    const minutes = Math.floor((seconds % 3600) / 60); // 1 minute = 60 seconds
-  
-    const timeComponents = [];
 
-    const units = {
-      months: [i18next.t("UNITS.MONTH"), i18next.t("UNITS.MONTHS")],
-      days: [i18next.t("UNITS.DAY"), i18next.t("UNITS.DAYS")],
-      hours: [i18next.t("UNITS.HOUR"), i18next.t("UNITS.HOURS")],
-      minutes: [i18next.t("UNITS.MINUTE"), i18next.t("UNITS.MINUTES")]
-    };
-  
-    if (months) {
-      timeComponents.push(`${months} ${months > 1 ? units.months[1] : units.months[0] }`);
-    }
-  
-    if (days) {
-      timeComponents.push(`${days} ${days > 1 ? units.days[1] : units.days[0]}`);
-    }
-  
-    if (hours) {
-      timeComponents.push(`${hours} ${hours > 1 ? units.hours[1] : units.hours[0]}`);
-    }
-  
-    if (!months && minutes) {
-      timeComponents.push(`${minutes} ${minutes > 1 ? units.minutes[1] : units.minutes[0]}`);
-    }
-  
-    const formattedTime = timeComponents.length > 0 ? timeComponents.join(' ') : `0 ${units.minutes[1]}`;
-    return formattedTime;
-  }
-  
+  const scanButton = (
+    <button
+      className="library-scan-button"
+      type="button"
+      onClick={handleScan}
+      disabled={props.scanDisabled || props.scanning}
+      aria-label={scanLabel}
+      title={scanLabel}
+    >
+      {props.scanIcon}
+    </button>
+  );
+
+  const statGrid = (
+    <div className="library-card-stat-grid">
+      {statTiles.map((tile) => (
+        <div key={tile.key}>
+          <span><Trans i18nKey={tile.labelKey} /></span>
+          <strong>{tile.value}</strong>
+        </div>
+      ))}
+    </div>
+  );
+
+  const lastPlayed = (
+    <>
+      <span><Trans i18nKey="LIBRARY_CARD.LAST_PLAYED" /></span>
+      <strong>{props.data.ItemName || `${i18next.t("ERROR_MESSAGES.N/A")}`}</strong>
+      <small>{formatLastPlayedLabel(props.data.LastActivity)}</small>
+    </>
+  );
 
   if (props.viewMode === "list") {
     return (
@@ -114,44 +96,36 @@ function LibraryCard(props) {
         </Link>
 
         <div className="library-list-stats">
-          <div>
-            <span><Trans i18nKey="TOTAL_PLAYS" /></span>
-            <strong>{props.data.Plays?.toLocaleString()}</strong>
-          </div>
-          <div>
-            <span>{primaryItemLabel}</span>
-            <strong>{(primaryItemCount ?? 0).toLocaleString()}</strong>
-          </div>
-          <div>
-            <span><Trans i18nKey="LIBRARY_CARD.LIBRARY_SIZE" /></span>
-            <strong>{formatLibrarySize(props.metadata && props.metadata.Size)}</strong>
-          </div>
-          <div>
-            <span><Trans i18nKey="LIBRARY_CARD.TOTAL_TIME" /></span>
-            <strong>{ticksToTimeString(props.data && props.data.total_play_time ? props.data.total_play_time : 0)}</strong>
-          </div>
+          {statTiles.map((tile) => (
+            <div key={tile.key}>
+              <span><Trans i18nKey={tile.labelKey} /></span>
+              <strong>{tile.value}</strong>
+            </div>
+          ))}
         </div>
 
         <div className="library-list-last-played">
-          <span><Trans i18nKey="LIBRARY_CARD.LAST_PLAYED" /></span>
-          <strong>{props.data.ItemName || `${i18next.t("ERROR_MESSAGES.N/A")}`}</strong>
-          <small>
-            {formatLastPlayedLabel(props.data.LastActivity)}
-          </small>
+          {lastPlayed}
         </div>
 
-        <button className="library-scan-button library-list-scan-button" type="button" onClick={props.onScan} disabled={props.scanDisabled || props.scanning}>
+        <button
+          className="library-scan-button library-list-scan-button"
+          type="button"
+          onClick={handleScan}
+          disabled={props.scanDisabled || props.scanning}
+          aria-label={scanLabel}
+          title={scanLabel}
+        >
           {props.scanIcon}
-          <span>{props.scanning ? "Scanning..." : "Scan library"}</span>
         </button>
       </article>
     );
   }
-  
+
   return (
-    <Card className={`lib-card ${props.showName === false ? "is-library-name-hidden" : ""}`.trim()}>
-      <Link to={`/libraries/${props.data.Id}`} className="library-card-link">
-        <div className="library-card-image">
+    <Card className="lib-card">
+      <div className="library-card-image">
+        <Link to={`/libraries/${props.data.Id}`} className="library-card-link">
           {imageLoaded ? (
             <Card.Img
               variant="top"
@@ -165,66 +139,21 @@ function LibraryCard(props) {
             default_image
           )}
           <div className="library-card-image-overlay" />
-          <div className="library-card-hero-copy">
-            <span className="library-type-icon">{libraryIcon}</span>
-            <div>
-              <span className="library-type-label">{typeLabel}</span>
-              {props.showName !== false ? <h2>{props.data.Name}</h2> : null}
-            </div>
-          </div>
-        </div>
-      </Link>
+        </Link>
+        {scanButton}
+        <Link to={`/libraries/${props.data.Id}`} className="library-card-hero-copy">
+          <h2>{props.data.Name}</h2>
+          <span className="library-type-chip">
+            <span className="library-type-icon">{typeChipIcon}</span>
+            <span className="library-type-label">{typeLabel}</span>
+          </span>
+        </Link>
+      </div>
 
       <Card.Body className="library-card-details">
-        <div className="library-card-actions">
-          <button className="library-scan-button" type="button" onClick={props.onScan} disabled={props.scanDisabled || props.scanning}>
-            {props.scanIcon}
-            <span>{props.scanning ? "Scanning..." : "Scan library"}</span>
-          </button>
-        </div>
-
-        <div className="library-card-stat-grid">
-          <div>
-            <span><Trans i18nKey="TOTAL_PLAYS" /></span>
-            <strong>{props.data.Plays?.toLocaleString()}</strong>
-          </div>
-          <div>
-            <span>{primaryItemLabel}</span>
-            <strong>{(primaryItemCount ?? 0).toLocaleString()}</strong>
-          </div>
-          <div>
-            <span><Trans i18nKey="LIBRARY_CARD.LIBRARY_SIZE" /></span>
-            <strong>{formatLibrarySize(props.metadata && props.metadata.Size)}</strong>
-          </div>
-        </div>
-
-        <div className="library-card-readout">
-          <div>
-            <span><Trans i18nKey="LIBRARY_CARD.TOTAL_TIME" /></span>
-            <strong>{ticksToTimeString(props.data && props.data.total_play_time ? props.data.total_play_time : 0)}</strong>
-          </div>
-          <div>
-            <span><Trans i18nKey="LIBRARY_CARD.TOTAL_PLAYBACK" /></span>
-            <strong>{formatTotalWatchTime(props.data.total_playback_duration)}</strong>
-          </div>
-          <div>
-            <span><Trans i18nKey="LIBRARY_CARD.TOTAL_FILES" /></span>
-            <strong>{(props.metadata && props.metadata.files ? props.metadata.files : 0).toLocaleString()}</strong>
-          </div>
-          {props.data.CollectionType === "tvshows" ? (
-            <div>
-              <span><Trans i18nKey="SEASONS" /></span>
-              <strong>{(props.data.Season_Count ?? 0).toLocaleString()}</strong>
-            </div>
-          ) : null}
-        </div>
-
+        {statGrid}
         <div className="library-card-footer">
-          <span><Trans i18nKey="LIBRARY_CARD.LAST_PLAYED" /></span>
-          <strong>{props.data.ItemName || `${i18next.t("ERROR_MESSAGES.N/A")}`}</strong>
-          <small>
-            {formatLastPlayedLabel(props.data.LastActivity)}
-          </small>
+          {lastPlayed}
         </div>
       </Card.Body>
     </Card>

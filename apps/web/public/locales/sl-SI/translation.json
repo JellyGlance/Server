@@ -190,7 +190,12 @@
     "TOTAL_PLAYBACK": "Skupno predvajanje",
     "LAST_PLAYED": "Nazadnje predvajano",
     "LAST_ACTIVITY": "Zadnja dejavnost",
-    "TRACKED": "Spremljano"
+    "TRACKED": "Spremljano",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Zadnjih 24 ur",

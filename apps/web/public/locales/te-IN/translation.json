@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "మొత్తం ప్లేబ్యాక్",
     "LAST_PLAYED": "చివరిగా ప్లే చేసింది",
     "LAST_ACTIVITY": "చివరి కార్యకలాపం",
-    "TRACKED": "ట్రాక్ చేయబడింది"
+    "TRACKED": "ట్రాక్ చేయబడింది",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "గత 24 గంటలు",

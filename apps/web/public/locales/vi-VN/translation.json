@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Tổng thời lượng phát",
     "LAST_PLAYED": "Phát lần cuối",
     "LAST_ACTIVITY": "Hoạt động gần nhất",
-    "TRACKED": "Đang theo dõi"
+    "TRACKED": "Đang theo dõi",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "24 giờ qua",

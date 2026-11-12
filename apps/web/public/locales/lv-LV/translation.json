@@ -189,7 +189,12 @@
     "TOTAL_PLAYBACK": "Kopējā atskaņošana",
     "LAST_PLAYED": "Pēdējoreiz atskaņots",
     "LAST_ACTIVITY": "Pēdējā aktivitāte",
-    "TRACKED": "Izsekots"
+    "TRACKED": "Izsekots",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Pēdējās 24 stundas",

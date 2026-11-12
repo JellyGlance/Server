@@ -190,7 +190,12 @@
     "TOTAL_PLAYBACK": "Усього відтворень",
     "LAST_PLAYED": "Останнє відтворення",
     "LAST_ACTIVITY": "Остання активність",
-    "TRACKED": "Відстежується"
+    "TRACKED": "Відстежується",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "За 24 години",

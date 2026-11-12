@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Összes lejátszás",
     "LAST_PLAYED": "Utoljára lejátszva",
     "LAST_ACTIVITY": "Utolsó tevékenység",
-    "TRACKED": "Követve"
+    "TRACKED": "Követve",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Elmúlt 24 óra",

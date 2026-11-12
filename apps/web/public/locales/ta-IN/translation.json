@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "மொத்த இயக்கம்",
     "LAST_PLAYED": "கடைசியாக இயக்கியது",
     "LAST_ACTIVITY": "கடைசி செயல்பாடு",
-    "TRACKED": "கண்காணிக்கப்பட்டது"
+    "TRACKED": "கண்காணிக்கப்பட்டது",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "கடந்த 24 மணிநேரம்",

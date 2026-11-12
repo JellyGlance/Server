@@ -3,9 +3,13 @@ import assert from "node:assert/strict";
 import i18n from "i18next";
 import {
   UNKNOWN_LIBRARY_SIZE,
+  formatCompactDurationFromSeconds,
+  formatCompactDurationFromTicks,
+  formatCompactLibrarySize,
   formatFileSize,
   formatLastPlayedLabel,
   formatLibrarySize,
+  libraryCardStatTiles,
   optionalTranslation,
 } from "../src/pages/components/library/library-card-format.js";
 
@@ -99,5 +103,71 @@ describe("formatLastPlayedLabel", () => {
     assert.equal(formatLastPlayedLabel({}), "Never");
     await i18n.changeLanguage("fr-FR");
     assert.equal(formatLastPlayedLabel(null), "Jamais");
+  });
+});
+
+describe("formatCompactDuration", () => {
+  test("shortens long durations to days and hours", () => {
+    assert.equal(formatCompactDurationFromSeconds((17 * 86400) + (4 * 3600) + (48 * 60)), "17d 4h");
+    assert.equal(formatCompactDurationFromSeconds(3 * 86400), "3d");
+  });
+
+  test("uses hours and minutes when shorter than a day", () => {
+    assert.equal(formatCompactDurationFromSeconds((3 * 3600) + (12 * 60)), "3h 12m");
+    assert.equal(formatCompactDurationFromSeconds(2 * 3600), "2h");
+    assert.equal(formatCompactDurationFromSeconds(45 * 60), "45m");
+    assert.equal(formatCompactDurationFromSeconds(0), "0m");
+  });
+
+  test("converts ticks the same way", () => {
+    const ticks = ((17 * 86400) + (4 * 3600)) * 10000000;
+    assert.equal(formatCompactDurationFromTicks(ticks), "17d 4h");
+    assert.equal(formatCompactDurationFromTicks("6000000000"), "10m");
+    assert.equal(formatCompactDurationFromTicks(0), "0m");
+    assert.equal(formatCompactDurationFromTicks(null), "0m");
+  });
+});
+
+describe("libraryCardStatTiles", () => {
+  const base = {
+    plays: 148,
+    episodeCount: 450,
+    librarySize: 288034549755,
+    files: 458,
+    seasonCount: 68,
+    totalTimeTicks: ((17 * 86400) + (4 * 3600)) * 10000000,
+    playbackSeconds: (2 * 86400) + (11 * 3600),
+  };
+
+  test("TV libraries include episodes and seasons", () => {
+    const keys = libraryCardStatTiles({ ...base, collectionType: "tvshows" }).map((tile) => tile.key);
+    assert.deepEqual(keys, ["plays", "episodes", "size", "files", "seasons", "totalTime", "playback"]);
+    const tiles = Object.fromEntries(libraryCardStatTiles({ ...base, collectionType: "tvshows" }).map((tile) => [tile.key, tile.value]));
+    assert.equal(tiles.episodes, "450");
+    assert.equal(tiles.seasons, "68");
+    assert.equal(tiles.size, "268 GB");
+    assert.equal(tiles.totalTime, "17d 4h");
+    assert.equal(tiles.playback, "2d 11h");
+  });
+
+  test("movies, music and books omit episodes and seasons", () => {
+    for (const type of ["movies", "music", "books"]) {
+      const keys = libraryCardStatTiles({ ...base, collectionType: type }).map((tile) => tile.key);
+      assert.deepEqual(keys, ["plays", "size", "files", "totalTime", "playback"], type);
+    }
+  });
+
+  test("keeps an em dash for an unknown size", () => {
+    const tiles = libraryCardStatTiles({ ...base, collectionType: "books", librarySize: null });
+    assert.equal(tiles.find((tile) => tile.key === "size").value, "—");
+  });
+});
+
+describe("formatCompactLibrarySize", () => {
+  test("uses a short form that fits overview tiles", () => {
+    assert.equal(formatCompactLibrarySize(288034549755), "268 GB");
+    assert.equal(formatCompactLibrarySize(9824432898), "9.1 GB");
+    assert.equal(formatCompactLibrarySize(3378005553021), "3.1 TB");
+    assert.equal(formatCompactLibrarySize(null), "—");
   });
 });

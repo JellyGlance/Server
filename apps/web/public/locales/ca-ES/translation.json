@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "Reproducció total",
     "LAST_PLAYED": "Última reproducció",
     "LAST_ACTIVITY": "Última activitat",
-    "TRACKED": "Seguit"
+    "TRACKED": "Seguit",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "Últimes 24 hores",

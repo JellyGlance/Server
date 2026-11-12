@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "ആകെ പ്ലേബാക്ക്",
     "LAST_PLAYED": "അവസാനം പ്ലേ ചെയ്തത്",
     "LAST_ACTIVITY": "അവസാന പ്രവർത്തനം",
-    "TRACKED": "ട്രാക്ക് ചെയ്യുന്നു"
+    "TRACKED": "ട്രാക്ക് ചെയ്യുന്നു",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "കഴിഞ്ഞ 24 മണിക്കൂർ",

@@ -188,7 +188,12 @@
     "TOTAL_PLAYBACK": "ਕੁੱਲ ਪਲੇਬੈਕ",
     "LAST_PLAYED": "ਆਖਰੀ ਵਾਰ ਚਲਾਇਆ",
     "LAST_ACTIVITY": "ਆਖਰੀ ਗਤੀਵਿਧੀ",
-    "TRACKED": "ਟ੍ਰੈਕ ਕੀਤਾ"
+    "TRACKED": "ਟ੍ਰੈਕ ਕੀਤਾ",
+    "PLAYS": "Plays",
+    "SIZE": "Size",
+    "FILES": "Files",
+    "PLAYBACK": "Playback",
+    "TIME": "Time"
   },
   "GLOBAL_STATS": {
     "LAST_24_HRS": "ਪਿਛਲੇ 24 ਘੰਟੇ",
