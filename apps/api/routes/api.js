@@ -4723,7 +4723,7 @@ router.get("/requests", async (req, res) => {
       force: req.query?.force === "true",
       includeInterest: req.query?.includeInterest === "true",
     });
-    res.send(enrichRequestPayload(filterSeerrRequestsForUser(data, req.user)));
+    res.send({ ...enrichRequestPayload(filterSeerrRequestsForUser(data, req.user)), readOnly: requestDiscover.isReadOnlySeerr() });
   } catch (error) {
     console.error("Get Seerr requests failed:", error);
     res.status(503).send({ error: "Unable to load requests" });
@@ -4831,6 +4831,10 @@ router.get("/requests/issues", async (req, res) => {
 
 router.post("/requests/issues/:issueId/actions", async (req, res) => {
   try {
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Read-only demo: Seerr changes are blocked.", readOnly: true });
+      return;
+    }
     const result = await runSeerrIssueAction({
       issueId: req.params.issueId,
       sourceId: req.body?.sourceId,
@@ -4950,6 +4954,10 @@ router.post("/requests/media", async (req, res) => {
 
 router.post("/requests/:requestId/actions", async (req, res) => {
   try {
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Read-only demo: Seerr changes are blocked.", readOnly: true });
+      return;
+    }
     const result = await runSeerrRequestAction({
       requestId: req.params.requestId,
       sourceId: req.body?.sourceId,
@@ -4965,6 +4973,10 @@ router.post("/requests/:requestId/actions", async (req, res) => {
 
 router.put("/requests/:requestId/edit", async (req, res) => {
   try {
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Read-only demo: Seerr changes are blocked.", readOnly: true });
+      return;
+    }
     const result = await updateSeerrRequest({
       requestId: req.params.requestId,
       sourceId: req.body?.sourceId,

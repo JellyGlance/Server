@@ -1,4 +1,5 @@
 import i18n from "i18next";
+import baseUrl from "../../lib/baseurl";
 import { formatDate as formatLocaleDate } from "../../lib/format-date";
 
 export function formatDate(value) {
@@ -95,7 +96,7 @@ export function getInitials(value) {
 export function getRequesterAvatarUrl(request) {
   const requester = request?.requester || {};
   if (requester.jellyfinUserId) {
-    return `/proxy/Users/Images/Primary?id=${encodeURIComponent(requester.jellyfinUserId)}&fillWidth=96&quality=80`;
+    return `${baseUrl}/proxy/Users/Images/Primary?id=${encodeURIComponent(requester.jellyfinUserId)}&fillWidth=96&quality=80`;
   }
   return requester.avatar && /^https?:\/\//i.test(requester.avatar) ? requester.avatar : "";
 }
@@ -113,3 +114,9 @@ export function matchesPipelineFilter(request, pipelineFilter) {
   if (!pipelineFilter || pipelineFilter === "all") return true;
   return String(request?.pipelineStatus || "").toLowerCase() === pipelineFilter;
 }
+
+// One chip per request, same seven labels everywhere: Pending, Approved, Processing,
+// Partial, Available, Declined, Failed. Approved turns into Processing once the
+// request has been grabbed and is on its way.
+
+export { REQUEST_CHIPS, requestStatusChip, REQUEST_FILTERS, matchesRequestFilter } from "./status.js";
