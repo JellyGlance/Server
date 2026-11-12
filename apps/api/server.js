@@ -48,6 +48,7 @@ const insightsRouter = require("./routes/insights");
 const opsCopilotRouter = require("./routes/ops-copilot");
 const incompleteSeasonsRouter = require("./routes/incomplete-seasons");
 const cleanupRulesRouter = require("./routes/cleanup-rules");
+const autoCollectionsRouter = require("./routes/auto-collections");
 const subtitleGapRouter = require("./routes/subtitle-gap");
 const alertsRouter = require("./routes/alerts");
 const webhookOutRouter = require("./routes/webhook-out");
@@ -424,6 +425,7 @@ app.use("/insights-data", apiRateLimit, authenticate, restrictApiKeyScope, insig
 app.use("/ops-copilot", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), opsCopilotRouter);
 app.use("/incomplete-seasons", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), incompleteSeasonsRouter);
 app.use("/cleanup-rules", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), cleanupRulesRouter);
+app.use("/auto-collections", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), autoCollectionsRouter);
 app.use("/subtitle-gap", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), subtitleGapRouter);
 app.use("/alerts-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), alertsRouter);
 app.use("/webhook-out-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), webhookOutRouter);

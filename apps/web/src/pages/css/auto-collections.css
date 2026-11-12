@@ -1,0 +1,28 @@
+.auto-collections { display: grid; gap: 0.9rem; color: #e8eef7; }
+.ac-hero, .ac-banner, .ac-card, .ac-form { padding: 0.9rem 1rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 0.85rem; background: rgba(9,12,18,0.78); }
+.ac-hero { display: flex; gap: 0.8rem; align-items: flex-start; }
+.ac-hero h1, .ac-form h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.ac-hero p, .ac-muted { margin: 0; color: #9aa7bb; font-size: 0.86rem; }
+.ac-banner.is-warn { border-color: rgba(250,204,21,0.35); background: rgba(250,204,21,0.08); color: #fde68a; }
+.ac-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.7rem; }
+.ac-field { display: grid; gap: 0.3rem; min-width: 0; }
+.ac-field span { color: #9aa7bb; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+.ac-field input, .ac-field select { width: 100%; min-height: 2.15rem; padding: 0.4rem 0.6rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 0.55rem; background: rgba(7,10,15,0.85); color: #f8fafc; }
+.ac-actions, .ac-toolbar { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.ac-btn { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2rem; padding: 0 0.7rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 0.6rem; background: rgba(255,255,255,0.04); color: #f8fafc; font-size: 0.78rem; font-weight: 750; }
+.ac-btn.is-primary { background: rgba(var(--primary-rgb), 0.28); border-color: rgba(var(--primary-light-rgb), 0.35); }
+.ac-btn:disabled { opacity: 0.5; }
+.ac-builder { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0.6rem; padding: 0.7rem 0.85rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 0.8rem; background: rgba(9,12,18,0.72); color: inherit; text-align: left; }
+.ac-builder.is-selected { border-color: rgba(var(--primary-light-rgb), 0.45); }
+.ac-badges { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
+.ac-badge { padding: 0.15rem 0.45rem; border-radius: 999px; background: rgba(255,255,255,0.08); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.ac-badge.is-warn { background: rgba(250,204,21,0.16); color: #fde68a; }
+.ac-poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: 0.7rem; }
+.ac-poster { min-width: 0; }
+.ac-poster img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 0.5rem; background: #0b1018; }
+.ac-poster figcaption { margin-top: 0.3rem; font-size: 0.75rem; }
+.ac-poster small { display: block; color: #9aa7bb; }
+.ac-error { color: #fecaca; margin: 0; }
+@media (max-width: 760px) {
+  .ac-grid, .ac-builder { grid-template-columns: 1fr; }
+}
