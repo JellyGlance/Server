@@ -43,11 +43,12 @@ export function matchesRequestFilter(request, filter) {
 }
 
 // Tab keys the page understands, and older or alternative spellings that map onto them.
-export const REQUEST_TABS = ["queue", "discover", "calendar", "issues"];
+export const REQUEST_TABS = ["queue", "discover", "calendar", "stats", "issues"];
 const TAB_ALIASES = {
   queue: "queue", requests: "queue", request: "queue", list: "queue", all: "queue", home: "queue", overview: "queue", pending: "queue",
   discover: "discover", discovery: "discover", browse: "discover", explore: "discover", search: "discover",
   calendar: "calendar", schedule: "calendar", upcoming: "calendar", week: "calendar", arriving: "calendar",
+  stats: "stats", statistics: "stats", insights: "stats", numbers: "stats", analytics: "stats",
   issues: "issues", issue: "issues", problems: "issues", reports: "issues",
 };
 

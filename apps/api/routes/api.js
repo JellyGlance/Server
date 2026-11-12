@@ -5,6 +5,7 @@ const { clientSettings } = require("../classes/client-config");
 const audiobookshelf = require("../classes/audiobookshelf");
 const requestDiscover = require("../classes/request-discover");
 const requestProgress = require("../classes/request-progress");
+const requestInsights = require("../classes/request-insights");
 const requestBulk = require("../classes/request-bulk");
 const requestTrailer = require("../classes/request-trailer");
 const requestCalendar = require("../classes/request-calendar");
@@ -4783,6 +4784,17 @@ router.get("/requests/calendar", async (req, res) => {
   } catch (error) {
     console.error("Get request calendar failed:", error);
     res.status(503).send({ error: "Unable to load the calendar" });
+  }
+});
+
+// Most-requested genres, time to fulfil, success rate and busiest requester.
+router.get("/requests/stats", async (req, res) => {
+  try {
+    const data = filterSeerrRequestsForUser(await fetchSeerrRequests(), req.user);
+    res.send(requestInsights.buildRequestInsights(data.requests || [], { days: req.query?.days }));
+  } catch (error) {
+    console.error("Get request stats failed:", error);
+    res.status(503).send({ error: "Unable to load request stats" });
   }
 });
 

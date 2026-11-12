@@ -37,6 +37,8 @@ import { discoverSectionFromSearch } from "./requests/discover-grid";
 import TrailerDialog from "./requests/TrailerDialog";
 import { trailerTarget } from "./requests/trailer";
 import PlayCircleLineIcon from "remixicon-react/PlayCircleLineIcon";
+import RequestStats from "./requests/RequestStats";
+import BarChartLineIcon from "remixicon-react/BarChartLineIcon";
 import RequestCalendar from "./requests/RequestCalendar";
 import CalendarLineIcon from "remixicon-react/CalendarLineIcon";
 import { RequestCard, IssueCard, RequestPoster, RequestSkeleton, RequesterAvatar, StatusChip, DownloadProgress } from "./requests/RequestCard";
@@ -1016,7 +1018,7 @@ export default function Requests() {
         <div className="rq-header">
           <h2>Requests</h2>
           <p>
-            {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : pageSection === "discover" ? "Browse what Seerr suggests and request what\u2019s missing." : pageSection === "calendar" ? "Requested titles arriving over the next seven days." : "Search the queue, or pick a title to request."}
+            {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : pageSection === "discover" ? "Browse what Seerr suggests and request what\u2019s missing." : pageSection === "calendar" ? "Requested titles arriving over the next seven days." : pageSection === "stats" ? "What gets requested, how fast it arrives and who asks the most." : "Search the queue, or pick a title to request."}
           </p>
         </div>
         <div className="rq-toolbar">
@@ -1032,6 +1034,10 @@ export default function Requests() {
             <button type="button" role="tab" aria-selected={pageSection === "calendar"} className={pageSection === "calendar" ? "is-active" : ""} aria-label="Calendar" onClick={() => setPageSection("calendar")}>
               <CalendarLineIcon size={16} />
               <span className="rq-tab-label">Calendar</span>
+            </button>
+            <button type="button" role="tab" aria-selected={pageSection === "stats"} className={pageSection === "stats" ? "is-active" : ""} aria-label="Stats" onClick={() => setPageSection("stats")}>
+              <BarChartLineIcon size={16} />
+              <span className="rq-tab-label">Stats</span>
             </button>
             {canManageRequests ? (
               <button type="button" role="tab" aria-label={t("FEATURES.REQUESTS.ISSUES")} aria-selected={pageSection === "issues"} className={pageSection === "issues" ? "is-active" : ""} onClick={() => setPageSection("issues")}>
@@ -1286,6 +1292,8 @@ export default function Requests() {
           <RequestDiscover blockedIds={blockedIds} onOpen={openMediaResultDetail} onTrailer={setTrailer} section={discoverView.section} chip={discoverView.chip} onSection={openDiscoverSection} onChip={setDiscoverChip} onReadOnly={setSeerrReadOnly} readOnly={readOnly} nonce={discoverNonce} />
         </section>
       ) : null}
+
+      {pageSection === "stats" ? <RequestStats /> : null}
 
       {pageSection === "calendar" ? (
         <RequestCalendar requests={data.requests || []} onOpen={openRequestDetail} />
