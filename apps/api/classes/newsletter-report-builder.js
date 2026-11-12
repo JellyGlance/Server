@@ -959,7 +959,7 @@ function renderBlock(block, data, ctx = {}) {
         render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([episodeLabel(item)], env)}`,
       })}`;
     case "trendingWeek":
-      return `${titleHtml(title, env, periodLabel(7, t))}${itemListOrCards(data.items, env, {
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
         kind: "item",
         empty: t("TRENDING_EMPTY"),
         metaFor: (item) => [playsLabel(item.Plays, t), item.Type, item.Library].filter(Boolean).join(" · "),
