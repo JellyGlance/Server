@@ -184,3 +184,25 @@ describe("newsletter server-news block", () => {
     assert.match(empty, /Keine Neuigkeiten|nichts/i);
   });
 });
+
+describe("newsletter coming-soon block", () => {
+  it("renders upcoming titles with a date, source, and request links", () => {
+    const block = reportBuilder.normalizeBlock({ type: "comingSoon", options: { style: "list", limit: 8, comingDays: 7 } });
+    const html = reportBuilder.renderBlock(block, {
+      days: 7,
+      today: "2026-11-12",
+      items: [
+        { Name: "Arrival", Type: "Movie", date: "2026-11-12", kind: "Release", source: "Radarr", requestId: 9 },
+        { Name: "The Crown", Type: "Series", date: "2026-11-13", kind: "Episode", label: "S06E03", source: "Sonarr" },
+      ],
+    }, ctx());
+    assert.match(html, /Coming soon/);
+    assert.match(html, /Arrival/);
+    assert.match(html, /Today/);
+    assert.match(html, /Tomorrow/);
+    assert.match(html, /Radarr/);
+    assert.match(html, /requests\?request=9/);
+    const empty = reportBuilder.renderBlock(block, { days: 7, items: [] }, ctx({ locale: "de-DE" }));
+    assert.match(empty, /Nichts|nächsten|Tage/i);
+  });
+});

@@ -66,3 +66,18 @@ test("items on one day are sorted by title", () => {
   const b = { ...movie, id: "B", title: "Alpha", releaseDate: "2026-11-13" };
   assert.deepEqual(calendar.buildCalendar([a, b], { window }).days[1].items.map((item) => item.title), ["Alpha", "Zulu"]);
 });
+
+test("unrequested Arr releases are included when asked", () => {
+  const unrequested = calendar.buildCalendar([], {
+    window,
+    liveReleases: [{ date: "2026-11-13", type: "movie", title: "Arrival", service: "Radarr", tmdbId: 644 }],
+    includeUnrequested: true,
+  });
+  assert.equal(unrequested.total, 1);
+  assert.equal(unrequested.days[1].items[0].title, "Arrival");
+  const hidden = calendar.buildCalendar([], {
+    window,
+    liveReleases: [{ date: "2026-11-13", type: "movie", title: "Arrival", service: "Radarr", tmdbId: 644 }],
+  });
+  assert.equal(hidden.total, 0);
+});

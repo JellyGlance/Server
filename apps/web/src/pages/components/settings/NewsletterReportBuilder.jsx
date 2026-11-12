@@ -28,6 +28,7 @@ export const BLOCK_LIBRARY = [
   { type: "leavingSoon", label: "Leaving soon", text: "Cleanup countdown matches, plus Maintainerr if it is configured. Read-only.", fields: ["title", "limit", "style"] },
   { type: "fulfilledRequests", label: "Newly available", text: "Seerr requests that became available since the last send. Per-user campaigns show only that person's requests.", fields: ["title", "limit", "period", "style"] },
   { type: "serverNews", label: "Server news", text: "An admin-written maintenance or new-feature note, with optional dates and a link to the public status page when it is enabled.", fields: ["title", "kind", "text", "startAt", "endAt"] },
+  { type: "comingSoon", label: "Coming soon", text: "Upcoming titles from Sonarr, Radarr and Seerr over the next N days. Read-only.", fields: ["title", "limit", "comingDays", "style"] },
   { type: "text", label: "Text", text: "Free text. **bold** and blank lines for paragraphs.", fields: ["title", "text"] },
   { type: "customHtml", label: "Custom HTML", text: "Raw HTML dropped into the email.", fields: ["title", "html"] },
   { type: "divider", label: "Divider", text: "A thin line between sections.", fields: [] },
@@ -184,6 +185,17 @@ function BlockFields({ block, fields, libraries, onChange }) {
             <option value="week">This week</option>
             <option value="month">This month</option>
             <option value="year">This year</option>
+          </Form.Select>
+        </Form.Group>
+      ) : null}
+      {fields.includes("comingDays") ? (
+        <Form.Group>
+          <Form.Label>Next</Form.Label>
+          <Form.Select value={block.options?.comingDays || 7} onChange={(event) => setOption("comingDays", Number(event.target.value))}>
+            <option value="3">3 days</option>
+            <option value="7">7 days</option>
+            <option value="14">14 days</option>
+            <option value="31">31 days</option>
           </Form.Select>
         </Form.Group>
       ) : null}

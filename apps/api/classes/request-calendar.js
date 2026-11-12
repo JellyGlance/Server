@@ -95,12 +95,23 @@ function findRequest(requests, release) {
 }
 
 // Releases as the sync task stores them: { date, type, title, service, subtitle, hasFile, ... }.
-function arrItems(requests, releases, window) {
+function requestFromRelease(release) {
+  return {
+    id: `arr:${release.tmdbId || release.tvdbId || release.title || "item"}`,
+    title: release.title || release.name || "Upcoming",
+    mediaType: release.type === "movie" || release.mediaType === "movie" ? "movie" : "tv",
+    status: "",
+    availability: {},
+    externalIds: { tmdbId: release.tmdbId || null, tvdbId: release.tvdbId || null },
+  };
+}
+
+function arrItems(requests, releases, window, { requireRequest = true } = {}) {
   const items = [];
   for (const release of releases || []) {
     const date = dateKey(release.date);
     if (!inWindow(date, window)) continue;
-    const request = findRequest(requests, release);
+    const request = findRequest(requests, release) || (!requireRequest ? requestFromRelease(release) : null);
     if (!request) continue;
     const movie = release.type === "movie" || release.mediaType === "movie";
     const label = movie ? "" : String(release.subtitle || "").match(/S\d+E\d+/i)?.[0]?.toUpperCase() || "";
@@ -119,9 +130,10 @@ function mergeItems(...lists) {
 }
 
 // Pure: group the merged items per day (every day of the window is present, in order).
-function buildCalendar(requests, { window, arrReleases = [], liveReleases = [] }) {
+function buildCalendar(requests, { window, arrReleases = [], liveReleases = [], includeUnrequested = false } = {}) {
   const visible = (requests || []).filter((request) => String(request.status || "").toLowerCase() !== "declined" && String(request.status || "").toLowerCase() !== "error");
-  const items = mergeItems(seerrItems(visible, window), arrItems(visible, arrReleases, window), arrItems(visible, liveReleases, window));
+  const arrOpts = { requireRequest: !includeUnrequested };
+  const items = mergeItems(seerrItems(visible, window), arrItems(visible, arrReleases, window, arrOpts), arrItems(visible, liveReleases, window, arrOpts));
   const days = Array.from({ length: window.days }, (_, offset) => {
     const date = addDays(window.from, offset);
     const dayItems = items
@@ -210,7 +222,7 @@ async function getCalendar(requests, query = {}) {
   } catch (error) {
     sources.push({ name: "Sonarr / Radarr", ok: false, error: error.message || "Unavailable" });
   }
-  return { ...buildCalendar(requests, { window, arrReleases: stored, liveReleases: live }), sources };
+  return { ...buildCalendar(requests, { window, arrReleases: stored, liveReleases: live, includeUnrequested: Boolean(query.includeUnrequested) }), sources };
 }
 
 module.exports = { dateKey, addDays, todayKey, resolveWindow, buildCalendar, getCalendar, MAX_DAYS, DAY_MS };

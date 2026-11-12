@@ -7,6 +7,7 @@ const wrappedCard = require("./wrapped-card");
 const leavingSoon = require("./newsletter-leaving-soon");
 const seerrRequests = require("./newsletter-seerr-requests");
 const statusPage = require("./status-page");
+const comingSoon = require("./newsletter-coming-soon");
 /* Newsletter report builder: renders an ordered list of configurable blocks into email-safe HTML and plain text. */
 const db = require("../db");
 
@@ -28,6 +29,7 @@ const REPORT_BLOCK_TYPES = [
   "leavingSoon",
   "fulfilledRequests",
   "serverNews",
+  "comingSoon",
   "text",
   "customHtml",
   "divider",
@@ -53,6 +55,7 @@ const BLOCK_DEFAULT_TITLE_KEYS = {
   leavingSoon: "LEAVING_SOON",
   fulfilledRequests: "FULFILLED",
   serverNews: "SERVER_NEWS",
+  comingSoon: "COMING_SOON",
   text: "",
   customHtml: "",
   divider: "",
@@ -76,6 +79,7 @@ const BLOCK_DEFAULT_TITLES = {
   leavingSoon: "Leaving soon",
   fulfilledRequests: "Newly available requests",
   serverNews: "Server news",
+  comingSoon: "Coming soon",
   text: "",
   customHtml: "",
   divider: "",
@@ -162,6 +166,7 @@ function normalizeBlock(block = {}, index = 0) {
       kind: ["maintenance", "feature"].includes(options.kind) ? options.kind : "feature",
       startAt: String(options.startAt || "").slice(0, 32),
       endAt: String(options.endAt || "").slice(0, 32),
+      comingDays: clampInt(options.comingDays, 1, 31, 7),
     },
   };
 }
@@ -383,6 +388,18 @@ async function blockData(block, period, context) {
         statusEnabled: Boolean(config && config.enabled),
       };
     }
+    case "comingSoon": {
+      const windowDays = block.options.comingDays || days || 7;
+      const userName = context.perUser ? (context.personData?.personName || context.personData?.name || "") : "";
+      const data = await comingSoon.listComingSoon({
+        days: windowDays,
+        limit,
+        userName,
+        now: context.now || new Date(),
+        includeUnrequested: !context.perUser,
+      });
+      return data;
+    }
     default:
       return { days };
   }
@@ -393,6 +410,11 @@ function periodLabel(days, t = identityT) {
   if (Number(days) === 7) return t("PERIOD_WEEK");
   if (Number(days) === 30) return t("PERIOD_30");
   return t("PERIOD_DAYS", { count: Number(days) || 0 });
+}
+
+function comingMeta(item, t, today) {
+  const when = comingSoon.dateLabel(item.date, today, t);
+  return [when, item.label, item.kind, item.source].filter(Boolean).join(" · ");
 }
 
 function newsKindLabel(kind, t) {
@@ -752,6 +774,13 @@ function renderBlock(block, data, ctx = {}) {
       if (!body && !statusLink) return `${titleHtml(title, env, kind)}${emptyHtml(t("NEWS_EMPTY"), env)}`;
       return `${titleHtml(title, env, kind)}${dates ? meta([dates], env) : ""}${body}${statusLink}`;
     }
+    case "comingSoon":
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "request",
+        empty: t("COMING_SOON_EMPTY", { count: data.days || 7 }),
+        metaFor: (item) => comingMeta(item, t, data.today),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, item.requestId ? "request" : "item"), themeOf(env).heading)}${meta([comingMeta(item, t, data.today)], env)}`,
+      })}`;
     default:
       return "";
   }
