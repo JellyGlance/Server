@@ -141,3 +141,22 @@ describe("newsletter leaving-soon block", () => {
     assert.match(empty, /Bald nicht mehr verf\u00fcgbar|Aktuell ist nichts/);
   });
 });
+
+describe("newsletter fulfilled-requests block", () => {
+  it("renders newly available Seerr requests with request deep links", () => {
+    const block = reportBuilder.normalizeBlock({ type: "fulfilledRequests", options: { style: "list", limit: 8 } });
+    const html = reportBuilder.renderBlock(block, {
+      items: [
+        { Name: "The Diplomat", Type: "tv", requestId: 41, requestedBy: "Roffo", status: "Available" },
+        { Name: "Arrival", Type: "movie", requestId: 42, requestedBy: "Ada", status: "Available", Id: "jf-1" },
+      ],
+    }, ctx());
+    assert.match(html, /Newly available requests/);
+    assert.match(html, /The Diplomat/);
+    assert.match(html, /Arrival/);
+    assert.match(html, /requests\?request=41/);
+    assert.match(html, /Available/);
+    const empty = reportBuilder.renderBlock(block, { items: [] }, ctx({ locale: "de-DE" }));
+    assert.match(empty, /Keine|keine|verfügbar|letzten Versand/i);
+  });
+});

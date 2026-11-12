@@ -5,6 +5,7 @@ const { buildForYou } = require("./for-you");
 const { buildWrapped } = require("./wrapped-recap");
 const wrappedCard = require("./wrapped-card");
 const leavingSoon = require("./newsletter-leaving-soon");
+const seerrRequests = require("./newsletter-seerr-requests");
 /* Newsletter report builder: renders an ordered list of configurable blocks into email-safe HTML and plain text. */
 const db = require("../db");
 
@@ -24,6 +25,7 @@ const REPORT_BLOCK_TYPES = [
   "forYou",
   "wrappedRecap",
   "leavingSoon",
+  "fulfilledRequests",
   "text",
   "customHtml",
   "divider",
@@ -47,6 +49,7 @@ const BLOCK_DEFAULT_TITLE_KEYS = {
   forYou: "FOR_YOU",
   wrappedRecap: "WRAPPED",
   leavingSoon: "LEAVING_SOON",
+  fulfilledRequests: "FULFILLED",
   text: "",
   customHtml: "",
   divider: "",
@@ -68,6 +71,7 @@ const BLOCK_DEFAULT_TITLES = {
   forYou: "Picked for you",
   wrappedRecap: "Your recap",
   leavingSoon: "Leaving soon",
+  fulfilledRequests: "Newly available requests",
   text: "",
   customHtml: "",
   divider: "",
@@ -342,6 +346,17 @@ async function blockData(block, period, context) {
     case "leavingSoon": {
       const data = await leavingSoon.listLeavingSoon({ limit, now: context.now });
       return { days, items: data.items, maintainerrConfigured: data.maintainerrConfigured };
+    }
+    case "fulfilledRequests": {
+      const userName = context.perUser ? (context.personData?.personName || context.personData?.name || "") : "";
+      const items = await seerrRequests.listFulfilledRequests({
+        lastSentAt: context.lastSentAt,
+        days: days || 7,
+        limit,
+        userName,
+        now: context.now || new Date(),
+      });
+      return { days: days || 7, items };
     }
     default:
       return { days };
@@ -681,6 +696,13 @@ function renderBlock(block, data, ctx = {}) {
         metaFor: (item) => [leavingLabel(item, t), item.source === "maintainerr" ? t("MAINTAINERR") : item.ruleName, item.Type, item.Library].filter(Boolean).join(" · "),
         render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([leavingLabel(item, t), item.source === "maintainerr" ? t("MAINTAINERR") : item.ruleName, item.Type, item.Library], env)}`,
       })}`;
+    case "fulfilledRequests":
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "request",
+        empty: t("FULFILLED_EMPTY"),
+        metaFor: (item) => [item.Type, item.requestedBy, t("AVAILABLE")].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "request"), themeOf(env).heading)}${meta([item.Type, item.requestedBy, t("AVAILABLE")], env)}`,
+      })}`;
     default:
       return "";
   }
@@ -751,7 +773,7 @@ async function renderReport(input, { campaignName, logoSrc = "", personData = nu
   const { t, locale: resolvedLocale } = newsletterI18n.translator(locale);
   const resolvedBase = publicUrl.resolvePublicBase({ assetBase, publicBase, settings });
   const accent = theme.accent;
-  const context = { personData, lastSentAt, publicBase: resolvedBase };
+  const context = { personData, lastSentAt, publicBase: resolvedBase, perUser, now: date || new Date() };
   const blocks = report.blocks.filter((block) => block.enabled && (perUser || !PER_USER_BLOCKS.has(block.type)));
   const renderCtx = { accent, theme, t, locale: resolvedLocale, publicBase: resolvedBase };
   const rendered = await Promise.all(
