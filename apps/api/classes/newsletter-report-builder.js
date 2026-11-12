@@ -6,6 +6,7 @@ const { buildWrapped } = require("./wrapped-recap");
 const wrappedCard = require("./wrapped-card");
 const leavingSoon = require("./newsletter-leaving-soon");
 const seerrRequests = require("./newsletter-seerr-requests");
+const statusPage = require("./status-page");
 /* Newsletter report builder: renders an ordered list of configurable blocks into email-safe HTML and plain text. */
 const db = require("../db");
 
@@ -26,6 +27,7 @@ const REPORT_BLOCK_TYPES = [
   "wrappedRecap",
   "leavingSoon",
   "fulfilledRequests",
+  "serverNews",
   "text",
   "customHtml",
   "divider",
@@ -50,6 +52,7 @@ const BLOCK_DEFAULT_TITLE_KEYS = {
   wrappedRecap: "WRAPPED",
   leavingSoon: "LEAVING_SOON",
   fulfilledRequests: "FULFILLED",
+  serverNews: "SERVER_NEWS",
   text: "",
   customHtml: "",
   divider: "",
@@ -72,6 +75,7 @@ const BLOCK_DEFAULT_TITLES = {
   wrappedRecap: "Your recap",
   leavingSoon: "Leaving soon",
   fulfilledRequests: "Newly available requests",
+  serverNews: "Server news",
   text: "",
   customHtml: "",
   divider: "",
@@ -155,6 +159,9 @@ function normalizeBlock(block = {}, index = 0) {
       html: String(options.html || "").slice(0, 20000),
       style: ["list", "cards"].includes(options.style) ? options.style : "list",
       wrappedPeriod: ["week", "month", "year"].includes(options.wrappedPeriod) ? options.wrappedPeriod : "week",
+      kind: ["maintenance", "feature"].includes(options.kind) ? options.kind : "feature",
+      startAt: String(options.startAt || "").slice(0, 32),
+      endAt: String(options.endAt || "").slice(0, 32),
     },
   };
 }
@@ -358,6 +365,24 @@ async function blockData(block, period, context) {
       });
       return { days: days || 7, items };
     }
+    case "serverNews": {
+      const now = context.now || new Date();
+      const startAt = block.options.startAt || "";
+      const endAt = block.options.endAt || "";
+      const startMs = startAt ? Date.parse(startAt) : null;
+      const endMs = endAt ? Date.parse(endAt.length === 10 ? `${endAt}T23:59:59` : endAt) : null;
+      const nowMs = now.getTime();
+      const inWindow = (startMs == null || !Number.isFinite(startMs) || nowMs >= startMs) && (endMs == null || !Number.isFinite(endMs) || nowMs <= endMs);
+      const config = await statusPage.getStatusConfig().catch(() => ({ enabled: false }));
+      return {
+        kind: block.options.kind || "feature",
+        text: inWindow ? (block.options.text || "") : "",
+        startAt,
+        endAt,
+        visible: inWindow,
+        statusEnabled: Boolean(config && config.enabled),
+      };
+    }
     default:
       return { days };
   }
@@ -368,6 +393,19 @@ function periodLabel(days, t = identityT) {
   if (Number(days) === 7) return t("PERIOD_WEEK");
   if (Number(days) === 30) return t("PERIOD_30");
   return t("PERIOD_DAYS", { count: Number(days) || 0 });
+}
+
+function newsKindLabel(kind, t) {
+  if (kind === "maintenance") return t("NEWS_MAINTENANCE");
+  if (kind === "feature") return t("NEWS_FEATURE");
+  return "";
+}
+
+function newsDates(data, locale) {
+  const start = data.startAt ? formatDate(data.startAt, locale) : "";
+  const end = data.endAt ? formatDate(data.endAt, locale) : "";
+  if (start && end) return `${start} – ${end}`;
+  return start || end || "";
 }
 
 function leavingLabel(item, t) {
@@ -703,6 +741,17 @@ function renderBlock(block, data, ctx = {}) {
         metaFor: (item) => [item.Type, item.requestedBy, t("AVAILABLE")].filter(Boolean).join(" · "),
         render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "request"), themeOf(env).heading)}${meta([item.Type, item.requestedBy, t("AVAILABLE")], env)}`,
       })}`;
+    case "serverNews": {
+      const kind = newsKindLabel(data.kind, t);
+      const dates = newsDates(data, env.locale);
+      const body = data.visible === false ? "" : textToHtml(data.text, env);
+      const statusHref = data.statusEnabled ? publicUrl.statusPageHref(env.publicBase) : "";
+      const statusLink = statusHref
+        ? `<p style="margin:12px 0 0;font-size:14px;">${wrapLink(escapeHtml(t("STATUS_PAGE_LINK")), statusHref, themeOf(env).accent)}</p>`
+        : "";
+      if (!body && !statusLink) return `${titleHtml(title, env, kind)}${emptyHtml(t("NEWS_EMPTY"), env)}`;
+      return `${titleHtml(title, env, kind)}${dates ? meta([dates], env) : ""}${body}${statusLink}`;
+    }
     default:
       return "";
   }

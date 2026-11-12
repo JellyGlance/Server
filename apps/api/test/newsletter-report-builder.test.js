@@ -160,3 +160,27 @@ describe("newsletter fulfilled-requests block", () => {
     assert.match(empty, /Keine|keine|verfügbar|letzten Versand/i);
   });
 });
+
+describe("newsletter server-news block", () => {
+  it("renders admin copy, optional dates, a kind label, and a status-page link when enabled", () => {
+    const block = reportBuilder.normalizeBlock({
+      type: "serverNews",
+      options: { kind: "maintenance", text: "The library will be offline on Sunday.", startAt: "2026-11-15", endAt: "2026-11-16" },
+    });
+    const html = reportBuilder.renderBlock(block, {
+      kind: "maintenance",
+      text: "The library will be offline on Sunday.",
+      startAt: "2026-11-15",
+      endAt: "2026-11-16",
+      visible: true,
+      statusEnabled: true,
+    }, ctx());
+    assert.match(html, /Server news/);
+    assert.match(html, /Maintenance/);
+    assert.match(html, /The library will be offline on Sunday/);
+    assert.match(html, /\/status/);
+    assert.match(html, /Check the public status page/);
+    const empty = reportBuilder.renderBlock(block, { visible: true, text: "", statusEnabled: false }, ctx({ locale: "de-DE" }));
+    assert.match(empty, /Keine Neuigkeiten|nichts/i);
+  });
+});
