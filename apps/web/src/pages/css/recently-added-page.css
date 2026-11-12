@@ -28,7 +28,7 @@
 
 .recently-added-controls {
   display: grid;
-  grid-template-columns: minmax(260px, 1.3fr) repeat(4, minmax(150px, 0.7fr)) auto auto;
+  grid-template-columns: minmax(180px, 1.3fr) repeat(4, minmax(104px, 0.7fr)) auto auto;
   align-items: end;
   gap: 10px;
   margin-bottom: 22px;
@@ -64,7 +64,6 @@
   outline: 0;
   color: #eef4ff;
   background-color: transparent;
-  background-image: none;
   font-size: 13px;
   font-weight: 760;
 }
@@ -78,24 +77,11 @@
   display: grid;
   align-content: center;
   gap: 2px;
-  padding: 6px 34px 6px 10px;
+  padding: 6px 10px;
   transition:
     border-color 160ms ease,
     background 160ms ease,
     box-shadow 160ms ease;
-}
-
-.recently-added-control::after {
-  position: absolute;
-  right: 11px;
-  bottom: 10px;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid #cbb7e7;
-  border-bottom: 2px solid #cbb7e7;
-  content: "";
-  pointer-events: none;
-  transform: rotate(45deg);
 }
 
 .recently-added-control:focus-within {
@@ -113,11 +99,18 @@
   text-transform: uppercase;
 }
 
-.recently-added-control select {
+/* One arrow only: the native one is removed and the shared arrow image (App.css) is used. */
+.recently-added-control select,
+.recently-added-control select:not(.form-select):not([multiple]):not([size]) {
   appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23c9a7e6' d='M1.15 1.4 6 6.25 10.85 1.4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  background-size: 12px 8px;
   overflow: hidden;
   cursor: pointer;
-  padding: 0;
+  padding: 0 22px 0 0;
   text-overflow: ellipsis;
   white-space: nowrap;
   color-scheme: dark;
@@ -527,4 +520,77 @@
     flex-basis: 136px;
     width: 136px;
   }
+}
+
+/* Libraries with nothing recent fold into one line at the end of the page */
+.recent-empty-libraries {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recent-empty-libraries-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px dashed rgba(var(--primary-light-rgb), 0.24);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: none;
+  color: #9fb0c7;
+  font-size: 13px;
+  font-weight: 850;
+  text-align: left;
+  transform: none;
+}
+
+.recent-empty-libraries-toggle:hover,
+.recent-empty-libraries-toggle:focus-visible {
+  color: #fff;
+  transform: none;
+}
+
+.recent-empty-libraries-toggle em {
+  margin-left: auto;
+  font-style: normal;
+  color: #8d9ab0;
+}
+
+.recent-empty-libraries ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recent-empty-libraries li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.recent-empty-libraries li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-empty-libraries li small {
+  margin-left: auto;
+  flex: none;
+  color: #8d9ab0;
+  font-size: 12px;
 }

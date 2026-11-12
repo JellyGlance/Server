@@ -589,9 +589,14 @@
 .settings-form .input-group > .form-control {
   border: 1px solid rgba(255, 255, 255, 0.11) !important;
   border-radius: 11px !important;
-  background: rgba(5, 8, 13, 0.72) !important;
+  background-color: rgba(5, 8, 13, 0.72) !important;
   color: white !important;
   min-height: 42px;
+}
+
+.settings-form .form-control,
+.settings-form .input-group > .form-control {
+  background-image: none !important;
 }
 
 .settings-form .input-group {
@@ -2552,9 +2557,13 @@
   min-height: 42px;
   border: 1px solid rgba(255, 255, 255, 0.11) !important;
   border-radius: 11px !important;
-  background: rgba(5, 8, 13, 0.72) !important;
+  background-color: rgba(5, 8, 13, 0.72) !important;
   color: #f8fafc !important;
   font-weight: 800;
+}
+
+.newsletter-panel .form-control {
+  background-image: none !important;
 }
 
 .newsletter-panel .form-control::placeholder {
@@ -2787,9 +2796,13 @@
   min-height: 42px;
   border: 1px solid rgba(255, 255, 255, 0.11) !important;
   border-radius: 11px !important;
-  background: rgba(5, 8, 13, 0.72) !important;
+  background-color: rgba(5, 8, 13, 0.72) !important;
   color: #f8fafc !important;
   font-weight: 800;
+}
+
+.notification-panel .form-control {
+  background-image: none !important;
 }
 
 .notification-switch {
