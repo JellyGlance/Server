@@ -37,6 +37,8 @@ import { discoverSectionFromSearch } from "./requests/discover-grid";
 import TrailerDialog from "./requests/TrailerDialog";
 import { trailerTarget } from "./requests/trailer";
 import PlayCircleLineIcon from "remixicon-react/PlayCircleLineIcon";
+import RequestAsk from "./requests/RequestAsk";
+import ChatSmile3LineIcon from "remixicon-react/ChatSmile3LineIcon";
 import RequestStats from "./requests/RequestStats";
 import BarChartLineIcon from "remixicon-react/BarChartLineIcon";
 import RequestCalendar from "./requests/RequestCalendar";
@@ -974,7 +976,7 @@ export default function Requests() {
 
   // Download bars refresh every 15 seconds while the queue is open and the tab is visible.
   useEffect(() => {
-    if (pageSection !== "queue") return undefined;
+    if (pageSection !== "queue" && pageSection !== "ask") return undefined;
     loadProgress();
     const intervalId = setInterval(() => {
       if (!document.hidden) loadProgress();
@@ -1018,7 +1020,7 @@ export default function Requests() {
         <div className="rq-header">
           <h2>Requests</h2>
           <p>
-            {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : pageSection === "discover" ? "Browse what Seerr suggests and request what\u2019s missing." : pageSection === "calendar" ? "Requested titles arriving over the next seven days." : pageSection === "stats" ? "What gets requested, how fast it arrives and who asks the most." : "Search the queue, or pick a title to request."}
+            {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : pageSection === "discover" ? "Browse what Seerr suggests and request what\u2019s missing." : pageSection === "calendar" ? "Requested titles arriving over the next seven days." : pageSection === "stats" ? "What gets requested, how fast it arrives and who asks the most." : pageSection === "ask" ? "Ask Blobbo about your requests in plain words." : "Search the queue, or pick a title to request."}
           </p>
         </div>
         <div className="rq-toolbar">
@@ -1038,6 +1040,10 @@ export default function Requests() {
             <button type="button" role="tab" aria-selected={pageSection === "stats"} className={pageSection === "stats" ? "is-active" : ""} aria-label="Stats" onClick={() => setPageSection("stats")}>
               <BarChartLineIcon size={16} />
               <span className="rq-tab-label">Stats</span>
+            </button>
+            <button type="button" role="tab" aria-selected={pageSection === "ask"} className={pageSection === "ask" ? "is-active" : ""} aria-label="Ask Blobbo" onClick={() => setPageSection("ask")}>
+              <ChatSmile3LineIcon size={16} />
+              <span className="rq-tab-label">Ask</span>
             </button>
             {canManageRequests ? (
               <button type="button" role="tab" aria-label={t("FEATURES.REQUESTS.ISSUES")} aria-selected={pageSection === "issues"} className={pageSection === "issues" ? "is-active" : ""} onClick={() => setPageSection("issues")}>
@@ -1294,6 +1300,8 @@ export default function Requests() {
       ) : null}
 
       {pageSection === "stats" ? <RequestStats /> : null}
+
+      {pageSection === "ask" ? <RequestAsk requests={data.requests || []} progress={progress} readOnly={readOnly} onOpenRequest={openRequestDetail} onOpenResult={openMediaResultDetail} /> : null}
 
       {pageSection === "calendar" ? (
         <RequestCalendar requests={data.requests || []} onOpen={openRequestDetail} />
