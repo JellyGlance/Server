@@ -1348,6 +1348,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Wall playback info: the session cards' pills and Device / Audio lines. */
+.session-wall-playback {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+  min-width: 0;
+  margin-top: auto;
+}
+
+.session-wall-playback > * {
+  min-width: 0;
+}
+
 /* Everything above is BETA's original card styling (818e7af^). Every rule below
    is for the newer card and carries :not(:where(.sessions-classic, ...)), so the
    original card shown by the Simple look (.sessions-classic) is untouched by it.
@@ -1981,7 +1994,7 @@
   white-space: nowrap;
 }
 
-.session-card.has-card-layout .session-pills {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -1992,67 +2005,67 @@
   line-height: 15px;
 }
 
-.session-card.has-card-layout .session-pills .session-pill {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .session-pill {
   position: static;
   transform: none;
   line-height: 15px;
   white-space: nowrap;
 }
 
-.session-card.has-card-layout .session-pills > * {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills > * {
   flex: 0 0 auto;
 }
 
-.session-card.has-card-layout .session-transcode-badge {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-transcode-badge {
   display: inline-flex;
   flex: 0 0 auto;
   max-width: 55%;
 }
 
-.session-card.has-card-layout .session-pills .transcode-explainer.is-compact,
-.session-card.has-card-layout .session-pills .transcode-explainer.is-compact > span {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer.is-compact,
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer.is-compact > span {
   display: flex;
   min-width: 0;
   max-width: 100%;
   margin: 0;
 }
 
-.session-card.has-card-layout .session-pills .transcode-explainer-chip {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer-chip {
   display: inline-flex;
   align-items: center;
   min-width: 0;
   max-width: 100%;
 }
 
-.session-card.has-card-layout .session-pills .transcode-explainer-chip > span {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer-chip > span {
   min-width: 0;
   overflow-x: clip;
   overflow-y: visible;
   text-overflow: ellipsis;
 }
 
-.session-card.has-card-layout .session-pills .transcode-explainer-chip > svg {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer-chip > svg {
   flex: 0 0 auto;
 }
 
-.session-card.has-card-layout .session-pills .transcode-explainer-chip {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer-chip {
   padding: 1px 8px;
   font-size: 10px;
   line-height: 1.5;
   white-space: nowrap;
 }
 
-.session-card.has-card-layout .session-pill-more {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pill-more {
   cursor: default;
 }
 
-.session-card.has-card-layout .session-fields {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-fields {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 2px;
 }
 
-.session-card.has-card-layout .session-field {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-field {
   display: flex;
   align-items: baseline;
   gap: 5px;
@@ -2061,11 +2074,11 @@
   line-height: 15px;
 }
 
-.session-card.has-card-layout .session-field-label {
+:is(.session-card.has-card-layout, .session-wall-tile) .session-field-label {
   flex: 0 0 auto;
 }
 
-.session-card.has-card-layout .session-card-layout .session-field-value {
+:is(.session-card.has-card-layout .session-card-layout, .session-wall-tile) .session-field-value {
   display: block;
   flex: 1 1 auto;
   min-width: 0;
@@ -2217,7 +2230,7 @@
   color: rgba(255, 255, 255, 0.78) !important;
 }
 
-.session-card.is-simple-card .session-state-chip {
+:is(.session-card.is-simple-card, .session-wall-tile) .session-state-chip {
   text-shadow: none;
   cursor: default;
 }

@@ -207,7 +207,7 @@ function Sessions({ surface = "home", view: controlledView, onViewChange }) {
       </div>
       {view === "list" ? <SessionList sessions={data} /> : null}
       {view === "bandwidth" ? <SessionBandwidth sessions={data} /> : null}
-      {view === "wall" ? <SessionWall sessions={data} /> : null}
+      {view === "wall" ? <SessionWall sessions={data} simple={simple} canManage={canManage && surface !== "kiosk"} /> : null}
       {view === "cards" && simple ? <div className="sessions-container sessions-detailed sessions-simple-cards">
         {orderSessions(data).map((session) => (
           <ErrorBoundary key={session.Id}>

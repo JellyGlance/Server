@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Card from "react-bootstrap/Card";
 import Row from "react-bootstrap/Row";
@@ -22,30 +22,9 @@ import { Trans } from "react-i18next";
 import baseUrl from "../../../lib/baseurl";
 import axios from "../../../lib/axios_instance";
 import TranscodeExplainer from "./transcode-explainer";
-import { explainTranscode, summarizeTranscode } from "../../../lib/transcode-explainer";
+import { SessionField, SessionPlaybackFields, SessionPlaybackPills, formatTranscodeReasons } from "./session-playback";
 import { formatTicks, getSessionProgress } from "../../../lib/session-progress";
 
-function formatTranscodeReasons(session) {
-  const reasons = session?.TranscodingInfo?.TranscodeReasons;
-  if (Array.isArray(reasons) && reasons.length) {
-    return reasons
-      .map((reason) => String(reason).replace(/([a-z])([A-Z])/g, "$1 $2"))
-      .join(", ");
-  }
-  const transcoding = session?.TranscodingInfo;
-  if (!transcoding) return "";
-  const parts = [];
-  if (transcoding.IsVideoDirect === false) parts.push("Video remux/transcode");
-  if (transcoding.IsAudioDirect === false) parts.push("Audio remux/transcode");
-  return parts.join(", ");
-}
-
-function lastStreamPart(value) {
-  const parts = String(value || "").split("->");
-  return parts[parts.length - 1].trim();
-}
-
-// Short, client-agnostic pills: playback method, resolution/codec and bitrate.
 // Simple card art, best first: an episode's still, a movie's backdrop, then
 // the series backdrop, then the poster. A failed image steps to the next one.
 function getSessionArtSources(item, root) {
@@ -80,69 +59,6 @@ function SessionCardArt({ sources }) {
   );
 }
 
-// Short transcode badge for the compact card: first reason + how many more,
-// e.g. "Video ⟳ +1". The full reasons sit in the badge's tooltip.
-const TRANSCODE_SHORT = {
-  videoCodec: "Video",
-  audioCodec: "Audio",
-  audioChannels: "Channels",
-  bitrate: "Bitrate",
-  subtitles: "Subs",
-  container: "Container",
-  videoRange: "HDR",
-  videoProfile: "Profile",
-  resolution: "Res",
-  directPlayDisabled: "DP off",
-  error: "DP failed",
-};
-
-function shortTranscodeLabel(explained) {
-  if (!explained) return "";
-  const first = explained.causes[0];
-  const name = first ? TRANSCODE_SHORT[first.id] || first.label : explained.mode === "remux" ? "Remux" : "Transcode";
-  const more = explained.causes.length > 1 ? ` +${explained.causes.length - 1}` : "";
-  return `${name} ⟳${more}`;
-}
-
-function getSessionPills(session) {
-  const item = session.NowPlayingItem || {};
-  const transcoding = session.TranscodingInfo;
-  const pills = [];
-  const videoTranscode = Boolean(transcoding) && transcoding.IsVideoDirect === false;
-  const audioTranscode = Boolean(transcoding) && transcoding.IsAudioDirect === false;
-
-  if (videoTranscode) {
-    pills.push({ key: "method", label: "Video transcode", tone: "warn" });
-  } else {
-    pills.push({ key: "method", label: session.PlayState?.PlayMethod === "DirectStream" ? "Direct stream" : "Direct play", tone: "ok" });
-  }
-  if (audioTranscode) {
-    pills.push({ key: "audio", label: "Audio transcode", tone: "warn" });
-  }
-
-  const videoMatch = /\(([^-\s)]+)-([^\s)]+)/.exec(item.VideoStream || "");
-  if (videoMatch) {
-    const target = /->\s*([^-\s)]+)-([^\s)]+)/.exec(item.VideoStream || "");
-    const codec = target ? target[1] : videoMatch[1];
-    const resolution = target ? target[2] : videoMatch[2];
-    pills.push({ key: "video", label: `${resolution} · ${codec}` });
-  }
-
-  const bitrate = lastStreamPart(item.VideoBitrateStream);
-  if (bitrate) {
-    pills.push({ key: "bitrate", label: bitrate });
-  }
-  return pills;
-}
-
-function formatStreamDetail(value) {
-  const inner = /\((.*)\)/.exec(String(value || ""));
-  return (inner ? inner[1] : String(value || ""))
-    .replace(/->/g, "→")
-    .replace(/-(\d+)Ch/gi, " $1ch")
-    .trim();
-}
-
 function formatClock(date) {
   if (!date) return "";
   return date.toLocaleTimeString([], {
@@ -164,18 +80,6 @@ function SessionDetailItem({ label, value, wide = false }) {
     <div className={`session-popout-detail${wide ? " is-wide" : ""}`}>
       <span>{label}</span>
       <strong>{value}</strong>
-    </div>
-  );
-}
-
-function SessionField({ label, value, title }) {
-  if (value === undefined || value === null || value === "") return null;
-  return (
-    <div className="session-field">
-      <span className="session-field-label">{label}</span>
-      <Tooltip title={title || (typeof value === "string" ? value : "")}>
-        <span className="session-field-value">{value}</span>
-      </Tooltip>
     </div>
   );
 }
@@ -288,45 +192,6 @@ function SessionUserAvatar({ session }) {
   );
 }
 
-// Badges stay on one row: the ones that don't fit are hidden and a "+N" chip
-// lists them in its tooltip. Works on the DOM so a resize doesn't re-render.
-function useBadgeOverflow(rowRef, moreRef, contentKey) {
-  useLayoutEffect(() => {
-    const row = rowRef.current;
-    const more = moreRef.current;
-    if (!row || !more || typeof ResizeObserver === "undefined") return undefined;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const items = [...row.children].filter((child) => child !== more);
-      items.forEach((item) => (item.style.display = ""));
-      more.style.display = "none";
-      if (row.scrollWidth <= row.clientWidth + 1) return;
-      more.style.display = "";
-      const limit = row.getBoundingClientRect().right - more.getBoundingClientRect().width - 6;
-      const hidden = [];
-      for (let i = items.length - 1; i >= 0; i -= 1) {
-        const fits = items.slice(0, i + 1).every((item) => item.getBoundingClientRect().right <= limit + 0.5);
-        if (fits) break;
-        items[i].style.display = "none";
-        hidden.unshift(items[i].textContent.trim());
-      }
-      more.textContent = `+${hidden.length}`;
-      more.title = hidden.join(", ");
-      more.setAttribute("aria-label", `${hidden.length} more: ${hidden.join(", ")}`);
-    };
-    const observer = new ResizeObserver(() => {
-      if (!frame) frame = window.requestAnimationFrame(update);
-    });
-    observer.observe(row);
-    update();
-    return () => {
-      observer.disconnect();
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, [rowRef, moreRef, contentKey]);
-}
-
 function SessionCard(props) {
   const session = props.data.session;
   const hideIpAddress = Boolean(props.hideIpAddress);
@@ -347,17 +212,6 @@ function SessionCard(props) {
   const [actionError, setActionError] = useState("");
 
   const simple = Boolean(props.simple);
-  const badgesRef = useRef(null);
-  const badgesMoreRef = useRef(null);
-  // The transcode badge already says "Transcode"/"Audio transcode", so the
-  // matching method pills are dropped next to it.
-  const showTranscodeBadge = canManage && Boolean(session.TranscodingInfo) && Boolean(explainTranscode(session));
-  const badgePills = getSessionPills(session).filter(
-    (pill) => !(showTranscodeBadge && ((pill.key === "method" && pill.tone === "warn") || pill.key === "audio")),
-  );
-  const badgeKey = [showTranscodeBadge ? "explainer" : "", ...badgePills.map((pill) => pill.label)].join("|");
-  useBadgeOverflow(badgesRef, badgesMoreRef, simple ? "simple" : badgeKey);
-
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => setLoadBackdrop(true));
     return () => window.cancelAnimationFrame(frameId);
@@ -407,10 +261,6 @@ function SessionCard(props) {
       : nowPlaying.Type === "Audio" && nowPlaying.Artists?.length > 0
         ? nowPlaying.Artists[0]
         : nowPlaying.SeriesName || nowPlaying.Type;
-  const transcodeExplained = isTranscoding ? explainTranscode(session) : null;
-  const transcodeBadgeTip = transcodeExplained
-    ? [summarizeTranscode(transcodeExplained), ...transcodeExplained.causes.map((cause) => cause.label)].filter((v, i, all) => all.indexOf(v) === i).join(" · ")
-    : "";
   const artSources = simple ? getSessionArtSources(nowPlaying, baseUrl) : [];
   const cardSubtitle =
     nowPlaying.Type === "Episode"
@@ -807,37 +657,7 @@ function SessionCard(props) {
                   </div>
                 </div>
 
-                {simple ? (
-                  <div className="session-pills">
-                    {isTranscoding ? (
-                      <Tooltip title={[transcodeBadgeTip, transcodeReason].filter(Boolean).join(" — ") || "Transcoding"}>
-                        <span className="session-pill session-state-chip is-warn" tabIndex={0}>
-                          {session.TranscodingInfo.IsVideoDirect === false ? "Transcode" : "Audio transcode"}
-                        </span>
-                      </Tooltip>
-                    ) : (
-                      <span className="session-pill session-state-chip is-ok">
-                        {playState.PlayMethod === "DirectStream" ? "Direct stream" : "Direct play"}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                <div className="session-pills" ref={badgesRef}>
-                  {showTranscodeBadge && transcodeExplained ? (
-                    <Tooltip title={[transcodeBadgeTip, transcodeReason].filter(Boolean).join(" — ")}>
-                      <span className="session-transcode-badge">
-                        <TranscodeExplainer session={session} compact label={shortTranscodeLabel(transcodeExplained)} />
-                      </span>
-                    </Tooltip>
-                  ) : null}
-                  {badgePills.map((pill) => (
-                    <span key={pill.key} className={`session-pill${pill.tone ? ` is-${pill.tone}` : ""}`}>
-                      {pill.label}
-                    </span>
-                  ))}
-                  <span className="session-pill session-pill-more" ref={badgesMoreRef} style={{ display: "none" }} />
-                </div>
-                )}
+                <SessionPlaybackPills session={session} simple={simple} canManage={canManage} />
 
                 {simple ? (
                   <div className="session-fields">
@@ -845,14 +665,7 @@ function SessionCard(props) {
                   </div>
                 ) : (
                 <div className="session-fields">
-                  <SessionField label="Device" value={session.DeviceName} />
-                  {nowPlaying.AudioStream ? (
-                    <SessionField
-                      label="Audio"
-                      value={[formatStreamDetail(nowPlaying.AudioStream), lastStreamPart(nowPlaying.AudioBitrateStream)].filter(Boolean).join(" · ")}
-                      title={`${nowPlaying.AudioStream} ${nowPlaying.AudioBitrateStream || ""}`.trim()}
-                    />
-                  ) : null}
+                  <SessionPlaybackFields session={session} />
                   <SessionField label="Left" value={timeLeft || <Trans i18nKey="ERROR_MESSAGES.N/A" />} />
                   {!hideIpAddress ? (
                     <SessionField
