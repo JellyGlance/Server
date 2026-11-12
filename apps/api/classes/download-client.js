@@ -131,6 +131,19 @@ function basicAuth(client) {
   return { username: username || "", password: password || "" };
 }
 
+// qBittorrent bans an address after a few failed sign-ins, and a sign-in per poll is
+// wasteful, so the session cookie is kept for a few minutes and dropped on a 403.
+const QBIT_SESSION_TTL_MS = 10 * 60 * 1000;
+const qbittorrentSessions = new Map();
+
+function qbittorrentSessionKey(client) {
+  return `${cleanUrl(client.values?.url)}|${client.values?.username || ""}`;
+}
+
+function forgetQbittorrentSession(client) {
+  qbittorrentSessions.delete(qbittorrentSessionKey(client));
+}
+
 async function qbittorrentCookie(client) {
   const url = cleanUrl(client.values?.url);
   const username = client.values?.username;
@@ -138,6 +151,9 @@ async function qbittorrentCookie(client) {
   if (!url || !username || !password) {
     throw Object.assign(new Error("Missing qBittorrent URL, username, or password"), { statusCode: 400 });
   }
+  const key = qbittorrentSessionKey(client);
+  const cached = qbittorrentSessions.get(key);
+  if (cached && cached.expiresAt > Date.now()) return { url, cookie: cached.cookie };
 
   const login = await safeHttpPost(url, "/api/v2/auth/login", new URLSearchParams({ username, password }), {
     timeout: 15000,
@@ -149,7 +165,9 @@ async function qbittorrentCookie(client) {
     throw Object.assign(new Error("qBittorrent login failed"), { statusCode: 502 });
   }
 
-  return { url, cookie: login.headers["set-cookie"]?.join("; ") || "" };
+  const cookie = login.headers["set-cookie"]?.join("; ") || "";
+  if (cookie) qbittorrentSessions.set(key, { cookie, expiresAt: Date.now() + QBIT_SESSION_TTL_MS });
+  return { url, cookie };
 }
 
 async function qbittorrentPost(client, path, params) {
@@ -160,6 +178,7 @@ async function qbittorrentPost(client, path, params) {
     validateStatus: () => true,
   });
   if (response.status >= 400 || String(response.data || "").toLowerCase().includes("fails.")) {
+    if (response.status === 403) forgetQbittorrentSession(client);
     throw Object.assign(new Error(`qBittorrent request failed (${response.status})`), { statusCode: 502 });
   }
   return response;
@@ -370,6 +389,8 @@ function normalizeQbittorrentTorrent(client, torrent) {
     up: formatSpeed(torrent.upspeed),
     addedAt: torrent.added_on ? new Date(Number(torrent.added_on) * 1000).toISOString() : new Date().toISOString(),
     hash: torrent.hash || null,
+    // Seconds left as qBittorrent reports it; 8640000 means "unknown".
+    eta: Number.isFinite(Number(torrent.eta)) && Number(torrent.eta) > 0 && Number(torrent.eta) < 8640000 ? Number(torrent.eta) : null,
     peers: Number(torrent.num_leechs || 0),
     seeds: Number(torrent.num_seeds || 0),
     error: torrent.state === "missingFiles" ? "Missing files" : torrent.state === "error" ? "Client error" : "",
@@ -494,12 +515,23 @@ async function fetchQbittorrentQueue(client) {
     return { items: [], error: "Missing qBittorrent URL, username, or password" };
   }
   try {
-    const { cookie } = await qbittorrentCookie(client);
-    const response = await safeHttpGet(url, "/api/v2/torrents/info", { // codeql[js/request-forgery]
-      timeout: 15000,
-      headers: { Cookie: cookie },
-      params: { filter: "all" },
-    });
+    const readTorrents = async () => {
+      const { cookie } = await qbittorrentCookie(client);
+      return safeHttpGet(url, "/api/v2/torrents/info", { // codeql[js/request-forgery]
+        timeout: 15000,
+        headers: { Cookie: cookie },
+        params: { filter: "all" },
+      });
+    };
+    let response;
+    try {
+      response = await readTorrents();
+    } catch (error) {
+      // An expired session answers 403; sign in once more and retry.
+      if (error?.response?.status !== 403 || !qbittorrentSessions.has(qbittorrentSessionKey(client))) throw error;
+      forgetQbittorrentSession(client);
+      response = await readTorrents();
+    }
     const torrents = Array.isArray(response.data) ? response.data : [];
     return { items: torrents.map((torrent) => normalizeQbittorrentTorrent(client, torrent)) };
   } catch (error) {

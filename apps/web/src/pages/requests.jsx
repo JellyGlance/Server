@@ -29,7 +29,7 @@ import "./css/integrations.css";
 import RequestTimeline from "./requests/RequestTimeline";
 import RequestRulesModal from "./requests/RequestRulesModal";
 import RequestDiscover from "./requests/RequestDiscover";
-import { RequestCard, IssueCard, RequestPoster, RequestSkeleton, RequesterAvatar, StatusChip } from "./requests/RequestCard";
+import { RequestCard, IssueCard, RequestPoster, RequestSkeleton, RequesterAvatar, StatusChip, DownloadProgress } from "./requests/RequestCard";
 import BlobboEmpty from "./requests/BlobboEmpty";
 import "./css/requests-polish.css";
 import ScalesLineIcon from "remixicon-react/Scales3LineIcon";
@@ -179,6 +179,7 @@ export default function Requests() {
   const [discoverNonce, setDiscoverNonce] = useState(0);
   const [seerrReadOnly, setSeerrReadOnly] = useState(false);
   const [blockedIds, setBlockedIds] = useState(() => new Set());
+  const [progress, setProgress] = useState({ items: {}, simulated: false });
   const [issues, setIssues] = useState([]);
   const [issuesLoading, setIssuesLoading] = useState(false);
   const [issuesError, setIssuesError] = useState("");
@@ -590,6 +591,15 @@ export default function Requests() {
     }
   }
 
+  async function loadProgress() {
+    try {
+      const response = await axios.get("/api/requests/progress", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      setProgress({ items: response.data?.items || {}, simulated: Boolean(response.data?.simulated) });
+    } catch {
+      // Progress is a bonus on top of the list; a failed poll just keeps the last bars.
+    }
+  }
+
   async function loadIssues() {
     if (!canManageRequests) return [];
     try {
@@ -893,6 +903,16 @@ export default function Requests() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Download bars refresh every 15 seconds while the queue is open and the tab is visible.
+  useEffect(() => {
+    if (pageSection !== "queue") return undefined;
+    loadProgress();
+    const intervalId = setInterval(() => {
+      if (!document.hidden) loadProgress();
+    }, 15000);
+    return () => clearInterval(intervalId);
+  }, [pageSection]);
+
   useEffect(() => {
     if (pageSection !== "issues" || !canManageRequests) return;
     loadIssues();
@@ -988,7 +1008,7 @@ export default function Requests() {
         {readOnly ? (
           <div className="rq-readonly-hint" role="note">
             <ForbidLineIcon size={16} />
-            <span>Demo: {seerrName} is connected read-only. You can browse and open titles; changes are turned off.</span>
+            <span>Demo: {seerrName} is connected read-only. You can browse and open titles; changes are turned off.{progress.simulated ? " Download bars are simulated demo data." : ""}</span>
           </div>
         ) : null}
         {actionMessage ? (
@@ -1203,6 +1223,8 @@ export default function Requests() {
             canManage={canManageRequests}
             readOnly={readOnly}
             busy={Boolean(busyAction)}
+            progress={progress.items[request.id]}
+            compact={narrow}
             onOpen={openRequestDetail}
             onAction={runRequestAction}
             onEdit={openRequestEditor}
@@ -1336,6 +1358,11 @@ export default function Requests() {
                     {selectedRequest.userInterest?.favouritedBy?.length ? <span className="is-interest">Favourited by {selectedRequest.userInterest.favouritedBy.join(", ")}</span> : null}
                   </div>
 
+                  {!selectedRequest.isSearchResult && progress.items[selectedRequest.id] ? (
+                    <div className="rq-dl-detail">
+                      <DownloadProgress entry={progress.items[selectedRequest.id]} barWidth={160} />
+                    </div>
+                  ) : null}
                   {!selectedRequest.isSearchResult ? <RequestTimeline request={selectedRequest} /> : null}
 
                   {!selectedRequest.isSearchResult && canManageRequests && readOnly ? (

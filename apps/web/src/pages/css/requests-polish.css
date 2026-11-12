@@ -1163,6 +1163,104 @@
   color: #86efac;
 }
 
+/* ---- live download progress: 6px bar, whole-pixel fill, label on the chip line ---- */
+.rq-dl {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  height: 24px;
+  margin-left: 4px;
+  color: var(--rq-text);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.rq-dl-bar {
+  display: block;
+  flex: none;
+  box-sizing: border-box;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.rq-dl-bar b {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: #93c5fd;
+}
+
+.rq-dl.is-stalled .rq-dl-bar b { background: #fbbf24; }
+.rq-dl.is-paused .rq-dl-bar b { background: #94a3b8; }
+.rq-dl.is-failed .rq-dl-bar b { background: #f87171; }
+.rq-dl.is-queued .rq-dl-bar b { width: 0 !important; }
+.rq-dl.is-stalled .rq-dl-text { color: #fde68a; }
+.rq-dl.is-failed .rq-dl-text { color: #fecaca; }
+.rq-dl.is-queued .rq-dl-text,
+.rq-dl.is-paused .rq-dl-text { color: #cbd5e1; }
+
+.rq-dl-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Marks simulated numbers in the demo. */
+.rq-dl-demo {
+  flex: none;
+  box-sizing: border-box;
+  height: 16px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  color: #cbd5e1;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Narrow rows keep the status and the bar; the type and age chips make way. */
+@media (max-width: 699px) {
+  .rq-card.is-list .rq-chips:has(.rq-dl) :is(.rq-age, .is-type) {
+    display: none;
+  }
+
+  .rq-card.is-list .rq-dl {
+    margin-left: 0;
+  }
+
+  .rq-dl-demo {
+    display: none;
+  }
+}
+
+/* In cards the bar takes its own line under the chips. */
+.rq-card.is-cards .rq-dl {
+  flex-basis: 100%;
+  margin-left: 0;
+}
+
+.rq-dl-detail {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  margin: 0 0 var(--rq-s3);
+}
+
+.rq-dl-detail .rq-dl {
+  margin-left: 0;
+}
+
 /* ---- skeletons: the same box as the real row or card ---- */
 .rq-card.is-skeleton {
   cursor: default;

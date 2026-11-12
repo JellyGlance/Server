@@ -13,6 +13,7 @@ import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
 import Tv2LineIcon from "remixicon-react/Tv2LineIcon";
 import baseUrl from "../../lib/baseurl";
 import { isPosterRatio, posterChain } from "./poster";
+import { BAR_WIDTH, fillWidth, progressView } from "./progress";
 import { formatDate, getInitials, getRequestAge, getRequesterAvatarUrl, getRequesterName, requestStatusChip } from "./helpers";
 
 export function StatusChip({ tone, label, className = "" }) {
@@ -54,6 +55,30 @@ export function RequesterAvatar({ name, url, size = 24 }) {
     <span className={`rq-avatar${size >= 32 ? " is-large" : ""}`} style={{ "--rq-avatar": `${size}px` }} aria-hidden="true">
       <span>{getInitials(name)}</span>
       {url && !failed ? <img src={url} alt="" decoding="async" onError={() => setFailed(true)} /> : null}
+    </span>
+  );
+}
+
+// Live download bar and ETA from the *arr and download client queues. The fill is a
+// whole number of pixels. `Demo` marks simulated data in the demo.
+export function DownloadProgress({ entry, barWidth = BAR_WIDTH, className = "" }) {
+  const view = progressView(entry);
+  return (
+    <span
+      className={`rq-dl is-${view.tone}${view.indeterminate ? " is-idle" : ""} ${className}`.trim()}
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={view.pct}
+      aria-valuetext={view.label}
+      aria-label={view.title}
+      title={view.title}
+    >
+      <i className="rq-dl-bar" style={{ width: `${barWidth}px` }}>
+        <b style={{ width: `${fillWidth(entry, barWidth)}px` }} />
+      </i>
+      <span className="rq-dl-text">{view.label}</span>
+      {entry.simulated ? <em className="rq-dl-demo">Demo</em> : null}
     </span>
   );
 }
@@ -112,7 +137,7 @@ function Action({ title, icon: Icon, tone = "", showLabel = false, disabled, onC
   );
 }
 
-export function RequestCard({ request, view = "list", canManage, readOnly, busy, onOpen, onAction, onEdit, onOpenSeerr }) {
+export function RequestCard({ request, view = "list", canManage, readOnly, busy, progress, compact, onOpen, onAction, onEdit, onOpenSeerr }) {
   const chip = requestStatusChip(request);
   const age = getRequestAge(request.createdAt);
   const name = getRequesterName(request);
@@ -132,7 +157,7 @@ export function RequestCard({ request, view = "list", canManage, readOnly, busy,
           <StatusChip tone={chip.key} label={chip.label} />
           {inLibrary ? <StatusChip tone="available" label="In library" className="rq-chip-extra" /> : null}
           <StatusChip tone={age.level === "week" ? "failed" : "pending"} label={age.label} className="rq-age" />
-          <ProgressDots request={request} />
+          {progress ? <DownloadProgress entry={progress} barWidth={compact ? 48 : BAR_WIDTH} /> : <ProgressDots request={request} />}
         </div>
         <div className="rq-requester" title={`Requested by ${name}`}>
           <RequesterAvatar name={name} url={getRequesterAvatarUrl(request)} />

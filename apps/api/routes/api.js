@@ -4,6 +4,7 @@ const { mediaServerAuthHeaders, chooseServerType, withServerType, saveServerType
 const { clientSettings } = require("../classes/client-config");
 const audiobookshelf = require("../classes/audiobookshelf");
 const requestDiscover = require("../classes/request-discover");
+const requestProgress = require("../classes/request-progress");
 const quietHours = require("../classes/quiet-hours");
 const fs = require("fs");
 const path = require("path");
@@ -3388,6 +3389,18 @@ async function normalizeSeerrRequest(item, source, options = {}) {
     languageProfileId: item.languageProfileId ?? null,
     is4k: Boolean(item.is4k),
     tags: Array.isArray(item.tags) ? item.tags : [],
+    // What Seerr itself reports from the *arr queues (the fallback for download progress).
+    downloadStatus: requestProgress.normalizeSeerrDownloadStatus(media.downloadStatus),
+    mediaAddedAt: media.mediaAddedAt || null,
+    mediaUpdatedAt: media.updatedAt || null,
+    nextEpisode: mediaDetails.nextEpisodeToAir?.airDate
+      ? {
+          airDate: mediaDetails.nextEpisodeToAir.airDate,
+          season: mediaDetails.nextEpisodeToAir.seasonNumber ?? null,
+          episode: mediaDetails.nextEpisodeToAir.episodeNumber ?? null,
+          name: mediaDetails.nextEpisodeToAir.name || "",
+        }
+      : null,
   };
 
   normalized.openUrl = buildSeerrOpenUrl(source, normalized);
@@ -4744,6 +4757,18 @@ router.get("/requests/home", async (req, res) => {
   } catch (error) {
     console.error("Get request home summary failed:", error);
     res.status(503).send({ error: "Unable to load request home summary" });
+  }
+});
+
+// Live download progress and ETA per request (Sonarr, Radarr and qBittorrent queues).
+router.get("/requests/progress", async (req, res) => {
+  try {
+    // The full list is the one the page already loaded (cached), with library availability.
+    const data = filterSeerrRequestsForUser(await fetchSeerrRequests(), req.user);
+    res.send(await requestProgress.getProgress(data.requests || []));
+  } catch (error) {
+    console.error("Get request progress failed:", error);
+    res.status(503).send({ error: "Unable to load download progress" });
   }
 });
 
