@@ -164,3 +164,37 @@ export function libraryCardStatTiles({ collectionType, plays, episodeCount, libr
   ].filter(Boolean);
 }
 
+// List view keeps a fixed column for every stat so rows line up. Inapplicable
+// stats (Episodes and Seasons on movies, music and books) show an em dash.
+export const LIBRARY_LIST_STAT_COLUMNS = [
+  { key: "plays", labelKey: "LIBRARY_CARD.PLAYS" },
+  { key: "episodes", labelKey: "EPISODES", optional: true },
+  { key: "seasons", labelKey: "SEASONS", optional: true },
+  { key: "size", labelKey: "LIBRARY_CARD.SIZE" },
+  { key: "files", labelKey: "LIBRARY_CARD.FILES" },
+  { key: "totalTime", labelKey: "LIBRARY_CARD.TIME" },
+  { key: "playback", labelKey: "LIBRARY_CARD.PLAYBACK" },
+];
+
+export function libraryListStatColumns({ collectionType, plays, episodeCount, librarySize, files, seasonCount, totalTimeTicks, playbackSeconds }) {
+  const type = String(collectionType || "").toLowerCase();
+  const isTv = type === "tvshows";
+
+  return [
+    { key: "plays", labelKey: "LIBRARY_CARD.PLAYS", value: formatCount(plays) },
+    { key: "episodes", labelKey: "EPISODES", value: isTv ? formatCount(episodeCount) : UNKNOWN_LIBRARY_SIZE, placeholder: !isTv },
+    { key: "seasons", labelKey: "SEASONS", value: isTv ? formatCount(seasonCount) : UNKNOWN_LIBRARY_SIZE, placeholder: !isTv },
+    { key: "size", labelKey: "LIBRARY_CARD.SIZE", value: formatCompactLibrarySize(librarySize) },
+    { key: "files", labelKey: "LIBRARY_CARD.FILES", value: formatCount(files) },
+    { key: "totalTime", labelKey: "LIBRARY_CARD.TIME", value: formatCompactDurationFromTicks(totalTimeTicks) },
+    { key: "playback", labelKey: "LIBRARY_CARD.PLAYBACK", value: formatCompactDurationFromSeconds(playbackSeconds) },
+  ];
+}
+
+export function formatLastPlayedLine(itemName, lastActivity, fallback = "N/A") {
+  const title = String(itemName || "").trim() || fallback;
+  const when = formatLastPlayedLabel(lastActivity);
+  const text = String(itemName || "").trim() ? `${title} · ${when}` : when;
+  return { title, when, text };
+}
+

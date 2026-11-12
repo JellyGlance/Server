@@ -4,7 +4,7 @@ import Config from "../lib/config";
 
 import "./css/library/libraries.css";
 import Loading from "./components/general/loading";
-import LibraryCard from "./components/library/library-card";
+import LibraryCard, { LibraryListHeader } from "./components/library/library-card";
 import StorageByLibrary from "./components/library/storage-by-library";
 import DiskForecastCard from "./components/library/disk-forecast-card";
 import ErrorBoundary from "./components/general/ErrorBoundary";
@@ -243,6 +243,7 @@ function Libraries() {
           ) : null}
 
           <div className={`libraries-container library-view-${viewMode}`}>
+            {viewMode === "list" && filteredLibraries.length > 0 ? <LibraryListHeader /> : null}
             {filteredLibraries.map((item) => (
               <ErrorBoundary key={item.Id}>
                 <LibraryCard

@@ -8,7 +8,7 @@ import { Trans } from "react-i18next";
 import i18next from "i18next";
 import baseUrl from "../../../lib/baseurl";
 import { libraryTypeMeta } from "../../../lib/library-types";
-import { formatLastPlayedLabel, libraryCardStatTiles } from "./library-card-format";
+import { formatLastPlayedLabel, formatLastPlayedLine, libraryCardStatTiles, libraryListStatColumns, LIBRARY_LIST_STAT_COLUMNS } from "./library-card-format";
 
 function LibraryCard(props) {
   const [imageLoaded, setImageLoaded] = useState(true);
@@ -19,7 +19,7 @@ function LibraryCard(props) {
   const default_image=<div className="default_library_image default_library_image_hover d-flex justify-content-center align-items-center">{libraryIcon} </div>;
   const typeLabel = libraryMeta.name;
   const scanLabel = props.scanning ? "Scanning..." : "Scan library";
-  const statTiles = libraryCardStatTiles({
+  const statInput = {
     collectionType: props.data.CollectionType,
     plays: props.data.Plays,
     episodeCount: props.data.Episode_Count,
@@ -28,7 +28,10 @@ function LibraryCard(props) {
     seasonCount: props.data.Season_Count,
     totalTimeTicks: props.data && props.data.total_play_time,
     playbackSeconds: props.data.total_playback_duration,
-  });
+  };
+  const statTiles = libraryCardStatTiles(statInput);
+  const listStats = libraryListStatColumns(statInput);
+  const lastPlayedLine = formatLastPlayedLine(props.data.ItemName, props.data.LastActivity, i18next.t("ERROR_MESSAGES.N/A"));
 
   function handleScan(event) {
     event.preventDefault();
@@ -72,7 +75,7 @@ function LibraryCard(props) {
 
   if (props.viewMode === "list") {
     return (
-      <article className="library-list-row">
+      <article className="library-list-row library-list-grid">
         <Link to={`/libraries/${props.data.Id}`} className="library-list-main">
           <div className="library-list-thumb">
             {imageLoaded ? (
@@ -95,17 +98,16 @@ function LibraryCard(props) {
           </div>
         </Link>
 
-        <div className="library-list-stats">
-          {statTiles.map((tile) => (
-            <div key={tile.key}>
-              <span><Trans i18nKey={tile.labelKey} /></span>
-              <strong>{tile.value}</strong>
-            </div>
-          ))}
-        </div>
+        {listStats.map((tile) => (
+          <div key={tile.key} className={`library-list-stat${tile.placeholder ? " is-placeholder" : ""}`}>
+            <span><Trans i18nKey={tile.labelKey} /></span>
+            <strong>{tile.value}</strong>
+          </div>
+        ))}
 
-        <div className="library-list-last-played">
-          {lastPlayed}
+        <div className="library-list-last-played" title={lastPlayedLine.text}>
+          <span><Trans i18nKey="LIBRARY_CARD.LAST_PLAYED" /></span>
+          <strong>{lastPlayedLine.text}</strong>
         </div>
 
         <button
@@ -157,6 +159,19 @@ function LibraryCard(props) {
         </div>
       </Card.Body>
     </Card>
+  );
+}
+
+export function LibraryListHeader() {
+  return (
+    <div className="library-list-header library-list-grid" role="row">
+      <span>Library</span>
+      {LIBRARY_LIST_STAT_COLUMNS.map((column) => (
+        <span key={column.key}><Trans i18nKey={column.labelKey} /></span>
+      ))}
+      <span><Trans i18nKey="LIBRARY_CARD.LAST_PLAYED" /></span>
+      <span className="library-list-header-scan">Scan</span>
+    </div>
   );
 }
 

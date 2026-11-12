@@ -10,6 +10,8 @@ import {
   formatLastPlayedLabel,
   formatLibrarySize,
   libraryCardStatTiles,
+  libraryListStatColumns,
+  formatLastPlayedLine,
   optionalTranslation,
 } from "../src/pages/components/library/library-card-format.js";
 
@@ -169,5 +171,58 @@ describe("formatCompactLibrarySize", () => {
     assert.equal(formatCompactLibrarySize(9824432898), "9.1 GB");
     assert.equal(formatCompactLibrarySize(3378005553021), "3.1 TB");
     assert.equal(formatCompactLibrarySize(null), "—");
+  });
+});
+
+describe("libraryListStatColumns", () => {
+  const base = {
+    plays: 148,
+    episodeCount: 450,
+    librarySize: 288034549755,
+    files: 458,
+    seasonCount: 68,
+    totalTimeTicks: ((17 * 86400) + (4 * 3600)) * 10000000,
+    playbackSeconds: (2 * 86400) + (11 * 3600),
+  };
+
+  test("keeps the same columns for every library type, in a fixed order", () => {
+    const expected = ["plays", "episodes", "seasons", "size", "files", "totalTime", "playback"];
+    for (const type of ["tvshows", "movies", "music", "books"]) {
+      const cols = libraryListStatColumns({ ...base, collectionType: type });
+      assert.deepEqual(cols.map((c) => c.key), expected, type);
+    }
+  });
+
+  test("shows an em dash for episodes and seasons on movies, music and books", () => {
+    for (const type of ["movies", "music", "books"]) {
+      const cols = Object.fromEntries(libraryListStatColumns({ ...base, collectionType: type }).map((c) => [c.key, c]));
+      assert.equal(cols.episodes.value, "—");
+      assert.equal(cols.seasons.value, "—");
+      assert.equal(cols.episodes.placeholder, true);
+      assert.equal(cols.plays.value, "148");
+    }
+  });
+
+  test("fills episodes and seasons on TV libraries", () => {
+    const cols = Object.fromEntries(libraryListStatColumns({ ...base, collectionType: "tvshows" }).map((c) => [c.key, c]));
+    assert.equal(cols.episodes.value, "450");
+    assert.equal(cols.seasons.value, "68");
+    assert.equal(cols.episodes.placeholder, false);
+    assert.equal(cols.size.value, "268 GB");
+    assert.equal(cols.totalTime.value, "17d 4h");
+  });
+});
+
+describe("formatLastPlayedLine", () => {
+  test("joins the title and relative time into one tooltip line", () => {
+    const line = formatLastPlayedLine("Long Way Up", { days: 36, minutes: 23 });
+    assert.equal(line.title, "Long Way Up");
+    assert.equal(line.when, "36 Days 23 Minutes ago");
+    assert.equal(line.text, "Long Way Up · 36 Days 23 Minutes ago");
+  });
+
+  test("falls back to just the relative time when there is no title", () => {
+    const line = formatLastPlayedLine("", null);
+    assert.equal(line.text, "Never");
   });
 });
