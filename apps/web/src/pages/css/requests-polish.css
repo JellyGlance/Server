@@ -21,6 +21,10 @@
   --rd-gap: 12px;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  /* integrations.css names message / discover / board areas on .requests-page; the new
+     layout flows in document order (header, then the board), so drop them. */
+  grid-template-areas: none;
+  grid-template-rows: none;
   align-content: start;
   gap: var(--rq-s4);
   min-width: 0;
@@ -34,6 +38,11 @@
 .requests-page.rq::before,
 .requests-page.rq::after {
   display: none;
+}
+
+.requests-page.rq.rq > * {
+  grid-area: auto;
+  order: 0;
 }
 
 @keyframes rq-shimmer {
@@ -891,7 +900,7 @@
 }
 
 .rq-card.is-cards {
-  grid-template-columns: 127px minmax(0, 1fr);
+  grid-template-columns: calc(190px * 2 / 3) minmax(0, 1fr);
   height: 190px;
 }
 
@@ -904,6 +913,7 @@
   width: 100%;
   height: 100%;
   min-width: 0;
+  aspect-ratio: 2 / 3;
   place-items: center;
   overflow: hidden;
   border-radius: var(--rq-radius-in) 0 0 var(--rq-radius-in);
@@ -950,11 +960,11 @@
   background-size: cover;
 }
 
+/* At least the 71% dark overlay of the Simple session cards, so text holds up on the
+   brightest art. */
 .rq-shade {
   z-index: 1;
-  background:
-    linear-gradient(90deg, rgba(11, 17, 25, 0.5), rgba(11, 17, 25, 0) 70%),
-    rgba(0, 0, 0, 0.46);
+  background: rgba(0, 0, 0, 0.76);
 }
 
 .rq-card.is-failed .rq-text::before {
@@ -1002,24 +1012,27 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
-  max-height: 24px;
+  height: 24px;
   overflow: hidden;
 }
 
 .rq-card.is-cards .rq-chips {
   flex-wrap: wrap;
-  gap: 4px 6px;
-  max-height: 52px;
+  align-content: flex-start;
+  gap: 8px;
+  height: 56px;
 }
 
+/* The four progress dots sit in a 24px tall group with a clear gap after the last chip. */
 .rq-dots {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 4px;
-  margin-left: 2px;
+  gap: 6px;
+  height: 24px;
+  margin-left: 4px;
 }
 
 .rq-dots i {
@@ -1027,7 +1040,7 @@
   box-sizing: border-box;
   width: 8px;
   height: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 50%;
 }
 
@@ -1060,7 +1073,8 @@
 .rq-requester time {
   flex: none;
   margin-left: auto;
-  color: var(--rq-muted);
+  padding-left: 8px;
+  color: #cbd5e1;
 }
 
 .rq-actions {

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { matchesRequestFilter, requestStatusChip, REQUEST_FILTERS } from "../src/pages/requests/status.js";
+import { matchesRequestFilter, normalizeRequestTab, requestStatusChip, REQUEST_FILTERS } from "../src/pages/requests/status.js";
+import { isPosterRatio, posterChain } from "../src/pages/requests/poster.js";
 import { countColumns, visibleTiles } from "../src/pages/requests/discover-grid.js";
 
 describe("requestStatusChip", () => {
@@ -80,5 +81,48 @@ describe("Discover grid", () => {
     const { shown, more } = visibleTiles(items(8), 6, 2, true);
     assert.equal(more, true);
     assert.equal(shown.length, 8);
+  });
+});
+
+describe("normalizeRequestTab", () => {
+  it("maps the new and older tab keys", () => {
+    assert.equal(normalizeRequestTab("?tab=queue"), "queue");
+    assert.equal(normalizeRequestTab("?tab=discover"), "discover");
+    assert.equal(normalizeRequestTab("?tab=issues"), "issues");
+    assert.equal(normalizeRequestTab("?tab=Requests"), "queue");
+    assert.equal(normalizeRequestTab("?tab=browse"), "discover");
+    assert.equal(normalizeRequestTab("?tab=issue"), "issues");
+  });
+
+  it("reads section, view and hash too, and falls back to the queue", () => {
+    assert.equal(normalizeRequestTab("?section=issues"), "issues");
+    assert.equal(normalizeRequestTab("?view=discover"), "discover");
+    assert.equal(normalizeRequestTab("", "#issues"), "issues");
+    assert.equal(normalizeRequestTab("?tab=nonsense"), "queue");
+    assert.equal(normalizeRequestTab(""), "queue");
+  });
+});
+
+describe("poster art", () => {
+  const item = { posterUrls: ["https://image.tmdb.org/t/p/w342/a.jpg", "https://image.tmdb.org/t/p/w500/a.jpg"], availability: { jellyfinItemId: "abc123" } };
+
+  it("puts the TMDB poster first and the library Primary image last", () => {
+    const chain = posterChain(item, "/base");
+    assert.equal(chain[0], "https://image.tmdb.org/t/p/w342/a.jpg");
+    assert.match(chain[chain.length - 1], /^\/base\/proxy\/Items\/Images\/Primary\?id=abc123/);
+    assert.ok(chain.every((url) => !/Logo|Thumb|Backdrop/i.test(url)));
+  });
+
+  it("has no library entry without a matched item", () => {
+    assert.equal(posterChain({ posterUrl: "https://x/p.jpg" }).length, 1);
+    assert.deepEqual(posterChain({}), []);
+  });
+
+  it("accepts portrait posters and rejects logos, thumbs and backdrops", () => {
+    assert.equal(isPosterRatio(342, 513), true);
+    assert.equal(isPosterRatio(300, 442), true);
+    assert.equal(isPosterRatio(500, 281), false);
+    assert.equal(isPosterRatio(600, 200), false);
+    assert.equal(isPosterRatio(0, 0), false);
   });
 });

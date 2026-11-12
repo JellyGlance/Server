@@ -12,6 +12,7 @@ import MovieLineIcon from "remixicon-react/MovieLineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
 import Tv2LineIcon from "remixicon-react/Tv2LineIcon";
 import baseUrl from "../../lib/baseurl";
+import { isPosterRatio, posterChain } from "./poster";
 import { formatDate, getInitials, getRequestAge, getRequesterAvatarUrl, getRequesterName, requestStatusChip } from "./helpers";
 
 export function StatusChip({ tone, label, className = "" }) {
@@ -20,23 +21,24 @@ export function StatusChip({ tone, label, className = "" }) {
 
 // Art frame fallback: a quiet Movie or TV glyph, never the chat or error icon.
 export function RequestPoster({ request, large = false }) {
-  // Library art first when a Jellyfin item matched, then TMDB.
-  const libraryId = request.availability?.jellyfinItemId || request.jellyfinItemId;
-  const library = libraryId ? `${baseUrl}/proxy/Items/Images/Primary?id=${libraryId}&fillWidth=300&quality=80` : null;
-  const remote = request.posterUrls?.length ? request.posterUrls : request.posterUrl ? [request.posterUrl] : [];
-  const urls = [library, ...remote].filter(Boolean);
+  const urls = posterChain(request, baseUrl);
   const [posterIndex, setPosterIndex] = useState(0);
   const posterUrl = urls[posterIndex];
   const isTv = String(request.mediaType || "").toLowerCase().startsWith("tv");
+  const next = () => setPosterIndex((current) => (current < urls.length ? current + 1 : current));
 
   if (posterUrl) {
     return (
       <img
+        key={posterUrl}
         src={posterUrl}
         alt=""
         loading={large ? undefined : "lazy"}
         decoding="async"
-        onError={() => setPosterIndex((current) => (current < urls.length ? current + 1 : current))}
+        onLoad={(event) => {
+          if (!isPosterRatio(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)) next();
+        }}
+        onError={next}
       />
     );
   }
@@ -60,9 +62,10 @@ const DOT_LABELS = ["Requested", "Approved", "Grabbed", "Available"];
 
 // Four 8px dots: complete, current, upcoming. The labelled timeline lives in the detail dialog.
 function ProgressDots({ request }) {
-  const steps = Array.isArray(request?.timeline) && request.timeline.length
-    ? request.timeline
-    : DOT_LABELS.map((label, index) => ({ id: label, label, state: index === 0 ? "current" : "upcoming" }));
+  // Always four dots; a declined request shows that in its chip, not as a fifth step.
+  const steps = (Array.isArray(request?.timeline) && request.timeline.length
+    ? request.timeline.filter((step) => step.label !== "Declined").slice(0, 4)
+    : DOT_LABELS.map((label, index) => ({ id: label, label, state: index === 0 ? "current" : "upcoming" })));
   const current = steps.find((step) => step.state === "current");
   const summary = `${steps.filter((step) => step.state === "complete").map((step) => step.label).join(", ") || "Nothing complete yet"}${current ? `; now ${current.label}` : ""}`;
   return (

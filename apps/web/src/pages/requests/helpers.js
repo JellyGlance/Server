@@ -119,4 +119,4 @@ export function matchesPipelineFilter(request, pipelineFilter) {
 // Partial, Available, Declined, Failed. Approved turns into Processing once the
 // request has been grabbed and is on its way.
 
-export { REQUEST_CHIPS, requestStatusChip, REQUEST_FILTERS, matchesRequestFilter } from "./status.js";
+export { REQUEST_CHIPS, requestStatusChip, REQUEST_FILTERS, matchesRequestFilter, REQUEST_TABS, normalizeRequestTab } from "./status.js";

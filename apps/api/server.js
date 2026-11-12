@@ -250,6 +250,19 @@ function indexStaticAssets(dir, baseDir = dir) {
   }
 }
 
+// The asset list is built when the server starts. A new web build brings new hashed file
+// names, so on a miss (or a file that has gone) the list is rebuilt, at most every 2 seconds.
+// Lookups still only ever return files found under the web root.
+let lastStaticAssetScan = 0;
+function refreshStaticAssetIndex() {
+  const now = Date.now();
+  if (now - lastStaticAssetScan < 2000) return false;
+  lastStaticAssetScan = now;
+  staticAssetIndex.clear();
+  indexStaticAssets(root);
+  return true;
+}
+
 function getRequestPathname(req) {
   try {
     return decodeURIComponent(new URL(req.originalUrl || req.url, "http://jellyglance.local").pathname);
@@ -258,12 +271,7 @@ function getRequestPathname(req) {
   }
 }
 
-function getStaticAssetPath(req) {
-  let pathname = getRequestPathname(req);
-  if (BASE_NAME && pathname.startsWith(BASE_NAME)) {
-    pathname = pathname.slice(BASE_NAME.length) || "/";
-  }
-
+function lookupStaticAsset(pathname) {
   const exactPath = staticAssetIndex.get(pathname);
   if (exactPath) {
     return exactPath;
@@ -275,6 +283,22 @@ function getStaticAssetPath(req) {
   }
 
   return null;
+}
+
+function getStaticAssetPath(req) {
+  let pathname = getRequestPathname(req);
+  if (BASE_NAME && pathname.startsWith(BASE_NAME)) {
+    pathname = pathname.slice(BASE_NAME.length) || "/";
+  }
+
+  let found = lookupStaticAsset(pathname);
+  if (found && !fs.existsSync(found)) {
+    found = null;
+  }
+  if (!found && refreshStaticAssetIndex()) {
+    found = lookupStaticAsset(pathname);
+  }
+  return found;
 }
 
 function getTranslationFilePath(req) {
@@ -468,6 +492,7 @@ mountSwaggerUi(app, swaggerUi, swaggerDocument);
 writeEnvVariables().then(() => {
   staticAssetIndex.clear();
   indexStaticAssets(root);
+  lastStaticAssetScan = Date.now();
   // staticRateLimit already applied globally; attach again so CodeQL sees these
   // async-registered file handlers as rate-limited.
   app.use(

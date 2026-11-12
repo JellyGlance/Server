@@ -48,6 +48,7 @@ import {
   requestStatusChip,
   REQUEST_FILTERS,
   matchesRequestFilter,
+  normalizeRequestTab,
 } from "./requests/helpers";
 
 function brandIconUrl(slug, color = "FFFFFF") {
@@ -142,8 +143,6 @@ function useNarrowScreen() {
   return narrow;
 }
 
-const TABS = ["queue", "discover", "issues"];
-
 export default function Requests() {
   const { t } = useTranslation();
   const [data, setData] = useState({ sources: [], requests: [], syncedAt: null });
@@ -174,10 +173,9 @@ export default function Requests() {
   const [editingRequestId, setEditingRequestId] = useState("");
   const [requestPreferences, setRequestPreferences] = useState({ is4k: false });
   const [userRequestFolders, setUserRequestFolders] = useState({ movieRootFolder: "", tvRootFolder: "" });
-  const [pageSection, setPageSection] = useState(() => {
-    const tab = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
-    return TABS.includes(tab) ? tab : "queue";
-  });
+  const [pageSection, setPageSection] = useState(() =>
+    typeof window !== "undefined" ? normalizeRequestTab(window.location.search, window.location.hash) : "queue"
+  );
   const [discoverNonce, setDiscoverNonce] = useState(0);
   const [seerrReadOnly, setSeerrReadOnly] = useState(false);
   const [blockedIds, setBlockedIds] = useState(() => new Set());
@@ -209,8 +207,12 @@ export default function Requests() {
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    if (url.searchParams.get("tab") === pageSection) return;
+    const clean = url.searchParams.get("tab") === pageSection && !url.searchParams.has("section") && !url.searchParams.has("view") && !url.hash;
+    if (clean) return;
     url.searchParams.set("tab", pageSection);
+    url.searchParams.delete("section");
+    url.searchParams.delete("view");
+    url.hash = "";
     window.history.replaceState(window.history.state, "", url);
   }, [pageSection]);
 

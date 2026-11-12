@@ -41,3 +41,22 @@ export function matchesRequestFilter(request, filter) {
   if (filter === "progress") return key === "approved" || key === "processing" || key === "partial";
   return key === filter;
 }
+
+// Tab keys the page understands, and older or alternative spellings that map onto them.
+export const REQUEST_TABS = ["queue", "discover", "issues"];
+const TAB_ALIASES = {
+  queue: "queue", requests: "queue", request: "queue", list: "queue", all: "queue", home: "queue", overview: "queue", pending: "queue",
+  discover: "discover", discovery: "discover", browse: "discover", explore: "discover", search: "discover",
+  issues: "issues", issue: "issues", problems: "issues", reports: "issues",
+};
+
+// Reads ?tab=, then ?section= / ?view=, then #hash. Anything unknown is the queue.
+export function normalizeRequestTab(search = "", hash = "") {
+  const params = new URLSearchParams(search);
+  const candidates = [params.get("tab"), params.get("section"), params.get("view"), String(hash || "").replace(/^#\/?/, "")];
+  for (const value of candidates) {
+    const key = String(value || "").trim().toLowerCase();
+    if (TAB_ALIASES[key]) return TAB_ALIASES[key];
+  }
+  return "queue";
+}

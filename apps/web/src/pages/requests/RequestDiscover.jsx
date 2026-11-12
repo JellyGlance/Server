@@ -15,6 +15,7 @@ import axios from "../../lib/axios_instance";
 import baseUrl from "../../lib/baseurl";
 import BlobboEmpty from "./BlobboEmpty";
 import { countColumns, visibleTiles } from "./discover-grid";
+import { isPosterRatio, posterChain } from "./poster";
 import { StatusChip } from "./RequestCard";
 import "../css/request-discover.css";
 
@@ -29,11 +30,10 @@ const BADGES = {
   blocked: { label: "Blocklisted", tone: "declined" },
 };
 
-// Library art first (through the JellyGlance image route), then TMDB. The browser
-// loads TMDB art itself, so it needs internet on the viewing device only.
+// TMDB poster first, the library Primary image only as a fallback (see poster.js). The
+// browser loads TMDB art itself, so it needs internet on the viewing device only.
 export function posterSources(item) {
-  const library = item.jellyfinItemId ? `${baseUrl}/proxy/Items/Images/Primary?id=${item.jellyfinItemId}&fillWidth=300&quality=80` : null;
-  return [library, ...(item.posterUrls || [])].filter(Boolean);
+  return posterChain(item, baseUrl);
 }
 
 function useColumns(ref) {
@@ -69,7 +69,10 @@ function DiscoverPoster({ item }) {
       alt=""
       loading="lazy"
       decoding="async"
-      onError={() => setIndex((current) => (current < sources.length - 1 ? current + 1 : sources.length))}
+      onLoad={(event) => {
+        if (!isPosterRatio(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)) setIndex((current) => current + 1);
+      }}
+      onError={() => setIndex((current) => current + 1)}
     />
   );
 }
