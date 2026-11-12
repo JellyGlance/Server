@@ -6076,6 +6076,42 @@
   border-color: rgba(251, 191, 36, 0.45);
 }
 
+.report-block.is-dragging {
+  opacity: 0.55;
+}
+
+.report-block.is-drop-target {
+  border-color: rgba(var(--primary-light-rgb), 0.7);
+  box-shadow: inset 0 0 0 1px rgba(var(--primary-light-rgb), 0.35);
+}
+
+.report-block-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #9aa8bc;
+  cursor: grab;
+}
+
+.report-block-handle:hover,
+.report-block-handle:focus-visible {
+  background: rgba(var(--primary-rgb), 0.22);
+  color: #fff;
+  outline: none;
+}
+
+.report-block-handle:active {
+  cursor: grabbing;
+}
+
 .report-block header {
   display: flex;
   align-items: center;

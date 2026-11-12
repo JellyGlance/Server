@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Form, Spinner } from "react-bootstrap";
 import AddLineIcon from "remixicon-react/AddLineIcon";
-import ArrowDownLineIcon from "remixicon-react/ArrowDownLineIcon";
-import ArrowUpLineIcon from "remixicon-react/ArrowUpLineIcon";
 import DeleteBinLineIcon from "remixicon-react/DeleteBinLineIcon";
+import DragMove2LineIcon from "remixicon-react/DragMove2LineIcon";
 import ExternalLinkLineIcon from "remixicon-react/ExternalLinkLineIcon";
 import FileCopyLineIcon from "remixicon-react/FileCopyLineIcon";
 import LayoutMasonryLineIcon from "remixicon-react/LayoutMasonryLineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
 import axios from "../../../lib/axios_instance";
+import { moveBlockBy, reorderBlocks } from "../../../lib/newsletter-report-blocks";
 
 export const BLOCK_LIBRARY = [
   { type: "intro", label: "Intro message", text: "A heading and a short welcome.", fields: ["title", "text"] },
@@ -184,6 +184,8 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
   const [previewing, setPreviewing] = useState(false);
   const [previewError, setPreviewError] = useState("");
   const [openBlockId, setOpenBlockId] = useState("");
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
   const timer = useRef(null);
   const perUser = campaignType === "per-user";
 
@@ -222,11 +224,45 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
   const updateBlocks = (blocks) => update({ blocks });
   const updateBlock = (index, block) => updateBlocks(report.blocks.map((current, position) => (position === index ? block : current)));
   const moveBlock = (index, delta) => {
-    const target = index + delta;
-    if (target < 0 || target >= report.blocks.length) return;
-    const blocks = [...report.blocks];
-    [blocks[index], blocks[target]] = [blocks[target], blocks[index]];
-    updateBlocks(blocks);
+    updateBlocks(moveBlockBy(report.blocks, index, delta));
+  };
+
+  const handleDragStart = (event, index) => {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(index));
+    setDragIndex(index);
+    setOverIndex(index);
+  };
+
+  const handleDragOver = (event, index) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (overIndex !== index) setOverIndex(index);
+  };
+
+  const handleDrop = (event, index) => {
+    event.preventDefault();
+    const from = Number(event.dataTransfer.getData("text/plain"));
+    const source = Number.isInteger(from) ? from : dragIndex;
+    if (source != null) updateBlocks(reorderBlocks(report.blocks, source, index));
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
+  const handleBlockKeyDown = (event, index) => {
+    if (event.target !== event.currentTarget && !event.target.classList?.contains("report-block-handle")) return;
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveBlock(index, -1);
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveBlock(index, 1);
+    }
   };
   const addBlock = () => {
     const block = newBlock(addType);
@@ -326,14 +362,32 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
               </Button>
             </div>
           </div>
+          <p className="newsletter-help">Drag the handle to reorder sections, or focus the handle and press the up or down arrow key.</p>
           <div className="report-block-list">
             {report.blocks.map((block, index) => {
               const definition = BLOCK_BY_TYPE[block.type] || { label: block.type, text: "", fields: [] };
               const open = openBlockId === block.id;
               const unsupported = definition.perUser && !perUser;
               return (
-                <article key={block.id} className={`report-block${block.enabled === false ? " is-off" : ""}${unsupported ? " is-warning" : ""}`}>
+                <article
+                  key={block.id}
+                  className={`report-block${block.enabled === false ? " is-off" : ""}${unsupported ? " is-warning" : ""}${dragIndex === index ? " is-dragging" : ""}${overIndex === index && dragIndex != null && dragIndex !== index ? " is-drop-target" : ""}`}
+                  onDragOver={(event) => handleDragOver(event, index)}
+                  onDrop={(event) => handleDrop(event, index)}
+                  onDragEnd={handleDragEnd}
+                >
                   <header>
+                    <button
+                      type="button"
+                      className="report-block-handle"
+                      draggable
+                      aria-label={`Reorder ${block.title || definition.label}. Use arrow keys to move.`}
+                      title="Drag to reorder, or focus and use the up and down arrow keys"
+                      onDragStart={(event) => handleDragStart(event, index)}
+                      onKeyDown={(event) => handleBlockKeyDown(event, index)}
+                    >
+                      <DragMove2LineIcon size={18} />
+                    </button>
                     <button type="button" className="report-block-name" onClick={() => setOpenBlockId(open ? "" : block.id)}>
                       <strong>{block.title || definition.label}</strong>
                       <small>{unsupported ? "Only shown in per-user campaigns" : definition.text}</small>
@@ -346,12 +400,6 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
                         checked={block.enabled !== false}
                         onChange={(event) => updateBlock(index, { ...block, enabled: event.target.checked })}
                       />
-                      <Button type="button" size="sm" variant="link" title="Move up" disabled={index === 0} onClick={() => moveBlock(index, -1)}>
-                        <ArrowUpLineIcon size={16} />
-                      </Button>
-                      <Button type="button" size="sm" variant="link" title="Move down" disabled={index === report.blocks.length - 1} onClick={() => moveBlock(index, 1)}>
-                        <ArrowDownLineIcon size={16} />
-                      </Button>
                       <Button
                         type="button"
                         size="sm"
