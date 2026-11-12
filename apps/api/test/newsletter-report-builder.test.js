@@ -118,3 +118,26 @@ describe("newsletter wrapped recap block", () => {
     assert.match(empty, /Dein R\u00fcckblick|Keine Wiedergaben/);
   });
 });
+
+describe("newsletter leaving-soon block", () => {
+  it("renders cleanup and Maintainerr matches with a countdown, read-only", () => {
+    const block = reportBuilder.normalizeBlock({ type: "leavingSoon", options: { style: "list", limit: 8 } });
+    const html = reportBuilder.renderBlock(block, {
+      items: [
+        { Id: "m1", Name: "Arrival", Type: "Movie", Library: "Movies", countdownDays: 3, source: "cleanup", ruleName: "Stale large movies" },
+        { Id: "m2", Name: "Dune", Type: "Movie", countdownDays: 1, source: "maintainerr", ruleName: "4K harvest" },
+        { Id: "m3", Name: "Leave today", Type: "Movie", countdownDays: 0, source: "cleanup" },
+      ],
+      maintainerrConfigured: true,
+    }, ctx());
+    assert.match(html, /Leaving soon/);
+    assert.match(html, /Arrival/);
+    assert.match(html, /Leaves in 3 days/);
+    assert.match(html, /Leaves tomorrow/);
+    assert.match(html, /Leaves today/);
+    assert.match(html, /Maintainerr/);
+    assert.match(html, /libraries\/item\/m1/);
+    const empty = reportBuilder.renderBlock(block, { items: [] }, ctx({ locale: "de-DE" }));
+    assert.match(empty, /Bald nicht mehr verf\u00fcgbar|Aktuell ist nichts/);
+  });
+});

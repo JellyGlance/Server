@@ -4,6 +4,7 @@ const publicUrl = require("./newsletter-public-url");
 const { buildForYou } = require("./for-you");
 const { buildWrapped } = require("./wrapped-recap");
 const wrappedCard = require("./wrapped-card");
+const leavingSoon = require("./newsletter-leaving-soon");
 /* Newsletter report builder: renders an ordered list of configurable blocks into email-safe HTML and plain text. */
 const db = require("../db");
 
@@ -22,6 +23,7 @@ const REPORT_BLOCK_TYPES = [
   "myRequests",
   "forYou",
   "wrappedRecap",
+  "leavingSoon",
   "text",
   "customHtml",
   "divider",
@@ -44,6 +46,7 @@ const BLOCK_DEFAULT_TITLE_KEYS = {
   myRequests: "MY_REQUESTS",
   forYou: "FOR_YOU",
   wrappedRecap: "WRAPPED",
+  leavingSoon: "LEAVING_SOON",
   text: "",
   customHtml: "",
   divider: "",
@@ -64,6 +67,7 @@ const BLOCK_DEFAULT_TITLES = {
   myRequests: "My requests",
   forYou: "Picked for you",
   wrappedRecap: "Your recap",
+  leavingSoon: "Leaving soon",
   text: "",
   customHtml: "",
   divider: "",
@@ -335,6 +339,10 @@ async function blockData(block, period, context) {
         topMovies: (data.topMovies || []).slice(0, limit).map((row) => ({ ...row, Name: row.name, Id: row.item_id || row.itemId, Plays: row.plays, WatchSeconds: row.seconds })),
       };
     }
+    case "leavingSoon": {
+      const data = await leavingSoon.listLeavingSoon({ limit, now: context.now });
+      return { days, items: data.items, maintainerrConfigured: data.maintainerrConfigured };
+    }
     default:
       return { days };
   }
@@ -345,6 +353,13 @@ function periodLabel(days, t = identityT) {
   if (Number(days) === 7) return t("PERIOD_WEEK");
   if (Number(days) === 30) return t("PERIOD_30");
   return t("PERIOD_DAYS", { count: Number(days) || 0 });
+}
+
+function leavingLabel(item, t) {
+  const days = Number(item.countdownDays);
+  if (!Number.isFinite(days) || days <= 0) return t("LEAVING_TODAY");
+  if (days === 1) return t("LEAVING_TOMORROW");
+  return t("LEAVING_IN_DAYS", { count: days });
 }
 
 function wrappedHeading(data, t, locale) {
@@ -659,6 +674,13 @@ function renderBlock(block, data, ctx = {}) {
       })}`;
       return `${titleHtml(heading, env, periodText)}${tiles}${shows}${films}`;
     }
+    case "leavingSoon":
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "item",
+        empty: t("LEAVING_EMPTY"),
+        metaFor: (item) => [leavingLabel(item, t), item.source === "maintainerr" ? t("MAINTAINERR") : item.ruleName, item.Type, item.Library].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([leavingLabel(item, t), item.source === "maintainerr" ? t("MAINTAINERR") : item.ruleName, item.Type, item.Library], env)}`,
+      })}`;
     default:
       return "";
   }

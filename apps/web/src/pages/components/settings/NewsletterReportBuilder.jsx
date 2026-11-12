@@ -25,6 +25,7 @@ export const BLOCK_LIBRARY = [
   { type: "myRequests", label: "My requests", text: "Per-user campaigns only (Seerr).", fields: ["title", "limit", "style"], perUser: true },
   { type: "forYou", label: "For you", text: "Picks and because-you-watched rows. Per-user campaigns only.", fields: ["title", "limit", "style"], perUser: true },
   { type: "wrappedRecap", label: "Wrapped recap", text: "Hours watched, top shows and films, and the busiest day.", fields: ["title", "limit", "wrappedPeriod", "style"] },
+  { type: "leavingSoon", label: "Leaving soon", text: "Cleanup countdown matches, plus Maintainerr if it is configured. Read-only.", fields: ["title", "limit", "style"] },
   { type: "text", label: "Text", text: "Free text. **bold** and blank lines for paragraphs.", fields: ["title", "text"] },
   { type: "customHtml", label: "Custom HTML", text: "Raw HTML dropped into the email.", fields: ["title", "html"] },
   { type: "divider", label: "Divider", text: "A thin line between sections.", fields: [] },
