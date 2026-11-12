@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ChatCheckFillIcon from "remixicon-react/ChatCheckFillIcon";
 import CheckboxCircleLineIcon from "remixicon-react/CheckboxCircleLineIcon";
 import CloseCircleLineIcon from "remixicon-react/CloseCircleLineIcon";
@@ -29,6 +29,7 @@ import "./css/integrations.css";
 import RequestTimeline from "./requests/RequestTimeline";
 import RequestRulesModal from "./requests/RequestRulesModal";
 import RequestDiscover from "./requests/RequestDiscover";
+import { discoverSectionFromSearch } from "./requests/discover-grid";
 import TrailerDialog from "./requests/TrailerDialog";
 import { trailerTarget } from "./requests/trailer";
 import PlayCircleLineIcon from "remixicon-react/PlayCircleLineIcon";
@@ -182,6 +183,10 @@ export default function Requests() {
     typeof window !== "undefined" ? normalizeRequestTab(window.location.search, window.location.hash) : "queue"
   );
   const [discoverNonce, setDiscoverNonce] = useState(0);
+  // Which Discover section is open as a full grid (?section=trending&chip=28), if any.
+  const [discoverView, setDiscoverView] = useState(() =>
+    typeof window !== "undefined" ? discoverSectionFromSearch(window.location.search) : { section: "", chip: "" }
+  );
   const [seerrReadOnly, setSeerrReadOnly] = useState(false);
   const [blockedIds, setBlockedIds] = useState(() => new Set());
   const [progress, setProgress] = useState({ items: {}, simulated: false });
@@ -212,16 +217,42 @@ export default function Requests() {
     if (pageSection === "issues" && !canManageRequests) setPageSection("queue");
   }, [pageSection, canManageRequests]);
 
+  // The URL carries the tab, and on Discover the open section: ?tab=discover&section=trending.
+  // Opening a section adds a history entry, so the browser Back button closes it too.
   useEffect(() => {
     const url = new URL(window.location.href);
-    const clean = url.searchParams.get("tab") === pageSection && !url.searchParams.has("section") && !url.searchParams.has("view") && !url.hash;
+    const section = pageSection === "discover" ? discoverView.section : "";
+    const chip = section ? discoverView.chip : "";
+    const clean =
+      url.searchParams.get("tab") === pageSection &&
+      (url.searchParams.get("section") || "") === section &&
+      (url.searchParams.get("chip") || "") === chip &&
+      !url.searchParams.has("view") &&
+      !url.hash;
     if (clean) return;
+    const sectionChanged = (url.searchParams.get("section") || "") !== section;
     url.searchParams.set("tab", pageSection);
-    url.searchParams.delete("section");
     url.searchParams.delete("view");
+    if (section) url.searchParams.set("section", section);
+    else url.searchParams.delete("section");
+    if (chip) url.searchParams.set("chip", chip);
+    else url.searchParams.delete("chip");
     url.hash = "";
-    window.history.replaceState(window.history.state, "", url);
-  }, [pageSection]);
+    if (sectionChanged && section) window.history.pushState(window.history.state, "", url);
+    else window.history.replaceState(window.history.state, "", url);
+  }, [pageSection, discoverView]);
+
+  useEffect(() => {
+    const onPop = () => {
+      setPageSection(normalizeRequestTab(window.location.search, window.location.hash));
+      setDiscoverView(discoverSectionFromSearch(window.location.search));
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const openDiscoverSection = useCallback((section, chip) => setDiscoverView({ section: section || "", chip: chip != null && chip !== "" ? String(chip) : "" }), []);
+  const setDiscoverChip = useCallback((chip) => setDiscoverView((current) => (current.section && current.chip !== String(chip) ? { ...current, chip: String(chip) } : current)), []);
 
   function loadQuota() {
     axios
@@ -964,7 +995,7 @@ export default function Requests() {
               <InboxLineIcon size={16} />
               <span className="rq-tab-label">{t("FEATURES.REQUESTS.QUEUE")}</span>
             </button>
-            <button type="button" role="tab" aria-selected={pageSection === "discover"} className={pageSection === "discover" ? "is-active" : ""} aria-label="Discover" onClick={() => setPageSection("discover")}>
+            <button type="button" role="tab" aria-selected={pageSection === "discover"} className={pageSection === "discover" ? "is-active" : ""} aria-label="Discover" onClick={() => { setPageSection("discover"); setDiscoverView({ section: "", chip: "" }); }}>
               <CompassDiscoverLineIcon size={16} />
               <span className="rq-tab-label">Discover</span>
             </button>
@@ -1207,7 +1238,7 @@ export default function Requests() {
 
       {pageSection === "discover" ? (
         <section className="requests-discover-board">
-          <RequestDiscover blockedIds={blockedIds} onOpen={openMediaResultDetail} onTrailer={setTrailer} onReadOnly={setSeerrReadOnly} readOnly={readOnly} nonce={discoverNonce} />
+          <RequestDiscover blockedIds={blockedIds} onOpen={openMediaResultDetail} onTrailer={setTrailer} section={discoverView.section} chip={discoverView.chip} onSection={openDiscoverSection} onChip={setDiscoverChip} onReadOnly={setSeerrReadOnly} readOnly={readOnly} nonce={discoverNonce} />
         </section>
       ) : null}
 

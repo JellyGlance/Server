@@ -308,3 +308,198 @@
 .requests-edit-actions .requests-options-status {
   margin-right: auto;
 }
+
+/* ---- shelves: one sideways row per section ---- */
+.rd-page {
+  gap: 24px;
+}
+
+.rd-page > .rd-row + .rd-row {
+  padding-top: 24px;
+  border-top: 1px solid var(--rq-line, #1d232c);
+}
+
+.rd-row > header {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 32px;
+}
+
+.rd-head {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 12px;
+  min-width: 0;
+}
+
+.rd-head h3 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rd-head > span:not(.rd-line) {
+  min-width: 0;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rd-row .rd-seeall,
+.rd-row .rd-back {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 8px 0 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: #93c5fd;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+  transform: none;
+}
+
+.rd-row .rd-back {
+  padding: 0 12px 0 6px;
+  border-color: #1d232c;
+  background: #0b1119;
+  color: #e2e8f0;
+}
+
+.rd-row .rd-seeall:hover,
+.rd-row .rd-back:hover {
+  border-color: #1d232c;
+  background: #111923;
+  color: #fff;
+  transform: none;
+}
+
+.rd-full > header {
+  justify-content: flex-start;
+}
+
+.rd-shelf-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.rd-scroller {
+  --rd-w: 160px;
+  display: flex;
+  gap: var(--rd-gap, 12px);
+  box-sizing: border-box;
+  min-width: 0;
+  margin: -3px;
+  padding: 3px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-padding: 3px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.rd-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.rd-scroller > .rd-tile,
+.rd-scroller > .rd-more {
+  flex: 0 0 var(--rd-w);
+  width: var(--rd-w);
+  scroll-snap-align: start;
+}
+
+.rd-scroller > .rd-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  align-self: stretch;
+}
+
+.rd-arrow {
+  position: absolute;
+  top: 120px;
+  z-index: 2;
+  display: none;
+  place-items: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(11, 17, 25, 0.92);
+  box-shadow: none;
+  color: #fff;
+  transform: none;
+}
+
+.rd-arrow.is-prev { left: 8px; }
+.rd-arrow.is-next { right: 8px; }
+
+.rd-arrow:hover {
+  border-color: rgba(147, 197, 253, 0.7);
+  background: rgba(30, 58, 95, 0.95);
+  transform: none;
+}
+
+.rd-arrow[hidden] {
+  display: none;
+}
+
+/* arrows only where there is a pointer to use them */
+@media (min-width: 900px) and (hover: hover) {
+  .rd-arrow:not([hidden]) {
+    display: grid;
+  }
+}
+
+.rd-chips {
+  min-width: 0;
+}
+
+@media (max-width: 699px) {
+  .rd-scroller {
+    --rd-w: 140px;
+  }
+
+  .rd-page > .rd-row + .rd-row {
+    padding-top: 20px;
+  }
+
+  /* chips are one swipeable line instead of several wrapped ones */
+  .rd-shelf .rd-chips {
+    flex-wrap: nowrap;
+    margin-inline: -2px;
+    padding: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .rd-shelf .rd-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rd-shelf .rd-chips button {
+    flex: none;
+  }
+}

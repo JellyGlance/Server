@@ -1,9 +1,13 @@
 /* eslint-disable react/prop-types */
-// Discover tab on the Requests page: shelves of what Seerr suggests (recommended,
-// just released, trending, popular, upcoming, genres, studios, networks). Each shelf
-// is a wrapping grid of whole tiles, two full rows, and a "More" tile that opens two
-// more. Shelves load as they scroll into view; a title opens the request dialog.
+// Discover tab on the Requests page: separate shelves of what Seerr suggests (recommended,
+// just released, trending, popular, upcoming, genres, studios, networks). Each shelf is one
+// sideways row of 2:3 posters ending in a More tile; genres, studios and networks are chips
+// that load a poster row. "See all" (or More) opens the section as a wrapping grid of whole
+// rows with a Back control; the section is in the URL. Shelves load as they scroll into view;
+// a title opens the request dialog.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import ArrowLeftSLineIcon from "remixicon-react/ArrowLeftSLineIcon";
+import ArrowRightSLineIcon from "remixicon-react/ArrowRightSLineIcon";
 import CheckLineIcon from "remixicon-react/CheckLineIcon";
 import ChatCheckFillIcon from "remixicon-react/ChatCheckFillIcon";
 import EyeLineIcon from "remixicon-react/EyeLineIcon";
@@ -15,7 +19,7 @@ import Tv2LineIcon from "remixicon-react/Tv2LineIcon";
 import axios from "../../lib/axios_instance";
 import baseUrl from "../../lib/baseurl";
 import BlobboEmpty from "./BlobboEmpty";
-import { countColumns, visibleTiles } from "./discover-grid";
+import { countColumns, scrollEdges, scrollStep, visibleTiles } from "./discover-grid";
 import { isPosterRatio, posterChain } from "./poster";
 import { StatusChip } from "./RequestCard";
 import { trailerTarget } from "./trailer";
@@ -261,18 +265,11 @@ function ItemTrack({ rowKey, chipId, sourceId, blockedIds, readOnly, onOpen, onT
   );
 }
 
-function DiscoverRow({ row, sourceId, blockedIds, readOnly, onOpen, onTrailer, nonce }) {
-  const sectionRef = useRef(null);
-  const gridRef = useRef(null);
-  const cols = useColumns(gridRef);
+// Fires once, the first time the node is within 300px of the viewport.
+function useVisibleOnce(ref) {
   const [visible, setVisible] = useState(false);
-  const [subtitle, setSubtitle] = useState("");
-  const [chips, setChips] = useState(null);
-  const [chipId, setChipId] = useState(null);
-  const [chipError, setChipError] = useState("");
-
   useEffect(() => {
-    const node = sectionRef.current;
+    const node = ref.current;
     if (!node || typeof IntersectionObserver === "undefined") {
       setVisible(true);
       return undefined;
@@ -288,63 +285,228 @@ function DiscoverRow({ row, sourceId, blockedIds, readOnly, onOpen, onTrailer, n
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [ref]);
+  return visible;
+}
 
+// Genre, studio and network chips of a chip shelf. `preferred` is the chip a link asked for.
+function useChips(row, enabled, sourceId, nonce, preferred) {
+  const [state, setState] = useState({ chips: null, chipId: null, error: "" });
   useEffect(() => {
-    if (!visible || row.kind !== "chips") return;
+    if (!enabled || row.kind !== "chips") return undefined;
     let cancelled = false;
     axios
       .get("/api/requests/discover/row", { headers: authHeaders(), params: { key: row.key, sourceId } })
       .then((response) => {
         if (cancelled) return;
         const list = response.data?.chips || [];
-        setChips(list);
-        setChipId((current) => current ?? list[0]?.id ?? null);
+        const wanted = list.find((chip) => String(chip.id) === String(preferred));
+        setState((current) => ({ chips: list, chipId: current.chipId ?? wanted?.id ?? list[0]?.id ?? null, error: "" }));
       })
-      .catch((error) => !cancelled && setChipError(error.response?.data?.error || error.message || "Could not load this row"));
+      .catch((error) => !cancelled && setState((current) => ({ ...current, error: error.response?.data?.error || error.message || "Could not load this row" })));
     return () => {
       cancelled = true;
     };
-  }, [visible, row.kind, row.key, sourceId, nonce]);
+  }, [enabled, row.kind, row.key, sourceId, nonce, preferred]);
+  return { ...state, setChipId: (chipId) => setState((current) => ({ ...current, chipId })) };
+}
+
+function ChipBar({ title, chips, chipId, onPick }) {
+  return (
+    <div className="rd-chips" role="tablist" aria-label={title}>
+      {chips.map((chip) => (
+        <button key={chip.id} type="button" role="tab" aria-selected={chip.id === chipId} className={chip.id === chipId ? "is-active" : ""} onClick={() => onPick(chip.id)}>
+          {chip.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// One sideways row of tiles with snap points and, on desktop, arrows that hide at the ends.
+function ShelfScroller({ children, itemsKey }) {
+  const ref = useRef(null);
+  const [edges, setEdges] = useState({ canPrev: false, canNext: false });
+
+  const update = useCallback(() => {
+    const node = ref.current;
+    if (!node) return;
+    const next = scrollEdges(node.scrollLeft, node.clientWidth, node.scrollWidth);
+    setEdges((current) => (current.canPrev === next.canPrev && current.canNext === next.canNext ? current : next));
+  }, []);
+
+  useLayoutEffect(() => {
+    update();
+    const node = ref.current;
+    if (!node || typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [update, itemsKey]);
+
+  const move = (direction) => {
+    const node = ref.current;
+    const first = node?.firstElementChild;
+    if (!node || !first) return;
+    const gap = parseFloat(getComputedStyle(node).columnGap) || 0;
+    node.scrollBy({ left: direction * scrollStep(node.clientWidth, first.offsetWidth, gap), behavior: "smooth" });
+  };
+
+  return (
+    <div className="rd-shelf-wrap">
+      <button type="button" className="rd-arrow is-prev" hidden={!edges.canPrev} aria-label="Scroll left" onClick={() => move(-1)}>
+        <ArrowLeftSLineIcon size={22} />
+      </button>
+      <div ref={ref} className="rd-scroller" onScroll={update}>
+        {children}
+      </div>
+      <button type="button" className="rd-arrow is-next" hidden={!edges.canNext} aria-label="Scroll right" onClick={() => move(1)}>
+        <ArrowRightSLineIcon size={22} />
+      </button>
+    </div>
+  );
+}
+
+// First page of a section as a single sideways row, ending in a More tile.
+function ShelfTrack({ rowKey, chipId, sourceId, enabled, nonce, blockedIds, readOnly, onOpen, onTrailer, onSubtitle, onMore }) {
+  const [state, setState] = useState({ items: [], hasMore: false, loading: true, error: "" });
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    let cancelled = false;
+    setState((current) => ({ ...current, loading: true, error: "" }));
+    axios
+      .get("/api/requests/discover/row", { headers: authHeaders(), params: { key: rowKey, chipId: chipId ?? undefined, page: 1, sourceId } })
+      .then((response) => {
+        if (cancelled) return;
+        const data = response.data || {};
+        if (data.because?.length) onSubtitle?.(`Because of ${data.because.join(", ")}`);
+        setState({ items: data.items || [], hasMore: Boolean(data.hasMore), loading: false, error: "" });
+      })
+      .catch((error) => !cancelled && setState((current) => ({ ...current, loading: false, error: error.response?.data?.error || error.message || "Could not load this row" })));
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, rowKey, chipId, sourceId, nonce, attempt, onSubtitle]);
+
+  if (state.error && !state.items.length) {
+    return (
+      <div className="rd-message is-error" role="alert">
+        <span>{state.error}</span>
+        <button type="button" className="rq-btn" onClick={() => setAttempt((value) => value + 1)}>
+          Try again
+        </button>
+      </div>
+    );
+  }
+  if (!enabled || (state.loading && !state.items.length)) {
+    return (
+      <ShelfScroller itemsKey="loading">
+        <SkeletonTiles count={8} />
+      </ShelfScroller>
+    );
+  }
+  if (!state.items.length) return <div className="rd-message">Nothing to show here right now.</div>;
+  return (
+    <ShelfScroller itemsKey={`${rowKey}-${chipId}-${state.items.length}`}>
+      {state.items.map((item) => (
+        <DiscoverTile key={item.id} item={item} blocked={blockedIds.has(item.id)} readOnly={readOnly} onOpen={onOpen} onTrailer={onTrailer} />
+      ))}
+      <button type="button" className="rd-more" onClick={onMore}>
+        More
+        <ArrowRightSLineIcon size={18} />
+      </button>
+    </ShelfScroller>
+  );
+}
+
+function DiscoverShelf({ row, sourceId, blockedIds, readOnly, onOpen, onTrailer, onSection, nonce }) {
+  const ref = useRef(null);
+  const visible = useVisibleOnce(ref);
+  const [subtitle, setSubtitle] = useState("");
+  const chips = useChips(row, visible, sourceId, nonce);
+  const isChips = row.kind === "chips";
+  const ready = visible && (!isChips || chips.chipId != null);
+  return (
+    <section className="rd-row rd-shelf" ref={ref} aria-label={row.title}>
+      <header>
+        <div className="rd-head">
+          <h3>{row.title}</h3>
+          {subtitle ? <span>{subtitle}</span> : null}
+        </div>
+        <button type="button" className="rd-seeall" onClick={() => onSection(row.key, chips.chipId)} aria-label={`See all ${row.title}`}>
+          See all
+          <ArrowRightSLineIcon size={16} />
+        </button>
+      </header>
+      {isChips && chips.chips ? <ChipBar title={row.title} chips={chips.chips} chipId={chips.chipId} onPick={chips.setChipId} /> : null}
+      {chips.error ? (
+        <div className="rd-message is-error" role="alert">{chips.error}</div>
+      ) : (
+        <ShelfTrack
+          key={`${row.key}-${chips.chipId}`}
+          rowKey={row.key}
+          chipId={isChips ? chips.chipId : undefined}
+          sourceId={sourceId}
+          enabled={ready}
+          nonce={nonce}
+          blockedIds={blockedIds}
+          readOnly={readOnly}
+          onOpen={onOpen}
+          onTrailer={onTrailer}
+          onSubtitle={setSubtitle}
+          onMore={() => onSection(row.key, chips.chipId)}
+        />
+      )}
+    </section>
+  );
+}
+
+// "See all": one section as the full wrapping grid, two whole rows at a time, with a Back control.
+function DiscoverGrid({ row, sourceId, blockedIds, readOnly, onOpen, onTrailer, onBack, onChip, preferredChip, nonce }) {
+  const gridRef = useRef(null);
+  const cols = useColumns(gridRef);
+  const [subtitle, setSubtitle] = useState("");
+  const chips = useChips(row, true, sourceId, nonce, preferredChip);
+  const isChips = row.kind === "chips";
+
+  useEffect(() => {
+    if (isChips && chips.chipId != null) onChip?.(chips.chipId);
+  }, [isChips, chips.chipId, onChip]);
 
   const trackProps = { sourceId, blockedIds, readOnly, onOpen, onTrailer, nonce, cols };
   return (
-    <section className="rd-row" ref={sectionRef} aria-label={row.title}>
+    <section className="rd-row rd-full" aria-label={row.title}>
       <header>
-        <h3>{row.title}</h3>
-        {subtitle ? <span>{subtitle}</span> : null}
-      </header>
-      {row.kind === "chips" && chips ? (
-        <div className="rd-chips" role="tablist" aria-label={row.title}>
-          {chips.map((chip) => (
-            <button key={chip.id} type="button" role="tab" aria-selected={chip.id === chipId} className={chip.id === chipId ? "is-active" : ""} onClick={() => setChipId(chip.id)}>
-              {chip.name}
-            </button>
-          ))}
+        <button type="button" className="rd-back" onClick={onBack}>
+          <ArrowLeftSLineIcon size={18} />
+          Back
+        </button>
+        <div className="rd-head">
+          <h3>{row.title}</h3>
+          {subtitle ? <span>{subtitle}</span> : null}
         </div>
-      ) : null}
+      </header>
+      {isChips && chips.chips ? <ChipBar title={row.title} chips={chips.chips} chipId={chips.chipId} onPick={chips.setChipId} /> : null}
       <div ref={gridRef} className="rd-measure">
-        {row.kind === "chips" ? (
-          chipError ? (
-            <div className="rd-message is-error" role="alert">{chipError}</div>
-          ) : chipId != null ? (
-            <ItemTrack key={`${row.key}-${chipId}`} rowKey={row.key} chipId={chipId} {...trackProps} />
-          ) : (
-            <div className="rd-track" aria-busy="true"><SkeletonTiles count={cols * 2} /></div>
-          )
-        ) : visible ? (
-          <ItemTrack rowKey={row.key} onSubtitle={setSubtitle} {...trackProps} />
-        ) : (
+        {chips.error ? (
+          <div className="rd-message is-error" role="alert">{chips.error}</div>
+        ) : isChips && chips.chipId == null ? (
           <div className="rd-track" aria-busy="true"><SkeletonTiles count={cols * 2} /></div>
+        ) : (
+          <ItemTrack key={`${row.key}-${chips.chipId}`} rowKey={row.key} chipId={isChips ? chips.chipId : undefined} onSubtitle={setSubtitle} {...trackProps} />
         )}
       </div>
     </section>
   );
 }
 
-export default function RequestDiscover({ blockedIds, onOpen, onTrailer, onReadOnly, readOnly = false, nonce = 0 }) {
+export default function RequestDiscover({ blockedIds, onOpen, onTrailer, onReadOnly, readOnly = false, nonce = 0, section = "", chip = "", onSection, onChip }) {
   const [state, setState] = useState({ loading: true, error: "", rows: [], sourceId: undefined, readOnly: false });
   const [attempt, setAttempt] = useState(0);
+  const pageRef = useRef(null);
+  const shownSection = useRef(section);
 
   useEffect(() => {
     let cancelled = false;
@@ -364,6 +526,19 @@ export default function RequestDiscover({ blockedIds, onOpen, onTrailer, onReadO
   }, [nonce, attempt, onReadOnly]);
 
   const viewOnly = readOnly || state.readOnly;
+  const fullRow = section ? state.rows.find((row) => row.key === section) : null;
+
+  // A link to a section that doesn't exist falls back to the shelves.
+  useEffect(() => {
+    if (!state.loading && !state.error && section && !fullRow) onSection?.("", "");
+  }, [state.loading, state.error, section, fullRow, onSection]);
+
+  // Opening or leaving a section starts at the top of Discover.
+  useEffect(() => {
+    if (shownSection.current === section) return;
+    shownSection.current = section;
+    pageRef.current?.scrollIntoView?.({ block: "start" });
+  }, [section]);
 
   if (state.loading) {
     return (
@@ -390,26 +565,46 @@ export default function RequestDiscover({ blockedIds, onOpen, onTrailer, onReadO
     return <BlobboEmpty title="Nothing to browse yet.">Connect Seerr in Settings to see recommendations and new releases.</BlobboEmpty>;
   }
 
+  if (fullRow) {
+    return (
+      <div className="rd-page is-full" ref={pageRef}>
+        <DiscoverGrid
+          key={fullRow.key}
+          row={fullRow}
+          sourceId={state.sourceId}
+          blockedIds={blockedIds}
+          readOnly={viewOnly}
+          onOpen={onOpen}
+          onTrailer={onTrailer}
+          onBack={() => onSection?.("", "")}
+          onChip={onChip}
+          preferredChip={chip}
+          nonce={nonce}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="rd-page">
+    <div className="rd-page" ref={pageRef}>
       {state.rows.map((row) => (
-        <DiscoverRow key={row.key} row={row} sourceId={state.sourceId} blockedIds={blockedIds} readOnly={viewOnly} onOpen={onOpen} onTrailer={onTrailer} nonce={nonce} />
+        <DiscoverShelf key={row.key} row={row} sourceId={state.sourceId} blockedIds={blockedIds} readOnly={viewOnly} onOpen={onOpen} onTrailer={onTrailer} onSection={(key, chipId) => onSection?.(key, chipId)} nonce={nonce} />
       ))}
     </div>
   );
 }
 
 function ShelfSkeleton() {
-  const ref = useRef(null);
-  const cols = useColumns(ref);
   return (
-    <section className="rd-row">
+    <section className="rd-row rd-shelf">
       <header>
-        <span className="rd-line is-heading" />
+        <div className="rd-head">
+          <span className="rd-line is-heading" />
+        </div>
       </header>
-      <div ref={ref} className="rd-measure">
-        <div className="rd-track">
-          <SkeletonTiles count={cols * 2} />
+      <div className="rd-shelf-wrap">
+        <div className="rd-scroller">
+          <SkeletonTiles count={8} />
         </div>
       </div>
     </section>
