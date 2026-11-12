@@ -1,3 +1,4 @@
+const newsletterTheme = require("./newsletter-theme");
 /* Newsletter report builder: renders an ordered list of configurable blocks into email-safe HTML and plain text. */
 const db = require("../db");
 
@@ -437,9 +438,14 @@ function renderBlockText(block, data) {
   }
 }
 
-async function renderReport(input, { campaignName, logoSrc = "", personData = null, perUser = false } = {}) {
+async function renderReport(input, { campaignName, logoSrc = "", personData = null, perUser = false, branding = {}, htmlBody = "" } = {}) {
   const report = normalizeReport(input);
-  const accent = report.accentColor;
+  const theme = newsletterTheme.normalizeBranding({
+    ...branding,
+    accent: branding.accent || branding.accentColor || report.accentColor,
+    footer: branding.footer || report.footer || "",
+  });
+  const accent = theme.accent;
   const context = { personData };
   const blocks = report.blocks.filter((block) => block.enabled && (perUser || !PER_USER_BLOCKS.has(block.type)));
   const rendered = await Promise.all(
@@ -450,33 +456,18 @@ async function renderReport(input, { campaignName, logoSrc = "", personData = nu
   );
   const subject = reportSubject(report, { campaignName, periodDays: report.periodDays });
   const greeting = personData?.personName ? `Hi ${personData.personName},` : "";
-  const html = `<!doctype html>
-<html>
-  <body style="margin:0;background:#0b111a;font-family:Arial,Helvetica,sans-serif;color:#d7e2f2;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#0b111a;padding:24px 12px;">
-      <tr><td align="center">
-        <table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;background:#151d29;border:1px solid #27364a;border-radius:18px;overflow:hidden;">
-          <tr><td style="height:4px;background:${accent};font-size:0;line-height:0;">&nbsp;</td></tr>
-          <tr><td style="padding:26px 28px 6px;">
-            ${report.showLogo && logoSrc ? `<img src="${logoSrc}" alt="JellyGlance" width="44" height="44" style="display:block;margin-bottom:12px;" />` : ""}
-            <div style="color:${accent};font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;">${escapeHtml(campaignName || "JellyGlance report")}</div>
-            <h1 style="margin:8px 0 6px;color:#f4f8ff;font-size:26px;">${escapeHtml(subject)}</h1>
-            <p style="margin:0;color:#9fb0c7;font-size:13px;">Covering the ${escapeHtml(periodLabel(report.periodDays))} · generated ${escapeHtml(formatDate(new Date()))}</p>
-            ${greeting ? `<p style="margin:14px 0 0;color:#d7e2f2;font-size:15px;">${escapeHtml(greeting)}</p>` : ""}
-          </td></tr>
-          <tr><td style="padding:4px 28px 26px;">
-            ${rendered.map((block) => block.html).join("\n") || emptyHtml("This report has no blocks yet. Add some in the report builder.")}
-          </td></tr>
-          ${
-            report.footer
-              ? `<tr><td style="padding:14px 28px 22px;border-top:1px solid #27364a;color:#7f93ad;font-size:12px;line-height:1.5;">${escapeHtml(report.footer).replace(/\n/g, "<br/>")}</td></tr>`
-              : ""
-          }
-        </table>
-      </td></tr>
-    </table>
-  </body>
-</html>`;
+  const inner = `${greeting ? `<p style="margin:14px 0 10px;color:${theme.text};font-size:15px;">${escapeHtml(greeting)}</p>` : ""}
+            ${rendered.map((block) => block.html).join("\n") || emptyHtml("This report has no blocks yet. Add some in the report builder.")}`;
+  const html = newsletterTheme.wrapEmailDocument({
+    bodyHtml: inner,
+    subject: escapeHtml(subject),
+    campaignName: escapeHtml(campaignName || "JellyGlance report"),
+    generatedAt: `Covering the ${escapeHtml(periodLabel(report.periodDays))} · generated ${escapeHtml(formatDate(new Date()))}`,
+    logoSrc: report.showLogo ? (theme.logoUrl || logoSrc) : "",
+    branding: theme,
+    htmlBody,
+    kickerColor: accent,
+  });
   const text = [subject, `Covering the ${periodLabel(report.periodDays)}`, greeting, ...rendered.flatMap((block) => block.text), "", report.footer]
     .filter((line) => line !== undefined)
     .join("\n")

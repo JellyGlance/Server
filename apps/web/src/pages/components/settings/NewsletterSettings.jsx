@@ -8,6 +8,7 @@ import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
 import SendPlaneLineIcon from "remixicon-react/SendPlaneLineIcon";
 import axios from "../../../lib/axios_instance";
 import NewsletterReportBuilder from "./NewsletterReportBuilder";
+import NewsletterTemplateManager from "./NewsletterTemplateManager";
 import { useTranslation } from "react-i18next";
 import "../../css/settings/settings.css";
 
@@ -51,6 +52,7 @@ const emptyCampaign = {
   enabled: false,
   audience: { recipients: [], roles: [] },
   ownerUserId: "",
+  templateId: "",
   schedule: { ...emptySchedule },
   scheduleCron: null,
   sections: { ...HOUSE_SECTIONS },
@@ -183,6 +185,8 @@ export default function NewsletterSettings() {
   const [audienceRoles, setAudienceRoles] = useState([]);
   const [directoryUsers, setDirectoryUsers] = useState([]);
   const [serverTimeZone, setServerTimeZone] = useState("UTC");
+  const [templates, setTemplates] = useState([]);
+  const [emailFonts, setEmailFonts] = useState([]);
 
   const recipientCount = useMemo(() => textToRecipients(recipientText).length, [recipientText]);
   const previewHtml = preview?.html || "";
@@ -209,6 +213,8 @@ export default function NewsletterSettings() {
     setAudienceRoles(response.data?.roles || []);
     setDirectoryUsers(response.data?.users || []);
     setServerTimeZone(response.data?.timeZone || "UTC");
+    setTemplates(response.data?.templates || []);
+    setEmailFonts(response.data?.fonts || []);
     const nextId = selectedCampaignId && nextCampaigns.some((campaign) => campaign.id === selectedCampaignId)
       ? selectedCampaignId
       : nextCampaigns[0]?.id || "";
@@ -525,6 +531,20 @@ export default function NewsletterSettings() {
                     </Form.Select>
                   </Form.Group>
                   <Form.Group>
+                    <Form.Label>Template</Form.Label>
+                    <Form.Select
+                      value={campaignDraft.templateId || ""}
+                      onChange={(event) => setCampaignDraft((current) => ({ ...current, templateId: event.target.value || null }))}
+                    >
+                      <option value="">Default layout</option>
+                      {templates.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                  <Form.Group>
                     <Form.Label>{t("FEATURES.NEWSLETTER.FREQUENCY")}</Form.Label>
                     <Form.Select
                       value={campaignDraft.frequency}
@@ -726,6 +746,10 @@ export default function NewsletterSettings() {
               </section>
             </Form>
           </div>
+        </Tab>
+
+        <Tab eventKey="templates" title="Templates" className="newsletter-tab-pane">
+          <NewsletterTemplateManager templates={templates} fonts={emailFonts} onChange={loadCampaigns} onError={(text) => setMessage({ type: "danger", text })} />
         </Tab>
 
         <Tab eventKey="builder" title="Report builder" className="newsletter-tab-pane">

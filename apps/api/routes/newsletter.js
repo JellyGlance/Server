@@ -6,6 +6,7 @@ const db = require("../db");
 const { axios } = require("../classes/axios");
 const { addAuditEntry } = require("../classes/admin-history");
 const campaigns = require("../classes/newsletter-campaigns");
+const newsletterTheme = require("../classes/newsletter-theme");
 const reportBuilder = require("../classes/newsletter-report-builder");
 const { encryptSecret, getIntegrations } = require("../classes/integration-store");
 const { isValidEmail } = require("../utils/security");
@@ -320,12 +321,22 @@ function listHtml(items, rowBuilder, emptyText) {
   return `<div>${items.map(rowBuilder).join("")}</div>`;
 }
 
+function templateRenderOptions(campaign, extras = {}) {
+  const template = extras.template || campaign?.template || {};
+  return {
+    branding: extras.branding || template.branding || {},
+    htmlBody: extras.htmlBody != null ? extras.htmlBody : template.htmlBody || "",
+    ...extras,
+  };
+}
+
 function buildNewsletterHtml(data, options = {}) {
   const perUser = Boolean(data.perUser || options.perUser);
   const sections = perUser
     ? { continueWatching: true, myRequests: true, recentlyAdded: true, ...(options.sections || {}) }
     : { recentlyAdded: true, topWatched: true, activeUsers: true, repairSummary: true, ...(options.sections || {}) };
-  const logoSrc = options.logoSrc || getLogoDataUri();
+  const branding = newsletterTheme.normalizeBranding(options.branding || {});
+  const logoSrc = branding.logoUrl || options.logoSrc || getLogoDataUri();
   const repairSummary = data.repairSummary || {};
   const totalRepairIssues =
     Number(repairSummary.missingPosters || 0) +
@@ -335,16 +346,16 @@ function buildNewsletterHtml(data, options = {}) {
   const topWatched = data.topWatched || [];
   const totalPlays = topWatched.reduce((total, item) => total + Number(item.Plays || 0), 0);
   const totalWatchSeconds = topWatched.reduce((total, item) => total + Number(item.WatchSeconds || 0), 0);
-  const metricBox = (label, value, detail, color = "#6ee7f9") => `
+  const metricBox = (label, value, detail, color = branding.accent) => `
     <td style="width:25%;padding:6px;">
-      <div style="background:#121a24;border:1px solid #27364a;border-radius:14px;padding:14px;min-height:86px;">
-        <div style="color:#8fa3bd;font-size:11px;font-weight:800;text-transform:uppercase;">${label}</div>
+      <div style="background:${branding.card};border:1px solid ${branding.border};border-radius:14px;padding:14px;min-height:86px;">
+        <div style="color:${branding.muted};font-size:11px;font-weight:800;text-transform:uppercase;">${label}</div>
         <div style="color:${color};font-size:26px;font-weight:900;line-height:1.1;margin:6px 0 3px;">${value}</div>
-        <div style="color:#9fb0c7;font-size:12px;">${detail}</div>
+        <div style="color:${branding.muted};font-size:12px;">${detail}</div>
       </div>
     </td>
   `;
-  const sectionTitle = (title) => `<h2 style="color:#e8eef8;font-size:16px;margin:24px 0 10px;">${title}</h2>`;
+  const sectionTitle = (title) => `<h2 style="color:${branding.heading};font-size:16px;margin:24px 0 10px;font-family:${branding.font};">${title}</h2>`;
   const recentlyAddedHtml = sections.recentlyAdded
     ? `${sectionTitle("Recently Added")}${listHtml(
         data.recentlyAdded || [],
@@ -407,43 +418,16 @@ function buildNewsletterHtml(data, options = {}) {
     ? `${continueWatchingHtml}${myRequestsHtml}${recentlyAddedHtml}${customHtml}`
     : `${recentlyAddedHtml}${topWatchedHtml}${activeUsersHtml}${repairHtml}${customHtml}`;
 
-  return `
-    <!doctype html>
-    <html>
-      <body style="margin:0;background:#0b111a;font-family:Arial,sans-serif;color:#d7e2f2;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#0b111a;padding:24px 12px;">
-          <tr>
-            <td align="center">
-              <table width="640" cellpadding="0" cellspacing="0" style="background:#151d29;border:1px solid #27364a;border-radius:18px;overflow:hidden;">
-                <tr>
-                  <td style="padding:28px 28px 12px;">
-                    ${logoSrc ? `<img src="${logoSrc}" alt="JellyGlance" width="48" height="48" style="display:block;margin-bottom:14px;" />` : ""}
-                    <div style="color:#8fa3bd;font-size:12px;font-weight:800;text-transform:uppercase;">${escapeHtml(options.campaignName || "JellyGlance Newsletter")}</div>
-                    <h1 style="margin:8px 0 6px;color:#f4f8ff;font-size:28px;">${escapeHtml(data.subject)}</h1>
-                    <p style="margin:0;color:#9fb0c7;font-size:14px;">Generated ${escapeHtml(formatDate(data.generatedAt))}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 22px 8px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        ${metricRow}
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 28px 32px;">
-                    ${bodyHtml}
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-    </html>
-  `;
+  return newsletterTheme.wrapEmailDocument({
+    bodyHtml,
+    metricHtml: `<table width="100%" cellpadding="0" cellspacing="0"><tr>${metricRow}</tr></table>`,
+    subject: escapeHtml(data.subject),
+    campaignName: escapeHtml(options.campaignName || "JellyGlance Newsletter"),
+    generatedAt: `Generated ${escapeHtml(formatDate(data.generatedAt))}`,
+    logoSrc,
+    branding,
+    htmlBody: options.htmlBody || "",
+  });
 }
 
 function buildNewsletterText(data) {
@@ -584,6 +568,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
               logoSrc: "cid:jellyglance-logo",
               personData: data,
               perUser: true,
+              ...templateRenderOptions(campaign),
             })
           : null;
         if (built) data.subject = built.subject;
@@ -600,6 +585,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
                 campaignName: campaign.name,
                 sections,
                 perUser: true,
+                ...templateRenderOptions(campaign),
               }),
           attachments,
         });
@@ -653,7 +639,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
     ...(campaign?.template?.blocks || {}),
   };
   const built = reportEnabled(campaign)
-    ? await reportBuilder.renderReport(campaign.sections.report, { campaignName: campaign.name, logoSrc: "cid:jellyglance-logo" })
+    ? await reportBuilder.renderReport(campaign.sections.report, { campaignName: campaign.name, logoSrc: "cid:jellyglance-logo", ...templateRenderOptions(campaign) })
     : null;
   if (built) data.subject = built.subject;
   const result = await transporter.sendMail({
@@ -667,6 +653,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
           logoSrc: "cid:jellyglance-logo",
           campaignName: campaign?.name,
           sections,
+          ...templateRenderOptions(campaign),
         }),
     attachments,
   });
@@ -750,8 +737,9 @@ router.get("/preview", async (req, res) => {
     let data = await buildNewsletterData();
     let sections = { ...campaigns.DEFAULT_SECTIONS };
     let campaignName = "JellyGlance Newsletter";
+    let campaign = null;
     if (req.query?.campaignId) {
-      const campaign = await campaigns.getCampaign(req.query.campaignId);
+      campaign = await campaigns.getCampaign(req.query.campaignId);
       if (campaign) {
         campaignName = campaign.name;
         if (campaign.type === "per-user") {
@@ -769,12 +757,23 @@ router.get("/preview", async (req, res) => {
             logoSrc: getLogoDataUri(),
             personData: campaign.type === "per-user" ? data : null,
             perUser: campaign.type === "per-user",
+            ...templateRenderOptions(campaign),
           });
           return res.json({ ...built, report: true });
         }
       }
     }
-    res.json({ ...data, html: buildNewsletterHtml(data, { sections, campaignName, perUser: data.perUser }), text: buildNewsletterText(data) });
+    const previewTemplate = req.query?.templateId ? await campaigns.getTemplate(req.query.templateId) : campaign?.template;
+    res.json({
+      ...data,
+      html: buildNewsletterHtml(data, {
+        sections,
+        campaignName,
+        perUser: data.perUser,
+        ...templateRenderOptions(campaign, { template: previewTemplate }),
+      }),
+      text: buildNewsletterText(data),
+    });
   } catch (error) {
     console.error("Newsletter preview failed:", error);
     res.status(503).json({ error: "Unable to generate newsletter preview" });
@@ -799,6 +798,7 @@ router.post("/report/preview", async (req, res) => {
       logoSrc: getLogoDataUri(),
       personData,
       perUser: type === "per-user",
+      ...templateRenderOptions(campaign, { branding: req.body?.branding, htmlBody: req.body?.htmlBody }),
     });
     res.json({ ...built, report: true });
   } catch (error) {
@@ -856,6 +856,7 @@ router.get("/campaigns", async (_req, res) => {
       roles: audienceOptions.roles,
       users: audienceOptions.users,
       timeZone: audienceOptions.timeZone,
+      fonts: audienceOptions.fonts || [],
     });
   } catch (error) {
     console.error("List newsletter campaigns failed:", error);
@@ -924,6 +925,44 @@ router.post("/templates", async (req, res) => {
   } catch (error) {
     console.error("Save newsletter template failed:", error);
     res.status(503).json({ error: "Unable to save newsletter template" });
+  }
+});
+
+router.post("/templates/preview", async (req, res) => {
+  try {
+    const data = await buildNewsletterData();
+    if (req.body?.subject) data.subject = String(req.body.subject);
+    const html = buildNewsletterHtml(data, {
+      campaignName: String(req.body?.name || "Template preview"),
+      branding: req.body?.branding || {},
+      htmlBody: req.body?.htmlBody || "",
+    });
+    res.json({ html, subject: data.subject, generatedAt: data.generatedAt, preview: true });
+  } catch (error) {
+    console.error("Newsletter template preview failed:", error);
+    res.status(503).json({ error: "Unable to preview newsletter template" });
+  }
+});
+
+router.post("/templates/:id/duplicate", async (req, res) => {
+  try {
+    const template = await campaigns.duplicateTemplate(req.params.id);
+    if (!template) return res.status(404).json({ error: "Template not found" });
+    res.json(template);
+  } catch (error) {
+    console.error("Duplicate newsletter template failed:", error);
+    res.status(503).json({ error: "Unable to duplicate newsletter template" });
+  }
+});
+
+router.delete("/templates/:id", async (req, res) => {
+  try {
+    const removed = await campaigns.deleteTemplate(req.params.id);
+    if (!removed) return res.status(404).json({ error: "Template not found" });
+    res.json({ ok: true, id: req.params.id });
+  } catch (error) {
+    console.error("Delete newsletter template failed:", error);
+    res.status(503).json({ error: "Unable to delete newsletter template" });
   }
 });
 

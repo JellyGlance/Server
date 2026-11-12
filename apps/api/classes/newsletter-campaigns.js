@@ -3,6 +3,7 @@ const { getSettings } = require("./admin-history");
 const { normalizeAccessRoles } = require("./role-permissions");
 const schedule = require("./newsletter-schedule");
 const audience = require("./newsletter-audience");
+const theme = require("./newsletter-theme");
 const db = require("../db");
 const { normalizeReport } = require("./newsletter-report-builder");
 
@@ -93,11 +94,13 @@ function mapCampaign(row) {
     lastSentAt: row.last_sent_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    template: row.template_name
+    template: row.template_name || row.html_body || row.template_branding
       ? {
           id: row.template_id,
           name: row.template_name,
           blocks: typeof row.template_blocks === "string" ? JSON.parse(row.template_blocks) : row.template_blocks || {},
+          htmlBody: row.html_body || "",
+          branding: typeof row.template_branding === "string" ? JSON.parse(row.template_branding) : row.template_branding || {},
         }
       : undefined,
   };
@@ -155,7 +158,7 @@ async function getCampaign(id) {
   if (!(await isCampaignSchemaReady())) return null;
   const { rows } = await db.query(
     `
-    SELECT c.*, t.name AS template_name, t.blocks AS template_blocks, t.html_body
+    SELECT c.*, t.name AS template_name, t.blocks AS template_blocks, t.html_body, t.branding AS template_branding
     FROM newsletter_campaigns c
     LEFT JOIN newsletter_templates t ON t.id = c.template_id
     WHERE c.id = $1
@@ -257,7 +260,7 @@ async function upsertTemplate(input = {}) {
         String(input.name || "Template").trim(),
         input.htmlBody || null,
         JSON.stringify(input.blocks || { ...DEFAULT_SECTIONS }),
-        JSON.stringify(input.branding || {}),
+        JSON.stringify(theme.normalizeBranding(input.branding || {})),
       ]
     );
   } else {
@@ -271,12 +274,35 @@ async function upsertTemplate(input = {}) {
         String(input.name || "Template").trim(),
         input.htmlBody || null,
         JSON.stringify(input.blocks || { ...DEFAULT_SECTIONS }),
-        JSON.stringify(input.branding || {}),
+        JSON.stringify(theme.normalizeBranding(input.branding || {})),
       ]
     );
   }
   const { rows } = await db.query(`SELECT * FROM newsletter_templates WHERE id=$1`, [id]);
   return mapTemplate(rows[0]);
+}
+
+async function getTemplate(id) {
+  if (!(await isCampaignSchemaReady()) || !id) return null;
+  const { rows } = await db.query(`SELECT * FROM newsletter_templates WHERE id=$1`, [id]);
+  return mapTemplate(rows[0]);
+}
+
+async function deleteTemplate(id) {
+  if (!(await isCampaignSchemaReady()) || !id) return false;
+  const { rowCount } = await db.query(`DELETE FROM newsletter_templates WHERE id=$1`, [id]);
+  return rowCount > 0;
+}
+
+async function duplicateTemplate(id) {
+  const current = await getTemplate(id);
+  if (!current) return null;
+  return upsertTemplate({
+    name: current.name.match(/\(copy\)$/i) ? current.name : `${current.name} (copy)`,
+    htmlBody: current.htmlBody,
+    blocks: current.blocks,
+    branding: current.branding,
+  });
 }
 
 async function listHistory({ campaignId = null, limit = 50 } = {}) {
@@ -399,6 +425,7 @@ async function listAudienceOptions() {
     roles: (normalizeAccessRoles(settings) || audience.PICKABLE_ROLES).filter((role) => role !== "Disabled"),
     users: audience.summariseDirectory(directory),
     timeZone: schedule.DEFAULT_TIME_ZONE,
+    fonts: theme.EMAIL_SAFE_FONTS,
   };
 }
 
@@ -472,6 +499,9 @@ module.exports = {
   isCampaignSchemaReady,
   resetCampaignSchemaCache,
   listTemplates,
+  getTemplate,
+  deleteTemplate,
+  duplicateTemplate,
   listCampaigns,
   getCampaign,
   createCampaign,
