@@ -29,6 +29,8 @@ import "./css/integrations.css";
 import RequestTimeline from "./requests/RequestTimeline";
 import RequestRulesModal from "./requests/RequestRulesModal";
 import RequestDiscover from "./requests/RequestDiscover";
+import RequestCalendar from "./requests/RequestCalendar";
+import CalendarLineIcon from "remixicon-react/CalendarLineIcon";
 import { RequestCard, IssueCard, RequestPoster, RequestSkeleton, RequesterAvatar, StatusChip, DownloadProgress } from "./requests/RequestCard";
 import BlobboEmpty from "./requests/BlobboEmpty";
 import "./css/requests-polish.css";
@@ -949,23 +951,27 @@ export default function Requests() {
         <div className="rq-header">
           <h2>Requests</h2>
           <p>
-            {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : pageSection === "discover" ? "Browse what Seerr suggests and request what\u2019s missing." : "Search the queue, or pick a title to request."}
+            {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : pageSection === "discover" ? "Browse what Seerr suggests and request what\u2019s missing." : pageSection === "calendar" ? "Requested titles arriving over the next seven days." : "Search the queue, or pick a title to request."}
           </p>
         </div>
         <div className="rq-toolbar">
           <div className="rq-tabs" role="tablist" aria-label={t("FEATURES.REQUESTS.SECTIONS")}>
-            <button type="button" role="tab" aria-selected={pageSection === "queue"} className={pageSection === "queue" ? "is-active" : ""} onClick={() => setPageSection("queue")}>
+            <button type="button" role="tab" aria-label={t("FEATURES.REQUESTS.QUEUE")} aria-selected={pageSection === "queue"} className={pageSection === "queue" ? "is-active" : ""} onClick={() => setPageSection("queue")}>
               <InboxLineIcon size={16} />
-              {t("FEATURES.REQUESTS.QUEUE")}
+              <span className="rq-tab-label">{t("FEATURES.REQUESTS.QUEUE")}</span>
             </button>
-            <button type="button" role="tab" aria-selected={pageSection === "discover"} className={pageSection === "discover" ? "is-active" : ""} onClick={() => setPageSection("discover")}>
+            <button type="button" role="tab" aria-selected={pageSection === "discover"} className={pageSection === "discover" ? "is-active" : ""} aria-label="Discover" onClick={() => setPageSection("discover")}>
               <CompassDiscoverLineIcon size={16} />
-              Discover
+              <span className="rq-tab-label">Discover</span>
+            </button>
+            <button type="button" role="tab" aria-selected={pageSection === "calendar"} className={pageSection === "calendar" ? "is-active" : ""} aria-label="Calendar" onClick={() => setPageSection("calendar")}>
+              <CalendarLineIcon size={16} />
+              <span className="rq-tab-label">Calendar</span>
             </button>
             {canManageRequests ? (
-              <button type="button" role="tab" aria-selected={pageSection === "issues"} className={pageSection === "issues" ? "is-active" : ""} onClick={() => setPageSection("issues")}>
+              <button type="button" role="tab" aria-label={t("FEATURES.REQUESTS.ISSUES")} aria-selected={pageSection === "issues"} className={pageSection === "issues" ? "is-active" : ""} onClick={() => setPageSection("issues")}>
                 <BugLineIcon size={16} />
-                {t("FEATURES.REQUESTS.ISSUES")}
+                <span className="rq-tab-label">{t("FEATURES.REQUESTS.ISSUES")}</span>
                 {issues.filter((issue) => issue.status === "Open").length ? <em>{issues.filter((issue) => issue.status === "Open").length}</em> : null}
               </button>
             ) : null}
@@ -1199,6 +1205,10 @@ export default function Requests() {
         <section className="requests-discover-board">
           <RequestDiscover blockedIds={blockedIds} onOpen={openMediaResultDetail} onReadOnly={setSeerrReadOnly} readOnly={readOnly} nonce={discoverNonce} />
         </section>
+      ) : null}
+
+      {pageSection === "calendar" ? (
+        <RequestCalendar requests={data.requests || []} onOpen={openRequestDetail} />
       ) : null}
 
       {pageSection === "queue" ? (

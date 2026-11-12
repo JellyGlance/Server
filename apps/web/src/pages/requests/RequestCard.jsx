@@ -14,6 +14,7 @@ import Tv2LineIcon from "remixicon-react/Tv2LineIcon";
 import baseUrl from "../../lib/baseurl";
 import { isPosterRatio, posterChain } from "./poster";
 import { BAR_WIDTH, fillWidth, progressView } from "./progress";
+import { itemKindLabel } from "./calendar";
 import { formatDate, getInitials, getRequestAge, getRequesterAvatarUrl, getRequesterName, requestStatusChip } from "./helpers";
 
 export function StatusChip({ tone, label, className = "" }) {
@@ -177,6 +178,34 @@ export function RequestCard({ request, view = "list", canManage, readOnly, busy,
         ) : null}
         {canWrite && request.requestId ? <Action title="Edit routing" icon={Edit2LineIcon} disabled={busy} onClick={(event) => onEdit(request, event)} /> : null}
         {canManage && request.openUrl ? <Action title={`Open in ${request.source}`} icon={ExternalLinkLineIcon} onClick={(event) => onOpenSeerr(request, event)} /> : null}
+      </div>
+    </Surface>
+  );
+}
+
+// One title arriving on a given day. Same row as the queue, with the kind of arrival
+// (Release, Premiere, S02E07) in place of the age and progress.
+export function CalendarCard({ item, request, onOpen }) {
+  const source = request || item;
+  const chip = requestStatusChip(source);
+  const name = getRequesterName(source);
+  const isTv = item.mediaType === "tv";
+  const TypeIcon = isTv ? Tv2LineIcon : MovieLineIcon;
+  const heading = `${source.title}${source.year ? ` (${source.year})` : ""}`;
+  return (
+    <Surface item={source} view="list" onOpen={() => onOpen(request || item)}>
+      <div className="rq-body">
+        <strong className="rq-title" title={heading}>{heading}</strong>
+        <div className="rq-chips">
+          <span className="rq-chip is-type"><TypeIcon size={12} /><span className="rq-chip-text">{isTv ? "TV" : "Movie"}</span></span>
+          <StatusChip tone="processing" label={itemKindLabel(item)} />
+          <StatusChip tone={chip.key} label={chip.label} />
+        </div>
+        <div className="rq-requester" title={item.episodeTitle || `Requested by ${name}`}>
+          <RequesterAvatar name={name} url={getRequesterAvatarUrl(source)} />
+          <span className="rq-requester-name">{item.episodeTitle ? <b>{item.episodeTitle}</b> : <><span>Requested by</span> <b>{name}</b></>}</span>
+          <time title={`From ${item.source}`}>{item.source}</time>
+        </div>
       </div>
     </Surface>
   );

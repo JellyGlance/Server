@@ -1261,6 +1261,153 @@
   margin-left: 0;
 }
 
+/* ---- calendar tab ---- */
+.rq-cal {
+  display: grid;
+  gap: var(--rq-s4);
+  min-width: 0;
+}
+
+.rq-cal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rq-s2) var(--rq-s4);
+}
+
+.rq-cal-step {
+  display: flex;
+  align-items: center;
+  gap: var(--rq-s2);
+  min-width: 0;
+}
+
+.rq-cal-step > strong {
+  min-width: 112px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+}
+
+.requests-page.rq .rq-cal-step .rq-tool:not(:has(span)) {
+  min-width: 40px;
+  padding: 0;
+}
+
+.rq-cal-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--rq-s2);
+  min-width: 0;
+}
+
+.requests-page.rq .rq-cal-day {
+  display: grid;
+  grid-template-rows: 16px 24px 16px;
+  justify-items: center;
+  align-content: center;
+  box-sizing: border-box;
+  height: 72px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--rq-line);
+  border-radius: 12px;
+  background: var(--rq-surface);
+  box-shadow: none;
+  color: var(--rq-muted);
+  transform: none;
+}
+
+.requests-page.rq .rq-cal-day > span {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.requests-page.rq .rq-cal-day > strong {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 24px;
+}
+
+.requests-page.rq .rq-cal-day > em {
+  min-width: 16px;
+  color: var(--rq-muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.requests-page.rq .rq-cal-day.has-items > em {
+  color: #93c5fd;
+}
+
+.requests-page.rq .rq-cal-day.is-today {
+  border-color: color-mix(in srgb, var(--primary-color) 60%, var(--rq-line));
+}
+
+.requests-page.rq .rq-cal-day:hover {
+  background: #111923;
+  transform: none;
+}
+
+.requests-page.rq .rq-cal-day.is-active {
+  border-color: color-mix(in srgb, #93c5fd 70%, transparent);
+  background: color-mix(in srgb, #93c5fd 16%, var(--rq-surface));
+}
+
+.rq-cal-group {
+  display: grid;
+  gap: var(--rq-s3);
+  min-width: 0;
+}
+
+.requests-page.rq .rq-cal-group h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--rq-s2);
+  margin: 0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.rq-cal-group h3 em {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--rq-line);
+  color: var(--rq-text);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+}
+
+.rq-cal-empty {
+  margin: 0;
+  color: var(--rq-muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.rq-cal-sources {
+  margin: 0;
+  color: var(--rq-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
 /* ---- skeletons: the same box as the real row or card ---- */
 .rq-card.is-skeleton {
   cursor: default;
@@ -1385,6 +1532,20 @@
 
   .requests-page.rq .rq-tabs button {
     flex: 1 1 0;
+    padding: 0 8px;
+  }
+
+  /* Seven tabs don't fit with labels on a phone: icons only, the open tab keeps its label. */
+  .requests-page.rq .rq-tabs button:not(.is-active) .rq-tab-label {
+    display: none;
+  }
+
+  .requests-page.rq .rq-tabs button.is-active {
+    flex: 2 1 0;
+  }
+
+  .rq-cal-nav {
+    justify-content: space-between;
   }
 
   .requests-page.rq .requests-overview {

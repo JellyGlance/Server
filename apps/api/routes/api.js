@@ -5,6 +5,7 @@ const { clientSettings } = require("../classes/client-config");
 const audiobookshelf = require("../classes/audiobookshelf");
 const requestDiscover = require("../classes/request-discover");
 const requestProgress = require("../classes/request-progress");
+const requestCalendar = require("../classes/request-calendar");
 const quietHours = require("../classes/quiet-hours");
 const fs = require("fs");
 const path = require("path");
@@ -4769,6 +4770,17 @@ router.get("/requests/progress", async (req, res) => {
   } catch (error) {
     console.error("Get request progress failed:", error);
     res.status(503).send({ error: "Unable to load download progress" });
+  }
+});
+
+// Requested titles arriving in a window (default: the next 7 days).
+router.get("/requests/calendar", async (req, res) => {
+  try {
+    const data = filterSeerrRequestsForUser(await fetchSeerrRequests(), req.user);
+    res.send(await requestCalendar.getCalendar(data.requests || [], { from: req.query?.from, days: req.query?.days }));
+  } catch (error) {
+    console.error("Get request calendar failed:", error);
+    res.status(503).send({ error: "Unable to load the calendar" });
   }
 });
 
