@@ -736,15 +736,15 @@ function statTiles(tiles, ctx) {
   const valueSize = count >= 3 ? 20 : 24;
   const cells = tiles
     .map(
-      ([label, value, detail], index) => `<td style="width:${widthPct}%;padding:4px;vertical-align:top;">
-        <div style="background:${theme.card};border:1px solid ${theme.border};border-radius:14px;padding:10px 8px;">
-          <div style="color:${theme.muted};font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;line-height:1.25;">${escapeHtml(label)}</div>
-          <div style="color:${index === 0 ? accent : ["#a78bfa", "#34d399", "#fbbf24"][index - 1] || accent};font-size:${valueSize}px;font-weight:900;line-height:1.15;margin:6px 0 3px;word-break:break-word;">${escapeHtml(value)}</div>
-          <div style="color:${theme.muted};font-size:11px;line-height:1.3;">${escapeHtml(detail)}</div>
+      ([label, value, detail], index) => `<td style="width:${widthPct}%;padding:4px;vertical-align:top;overflow:hidden;">
+        <div style="background:${theme.card};border:1px solid ${theme.border};border-radius:14px;padding:10px 6px;box-sizing:border-box;">
+          <div style="color:${theme.muted};font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;line-height:1.25;word-break:break-word;">${escapeHtml(label)}</div>
+          <div style="color:${index === 0 ? accent : ["#a78bfa", "#34d399", "#fbbf24"][index - 1] || accent};font-size:${valueSize}px;font-weight:900;line-height:1.15;margin:6px 0 3px;word-break:break-word;overflow-wrap:anywhere;">${escapeHtml(value)}</div>
+          <div style="color:${theme.muted};font-size:11px;line-height:1.3;word-break:break-word;">${escapeHtml(detail)}</div>
         </div></td>`
     )
     .join("");
-  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>${cells}</tr></table>`;
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;table-layout:fixed;border-collapse:collapse;"><tr>${cells}</tr></table>`;
 }
 
 function meta(parts, ctx) {
