@@ -8,6 +8,7 @@ import { Trans } from "react-i18next";
 import i18next from "i18next";
 import baseUrl from "../../../lib/baseurl";
 import { libraryTypeMeta } from "../../../lib/library-types";
+import { formatLastPlayedLabel, formatLibrarySize } from "./library-card-format";
 
 function LibraryCard(props) {
   const [imageLoaded, setImageLoaded] = useState(true);
@@ -18,33 +19,6 @@ function LibraryCard(props) {
   const typeLabel = libraryMeta.name;
   const primaryItemCount = props.data.CollectionType === "tvshows" ? props.data.Episode_Count : props.data.Library_Count;
   const primaryItemLabel = props.data.CollectionType === "tvshows" ? i18next.t("EPISODES") : libraryMeta.units;
-
-  function formatFileSize(sizeInBytes) {
-    const sizeInKB = sizeInBytes / 1024; // 1 KB = 1024 bytes
-    if (sizeInKB < 1024) {
-      return `${sizeInKB.toFixed(2)} KB`;
-    } else {
-      const sizeInMB = sizeInKB / 1024; // 1 MB = 1024 KB
-      if (sizeInMB < 1024) {
-        return `${sizeInMB.toFixed(2)} MB`;
-      } else {
-        const sizeInGB = sizeInMB / 1024; // 1 GB = 1024 MB
-        if (sizeInGB < 1024) {
-          return `${sizeInGB.toFixed(2)} GB`;
-        } else {
-          const sizeInTB = sizeInGB / 1024; // 1 TB = 1024 GB
-          if (sizeInTB < 1024) {
-            return `${sizeInTB.toFixed(2)} TB`;
-          } else {
-            const sizeInPB = sizeInTB / 1024; // 1 PB = 1024 TB
-            return `${sizeInPB.toFixed(2)} PB`;
-          }
-        }
-      }
-    }
-  }
-  
-
 
   function formatTotalWatchTime(seconds) {
     const days = Math.floor(seconds / 86400); // 1 day = 86400 seconds
@@ -114,25 +88,6 @@ function LibraryCard(props) {
   }
   
 
-  function formatLastActivityTime(time) {
-    const units = {
-      days: [i18next.t("UNITS.DAY"), i18next.t("UNITS.DAYS")],
-      hours: [i18next.t("UNITS.HOUR"), i18next.t("UNITS.HOURS")],
-      minutes: [i18next.t("UNITS.MINUTE"), i18next.t("UNITS.MINUTES")]
-    };
-  
-    let formattedTime = '';
-  
-    for (const unit in units) {
-      if (time[unit]) {
-        const unitName = units[unit][time[unit] > 1 ? 1 : 0];
-        formattedTime += `${time[unit]} ${unitName} `;
-      }
-    }
-  
-    return formattedTime;
-  }
-
   if (props.viewMode === "list") {
     return (
       <article className="library-list-row">
@@ -169,7 +124,7 @@ function LibraryCard(props) {
           </div>
           <div>
             <span><Trans i18nKey="LIBRARY_CARD.LIBRARY_SIZE" /></span>
-            <strong>{formatFileSize(props.metadata && props.metadata.Size ? props.metadata.Size : 0)}</strong>
+            <strong>{formatLibrarySize(props.metadata && props.metadata.Size)}</strong>
           </div>
           <div>
             <span><Trans i18nKey="LIBRARY_CARD.TOTAL_TIME" /></span>
@@ -181,9 +136,7 @@ function LibraryCard(props) {
           <span><Trans i18nKey="LIBRARY_CARD.LAST_PLAYED" /></span>
           <strong>{props.data.ItemName || `${i18next.t("ERROR_MESSAGES.N/A")}`}</strong>
           <small>
-            {props.data.LastActivity
-              ? `${i18next.t("USERS_PAGE.AGO_ALT")} ${formatLastActivityTime(props.data.LastActivity)} ${i18next.t("USERS_PAGE.AGO").toLocaleLowerCase()}`
-              : i18next.t("ERROR_MESSAGES.NEVER")}
+            {formatLastPlayedLabel(props.data.LastActivity)}
           </small>
         </div>
 
@@ -241,7 +194,7 @@ function LibraryCard(props) {
           </div>
           <div>
             <span><Trans i18nKey="LIBRARY_CARD.LIBRARY_SIZE" /></span>
-            <strong>{formatFileSize(props.metadata && props.metadata.Size ? props.metadata.Size : 0)}</strong>
+            <strong>{formatLibrarySize(props.metadata && props.metadata.Size)}</strong>
           </div>
         </div>
 
@@ -270,9 +223,7 @@ function LibraryCard(props) {
           <span><Trans i18nKey="LIBRARY_CARD.LAST_PLAYED" /></span>
           <strong>{props.data.ItemName || `${i18next.t("ERROR_MESSAGES.N/A")}`}</strong>
           <small>
-            {props.data.LastActivity
-              ? `${i18next.t("USERS_PAGE.AGO_ALT")} ${formatLastActivityTime(props.data.LastActivity)} ${i18next.t("USERS_PAGE.AGO").toLocaleLowerCase()}`
-              : i18next.t("ERROR_MESSAGES.NEVER")}
+            {formatLastPlayedLabel(props.data.LastActivity)}
           </small>
         </div>
       </Card.Body>
