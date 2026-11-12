@@ -429,6 +429,11 @@ async function listAudienceOptions() {
   };
 }
 
+async function resolveSelfEmail(user) {
+  const directory = await listAudienceDirectory();
+  return audience.resolveSelfEmail({ user, directory });
+}
+
 async function resolveCampaignRecipients(campaign, options = {}) {
   const directory = options.directory || (await listAudienceDirectory());
   let subscriptions = options.subscriptions;
@@ -518,4 +523,5 @@ module.exports = {
   campaignDue,
   listAudienceDirectory,
   listAudienceOptions,
+  resolveSelfEmail,
 };

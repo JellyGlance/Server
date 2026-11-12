@@ -170,7 +170,8 @@ export default function NewsletterSettings() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState(emptySettings);
   const [recipientText, setRecipientText] = useState("");
-  const [testRecipient, setTestRecipient] = useState("");
+  const [selfEmail, setSelfEmail] = useState("");
+  const [selfEmailMessage, setSelfEmailMessage] = useState("");
   const [preview, setPreview] = useState(null);
   const [activeTab, setActiveTab] = useState("campaigns");
   const [loading, setLoading] = useState(true);
@@ -215,6 +216,8 @@ export default function NewsletterSettings() {
     setServerTimeZone(response.data?.timeZone || "UTC");
     setTemplates(response.data?.templates || []);
     setEmailFonts(response.data?.fonts || []);
+    setSelfEmail(response.data?.selfEmail || "");
+    setSelfEmailMessage(response.data?.selfEmailMessage || "");
     const nextId = selectedCampaignId && nextCampaigns.some((campaign) => campaign.id === selectedCampaignId)
       ? selectedCampaignId
       : nextCampaigns[0]?.id || "";
@@ -373,14 +376,18 @@ export default function NewsletterSettings() {
   }
 
   async function sendTest() {
+    if (!selfEmail) {
+      setMessage({ type: "danger", text: selfEmailMessage || "Your account has no email address, so a test newsletter cannot be sent." });
+      return;
+    }
     try {
       setBusyAction("test");
       const response = await axios.post(
         "/newsletter/test",
-        { recipients: [testRecipient], campaignId: selectedCampaignId || undefined },
+        { campaignId: selectedCampaignId || undefined },
         { headers: headers() }
       );
-      setMessage({ type: "success", text: `Test newsletter sent to ${response.data.recipientCount} recipient.` });
+      setMessage({ type: "success", text: `Test newsletter sent to ${selfEmail}.` });
       await loadNewsletter();
     } catch (error) {
       setMessage({ type: "danger", text: error.response?.data?.error || "Unable to send test newsletter." });
@@ -564,10 +571,6 @@ export default function NewsletterSettings() {
                       <option value="scheduled">Custom</option>
                     </Form.Select>
                   </Form.Group>
-                  <Form.Group>
-                    <Form.Label>{t("FEATURES.NEWSLETTER.TEST_RECIPIENT")}</Form.Label>
-                    <Form.Control type="email" value={testRecipient} onChange={(event) => setTestRecipient(event.target.value)} placeholder="you@example.com" />
-                  </Form.Group>
                 </div>
                 {campaignDraft.frequency !== "manual" ? (
                   <div className="newsletter-schedule">
@@ -729,14 +732,19 @@ export default function NewsletterSettings() {
                     placeholder="Optional custom HTML appended to the digest"
                   />
                 </Form.Group>
+                {selfEmail ? (
+                  <p className="newsletter-help">Test newsletters are sent only to your address, {selfEmail}.</p>
+                ) : (
+                  <p className="newsletter-help">{selfEmailMessage || "Your account has no email address, so a test newsletter cannot be sent. Add an email to your user and try again."}</p>
+                )}
                 <div className="newsletter-actions">
                   <Button type="submit" disabled={Boolean(busyAction)}>
                     {busyAction === "campaign-save" ? <Spinner size="sm" animation="border" /> : <MailCheckLineIcon size={17} />}
                     {t("FEATURES.NEWSLETTER.SAVE_CAMPAIGN")}
                   </Button>
-                  <Button type="button" variant="outline-primary" onClick={sendTest} disabled={!testRecipient || Boolean(busyAction)}>
+                  <Button type="button" variant="outline-primary" onClick={sendTest} disabled={!selfEmail || Boolean(busyAction)} title={selfEmail ? `Send a test to ${selfEmail}` : "Your account has no email address"}>
                     {busyAction === "test" ? <Spinner size="sm" animation="border" /> : <SendPlaneLineIcon size={17} />}
-                    {t("FEATURES.NEWSLETTER.SEND_TEST")}
+                    {selfEmail ? `Send test to ${selfEmail}` : t("FEATURES.NEWSLETTER.SEND_TEST")}
                   </Button>
                   <Button type="button" variant="primary" onClick={sendCampaign} disabled={!selectedCampaignId || Boolean(busyAction)}>
                     {busyAction === "campaign-send" ? <Spinner size="sm" animation="border" /> : <SendPlaneLineIcon size={17} />}
@@ -766,9 +774,9 @@ export default function NewsletterSettings() {
               {busyAction === "campaign-save" ? <Spinner size="sm" animation="border" /> : <MailCheckLineIcon size={17} />}
               {t("FEATURES.NEWSLETTER.SAVE_CAMPAIGN")}
             </Button>
-            <Button type="button" variant="outline-primary" onClick={sendTest} disabled={!testRecipient || !selectedCampaignId || Boolean(busyAction)} title={testRecipient ? "" : "Set a test recipient on the Campaigns tab"}>
+            <Button type="button" variant="outline-primary" onClick={sendTest} disabled={!selfEmail || !selectedCampaignId || Boolean(busyAction)} title={selfEmail ? `Send a test to ${selfEmail}` : "Your account has no email address"}>
               {busyAction === "test" ? <Spinner size="sm" animation="border" /> : <SendPlaneLineIcon size={17} />}
-              {t("FEATURES.NEWSLETTER.SEND_TEST")}
+              {selfEmail ? `Send test to ${selfEmail}` : t("FEATURES.NEWSLETTER.SEND_TEST")}
             </Button>
           </div>
           <NewsletterReportBuilder

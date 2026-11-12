@@ -7,6 +7,7 @@ const { axios } = require("../classes/axios");
 const { addAuditEntry } = require("../classes/admin-history");
 const campaigns = require("../classes/newsletter-campaigns");
 const newsletterTheme = require("../classes/newsletter-theme");
+const audience = require("../classes/newsletter-audience");
 const reportBuilder = require("../classes/newsletter-report-builder");
 const { encryptSecret, getIntegrations } = require("../classes/integration-store");
 const { isValidEmail } = require("../utils/security");
@@ -809,12 +810,18 @@ router.post("/report/preview", async (req, res) => {
 
 router.post("/test", async (req, res) => {
   try {
-    res.json(await sendNewsletter(req, normalizeRecipients(req.body?.recipients), "test", { campaignId: req.body?.campaignId }));
+    const email = await campaigns.resolveSelfEmail(req.user);
+    if (!email) {
+      const error = new Error(audience.NO_SELF_EMAIL_MESSAGE);
+      error.statusCode = 400;
+      throw error;
+    }
+    res.json(await sendNewsletter(req, [email], "test", { campaignId: req.body?.campaignId }));
   } catch (error) {
     await addNewsletterHistory(req, {
       ok: false,
       mode: "test",
-      recipientCount: normalizeRecipients(req.body?.recipients).length,
+      recipientCount: 0,
       error: error.message,
     }).catch(() => {});
     res.status(error.statusCode || 503).json({ error: error.message || "Unable to send test newsletter" });
@@ -839,7 +846,7 @@ router.post("/send", async (req, res) => {
   }
 });
 
-router.get("/campaigns", async (_req, res) => {
+router.get("/campaigns", async (req, res) => {
   try {
     const schemaReady = await campaigns.isCampaignSchemaReady();
     const audienceOptions = await campaigns.listAudienceOptions().catch(() => ({
@@ -847,6 +854,7 @@ router.get("/campaigns", async (_req, res) => {
       users: [],
       timeZone: process.env.TZ || "UTC",
     }));
+    const selfEmail = await campaigns.resolveSelfEmail(req.user).catch(() => "");
     res.json({
       schemaReady,
       campaigns: schemaReady ? await campaigns.listCampaigns() : [],
@@ -857,6 +865,8 @@ router.get("/campaigns", async (_req, res) => {
       users: audienceOptions.users,
       timeZone: audienceOptions.timeZone,
       fonts: audienceOptions.fonts || [],
+      selfEmail: selfEmail || "",
+      selfEmailMessage: selfEmail ? "" : audience.NO_SELF_EMAIL_MESSAGE,
     });
   } catch (error) {
     console.error("List newsletter campaigns failed:", error);

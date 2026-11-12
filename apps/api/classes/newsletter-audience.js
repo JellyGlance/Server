@@ -151,6 +151,22 @@ function summariseDirectory(directory = []) {
   }));
 }
 
+function resolveSelfEmail({ user, directory = [], requestedRecipients } = {}) {
+  // requestedRecipients is ignored on purpose: test sends only go to the
+  // signed-in admin, never to a free-text address from the request body.
+  void requestedRecipients;
+  const direct = normalizeEmail(user?.email || user?.Email || user?.oidcUser?.email);
+  if (direct) return direct;
+  const ids = [user?.id, user?.jellyfinUser?.id, user?.jellyfinUser?.Id].filter(Boolean).map(String);
+  const names = [user?.username, user?.name, user?.jellyfinUser?.name, user?.jellyfinUser?.Name]
+    .filter(Boolean)
+    .map((value) => String(value).trim().toLowerCase());
+  const match = directory.find((entry) => ids.includes(String(entry.id)) || names.includes(String(entry.name || "").trim().toLowerCase()));
+  return match?.email || "";
+}
+
+const NO_SELF_EMAIL_MESSAGE = "Your account has no email address, so a test newsletter cannot be sent. Add an email to your user and try again.";
+
 module.exports = {
   PICKABLE_ROLES,
   normalizeEmail,
@@ -158,4 +174,6 @@ module.exports = {
   buildDirectoryUsers,
   resolveAudienceRecipients,
   summariseDirectory,
+  resolveSelfEmail,
+  NO_SELF_EMAIL_MESSAGE,
 };

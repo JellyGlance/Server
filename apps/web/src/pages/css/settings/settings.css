@@ -2621,6 +2621,17 @@
   margin-top: 4px;
 }
 
+.newsletter-test-send {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  flex: 1;
+}
+
+.newsletter-test-send .newsletter-help {
+  margin: 0;
+}
+
 .newsletter-template-editor {
   display: grid;
   gap: 14px;

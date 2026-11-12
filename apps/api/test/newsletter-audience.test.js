@@ -71,3 +71,26 @@ test("users without an email cannot be added from a role match", () => {
   });
   assert.deepEqual(emails, ["bob@example.com"]);
 });
+
+test("test sends resolve only to the signed-in admin email and ignore free-text recipients", () => {
+  const email = audience.resolveSelfEmail({
+    user: { id: "ada", username: "demo-admin" },
+    directory,
+    requestedRecipients: ["attacker@example.com", "other@example.com"],
+  });
+  assert.equal(email, "ada@example.com");
+
+  const fromUser = audience.resolveSelfEmail({
+    user: { email: "me@example.com" },
+    directory,
+    requestedRecipients: ["attacker@example.com"],
+  });
+  assert.equal(fromUser, "me@example.com");
+
+  const missing = audience.resolveSelfEmail({
+    user: { id: "no-mail", username: "nomail" },
+    directory,
+    requestedRecipients: ["attacker@example.com"],
+  });
+  assert.equal(missing, "");
+});
