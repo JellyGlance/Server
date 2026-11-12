@@ -328,12 +328,18 @@
   color: #fecaca;
 }
 
-/* ---- summary tiles (shortcuts into the filter row) ---- */
+/* ---- summary tiles (shortcuts into the filter row) ----
+   Icon badge on the left, the number over its label on the right. The legacy rules in
+   integrations.css place the children by area name (icon / value / label / hint), so the
+   areas are redefined here instead of auto-placing. Each state has a tint that matches
+   its chip; hover and the selected filter change only the border and tint (no lift). */
 .requests-page.rq .requests-overview {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 72px;
   gap: var(--rq-s3);
   min-width: 0;
+  margin: 0;
   padding: 0;
   border: 0;
   background: none;
@@ -341,56 +347,78 @@
 }
 
 .requests-page.rq .requests-overview-tile {
+  --tile-tint: #94a3b8;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  grid-template-rows: 24px 16px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-rows: 28px 16px;
+  grid-template-areas:
+    "icon value"
+    "icon label";
   align-content: center;
   align-items: center;
-  column-gap: var(--rq-s3);
+  gap: 0 var(--rq-s3);
   box-sizing: border-box;
   height: 72px;
   min-height: 0;
-  padding: var(--rq-s3);
+  padding: 0 var(--rq-s4);
   overflow: hidden;
   border: 1px solid var(--rq-line);
   border-radius: 12px;
-  background: var(--rq-surface);
+  background: color-mix(in srgb, var(--tile-tint) 7%, var(--rq-surface));
   box-shadow: none;
   color: #f1f5f9;
   text-align: left;
   transform: none;
+  transition: none;
 }
 
+.requests-page.rq .requests-overview-tile.is-pending { --tile-tint: #f5b942; }
+.requests-page.rq .requests-overview-tile.is-progress { --tile-tint: #93c5fd; }
+.requests-page.rq .requests-overview-tile.is-available { --tile-tint: #86efac; }
+.requests-page.rq .requests-overview-tile.is-attention { --tile-tint: #f87171; }
+
 .requests-page.rq .requests-overview-tile:hover {
-  border-color: var(--rq-line);
-  background: #111923;
+  border-color: color-mix(in srgb, var(--tile-tint) 40%, var(--rq-line));
+  background: color-mix(in srgb, var(--tile-tint) 11%, var(--rq-surface));
   transform: none;
 }
 
 .requests-page.rq .requests-overview-tile.is-active {
-  border-color: var(--rq-line);
-  background: rgba(var(--primary-rgb), 0.16);
+  border-color: color-mix(in srgb, var(--tile-tint) 70%, transparent);
+  background: color-mix(in srgb, var(--tile-tint) 18%, var(--rq-surface));
   transform: none;
 }
 
 .requests-page.rq .requests-overview-tile > svg {
-  grid-row: 1 / 3;
-  align-self: center;
+  grid-area: icon;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tile-tint) 16%, transparent);
+  color: var(--tile-tint);
 }
 
 .requests-page.rq .requests-overview-tile > strong {
   display: block;
+  grid-area: value;
+  margin: 0;
+  color: #fff;
   font-size: 24px;
   font-weight: 800;
-  line-height: 24px;
+  line-height: 28px;
 }
 
 .requests-page.rq .requests-overview-tile > span {
   display: block;
+  grid-area: label;
+  min-width: 0;
+  margin: 0;
   overflow: hidden;
   color: var(--rq-text);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -399,11 +427,6 @@
 .requests-page.rq .requests-overview-tile > small {
   display: none;
 }
-
-.requests-page.rq .requests-overview-tile.is-pending > svg { color: #f5b942; }
-.requests-page.rq .requests-overview-tile.is-progress > svg { color: #93c5fd; }
-.requests-page.rq .requests-overview-tile.is-available > svg { color: #86efac; }
-.requests-page.rq .requests-overview-tile.is-attention > svg { color: #f87171; }
 
 .requests-page.rq .requests-approve-all {
   display: inline-flex;
@@ -1267,20 +1290,33 @@
   }
 
   .requests-page.rq .requests-overview {
-    display: flex;
-    gap: var(--rq-s3);
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
-
-  .requests-page.rq .requests-overview::-webkit-scrollbar {
-    display: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 64px;
+    gap: var(--rq-s2);
   }
 
   .requests-page.rq .requests-overview-tile {
-    flex: 1 0 160px;
-    scroll-snap-align: start;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-rows: 24px 16px;
+    gap: 0 8px;
+    height: 64px;
+    padding: 0 10px;
+  }
+
+  .requests-page.rq .requests-overview-tile > svg {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .requests-page.rq .requests-overview-tile > strong {
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  .requests-page.rq .requests-overview-tile > span {
+    font-size: 11px;
   }
 
   .requests-page.rq .requests-media-search {
