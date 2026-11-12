@@ -110,6 +110,8 @@ describe("newsletter wrapped recap block", () => {
     assert.match(html, /Your recap|November 2026|Nov 2026/);
     assert.match(html, /Hours watched/);
     assert.match(html, /Busiest day/);
+    assert.match(html, /width:33%/);
+    assert.doesNotMatch(html, /width:25%/);
     assert.match(html, /The Crown/);
     assert.match(html, /Arrival/);
     assert.match(html, /Top shows/);
@@ -204,5 +206,60 @@ describe("newsletter coming-soon block", () => {
     assert.match(html, /requests\?request=9/);
     const empty = reportBuilder.renderBlock(block, { days: 7, items: [] }, ctx({ locale: "de-DE" }));
     assert.match(empty, /Nichts|nächsten|Tage/i);
+  });
+});
+
+describe("newsletter extra blocks", () => {
+  it("renders a featured hero with a backdrop and a watch CTA", () => {
+    const block = reportBuilder.normalizeBlock({ type: "heroFeatured", options: { ctaLabel: "Watch now" } });
+    const html = reportBuilder.renderBlock(block, {
+      item: { Id: "m1", Name: "Arrival", Type: "Movie", ProductionYear: 2016, HasBackdrop: true, CommunityRating: 8.1, Genres: ["Drama", "Sci-Fi"] },
+    }, ctx());
+    assert.match(html, /Featured/);
+    assert.match(html, /Arrival/);
+    assert.match(html, /Images\/Backdrop/);
+    assert.match(html, /Watch now/);
+    assert.match(html, /libraries\/item\/m1/);
+  });
+
+  it("hides storage stats from non-admin recipients and shows them to admins", async () => {
+    const report = { enabled: true, blocks: [{ type: "serverStats", enabled: true, title: "", options: {} }] };
+    const hidden = await reportBuilder.renderReport(report, { campaignName: "Digest", isAdmin: false, publicBase: "http://example.com", locale: "en-GB" });
+    assert.doesNotMatch(hidden.html, /Storage and server stats/);
+    const shown = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "serverStats" }), {
+      totalLabel: "12 TB", libraries: 6, items: 100, upcomingEstimate: "20 GB", upcomingCount: 4, librarySizes: [{ name: "Movies", size: "8 TB", items: 80 }],
+    }, ctx());
+    assert.match(shown, /12 TB/);
+    assert.match(shown, /Visible to admins only/);
+  });
+
+  it("renders layout blocks, a countdown and an invite button", () => {
+    const quote = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "quote", options: { quote: "Ask if you cannot find it.", attribution: "NT" } }), {}, ctx());
+    assert.match(quote, /Ask if you cannot find it/);
+    assert.match(quote, /NT/);
+    const button = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "buttonCta", options: { buttonLabel: "Open requests", buttonHref: "http://example.com/requests" } }), {}, ctx());
+    assert.match(button, /Open requests/);
+    assert.match(button, /href="http:\/\/example.com\/requests"/);
+    const bad = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "image", options: { imageUrl: "javascript:alert(1)" } }), {}, ctx());
+    assert.match(bad, /Add an image URL/);
+    assert.doesNotMatch(bad, /javascript:/);
+    const count = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "countdown", options: { countdownAt: "2026-11-16", countdownLabel: "Premiere" } }), { hasDate: true, days: 4 }, ctx());
+    assert.match(count, /Premiere/);
+    assert.match(count, /4 days to go/);
+    const invite = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "inviteFriend" }), { url: "https://invite.example" }, ctx());
+    assert.match(invite, /Invite a friend/);
+    assert.match(invite, /https:\/\/invite.example/);
+    const columns = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "twoColumn", options: { leftTitle: "Left", leftText: "A", rightTitle: "Right", rightText: "B" } }), {}, ctx());
+    assert.match(columns, /Left/);
+    assert.match(columns, /Right/);
+    const divider = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "divider", options: { dividerStyle: "spacer", space: 40 } }), {}, ctx());
+    assert.match(divider, /height:40px/);
+  });
+
+  it("is a per-user block for new episodes and translates empty copy", () => {
+    assert.ok(reportBuilder.PER_USER_BLOCKS.has("newEpisodes"));
+    assert.ok(reportBuilder.ADMIN_ONLY_BLOCKS.has("serverStats"));
+    const empty = reportBuilder.renderBlock(reportBuilder.normalizeBlock({ type: "newEpisodes" }), { items: [] }, ctx({ locale: "de-DE" }));
+    assert.match(empty, /Neue Folgen|keine neuen Folgen/i);
   });
 });

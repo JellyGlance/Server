@@ -29,9 +29,26 @@ export const BLOCK_LIBRARY = [
   { type: "fulfilledRequests", label: "Newly available", text: "Seerr requests that became available since the last send. Per-user campaigns show only that person's requests.", fields: ["title", "limit", "period", "style"] },
   { type: "serverNews", label: "Server news", text: "An admin-written maintenance or new-feature note, with optional dates and a link to the public status page when it is enabled.", fields: ["title", "kind", "text", "startAt", "endAt"] },
   { type: "comingSoon", label: "Coming soon", text: "Upcoming titles from Sonarr, Radarr and Seerr over the next N days. Read-only.", fields: ["title", "limit", "comingDays", "style"] },
+  { type: "heroFeatured", label: "Featured title", text: "A hero title with a backdrop and a watch CTA. Leave the item ID blank to pick a trending title automatically.", fields: ["title", "itemId", "library", "ctaLabel"] },
+  { type: "newEpisodes", label: "New episodes", text: "New episodes of shows this person already watches. Per-user campaigns only.", fields: ["title", "limit", "period", "style"], perUser: true },
+  { type: "trendingWeek", label: "Trending this week", text: "The titles people watched most on the server this week.", fields: ["title", "limit", "library", "style"] },
+  { type: "topRequesters", label: "Top requesters", text: "A leaderboard of who requested the most on Seerr.", fields: ["title", "limit"] },
+  { type: "collectionsSpotlight", label: "Collection spotlight", text: "Auto-collection previews from the server. Read-only, no writes to Jellyfin.", fields: ["title", "limit", "library", "style"] },
+  { type: "qualityUpgrades", label: "Quality upgrades", text: "4K, HDR and Dolby Vision titles, newest first.", fields: ["title", "limit", "library", "style"] },
+  { type: "serverStats", label: "Storage and server stats", text: "Library storage and item counts. Included only in admin copies of the digest.", fields: ["title"], adminOnly: true },
+  { type: "genreChart", label: "Most-watched genres", text: "A bar chart of the genres people watched in the period.", fields: ["title", "limit", "period", "library"] },
+  { type: "hiddenGem", label: "Hidden gem", text: "A highly rated title that is rarely watched.", fields: ["title", "limit", "library", "style"] },
+  { type: "onThisDay", label: "On this day", text: "Titles that premiered on this date in past years.", fields: ["title", "limit", "library", "style"] },
+  { type: "countdown", label: "Countdown", text: "Days remaining until a date you set, with an optional button.", fields: ["title", "countdownLabel", "countdownAt", "ctaLabel", "ctaHref"] },
+  { type: "image", label: "Image", text: "A single image from an https URL, with an optional link.", fields: ["title", "imageUrl", "imageAlt", "ctaHref", "align"] },
+  { type: "buttonCta", label: "Button", text: "A call-to-action button with a link.", fields: ["title", "buttonLabel", "buttonHref", "align"] },
+  { type: "divider", label: "Divider or spacer", text: "A line, empty space, or both.", fields: ["dividerStyle", "space"] },
+  { type: "twoColumn", label: "Two columns", text: "Two side-by-side text columns.", fields: ["title", "leftTitle", "leftText", "rightTitle", "rightText"] },
+  { type: "quote", label: "Quote or tip", text: "A highlighted quote or tip of the week.", fields: ["title", "quote", "attribution"] },
+  { type: "inviteFriend", label: "Invite a friend", text: "A Wizarr invite link, or a URL you set. Never creates an invite.", fields: ["title", "text", "ctaLabel", "inviteUrl"] },
+  { type: "footerSocial", label: "Footer and social links", text: "Closing copy plus links to the site, Discord and other profiles.", fields: ["title", "text", "socialWebsite", "socialDiscord", "socialYoutube", "socialMastodon", "socialX", "socialGithub", "socialInstagram", "socialFacebook"] },
   { type: "text", label: "Text", text: "Free text. **bold** and blank lines for paragraphs.", fields: ["title", "text"] },
   { type: "customHtml", label: "Custom HTML", text: "Raw HTML dropped into the email.", fields: ["title", "html"] },
-  { type: "divider", label: "Divider", text: "A thin line between sections.", fields: [] },
 ];
 
 const BLOCK_BY_TYPE = Object.fromEntries(BLOCK_LIBRARY.map((block) => [block.type, block]));
@@ -220,6 +237,138 @@ function BlockFields({ block, fields, libraries, onChange }) {
           <Form.Control type="date" value={block.options?.endAt || ""} onChange={(event) => setOption("endAt", event.target.value)} />
         </Form.Group>
       ) : null}
+
+      {fields.includes("itemId") ? (
+        <Form.Group>
+          <Form.Label>Item ID</Form.Label>
+          <Form.Control value={block.options?.itemId || ""} placeholder="Leave blank to pick automatically" onChange={(event) => setOption("itemId", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("ctaLabel") ? (
+        <Form.Group>
+          <Form.Label>Button label</Form.Label>
+          <Form.Control value={block.options?.ctaLabel || ""} placeholder="Watch now" onChange={(event) => setOption("ctaLabel", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("ctaHref") ? (
+        <Form.Group>
+          <Form.Label>Button link</Form.Label>
+          <Form.Control value={block.options?.ctaHref || ""} placeholder="https://" onChange={(event) => setOption("ctaHref", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("imageUrl") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Image URL</Form.Label>
+          <Form.Control value={block.options?.imageUrl || ""} placeholder="https://" onChange={(event) => setOption("imageUrl", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("imageAlt") ? (
+        <Form.Group>
+          <Form.Label>Alt text</Form.Label>
+          <Form.Control value={block.options?.imageAlt || ""} onChange={(event) => setOption("imageAlt", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("buttonLabel") ? (
+        <Form.Group>
+          <Form.Label>Button label</Form.Label>
+          <Form.Control value={block.options?.buttonLabel || ""} placeholder="Open" onChange={(event) => setOption("buttonLabel", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("buttonHref") ? (
+        <Form.Group>
+          <Form.Label>Button link</Form.Label>
+          <Form.Control value={block.options?.buttonHref || ""} placeholder="https://" onChange={(event) => setOption("buttonHref", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("align") ? (
+        <Form.Group>
+          <Form.Label>Align</Form.Label>
+          <Form.Select value={block.options?.align || "center"} onChange={(event) => setOption("align", event.target.value)}>
+            <option value="left">Left</option>
+            <option value="center">Centre</option>
+            <option value="right">Right</option>
+          </Form.Select>
+        </Form.Group>
+      ) : null}
+      {fields.includes("dividerStyle") ? (
+        <Form.Group>
+          <Form.Label>Style</Form.Label>
+          <Form.Select value={block.options?.dividerStyle || "line"} onChange={(event) => setOption("dividerStyle", event.target.value)}>
+            <option value="line">Line</option>
+            <option value="spacer">Spacer</option>
+            <option value="both">Line and space</option>
+          </Form.Select>
+        </Form.Group>
+      ) : null}
+      {fields.includes("space") ? (
+        <Form.Group>
+          <Form.Label>Space (px)</Form.Label>
+          <Form.Control type="number" min="0" max="80" value={block.options?.space ?? 22} onChange={(event) => setOption("space", Number(event.target.value))} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("leftTitle") ? (
+        <Form.Group>
+          <Form.Label>Left heading</Form.Label>
+          <Form.Control value={block.options?.leftTitle || ""} onChange={(event) => setOption("leftTitle", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("leftText") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Left text</Form.Label>
+          <Form.Control as="textarea" rows={3} value={block.options?.leftText || ""} onChange={(event) => setOption("leftText", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("rightTitle") ? (
+        <Form.Group>
+          <Form.Label>Right heading</Form.Label>
+          <Form.Control value={block.options?.rightTitle || ""} onChange={(event) => setOption("rightTitle", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("rightText") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Right text</Form.Label>
+          <Form.Control as="textarea" rows={3} value={block.options?.rightText || ""} onChange={(event) => setOption("rightText", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("quote") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Quote or tip</Form.Label>
+          <Form.Control as="textarea" rows={3} value={block.options?.quote || ""} onChange={(event) => setOption("quote", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("attribution") ? (
+        <Form.Group>
+          <Form.Label>Attribution</Form.Label>
+          <Form.Control value={block.options?.attribution || ""} onChange={(event) => setOption("attribution", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("countdownLabel") ? (
+        <Form.Group>
+          <Form.Label>Event</Form.Label>
+          <Form.Control value={block.options?.countdownLabel || ""} placeholder="Season premiere" onChange={(event) => setOption("countdownLabel", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("countdownAt") ? (
+        <Form.Group>
+          <Form.Label>Date</Form.Label>
+          <Form.Control type="date" value={block.options?.countdownAt || ""} onChange={(event) => setOption("countdownAt", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("inviteUrl") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Invite URL override</Form.Label>
+          <Form.Control value={block.options?.inviteUrl || ""} placeholder="Uses the connected Wizarr URL if this is blank" onChange={(event) => setOption("inviteUrl", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {["socialWebsite", "socialDiscord", "socialYoutube", "socialMastodon", "socialX", "socialGithub", "socialInstagram", "socialFacebook"].map((field) => (
+        fields.includes(field) ? (
+          <Form.Group key={field}>
+            <Form.Label>{field.replace("social", "")}</Form.Label>
+            <Form.Control value={block.options?.[field] || ""} placeholder="https://" onChange={(event) => setOption(field, event.target.value)} />
+          </Form.Group>
+        ) : null
+      ))}
+
       {fields.includes("style") ? (
         <Form.Group>
           <Form.Label>Layout</Form.Label>

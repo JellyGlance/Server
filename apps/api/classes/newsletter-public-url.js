@@ -57,9 +57,31 @@ function posterSrc(base, itemId, { width = 200, quality = 80 } = {}) {
   return `${root}/proxy/Items/Images/Primary/?id=${encodeURIComponent(id)}&fillWidth=${fillWidth}&quality=${imageQuality}`;
 }
 
+function backdropSrc(base, itemId, { width = 1200, quality = 70 } = {}) {
+  const root = trimBase(base);
+  const id = String(itemId || "").trim();
+  if (!root || !id) return "";
+  const fillWidth = Number.isFinite(Number(width)) ? Math.max(80, Math.min(1920, Math.round(Number(width)))) : 1200;
+  const imageQuality = Number.isFinite(Number(quality)) ? Math.max(10, Math.min(100, Math.round(Number(quality)))) : 70;
+  return `${root}/proxy/Items/Images/Backdrop/?id=${encodeURIComponent(id)}&fillWidth=${fillWidth}&quality=${imageQuality}`;
+}
+
+function safeHttpUrl(value) {
+  const text = String(value || "").trim();
+  if (!looksLikeHttpUrl(text)) return "";
+  try {
+    const url = new URL(text);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+    return text;
+  } catch {
+    return "";
+  }
+}
+
 module.exports = {
   trimBase,
   looksLikeHttpUrl,
+  safeHttpUrl,
   configuredPublicBase,
   resolvePublicBase,
   absoluteUrl,
@@ -67,4 +89,5 @@ module.exports = {
   requestsHref,
   statusPageHref,
   posterSrc,
+  backdropSrc,
 };

@@ -8,6 +8,7 @@ const leavingSoon = require("./newsletter-leaving-soon");
 const seerrRequests = require("./newsletter-seerr-requests");
 const statusPage = require("./status-page");
 const comingSoon = require("./newsletter-coming-soon");
+const extraBlocks = require("./newsletter-extra-blocks");
 /* Newsletter report builder: renders an ordered list of configurable blocks into email-safe HTML and plain text. */
 const db = require("../db");
 
@@ -30,12 +31,30 @@ const REPORT_BLOCK_TYPES = [
   "fulfilledRequests",
   "serverNews",
   "comingSoon",
+  "heroFeatured",
+  "newEpisodes",
+  "trendingWeek",
+  "topRequesters",
+  "collectionsSpotlight",
+  "qualityUpgrades",
+  "serverStats",
+  "genreChart",
+  "hiddenGem",
+  "onThisDay",
+  "countdown",
+  "image",
+  "buttonCta",
+  "twoColumn",
+  "quote",
+  "inviteFriend",
+  "footerSocial",
   "text",
   "customHtml",
   "divider",
 ];
 
-const PER_USER_BLOCKS = new Set(["continueWatching", "myRequests", "forYou"]);
+const PER_USER_BLOCKS = new Set(["continueWatching", "myRequests", "forYou", "newEpisodes"]);
+const ADMIN_ONLY_BLOCKS = new Set(["serverStats"]);
 
 const BLOCK_DEFAULT_TITLE_KEYS = {
   intro: "",
@@ -56,6 +75,23 @@ const BLOCK_DEFAULT_TITLE_KEYS = {
   fulfilledRequests: "FULFILLED",
   serverNews: "SERVER_NEWS",
   comingSoon: "COMING_SOON",
+  heroFeatured: "HERO",
+  newEpisodes: "NEW_EPISODES",
+  trendingWeek: "TRENDING_WEEK",
+  topRequesters: "TOP_REQUESTERS",
+  collectionsSpotlight: "COLLECTIONS_SPOTLIGHT",
+  qualityUpgrades: "QUALITY_UPGRADES",
+  serverStats: "SERVER_STATS",
+  genreChart: "GENRE_CHART",
+  hiddenGem: "HIDDEN_GEM",
+  onThisDay: "ON_THIS_DAY",
+  countdown: "COUNTDOWN",
+  image: "",
+  buttonCta: "",
+  twoColumn: "",
+  quote: "TIP_OF_THE_WEEK",
+  inviteFriend: "INVITE_FRIEND",
+  footerSocial: "FOOTER_SOCIAL",
   text: "",
   customHtml: "",
   divider: "",
@@ -80,6 +116,23 @@ const BLOCK_DEFAULT_TITLES = {
   fulfilledRequests: "Newly available requests",
   serverNews: "Server news",
   comingSoon: "Coming soon",
+  heroFeatured: "Featured",
+  newEpisodes: "New episodes of shows you watch",
+  trendingWeek: "Trending this week",
+  topRequesters: "Top requesters",
+  collectionsSpotlight: "Collection spotlight",
+  qualityUpgrades: "Quality upgrades",
+  serverStats: "Storage and server stats",
+  genreChart: "Most-watched genres",
+  hiddenGem: "Hidden gem",
+  onThisDay: "On this day",
+  countdown: "Countdown",
+  image: "",
+  buttonCta: "",
+  twoColumn: "",
+  quote: "Tip of the week",
+  inviteFriend: "Invite a friend",
+  footerSocial: "Find us online",
   text: "",
   customHtml: "",
   divider: "",
@@ -167,6 +220,33 @@ function normalizeBlock(block = {}, index = 0) {
       startAt: String(options.startAt || "").slice(0, 32),
       endAt: String(options.endAt || "").slice(0, 32),
       comingDays: clampInt(options.comingDays, 1, 31, 7),
+      itemId: String(options.itemId || "").slice(0, 128),
+      ctaLabel: String(options.ctaLabel || "").slice(0, 80),
+      ctaHref: String(options.ctaHref || "").slice(0, 500),
+      imageUrl: String(options.imageUrl || "").slice(0, 500),
+      imageAlt: String(options.imageAlt || "").slice(0, 160),
+      buttonLabel: String(options.buttonLabel || "").slice(0, 80),
+      buttonHref: String(options.buttonHref || "").slice(0, 500),
+      align: ["left", "center", "right"].includes(options.align) ? options.align : "center",
+      dividerStyle: ["line", "spacer", "both"].includes(options.dividerStyle) ? options.dividerStyle : "line",
+      space: clampInt(options.space, 0, 80, 22),
+      leftTitle: String(options.leftTitle || "").slice(0, 160),
+      leftText: String(options.leftText || "").slice(0, 4000),
+      rightTitle: String(options.rightTitle || "").slice(0, 160),
+      rightText: String(options.rightText || "").slice(0, 4000),
+      quote: String(options.quote || "").slice(0, 2000),
+      attribution: String(options.attribution || "").slice(0, 160),
+      inviteUrl: String(options.inviteUrl || "").slice(0, 500),
+      countdownAt: String(options.countdownAt || "").slice(0, 32),
+      countdownLabel: String(options.countdownLabel || "").slice(0, 160),
+      socialWebsite: String(options.socialWebsite || "").slice(0, 500),
+      socialDiscord: String(options.socialDiscord || "").slice(0, 500),
+      socialYoutube: String(options.socialYoutube || "").slice(0, 500),
+      socialMastodon: String(options.socialMastodon || "").slice(0, 500),
+      socialX: String(options.socialX || "").slice(0, 500),
+      socialGithub: String(options.socialGithub || "").slice(0, 500),
+      socialInstagram: String(options.socialInstagram || "").slice(0, 500),
+      socialFacebook: String(options.socialFacebook || "").slice(0, 500),
     },
   };
 }
@@ -400,6 +480,38 @@ async function blockData(block, period, context) {
       });
       return data;
     }
+    case "heroFeatured":
+      return { item: await extraBlocks.listHero({ itemId: block.options.itemId, libraryId: block.options.libraryId, now: context.now }) };
+    case "newEpisodes": {
+      const userId = context.personData?.userId || context.personData?.UserId || "";
+      return { days, items: await extraBlocks.listNewEpisodes({ userId, days: days || 14, limit }) };
+    }
+    case "trendingWeek":
+      return { days: 7, items: await extraBlocks.listTrendingWeek({ limit, libraryId: block.options.libraryId, days: 7 }) };
+    case "topRequesters":
+      return { items: await extraBlocks.listTopRequesters({ limit }) };
+    case "collectionsSpotlight":
+      return { collections: await extraBlocks.listCollectionSpotlight({ limit, libraryId: block.options.libraryId }) };
+    case "qualityUpgrades":
+      return { items: await extraBlocks.listQualityUpgrades({ limit, libraryId: block.options.libraryId }) };
+    case "serverStats":
+      return await extraBlocks.listServerStats();
+    case "genreChart":
+      return { days, items: await extraBlocks.listGenreChart({ days: days || 7, limit, libraryId: block.options.libraryId }) };
+    case "hiddenGem":
+      return { items: await extraBlocks.listHiddenGem({ libraryId: block.options.libraryId, limit: limit || 1 }) };
+    case "onThisDay":
+      return { items: await extraBlocks.listOnThisDay({ now: context.now || new Date(), libraryId: block.options.libraryId, limit }) };
+    case "countdown":
+      return extraBlocks.countdownFrom(block.options.countdownAt, context.now || new Date());
+    case "image":
+    case "buttonCta":
+    case "twoColumn":
+    case "quote":
+    case "footerSocial":
+      return {};
+    case "inviteFriend":
+      return { url: await extraBlocks.resolveWizarrInviteUrl(block.options.inviteUrl) };
     default:
       return { days };
   }
@@ -410,6 +522,41 @@ function periodLabel(days, t = identityT) {
   if (Number(days) === 7) return t("PERIOD_WEEK");
   if (Number(days) === 30) return t("PERIOD_30");
   return t("PERIOD_DAYS", { count: Number(days) || 0 });
+}
+
+function ctaButton(label, href, ctx, align) {
+  const theme = themeOf(ctx);
+  const url = publicUrl.safeHttpUrl(href) || "";
+  if (!label) return "";
+  const button = url
+    ? `<a href="${escapeHtml(url)}" style="display:inline-block;background:${ctx.accent || theme.accent};color:#0b1220;text-decoration:none;font-weight:800;font-size:14px;padding:10px 18px;border-radius:10px;">${escapeHtml(label)}</a>`
+    : `<span style="display:inline-block;background:${theme.card};color:${theme.muted};font-weight:800;font-size:14px;padding:10px 18px;border-radius:10px;border:1px solid ${theme.border};">${escapeHtml(label)}</span>`;
+  return `<p style="margin:14px 0 0;text-align:${align || "center"};">${button}</p>`;
+}
+
+function qualityLabel(labels, t) {
+  const map = { "4K": t("QUALITY_4K"), HDR: t("QUALITY_HDR"), "Dolby Vision": t("QUALITY_DV") };
+  return (labels || []).map((label) => map[label] || label).join(" · ");
+}
+
+function episodeLabel(item) {
+  if (item.Season == null || item.Episode == null) return item.SeriesName || "";
+  return `S${String(item.Season).padStart(2, "0")}E${String(item.Episode).padStart(2, "0")}`;
+}
+
+function socialLinks(options, t) {
+  return [
+    ["socialWebsite", "SOCIAL_WEBSITE"],
+    ["socialDiscord", "SOCIAL_DISCORD"],
+    ["socialYoutube", "SOCIAL_YOUTUBE"],
+    ["socialMastodon", "SOCIAL_MASTODON"],
+    ["socialX", "SOCIAL_X"],
+    ["socialGithub", "SOCIAL_GITHUB"],
+    ["socialInstagram", "SOCIAL_INSTAGRAM"],
+    ["socialFacebook", "SOCIAL_FACEBOOK"],
+  ]
+    .map(([key, label]) => ({ label: t(label), href: publicUrl.safeHttpUrl(options[key]) }))
+    .filter((item) => item.href);
 }
 
 function comingMeta(item, t, today) {
@@ -628,8 +775,15 @@ function renderBlock(block, data, ctx = {}) {
       return `${titleHtml(block.title, env)}${textToHtml(block.options.text, env)}`;
     case "customHtml":
       return `${titleHtml(block.title, env)}<div>${block.options.html}</div>`;
-    case "divider":
-      return `<div style="border-top:1px solid ${themeOf(env).border};margin:22px 0;"></div>`;
+    case "divider": {
+      const space = Number(block.options?.space || 22);
+      const kind = block.options?.dividerStyle || "line";
+      const gap = `<div style="height:${space}px;line-height:${space}px;font-size:0;">&nbsp;</div>`;
+      const line = `<div style="border-top:1px solid ${themeOf(env).border};margin:0;"></div>`;
+      if (kind === "spacer") return gap;
+      if (kind === "both") return `${gap}${line}${gap}`;
+      return `<div style="border-top:1px solid ${themeOf(env).border};margin:${space}px 0;"></div>`;
+    }
     case "stats":
       return `${titleHtml(title, env, sub)}${statTiles(
         [
@@ -784,7 +938,143 @@ function renderBlock(block, data, ctx = {}) {
         metaFor: (item) => comingMeta(item, t, data.today),
         render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, item.requestId ? "request" : "item"), themeOf(env).heading)}${meta([comingMeta(item, t, data.today)], env)}`,
       })}`;
+    case "heroFeatured": {
+      const item = data.item;
+      if (!item) return `${titleHtml(title, env)}${emptyHtml(t("HERO_EMPTY"), env)}`;
+      const backdrop = item.HasBackdrop || item.BackdropImageTags ? publicUrl.backdropSrc(env.publicBase, item.Id || item.id, { width: 1200, quality: 70 }) : "";
+      const href = hrefFor(item, env, "item") || publicUrl.safeHttpUrl(block.options.ctaHref);
+      const img = backdrop
+        ? `<img src="${escapeHtml(backdrop)}" width="560" alt="${escapeHtml(item.Name)}" style="display:block;width:100%;max-width:560px;height:auto;border-radius:14px;border:1px solid ${themeOf(env).border};" />`
+        : fallbackPoster(item, env);
+      const genres = (Array.isArray(item.Genres) ? item.Genres : []).map((genre) => genre.name || genre).filter(Boolean).slice(0, 3).join(", ");
+      const blurb = [item.Type, item.ProductionYear, genres, item.CommunityRating ? `★ ${item.CommunityRating}` : ""].filter(Boolean).join(" · ");
+      const cta = ctaButton(block.options.ctaLabel || t("FEATURED_WATCH"), href, env, "left");
+      return `${titleHtml(title, env)}<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td>${wrapLink(img, href)}</td></tr><tr><td style="padding-top:12px;">${wrapLink(`<strong style="font-size:20px;color:${themeOf(env).heading};">${escapeHtml(item.Name)}</strong>`, href, themeOf(env).heading)}${meta([blurb], env)}${cta}</td></tr></table>`;
+    }
+    case "newEpisodes":
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "item",
+        empty: t("NEW_EPISODES_EMPTY"),
+        metaFor: (item) => [episodeLabel(item), item.Type].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([episodeLabel(item)], env)}`,
+      })}`;
+    case "trendingWeek":
+      return `${titleHtml(title, env, periodLabel(7, t))}${itemListOrCards(data.items, env, {
+        kind: "item",
+        empty: t("TRENDING_EMPTY"),
+        metaFor: (item) => [playsLabel(item.Plays, t), item.Type, item.Library].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([playsLabel(item.Plays, t), item.Type, item.Library], env)}`,
+      })}`;
+    case "topRequesters":
+      return `${titleHtml(title, env)}${barsHtml(data.items, env, { suffix: "requests" })}`;
+    case "collectionsSpotlight": {
+      const collections = data.collections || [];
+      if (!collections.length) return `${titleHtml(title, env)}${emptyHtml(t("COLLECTIONS_EMPTY"), env)}`;
+      return collections
+        .map((collection) => {
+          const heading = collection.name || t("COLLECTIONS_SPOTLIGHT");
+          const sub = [collection.libraryName, collection.count ? t("TITLES_IN_COLLECTION", { count: collection.count }) : ""].filter(Boolean).join(" · ");
+          if (collection.items && collection.items.length) {
+            return `${titleHtml(heading, env, sub)}${itemListOrCards(collection.items, env, {
+              kind: "item",
+              empty: t("COLLECTIONS_EMPTY"),
+              metaFor: (item) => [item.Type, item.ProductionYear].filter(Boolean).join(" · "),
+              render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([item.Type, item.ProductionYear], env)}`,
+            })}`;
+          }
+          return `${titleHtml(heading, env, sub)}`;
+        })
+        .join("");
+    }
+    case "qualityUpgrades":
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "item",
+        empty: t("QUALITY_EMPTY"),
+        metaFor: (item) => [qualityLabel(item.quality, t), item.Type, item.Library].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([qualityLabel(item.quality, t), item.Type, item.Library], env)}`,
+      })}`;
+    case "serverStats": {
+      const tiles = statTiles(
+        [
+          [t("STORAGE_TOTAL"), String(data.totalLabel || "0"), t("LIBRARIES_COUNT")],
+          [t("LIBRARIES_COUNT"), String(Number(data.libraries || 0)), t("ITEMS_COUNT", { count: Number(data.items || 0) })],
+          [t("UPCOMING_STORAGE"), String(data.upcomingEstimate || "0"), t("ITEMS_COUNT", { count: Number(data.upcomingCount || 0) })],
+        ],
+        env
+      );
+      const list = listTable(
+        data.librarySizes || [],
+        (item) => `<strong>${escapeHtml(item.name)}</strong>${meta([item.size, t("ITEMS_COUNT", { count: Number(item.items || 0) })], env)}`,
+        t("NO_LIBRARIES"),
+        env
+      );
+      return `${titleHtml(title, env, t("SERVER_STATS_ADMIN"))}${tiles}${list}`;
+    }
+    case "genreChart":
+      return `${titleHtml(title, env, sub)}${barsHtml(data.items, env, { suffix: t("PLAYS_WORD") || "plays" })}`;
+    case "hiddenGem":
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "item",
+        empty: t("HIDDEN_GEM_EMPTY"),
+        metaFor: (item) => [t("HIDDEN_GEM_WHY", { rating: item.CommunityRating || item.rating || "" }), item.Type, item.Library].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([t("HIDDEN_GEM_WHY", { rating: item.CommunityRating || item.rating || "" }), item.Type], env)}`,
+      })}`;
+    case "onThisDay":
+      return `${titleHtml(title, env)}${itemListOrCards(data.items, env, {
+        kind: "item",
+        empty: t("ON_THIS_DAY_EMPTY"),
+        metaFor: (item) => [item.year ? t("ON_THIS_DAY_YEAR", { year: item.year }) : "", item.Type, item.Library].filter(Boolean).join(" · "),
+        render: (item) => `${wrapLink(`<strong>${escapeHtml(item.Name)}</strong>`, hrefFor(item, env, "item"), themeOf(env).heading)}${meta([item.year ? t("ON_THIS_DAY_YEAR", { year: item.year }) : "", item.Type], env)}`,
+      })}`;
+    case "countdown": {
+      const label = block.options.countdownLabel || title;
+      if (!data.hasDate) return `${titleHtml(label, env)}${emptyHtml(t("COUNTDOWN_EMPTY"), env)}`;
+      const message = data.days === 0 ? t("COUNTDOWN_TODAY") : data.days === 1 ? t("COUNTDOWN_TOMORROW") : data.days < 0 ? t("COUNTDOWN_PASSED") : t("COUNTDOWN_IN_DAYS", { count: data.days });
+      const value = data.days < 0 ? "0" : String(data.days);
+      return `${titleHtml(label, env)}${statTiles([[t("COUNTDOWN"), value, message]], env)}${ctaButton(block.options.ctaLabel, publicUrl.safeHttpUrl(block.options.ctaHref), env, "left")}`;
+    }
+    case "image": {
+      const src = publicUrl.safeHttpUrl(block.options.imageUrl);
+      if (!src) return `${titleHtml(title, env)}${emptyHtml(t("IMAGE_EMPTY"), env)}`;
+      const href = publicUrl.safeHttpUrl(block.options.ctaHref || block.options.imageUrl);
+      const alt = block.options.imageAlt || title || "";
+      const img = `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" width="560" style="display:block;width:100%;max-width:560px;height:auto;border-radius:12px;border:1px solid ${themeOf(env).border};" />`;
+      return `${titleHtml(title, env)}<div style="text-align:${block.options.align || "center"};">${wrapLink(img, href)}</div>`;
+    }
+    case "buttonCta": {
+      const label = block.options.buttonLabel || block.options.ctaLabel || t("BUTTON_DEFAULT");
+      const href = publicUrl.safeHttpUrl(block.options.buttonHref || block.options.ctaHref);
+      return `${titleHtml(title, env)}${ctaButton(label, href, env, block.options.align || "center")}`;
+    }
+    case "twoColumn": {
+      const theme = themeOf(env);
+      const left = `${block.options.leftTitle ? `<div style="font-weight:800;color:${theme.heading};margin:0 0 8px;">${escapeHtml(block.options.leftTitle)}</div>` : ""}${textToHtml(block.options.leftText, env)}`;
+      const right = `${block.options.rightTitle ? `<div style="font-weight:800;color:${theme.heading};margin:0 0 8px;">${escapeHtml(block.options.rightTitle)}</div>` : ""}${textToHtml(block.options.rightText, env)}`;
+      return `${titleHtml(title, env)}<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td width="50%" valign="top" style="padding-right:10px;">${left}</td><td width="50%" valign="top" style="padding-left:10px;">${right}</td></tr></table>`;
+    }
+    case "quote": {
+      const text = block.options.quote || block.options.text || "";
+      if (!text) return `${titleHtml(title, env)}${emptyHtml(t("QUOTE_EMPTY"), env)}`;
+      const cite = block.options.attribution ? `<div style="margin-top:8px;color:${themeOf(env).muted};font-size:13px;">— ${escapeHtml(block.options.attribution)}</div>` : "";
+      return `${titleHtml(title, env)}<div style="border-left:3px solid ${env.accent || themeOf(env).accent};padding:4px 0 4px 14px;color:${themeOf(env).text};font-size:16px;line-height:1.6;font-style:italic;">${escapeHtml(text)}${cite}</div>`;
+    }
+    case "inviteFriend": {
+      const url = publicUrl.safeHttpUrl(data.url || block.options.inviteUrl);
+      const body = textToHtml(block.options.text || t("INVITE_FRIEND_BODY"), env);
+      const cta = ctaButton(block.options.ctaLabel || t("INVITE_FRIEND_CTA"), url, env, "left");
+      if (!url) return `${titleHtml(title, env)}${emptyHtml(t("INVITE_EMPTY"), env)}`;
+      return `${titleHtml(title, env)}${body}${cta}`;
+    }
+    case "footerSocial": {
+      const links = socialLinks(block.options, t);
+      const body = textToHtml(block.options.text, env);
+      const list = links.length
+        ? `<p style="margin:10px 0 0;font-size:14px;">${links.map((link) => wrapLink(escapeHtml(link.label), link.href, env.accent || themeOf(env).accent)).join(" · ")}</p>`
+        : "";
+      return `${titleHtml(title, env)}${body}${list}`;
+    }
     default:
+
       return "";
   }
 }
@@ -844,7 +1134,7 @@ function textToHtml(value, ctx = {}) {
     .join("");
 }
 
-async function renderReport(input, { campaignName, logoSrc = "", personData = null, perUser = false, branding = {}, htmlBody = "", date, assetBase = "", publicBase = "", settings = {}, locale, lastSentAt = null } = {}) {
+async function renderReport(input, { campaignName, logoSrc = "", personData = null, perUser = false, branding = {}, htmlBody = "", date, assetBase = "", publicBase = "", settings = {}, locale, lastSentAt = null, isAdmin = false } = {}) {
   const report = normalizeReport(input);
   const theme = newsletterTheme.normalizeBranding({
     ...branding,
@@ -854,8 +1144,8 @@ async function renderReport(input, { campaignName, logoSrc = "", personData = nu
   const { t, locale: resolvedLocale } = newsletterI18n.translator(locale);
   const resolvedBase = publicUrl.resolvePublicBase({ assetBase, publicBase, settings });
   const accent = theme.accent;
-  const context = { personData, lastSentAt, publicBase: resolvedBase, perUser, now: date || new Date() };
-  const blocks = report.blocks.filter((block) => block.enabled && (perUser || !PER_USER_BLOCKS.has(block.type)));
+  const context = { personData, lastSentAt, publicBase: resolvedBase, perUser, now: date || new Date(), isAdmin: Boolean(isAdmin) };
+  const blocks = report.blocks.filter((block) => block.enabled && (perUser || !PER_USER_BLOCKS.has(block.type)) && (!ADMIN_ONLY_BLOCKS.has(block.type) || isAdmin));
   const renderCtx = { accent, theme, t, locale: resolvedLocale, publicBase: resolvedBase };
   const rendered = await Promise.all(
     blocks.map(async (block) => {
@@ -894,6 +1184,7 @@ async function listReportLibraries() {
 module.exports = {
   REPORT_BLOCK_TYPES,
   PER_USER_BLOCKS,
+  ADMIN_ONLY_BLOCKS,
   DEFAULT_REPORT,
   BLOCK_DEFAULT_TITLES,
   BLOCK_DEFAULT_TITLE_KEYS,

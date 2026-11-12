@@ -862,6 +862,7 @@ router.post("/report/preview", async (req, res) => {
       logoSrc: getLogoDataUri(),
       personData,
       perUser: type === "per-user",
+      isAdmin: true,
       ...templateRenderOptions(campaign, {
         branding: req.body?.branding,
         htmlBody: req.body?.htmlBody,
