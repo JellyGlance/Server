@@ -1,8 +1,9 @@
-import { Component, useEffect, useState } from "react";
+import { Component, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Blurhash } from "react-blurhash";
 import axios from "../../../lib/axios_instance";
 import baseUrl from "../../../lib/baseurl";
+import { balancedColumns } from "../../../lib/balanced-columns";
 import { lookAssets } from "../../../lib/blobbo-looks";
 
 import CalendarEventLineIcon from "remixicon-react/CalendarEventLineIcon";
@@ -191,9 +192,38 @@ function formatAiring(value) {
   return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+// Up next columns: as many equal columns as fit, balanced so the last row
+// never holds a single tile; if every grid would, one scrolling row instead.
+const UP_NEXT_MIN_TILE = 260;
+const UP_NEXT_GAP = 12;
+
+function useBalancedGrid(ref) {
+  useLayoutEffect(() => {
+    const list = ref.current;
+    if (!list || typeof ResizeObserver === "undefined") return undefined;
+    const update = () => {
+      const count = [...list.children].filter((child) => getComputedStyle(child).display !== "none").length;
+      const { columns, scroll } = balancedColumns(count, list.clientWidth, UP_NEXT_MIN_TILE, UP_NEXT_GAP);
+      list.style.setProperty("--up-next-cols", String(columns));
+      list.classList.toggle("is-scroll", scroll);
+    };
+    const resize = new ResizeObserver(update);
+    const mutation = new MutationObserver(update);
+    resize.observe(list);
+    mutation.observe(list, { childList: true });
+    update();
+    return () => {
+      resize.disconnect();
+      mutation.disconnect();
+    };
+  }, [ref]);
+}
+
 export function UpNextWidget({ data, error }) {
   const items = data?.items || [];
   const fromHistory = data?.source === "next-episodes";
+  const listRef = useRef(null);
+  useBalancedGrid(listRef);
   return (
     <>
       <WidgetTitle icon={CalendarEventLineIcon} title="Up next tonight" badge={fromHistory ? "From watch history" : null} />
@@ -210,7 +240,7 @@ export function UpNextWidget({ data, error }) {
           Showing the next episode of shows watched recently.
         </p>
       ) : null}
-      <div className="home-up-next-list">
+      <div className="home-up-next-list" ref={listRef}>
         {items.length ? (
           items.map((item) => (
             <article key={item.id}>
@@ -221,7 +251,10 @@ export function UpNextWidget({ data, error }) {
                   {item.subtitle}
                   {item.episodeTitle ? ` · ${item.episodeTitle}` : ""}
                 </small>
-                <em>{fromHistory ? (item.lastWatchedBy ? `${item.lastWatchedBy} · ${timeAgo(item.lastWatchedAt)}` : "") : formatAiring(item.at)}</em>
+                {(() => {
+                  const when = fromHistory ? (item.lastWatchedBy ? `${item.lastWatchedBy} · ${timeAgo(item.lastWatchedAt)}` : "") : formatAiring(item.at);
+                  return <em title={when}>{when}</em>;
+                })()}
               </div>
             </article>
           ))

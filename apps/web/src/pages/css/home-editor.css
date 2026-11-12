@@ -495,20 +495,37 @@
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* Up next: compact tiles (16:9 still, then title, episode and who/when) that
-   fill the widget width in even columns. */
+/* Up next: compact tiles (one fixed 16:9 still, then title, episode and
+   who/when) in equal columns. The column count comes from
+   balancedColumns() so rows stay even; one gap token spaces everything. */
 .home-up-next-list {
+  --up-next-gap: 12px;
+  --up-next-thumb-w: 112px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-  gap: 10px 16px;
+  grid-template-columns: repeat(var(--up-next-cols, 1), minmax(0, 1fr));
+  gap: var(--up-next-gap);
+}
+
+.home-up-next-list.is-scroll {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - (var(--up-next-cols) - 1) * var(--up-next-gap)) / var(--up-next-cols));
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 6px;
+}
+
+.home-up-next-list.is-scroll > article {
+  scroll-snap-align: start;
 }
 
 .home-up-next-list article {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-columns: var(--up-next-thumb-w) minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  height: 63px;
+  gap: var(--up-next-gap);
+  height: calc(var(--up-next-thumb-w) * 9 / 16);
   min-width: 0;
 }
 
@@ -550,8 +567,8 @@
 .home-up-next-thumb {
   position: relative;
   display: block;
-  width: 112px;
-  height: 63px;
+  width: var(--up-next-thumb-w);
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 8px;
   background: #0b1119;
