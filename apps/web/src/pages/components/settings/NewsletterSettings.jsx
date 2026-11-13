@@ -9,6 +9,9 @@ import SendPlaneLineIcon from "remixicon-react/SendPlaneLineIcon";
 import axios from "../../../lib/axios_instance";
 import NewsletterReportBuilder from "./NewsletterReportBuilder";
 import NewsletterTemplateManager from "./NewsletterTemplateManager";
+import NewsletterChannels from "./NewsletterChannels";
+import NewsletterAutomations from "./NewsletterAutomations";
+import NewsletterArchive from "./NewsletterArchive";
 import { useTranslation } from "react-i18next";
 import { languages as languageOptions } from "../../../lib/languages";
 import "../../css/settings/settings.css";
@@ -304,6 +307,22 @@ export default function NewsletterSettings() {
       setMessage({ type: "danger", text: error.response?.data?.error || "Unable to save newsletter settings." });
     } finally {
       setBusyAction("");
+    }
+  }
+
+  async function saveSettingsSection(patch) {
+    try {
+      const response = await axios.post(
+        "/newsletter/settings",
+        { ...settings, ...patch, smtp: { ...settings.smtp, password: "" } },
+        { headers: headers() }
+      );
+      if (response.data) {
+        setSettings((current) => ({ ...current, ...response.data }));
+      }
+      setMessage({ type: "success", text: t("FEATURES.NEWSLETTER.SMTP_SAVED") });
+    } catch (error) {
+      setMessage({ type: "danger", text: error.response?.data?.error || t("FEATURES.NEWSLETTER.SMTP_SAVE_ERROR") });
     }
   }
 
@@ -866,6 +885,15 @@ export default function NewsletterSettings() {
           </div>
         </Tab>
 
+        <Tab eventKey="channels" title={t("FEATURES.NEWSLETTER.TAB_CHANNELS")} className="newsletter-tab-pane">
+          <NewsletterChannels campaignId={selectedCampaignId} locale={previewLocale} settings={settings} onSave={saveSettingsSection} busy={busyAction} />
+        </Tab>
+        <Tab eventKey="automations" title={t("FEATURES.NEWSLETTER.TAB_AUTOMATIONS")} className="newsletter-tab-pane">
+          <NewsletterAutomations locale={previewLocale} settings={settings} onSave={saveSettingsSection} busy={busyAction} />
+        </Tab>
+        <Tab eventKey="archive" title={t("FEATURES.NEWSLETTER.TAB_ARCHIVE")} className="newsletter-tab-pane">
+          <NewsletterArchive campaignId={selectedCampaignId} locale={previewLocale} settings={settings} onSave={saveSettingsSection} busy={busyAction} />
+        </Tab>
         <Tab eventKey="preview" title={t("FEATURES.NEWSLETTER.TAB_PREVIEW")} className="newsletter-tab-pane">
           <section className="newsletter-panel newsletter-preview-panel">
             <div className="newsletter-panel-title">

@@ -6847,3 +6847,96 @@
 .webhook-out-advanced { gap: 8px; }
 .webhook-out-template, .webhook-out-preview { width: 100%; padding: 8px 10px; border: 1px solid rgba(var(--primary-light-rgb, 139, 92, 246), 0.25); border-radius: 8px; background: rgba(8, 12, 20, 0.8); color: #e6edf7; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .webhook-out-preview { margin: 4px 0 0 26px; width: calc(100% - 26px); max-height: 260px; overflow: auto; white-space: pre-wrap; }
+
+.discord-embed-preview,
+.telegram-preview {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #1e1f22;
+  border-left: 4px solid #6ee7f9;
+  color: #dce3ee;
+}
+
+.telegram-preview {
+  border-left-color: #2aabee;
+  background: #17212b;
+}
+
+.discord-embed-preview img,
+.telegram-preview img {
+  width: 84px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.discord-embed-preview p,
+.telegram-preview pre {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+  color: #b9c3d3;
+}
+
+.discord-embed-field {
+  display: grid;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.discord-embed-field span {
+  font-weight: 700;
+}
+
+.discord-embed-field em {
+  font-style: normal;
+  color: #9aa8bb;
+}
+
+.discord-embed-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.discord-embed-buttons a {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #313338;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.newsletter-automation-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--bs-border-color, #26364a);
+}
+
+.newsletter-automation-card.is-active {
+  background: rgba(110, 231, 249, 0.04);
+}
+
+.newsletter-archive-admin-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.newsletter-archive-admin-list li {
+  display: grid;
+  padding: 8px 0;
+  border-top: 1px solid var(--bs-border-color, #26364a);
+}
+
+.newsletter-archive-admin-list span {
+  color: var(--bs-secondary-color, #8fa3bd);
+  font-size: 13px;
+}
