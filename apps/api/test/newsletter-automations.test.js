@@ -25,7 +25,7 @@ describe("newsletter automations", () => {
       person: { name: "Alex" },
       items: [{ Id: "1", Name: "Gnomes", Type: "Series", ProductionYear: 2026 }],
       locale: "en-GB",
-      base: "http://192.168.0.200:3410",
+      base: "http://127.0.0.1:3410",
     });
     assert.match(welcome.subject, /welcome/i);
     assert.match(welcome.html, /Alex/);
@@ -37,7 +37,7 @@ describe("newsletter automations", () => {
       mark: 100,
       favourite: "Gnomes",
       locale: "en-GB",
-      base: "http://192.168.0.200:3410",
+      base: "http://127.0.0.1:3410",
     });
     assert.match(milestone.subject, /100/);
     assert.match(milestone.html, /Gnomes/);
@@ -47,7 +47,7 @@ describe("newsletter automations", () => {
       kind: "year",
       mark: 1,
       locale: "en-GB",
-      base: "http://192.168.0.200:3410",
+      base: "http://127.0.0.1:3410",
     });
     assert.match(year.html, /year/i);
 
@@ -57,7 +57,7 @@ describe("newsletter automations", () => {
       inactiveDays: 30,
       lastWatched: "1 Oct 2026",
       locale: "en-GB",
-      base: "http://192.168.0.200:3410",
+      base: "http://127.0.0.1:3410",
     });
     assert.match(reengage.subject, /welcome back/i);
     assert.match(reengage.html, /The Rookie/);
@@ -66,7 +66,7 @@ describe("newsletter automations", () => {
       stats: { storageLabel: "3.9 TB", newItems: 12, newUsers: 1, openRequests: 4, missingPosters: 3 },
       items: [{ Id: "1", Name: "Gnomes", Type: "Series" }],
       locale: "en-GB",
-      base: "http://192.168.0.200:3410",
+      base: "http://127.0.0.1:3410",
     });
     assert.match(admin.html, /3\.9 TB/);
     assert.match(admin.html, /Gnomes/);
@@ -99,7 +99,7 @@ describe("newsletter automations", () => {
       person: { name: "Alex" },
       items: [{ Id: "1", Name: "A Very Long Title That Should Wrap Without Clipping", Type: "Movie" }],
       locale: "en-GB",
-      base: "http://192.168.0.200:3410",
+      base: "http://127.0.0.1:3410",
       generatedAt,
     });
     const kickers = welcome.html.match(/text-transform:uppercase;">Welcome<\/div>/g) || [];

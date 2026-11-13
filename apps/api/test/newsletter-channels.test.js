@@ -47,16 +47,16 @@ describe("newsletter digest channels", () => {
       subject: "Week to 12 Nov 2026",
       summary: "26 plays this week",
       accent: "#6ee7f9",
-      posterUrl: "http://192.168.0.200:3410/items/images/abc?tag=Primary",
+      posterUrl: "http://127.0.0.1:3410/items/images/abc?tag=Primary",
       items: [{ name: "Gnomes", meta: "7 plays", library: "TV Shows" }],
       links: [
-        { label: "Open JellyGlance", url: "http://192.168.0.200:3410" },
-        { label: "Requests", url: "http://192.168.0.200:3410/requests" },
+        { label: "Open JellyGlance", url: "http://127.0.0.1:3410" },
+        { label: "Requests", url: "http://127.0.0.1:3410/requests" },
         { label: "Bad", url: "javascript:alert(1)" },
       ],
     });
     assert.equal(payload.embeds[0].title, "Weekly digest");
-    assert.equal(payload.embeds[0].thumbnail.url, "http://192.168.0.200:3410/items/images/abc?tag=Primary");
+    assert.equal(payload.embeds[0].thumbnail.url, "http://127.0.0.1:3410/items/images/abc?tag=Primary");
     assert.equal(payload.embeds[0].fields[0].name, "Gnomes");
     assert.equal(payload.components[0].components.length, 2);
     assert.equal(payload.components[0].components[0].style, 5);
@@ -68,14 +68,14 @@ describe("newsletter digest channels", () => {
     const payload = channels.buildTelegramDigest({
       campaignName: "Weekly digest",
       summary: "26 plays this week",
-      posterUrl: "http://192.168.0.200:3410/items/images/abc",
+      posterUrl: "http://127.0.0.1:3410/items/images/abc",
       items: [{ name: "Gnomes", meta: "7 plays" }],
-      links: [{ label: "Open", url: "http://192.168.0.200:3410" }],
+      links: [{ label: "Open", url: "http://127.0.0.1:3410" }],
       chatId: "123",
     });
     assert.equal(payload.method, "sendPhoto");
     assert.match(payload.caption, /Weekly digest/);
-    assert.equal(payload.reply_markup.inline_keyboard[0][0].url, "http://192.168.0.200:3410");
+    assert.equal(payload.reply_markup.inline_keyboard[0][0].url, "http://127.0.0.1:3410");
   });
 
   it("does not post to Discord or Telegram when notifications are disabled", async () => {

@@ -10,15 +10,15 @@ describe("newsletter public URL helpers", () => {
     try {
       assert.equal(publicUrl.configuredPublicBase({ EXTERNAL_URL: "https://glance.example" }), "https://glance.example");
       process.env.JS_PUBLIC_URL = "https://mail.example/";
-      assert.equal(publicUrl.resolvePublicBase({ assetBase: "http://192.168.0.200:3410", settings: { EXTERNAL_URL: "https://glance.example" } }), "https://mail.example");
+      assert.equal(publicUrl.resolvePublicBase({ assetBase: "http://127.0.0.1:3410", settings: { EXTERNAL_URL: "https://glance.example" } }), "https://mail.example");
     } finally {
       if (previous == null) delete process.env.JS_PUBLIC_URL;
       else process.env.JS_PUBLIC_URL = previous;
     }
     delete process.env.JS_PUBLIC_URL;
     assert.equal(
-      publicUrl.resolvePublicBase({ assetBase: "http://192.168.0.200:3410", settings: {} }),
-      "http://192.168.0.200:3410"
+      publicUrl.resolvePublicBase({ assetBase: "http://127.0.0.1:3410", settings: {} }),
+      "http://127.0.0.1:3410"
     );
     assert.equal(publicUrl.resolvePublicBase({}), "");
   });
