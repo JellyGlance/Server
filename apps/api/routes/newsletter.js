@@ -1218,14 +1218,27 @@ router.post("/archive/preview", async (req, res) => {
     let preview = null;
     if (campaign) {
       const report = campaign.sections?.report;
-      const built = report
+      let built = report
         ? await reportBuilder.renderReport(report, {
             campaignName: campaign.name,
             isAdmin: true,
             assetBase: publicAssetBase(req),
             locale: req.body?.locale,
-          })
+          }).catch(() => null)
         : null;
+      if (!built?.html) {
+        const data = await buildNewsletterData();
+        built = {
+          subject: `${campaign.name} - ${formatDate(new Date())}`,
+          html: buildNewsletterHtml(data, {
+            campaignName: campaign.name,
+            sections: campaign.sections,
+            assetBase: publicAssetBase(req),
+            locale: req.body?.locale,
+          }),
+          text: buildNewsletterText(data),
+        };
+      }
       preview = newsletterArchive.virtualEntry({
         subject: built?.subject || `${campaign.name} - ${formatDate(new Date())}`,
         html: built?.html || "",

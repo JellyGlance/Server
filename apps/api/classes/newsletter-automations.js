@@ -260,7 +260,20 @@ function formatBytes(bytes = 0) {
 }
 
 async function loadAdminStats(days = 7) {
-  const [storage] = await query(`SELECT COALESCE(SUM("Size"), 0)::bigint AS bytes FROM jf_item_info`);
+  let storageLabel = "0 B";
+  try {
+    const extraBlocks = require("./newsletter-extra-blocks");
+    const storage = await extraBlocks.listServerStats();
+    storageLabel = storage.totalLabel || formatBytes(storage.totalBytes || 0);
+  } catch {
+    const [storage] = await query(
+      `SELECT COALESCE(SUM(info."Size"), 0)::bigint AS bytes
+         FROM jf_library_items i
+         LEFT JOIN jf_item_info info ON info."Id" = i."Id"
+        WHERE i.archived IS NOT TRUE`
+    );
+    storageLabel = formatBytes(storage?.bytes || 0);
+  }
   const [added] = await query(
     `SELECT count(*)::int AS count FROM jf_library_items WHERE "DateCreated" >= now() - make_interval(days => $1)`,
     [days]
@@ -291,7 +304,7 @@ async function loadAdminStats(days = 7) {
     [days]
   );
   return {
-    storageLabel: formatBytes(storage?.bytes || 0),
+    storageLabel,
     newItems: added?.count || 0,
     newUsers: newUsers?.count || 0,
     openRequests: 0,
