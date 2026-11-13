@@ -53,6 +53,7 @@ const subtitleGapRouter = require("./routes/subtitle-gap");
 const alertsRouter = require("./routes/alerts");
 const webhookOutRouter = require("./routes/webhook-out");
 const { publicRouter: publicStatusRouter, adminRouter: publicStatusAdminRouter } = require("./routes/public-status");
+const { publicRouter: publicNewsletterArchiveRouter } = require("./routes/newsletter-public");
 const thresholdAlerts = require("./classes/threshold-alerts");
 
 // tasks
@@ -431,6 +432,7 @@ app.use("/alerts-data", apiRateLimit, authenticate, restrictApiKeyScope, require
 app.use("/webhook-out-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), webhookOutRouter);
 app.use("/status-data/admin", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), publicStatusAdminRouter);
 app.use("/status-data", apiRateLimit, publicStatusRouter);
+app.use("/newsletter-archive-data", apiRateLimit, publicNewsletterArchiveRouter);
 app.use("/stats", apiRateLimit, authenticate, restrictApiKeyScope, statsRouter, () => {
   /*  #swagger.tags = ['Stats']*/
 }); // mount the API router at /stats, with JWT middleware

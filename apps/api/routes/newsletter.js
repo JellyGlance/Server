@@ -14,6 +14,11 @@ const { encryptSecret, getIntegrations } = require("../classes/integration-store
 const { isValidEmail } = require("../utils/security");
 const { decryptPassword, upgradeLegacyPassword } = require("../classes/smtp-mailer");
 const { fetchJellyfinUserItems, normalizeJellyfinMediaItem } = require("../classes/watch-tonight");
+const newsletterChannels = require("../classes/newsletter-channels");
+const newsletterAutomations = require("../classes/newsletter-automations");
+const newsletterArchive = require("../classes/newsletter-archive");
+const publicUrl = require("../classes/newsletter-public-url");
+const extraBlocks = require("../classes/newsletter-extra-blocks");
 
 const router = express.Router();
 const HISTORY_LIMIT = 50;
@@ -46,6 +51,9 @@ function defaultNewsletterSettings() {
       rejectUnauthorized: true,
     },
     history: [],
+    channels: newsletterChannels.defaultChannels(),
+    automations: newsletterAutomations.defaultAutomations(),
+    archive: newsletterArchive.defaultArchive(),
   };
 }
 
@@ -66,6 +74,9 @@ function publicSettings(settings) {
       password: "",
       hasPassword: Boolean(newsletter.smtp.password),
     },
+    channels: newsletterChannels.publicChannels(newsletter.channels),
+    automations: newsletterAutomations.publicAutomations(newsletter.automations),
+    archive: newsletterArchive.publicArchive(newsletter.archive),
   };
 }
 
@@ -114,6 +125,18 @@ function mergeNewsletterSettings(existingSettings, incoming) {
       rejectUnauthorized: incoming.smtp?.rejectUnauthorized !== false,
     },
     history: Array.isArray(current.history) ? current.history.slice(0, HISTORY_LIMIT) : [],
+    channels: newsletterChannels.normalizeChannels(
+      incoming.channels !== undefined ? incoming.channels : current.channels,
+      current.channels
+    ),
+    automations: newsletterAutomations.normalizeAutomations(
+      incoming.automations !== undefined ? incoming.automations : current.automations,
+      current.automations
+    ),
+    archive: newsletterArchive.normalizeArchive(
+      incoming.archive !== undefined ? incoming.archive : current.archive,
+      current.archive
+    ),
   };
 }
 
@@ -569,6 +592,8 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
     };
     let sent = 0;
     let lastMessageId = null;
+    let lastHtml = "";
+    let lastText = "";
     let lastSubject = campaign.name ? `${campaign.name} - ${formatDate(new Date())}` : "";
     const errors = [];
     for (const delivery of deliveries) {
@@ -619,6 +644,8 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
           attachments,
         });
         lastMessageId = result.messageId;
+        lastHtml = built ? built.html : "";
+        lastText = built ? built.text : buildNewsletterText(data);
         sent += delivery.emails.length;
       } catch (error) {
         errors.push(error.message);
@@ -644,6 +671,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
       subject: lastSubject,
       meta: { messageId: lastMessageId, perUser: true, errors },
     });
+    await afterSuccessfulSend({ req, campaign, subject: lastSubject, html: lastHtml, text: lastText, newsletter });
     return { ok: true, messageId: lastMessageId, recipientCount: sent, subject: lastSubject, campaignId: campaign.id };
   }
 
@@ -675,6 +703,8 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
   const directory = await campaigns.listAudienceDirectory().catch(() => []);
   const directoryByEmail = new Map(directory.filter((user) => user.email).map((user) => [user.email, user]));
   let result = { messageId: null };
+  let lastHtml = "";
+  let lastText = "";
   for (const email of targets) {
     const locale = newsletterI18n.localeForRecipient(directoryByEmail.get(email) || { email });
     const built = reportEnabled(campaign)
@@ -703,6 +733,8 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
       html,
       attachments,
     });
+    lastHtml = html;
+    lastText = built ? built.text : buildNewsletterText(data);
   }
 
   await addNewsletterHistory(req, {
@@ -720,7 +752,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
     subject: data.subject,
     meta: { messageId: result.messageId },
   });
-
+  await afterSuccessfulSend({ req, campaign, subject: data.subject, html: lastHtml, text: lastText, newsletter });
   return { ok: true, messageId: result.messageId, recipientCount: targets.length, subject: data.subject, campaignId: campaign?.id || null };
 }
 
@@ -1049,6 +1081,173 @@ router.delete("/templates/:id", async (req, res) => {
   }
 });
 
+
+function digestLinks(base, t) {
+  const root = String(base || "").replace(/\/+$/, "");
+  return [
+    { label: t("CHANNEL_OPEN"), url: root },
+    { label: t("CHANNEL_REQUESTS"), url: root ? `${root}/requests` : "" },
+    { label: t("CHANNEL_STATUS"), url: root ? `${root}/status` : "" },
+  ];
+}
+
+async function buildChannelPreview({ req, campaign, locale, periodDays = 7 }) {
+  const { t, locale: resolved } = newsletterI18n.translator(locale);
+  const base = publicAssetBase(req);
+  const items = (await extraBlocks.listTrendingWeek({ limit: 6, days: periodDays }).catch(() => [])) || [];
+  const mapped = items.map((item) => ({
+    name: item.Name || item.name,
+    meta: [item.Type, item.Library || item.library].filter(Boolean).join(" · "),
+    plays: item.Plays || item.plays,
+    id: item.Id || item.id,
+  }));
+  const firstId = mapped[0]?.id;
+  const posterUrl = firstId ? publicUrl.posterSrc(base, firstId) : "";
+  const subject = campaign?.name ? `${campaign.name} - ${formatDate(new Date())}` : t("CHANNELS_TITLE");
+  const summary = mapped.length
+    ? `${mapped.length} ${mapped.length === 1 ? "title" : "titles"} from the last ${periodDays} days`
+    : "";
+  const links = digestLinks(base, t);
+  const discord = newsletterChannels.buildDiscordDigest({
+    campaignName: campaign?.name || t("CHANNELS_TITLE"),
+    subject,
+    generatedAt: new Date().toISOString(),
+    summary,
+    items: mapped,
+    links,
+    posterUrl,
+    footer: t("DISCORD_DIGEST_FOOTER"),
+  });
+  const telegram = newsletterChannels.buildTelegramDigest({
+    campaignName: campaign?.name || t("CHANNELS_TITLE"),
+    subject,
+    summary,
+    items: mapped,
+    links,
+    posterUrl,
+  });
+  return { locale: resolved, subject, items: mapped, posterUrl, discord, telegram };
+}
+
+async function afterSuccessfulSend({ req, campaign, subject, html, text, newsletter }) {
+  try {
+    await newsletterArchive.addEntry({
+      campaignId: campaign?.id,
+      subject,
+      html,
+      text,
+      audienceLabel: campaign?.name || "Digest",
+      kind: "campaign",
+    });
+  } catch (error) {
+    console.warn("Newsletter archive snapshot skipped:", error.message);
+  }
+  try {
+    const preview = await buildChannelPreview({ req, campaign, locale: "en-GB" });
+    await newsletterChannels.deliverDigestChannels({
+      channels: newsletter?.channels,
+      discordPayload: preview.discord,
+      telegramPayload: preview.telegram,
+    });
+  } catch (error) {
+    console.warn("Newsletter channel delivery skipped:", error.message);
+  }
+}
+
+async function runDueNewsletterAutomations(req = null) {
+  if (newsletterChannels.notificationsDisabled()) {
+    return { skipped: "notifications-disabled", results: [] };
+  }
+  const settings = await getSettings();
+  const newsletter = {
+    ...defaultNewsletterSettings(),
+    ...(settings[SETTINGS_KEY] || {}),
+  };
+  const directory = await campaigns.listAudienceDirectory().catch(() => []);
+  const base = publicAssetBase(req) || publicUrl.configuredPublicBase(settings);
+  return newsletterAutomations.runDueAutomations({
+    automations: newsletter.automations,
+    directory,
+    base,
+    assetBase: base,
+  });
+}
+
+router.post("/channels/preview", async (req, res) => {
+  try {
+    const campaign = req.body?.campaignId ? await campaigns.getCampaign(req.body.campaignId) : null;
+    res.json({ preview: true, ...(await buildChannelPreview({ req, campaign, locale: req.body?.locale })) });
+  } catch (error) {
+    console.error("Newsletter channel preview failed:", error);
+    res.status(503).json({ error: "Unable to preview digest channels" });
+  }
+});
+
+router.post("/automations/preview", async (req, res) => {
+  try {
+    const kind = String(req.body?.kind || req.query?.kind || "welcome");
+    const base = publicAssetBase(req);
+    const preview = await newsletterAutomations.previewAutomation(kind, {
+      locale: req.body?.locale || req.query?.locale,
+      assetBase: base,
+      base,
+    });
+    res.json({ preview: true, kind: preview.kind, subject: preview.subject, html: preview.html, text: preview.text, person: preview.person ? { name: preview.person.name || preview.person.Name } : null });
+  } catch (error) {
+    console.error("Newsletter automation preview failed:", error);
+    res.status(503).json({ error: "Unable to preview this automatic email" });
+  }
+});
+
+router.get("/archive", async (req, res) => {
+  try {
+    const entries = await newsletterArchive.listEntries({ includeHtml: false });
+    res.json({ entries: entries.map(newsletterArchive.summaryOf), publicPath: "/newsletter-archive" });
+  } catch (error) {
+    res.status(503).json({ error: "Unable to load the newsletter archive" });
+  }
+});
+
+router.post("/archive/preview", async (req, res) => {
+  try {
+    const settings = await getSettings();
+    const newsletter = { ...defaultNewsletterSettings(), ...(settings[SETTINGS_KEY] || {}) };
+    const archive = newsletterArchive.publicArchive(newsletter.archive);
+    const entries = await newsletterArchive.listEntries({ includeHtml: false });
+    const campaign = req.body?.campaignId ? await campaigns.getCampaign(req.body.campaignId) : (await campaigns.listCampaigns({ includePersonal: false }))[0];
+    let preview = null;
+    if (campaign) {
+      const report = campaign.sections?.report;
+      const built = report
+        ? await reportBuilder.renderReport(report, {
+            campaignName: campaign.name,
+            isAdmin: true,
+            assetBase: publicAssetBase(req),
+            locale: req.body?.locale,
+          })
+        : null;
+      preview = newsletterArchive.virtualEntry({
+        subject: built?.subject || `${campaign.name} - ${formatDate(new Date())}`,
+        html: built?.html || "",
+        text: built?.text || "",
+        audienceLabel: campaign.name,
+        kind: "preview",
+      });
+    }
+    const payload = newsletterArchive.buildArchivePayload({
+      enabled: archive.enabled,
+      entries,
+      preview,
+      locale: req.body?.locale,
+    });
+    res.json({ ...payload, previewHtml: preview?.html || "", previewSubject: preview?.subject || "" });
+  } catch (error) {
+    console.error("Newsletter archive preview failed:", error);
+    res.status(503).json({ error: "Unable to preview the newsletter archive" });
+  }
+});
+
 module.exports = router;
 module.exports.sendDueCampaigns = sendDueCampaigns;
 module.exports.sendNewsletter = sendNewsletter;
+module.exports.runDueNewsletterAutomations = runDueNewsletterAutomations;

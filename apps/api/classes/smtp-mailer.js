@@ -23,6 +23,9 @@ function defaultNewsletterSettings() {
       rejectUnauthorized: true,
     },
     history: [],
+    channels: { discord: { enabled: false, webhookUrl: "" }, telegram: { enabled: false, botToken: "", chatId: "" } },
+    automations: { welcome: { enabled: false }, milestone: { enabled: false }, adminDigest: { enabled: false }, reengagement: { enabled: false } },
+    archive: { enabled: false },
   };
 }
 

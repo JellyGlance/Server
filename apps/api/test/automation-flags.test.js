@@ -23,3 +23,14 @@ test("automatic Jellyfin/Arr job runs and imports stop only when JG_DISABLE_SERV
     assert.match(read(file), /process\.env\.NODE_ENV !== "test" && process\.env\.JG_DISABLE_SERVER_AUTOMATION !== "1"/, file);
   }
 });
+
+test("digest channel posts and automatic newsletter emails are gated by JG_DISABLE_NOTIFICATIONS", () => {
+  const channels = read("classes/newsletter-channels.js");
+  const automations = read("classes/newsletter-automations.js");
+  const body = channels + "\n" + automations;
+  assert.match(body, /process\.env\.JG_DISABLE_NOTIFICATIONS === "1"/);
+  assert.match(channels, /async function postDiscordWebhook/);
+  assert.match(channels, /async function postTelegramMessage/);
+  assert.match(channels, /if \(notificationsDisabled\(\)\) return \{ skipped: "notifications-disabled" \}/);
+  assert.match(automations, /if \(notificationsDisabled\(\)\) return \{ skipped: "notifications-disabled"/);
+});
