@@ -1,4 +1,9 @@
 const { randomUUID } = require("crypto");
+const { getSettings } = require("./admin-history");
+const { normalizeAccessRoles } = require("./role-permissions");
+const schedule = require("./newsletter-schedule");
+const audience = require("./newsletter-audience");
+const theme = require("./newsletter-theme");
 const db = require("../db");
 const { normalizeReport } = require("./newsletter-report-builder");
 
@@ -89,11 +94,13 @@ function mapCampaign(row) {
     lastSentAt: row.last_sent_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    template: row.template_name
+    template: row.template_name || row.html_body || row.template_branding
       ? {
           id: row.template_id,
           name: row.template_name,
           blocks: typeof row.template_blocks === "string" ? JSON.parse(row.template_blocks) : row.template_blocks || {},
+          htmlBody: row.html_body || "",
+          branding: typeof row.template_branding === "string" ? JSON.parse(row.template_branding) : row.template_branding || {},
         }
       : undefined,
   };
@@ -151,7 +158,7 @@ async function getCampaign(id) {
   if (!(await isCampaignSchemaReady())) return null;
   const { rows } = await db.query(
     `
-    SELECT c.*, t.name AS template_name, t.blocks AS template_blocks, t.html_body
+    SELECT c.*, t.name AS template_name, t.blocks AS template_blocks, t.html_body, t.branding AS template_branding
     FROM newsletter_campaigns c
     LEFT JOIN newsletter_templates t ON t.id = c.template_id
     WHERE c.id = $1
@@ -180,8 +187,8 @@ async function createCampaign(input = {}) {
       type,
       input.ownerUserId || null,
       input.templateId || null,
-      input.scheduleCron || null,
-      ["manual", "weekly", "monthly"].includes(input.frequency) ? input.frequency : "manual",
+      schedule.resolveScheduleFields(input).scheduleCron,
+      schedule.resolveScheduleFields(input).frequency,
       Boolean(input.enabled),
       JSON.stringify(input.audience || { recipients: [], roles: [] }),
       JSON.stringify(sections),
@@ -199,8 +206,10 @@ async function updateCampaign(id, input = {}) {
     type: isCampaignType(input.type) ? input.type : current.type,
     ownerUserId: input.ownerUserId !== undefined ? input.ownerUserId : current.ownerUserId,
     templateId: input.templateId !== undefined ? input.templateId : current.templateId,
-    scheduleCron: input.scheduleCron !== undefined ? input.scheduleCron : current.scheduleCron,
-    frequency: ["manual", "weekly", "monthly"].includes(input.frequency) ? input.frequency : current.frequency,
+    ...(() => {
+      const resolved = schedule.resolveScheduleFields(input, current);
+      return { scheduleCron: resolved.scheduleCron, frequency: resolved.frequency };
+    })(),
     enabled: input.enabled !== undefined ? Boolean(input.enabled) : current.enabled,
     audience: input.audience !== undefined ? input.audience : current.audience,
     sections:
@@ -209,9 +218,6 @@ async function updateCampaign(id, input = {}) {
         : current.sections,
   };
 
-  if (next.frequency === "weekly" && !next.scheduleCron) next.scheduleCron = "0 9 * * 1";
-  if (next.frequency === "monthly" && !next.scheduleCron) next.scheduleCron = "0 9 1 * *";
-  if (next.frequency === "manual") next.scheduleCron = null;
 
   await db.query(
     `
@@ -254,7 +260,7 @@ async function upsertTemplate(input = {}) {
         String(input.name || "Template").trim(),
         input.htmlBody || null,
         JSON.stringify(input.blocks || { ...DEFAULT_SECTIONS }),
-        JSON.stringify(input.branding || {}),
+        JSON.stringify(theme.normalizeBranding(input.branding || {})),
       ]
     );
   } else {
@@ -268,12 +274,35 @@ async function upsertTemplate(input = {}) {
         String(input.name || "Template").trim(),
         input.htmlBody || null,
         JSON.stringify(input.blocks || { ...DEFAULT_SECTIONS }),
-        JSON.stringify(input.branding || {}),
+        JSON.stringify(theme.normalizeBranding(input.branding || {})),
       ]
     );
   }
   const { rows } = await db.query(`SELECT * FROM newsletter_templates WHERE id=$1`, [id]);
   return mapTemplate(rows[0]);
+}
+
+async function getTemplate(id) {
+  if (!(await isCampaignSchemaReady()) || !id) return null;
+  const { rows } = await db.query(`SELECT * FROM newsletter_templates WHERE id=$1`, [id]);
+  return mapTemplate(rows[0]);
+}
+
+async function deleteTemplate(id) {
+  if (!(await isCampaignSchemaReady()) || !id) return false;
+  const { rowCount } = await db.query(`DELETE FROM newsletter_templates WHERE id=$1`, [id]);
+  return rowCount > 0;
+}
+
+async function duplicateTemplate(id) {
+  const current = await getTemplate(id);
+  if (!current) return null;
+  return upsertTemplate({
+    name: current.name.match(/\(copy\)$/i) ? current.name : `${current.name} (copy)`,
+    htmlBody: current.htmlBody,
+    blocks: current.blocks,
+    branding: current.branding,
+  });
 }
 
 async function listHistory({ campaignId = null, limit = 50 } = {}) {
@@ -372,30 +401,56 @@ async function upsertSubscription({ userId, campaignId, optedIn = true, extraRec
   return getSubscriptionsForUser(userId);
 }
 
-async function resolveCampaignRecipients(campaign) {
-  const recipients = new Set();
-  const audience = campaign.audience || {};
-  (audience.recipients || []).forEach((email) => {
-    if (email) recipients.add(String(email).trim().toLowerCase());
-  });
-
-  const { rows: subs } = await db.query(
-    `
-    SELECT extra_recipients, opted_in, user_id
-    FROM newsletter_subscriptions
-    WHERE campaign_id=$1 AND opted_in=true
-    `,
-    [campaign.id]
-  );
-
-  for (const sub of subs) {
-    const extras = typeof sub.extra_recipients === "string" ? JSON.parse(sub.extra_recipients) : sub.extra_recipients || [];
-    extras.forEach((email) => {
-      if (email) recipients.add(String(email).trim().toLowerCase());
-    });
+async function listAudienceDirectory() {
+  const settings = await getSettings().catch(() => ({}));
+  let jellyfinUsers = [];
+  try {
+    const API = require("./api-loader");
+    jellyfinUsers = await API.getUsers(false).catch(() => []);
+  } catch {
+    jellyfinUsers = [];
   }
+  return audience.buildDirectoryUsers({
+    jellyfinUsers,
+    localUsers: settings.localUsers || [],
+    userRoles: settings.userRoles || {},
+    excludedUsers: settings.ExcludedUsers || [],
+  });
+}
 
-  return [...recipients].filter(Boolean);
+async function listAudienceOptions() {
+  const settings = await getSettings().catch(() => ({}));
+  const directory = await listAudienceDirectory();
+  return {
+    roles: (normalizeAccessRoles(settings) || audience.PICKABLE_ROLES).filter((role) => role !== "Disabled"),
+    users: audience.summariseDirectory(directory),
+    timeZone: schedule.DEFAULT_TIME_ZONE,
+    fonts: theme.EMAIL_SAFE_FONTS,
+  };
+}
+
+async function resolveSelfEmail(user) {
+  const directory = await listAudienceDirectory();
+  return audience.resolveSelfEmail({ user, directory });
+}
+
+async function resolveCampaignRecipients(campaign, options = {}) {
+  const directory = options.directory || (await listAudienceDirectory());
+  let subscriptions = options.subscriptions;
+  if (!subscriptions) {
+    const { rows: subs } = await db
+      .query(
+        `
+        SELECT extra_recipients, opted_in, user_id
+        FROM newsletter_subscriptions
+        WHERE campaign_id=$1
+        `,
+        [campaign.id]
+      )
+      .catch(() => ({ rows: [] }));
+    subscriptions = subs;
+  }
+  return audience.resolveAudienceRecipients({ campaign, directory, subscriptions });
 }
 
 function userEmail(user, extras = []) {
@@ -434,18 +489,13 @@ async function resolvePerUserCampaignRecipients(campaign) {
   return people;
 }
 
-function campaignDue(campaign, now = new Date()) {
-  if (!campaign.enabled || campaign.frequency === "manual") return false;
-  const last = campaign.lastSentAt ? new Date(campaign.lastSentAt).getTime() : 0;
-  const ms = now.getTime() - last;
-  if (campaign.frequency === "weekly") return ms >= 6.5 * 24 * 3600 * 1000;
-  if (campaign.frequency === "monthly") return ms >= 28 * 24 * 3600 * 1000;
-  return false;
+function campaignDue(campaign, now = new Date(), options = {}) {
+  return schedule.campaignDue(campaign, now, options);
 }
 
-async function listDueCampaigns() {
+async function listDueCampaigns(now = new Date(), options = {}) {
   const campaigns = await listCampaigns({ includePersonal: true });
-  return campaigns.filter((campaign) => campaignDue(campaign));
+  return campaigns.filter((item) => campaignDue(item, now, options));
 }
 
 module.exports = {
@@ -454,6 +504,9 @@ module.exports = {
   isCampaignSchemaReady,
   resetCampaignSchemaCache,
   listTemplates,
+  getTemplate,
+  deleteTemplate,
+  duplicateTemplate,
   listCampaigns,
   getCampaign,
   createCampaign,
@@ -468,4 +521,7 @@ module.exports = {
   resolvePerUserCampaignRecipients,
   listDueCampaigns,
   campaignDue,
+  listAudienceDirectory,
+  listAudienceOptions,
+  resolveSelfEmail,
 };

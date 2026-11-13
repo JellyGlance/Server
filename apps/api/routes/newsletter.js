@@ -6,11 +6,19 @@ const db = require("../db");
 const { axios } = require("../classes/axios");
 const { addAuditEntry } = require("../classes/admin-history");
 const campaigns = require("../classes/newsletter-campaigns");
+const newsletterTheme = require("../classes/newsletter-theme");
+const audience = require("../classes/newsletter-audience");
+const newsletterI18n = require("../classes/newsletter-i18n");
 const reportBuilder = require("../classes/newsletter-report-builder");
 const { encryptSecret, getIntegrations } = require("../classes/integration-store");
 const { isValidEmail } = require("../utils/security");
 const { decryptPassword, upgradeLegacyPassword } = require("../classes/smtp-mailer");
 const { fetchJellyfinUserItems, normalizeJellyfinMediaItem } = require("../classes/watch-tonight");
+const newsletterChannels = require("../classes/newsletter-channels");
+const newsletterAutomations = require("../classes/newsletter-automations");
+const newsletterArchive = require("../classes/newsletter-archive");
+const publicUrl = require("../classes/newsletter-public-url");
+const extraBlocks = require("../classes/newsletter-extra-blocks");
 
 const router = express.Router();
 const HISTORY_LIMIT = 50;
@@ -43,6 +51,9 @@ function defaultNewsletterSettings() {
       rejectUnauthorized: true,
     },
     history: [],
+    channels: newsletterChannels.defaultChannels(),
+    automations: newsletterAutomations.defaultAutomations(),
+    archive: newsletterArchive.defaultArchive(),
   };
 }
 
@@ -63,6 +74,9 @@ function publicSettings(settings) {
       password: "",
       hasPassword: Boolean(newsletter.smtp.password),
     },
+    channels: newsletterChannels.publicChannels(newsletter.channels),
+    automations: newsletterAutomations.publicAutomations(newsletter.automations),
+    archive: newsletterArchive.publicArchive(newsletter.archive),
   };
 }
 
@@ -111,6 +125,18 @@ function mergeNewsletterSettings(existingSettings, incoming) {
       rejectUnauthorized: incoming.smtp?.rejectUnauthorized !== false,
     },
     history: Array.isArray(current.history) ? current.history.slice(0, HISTORY_LIMIT) : [],
+    channels: newsletterChannels.normalizeChannels(
+      incoming.channels !== undefined ? incoming.channels : current.channels,
+      current.channels
+    ),
+    automations: newsletterAutomations.normalizeAutomations(
+      incoming.automations !== undefined ? incoming.automations : current.automations,
+      current.automations
+    ),
+    archive: newsletterArchive.normalizeArchive(
+      incoming.archive !== undefined ? incoming.archive : current.archive,
+      current.archive
+    ),
   };
 }
 
@@ -123,6 +149,8 @@ function validateSmtpSettings(newsletter) {
 }
 
 function createTransport(newsletter) {
+  // JG_DISABLE_NOTIFICATIONS=1 turns every outgoing email off (scheduled and manual).
+  if (process.env.JG_DISABLE_NOTIFICATIONS === "1") throw new Error("Email is turned off on this server (JG_DISABLE_NOTIFICATIONS=1)");
   return nodemailer.createTransport({
     host: newsletter.smtp.host,
     port: Number(newsletter.smtp.port || 587),
@@ -255,7 +283,7 @@ async function fetchUserSeerrRequests(userName) {
       const response = await axios.get(`${cleanUrl(app.values.url)}/api/v1/request`, {
         timeout: 12000,
         headers: { "X-Api-Key": app.values.secret },
-        params: { take: 40, skip: 0, sort: "added", skipCount: "false" },
+        params: { take: 40, skip: 0, sort: "added" },
       });
       const rows = response.data?.results || response.data || [];
       for (const row of Array.isArray(rows) ? rows : []) {
@@ -266,6 +294,9 @@ async function fetchUserSeerrRequests(userName) {
           Name: media.title || media.name || row.title || "Request",
           Type: media.mediaType || row.type || "Request",
           status: row.status,
+          Id: row.id || media.jellyfinId || media.tmdbId || "",
+          requestId: row.id,
+          mediaId: media.jellyfinId || media.mediaId || "",
         });
       }
     } catch {
@@ -298,14 +329,21 @@ async function buildUserNewsletterData(person) {
     subject: `Your JellyGlance digest - ${formatDate(new Date())}`,
     perUser: true,
     personName: person.name,
+    userId: person.userId || "",
     continueWatching: continueItems.map(normalizeJellyfinMediaItem).map((item) => ({
       Name: item.seriesName || item.name,
       Type: item.type,
+      Id: item.imageId || item.seriesId || item.id,
+      ItemId: item.id,
+      PrimaryImageHash: item.primaryImageHash || "",
     })),
     myRequests: requests,
     recentlyAdded: recentItems.map(normalizeJellyfinMediaItem).map((item) => ({
       Name: item.seriesName || item.name,
       Type: item.type,
+      Id: item.imageId || item.seriesId || item.id,
+      ItemId: item.id,
+      PrimaryImageHash: item.primaryImageHash || "",
     })),
     topWatched: [],
     activeUsers: [],
@@ -318,12 +356,34 @@ function listHtml(items, rowBuilder, emptyText) {
   return `<div>${items.map(rowBuilder).join("")}</div>`;
 }
 
+function publicAssetBase(req) {
+  const host = req?.get?.("x-forwarded-host") || req?.get?.("host") || req?.headers?.host;
+  if (!host) return "";
+  const proto = req?.get?.("x-forwarded-proto") || req?.protocol || "http";
+  return `${proto}://${host}`;
+}
+
+function templateRenderOptions(campaign, extras = {}) {
+  const template = extras.template || campaign?.template || {};
+  return {
+    branding: extras.branding || template.branding || {},
+    htmlBody: extras.htmlBody != null ? extras.htmlBody : template.htmlBody || "",
+    lastSentAt: extras.lastSentAt != null ? extras.lastSentAt : campaign?.lastSentAt || campaign?.last_sent_at || null,
+    settings: extras.settings,
+    publicBase: extras.publicBase,
+    ...extras,
+  };
+}
+
 function buildNewsletterHtml(data, options = {}) {
   const perUser = Boolean(data.perUser || options.perUser);
   const sections = perUser
     ? { continueWatching: true, myRequests: true, recentlyAdded: true, ...(options.sections || {}) }
     : { recentlyAdded: true, topWatched: true, activeUsers: true, repairSummary: true, ...(options.sections || {}) };
-  const logoSrc = options.logoSrc || getLogoDataUri();
+  const branding = newsletterTheme.normalizeBranding(options.branding || {});
+  const logoSrc = branding.logoUrl || options.logoSrc || getLogoDataUri();
+  const { t, locale } = newsletterI18n.translator(options.locale);
+  data.locale = locale;
   const repairSummary = data.repairSummary || {};
   const totalRepairIssues =
     Number(repairSummary.missingPosters || 0) +
@@ -333,115 +393,90 @@ function buildNewsletterHtml(data, options = {}) {
   const topWatched = data.topWatched || [];
   const totalPlays = topWatched.reduce((total, item) => total + Number(item.Plays || 0), 0);
   const totalWatchSeconds = topWatched.reduce((total, item) => total + Number(item.WatchSeconds || 0), 0);
-  const metricBox = (label, value, detail, color = "#6ee7f9") => `
+  const metricBox = (label, value, detail, color = branding.accent) => `
     <td style="width:25%;padding:6px;">
-      <div style="background:#121a24;border:1px solid #27364a;border-radius:14px;padding:14px;min-height:86px;">
-        <div style="color:#8fa3bd;font-size:11px;font-weight:800;text-transform:uppercase;">${label}</div>
+      <div style="background:${branding.card};border:1px solid ${branding.border};border-radius:14px;padding:14px;min-height:86px;">
+        <div style="color:${branding.muted};font-size:11px;font-weight:800;text-transform:uppercase;">${label}</div>
         <div style="color:${color};font-size:26px;font-weight:900;line-height:1.1;margin:6px 0 3px;">${value}</div>
-        <div style="color:#9fb0c7;font-size:12px;">${detail}</div>
+        <div style="color:${branding.muted};font-size:12px;">${detail}</div>
       </div>
     </td>
   `;
-  const sectionTitle = (title) => `<h2 style="color:#e8eef8;font-size:16px;margin:24px 0 10px;">${title}</h2>`;
+  const sectionTitle = (title) => `<h2 style="color:${branding.heading};font-size:16px;margin:24px 0 10px;font-family:${branding.font};">${title}</h2>`;
   const recentlyAddedHtml = sections.recentlyAdded
-    ? `${sectionTitle("Recently Added")}${listHtml(
+    ? `${sectionTitle(t("RECENTLY_ADDED"))}${listHtml(
         data.recentlyAdded || [],
         (item) =>
           `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${escapeHtml([item.Type, item.ProductionYear, item.status].filter(Boolean).join(" · "))}</span></div>`,
-        "No new media this period."
+        t("NO_NEW_MEDIA")
       )}`
     : "";
   const continueWatchingHtml =
     perUser && sections.continueWatching
-      ? `${sectionTitle("Continue Watching")}${listHtml(
+      ? `${sectionTitle(t("CONTINUE_WATCHING"))}${listHtml(
           data.continueWatching || [],
           (item) =>
             `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${escapeHtml(item.Type || "")}</span></div>`,
-          "Nothing in progress."
+          t("NOTHING_IN_PROGRESS")
         )}`
       : "";
   const myRequestsHtml =
     perUser && sections.myRequests
-      ? `${sectionTitle("My Requests")}${listHtml(
+      ? `${sectionTitle(t("MY_REQUESTS"))}${listHtml(
           data.myRequests || [],
           (item) =>
             `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${escapeHtml([item.Type, item.status].filter(Boolean).join(" · "))}</span></div>`,
-          "No requests for this account."
+          t("NO_REQUESTS")
         )}`
       : "";
   const topWatchedHtml =
     !perUser && sections.topWatched
-      ? `${sectionTitle("Most Watched")}${listHtml(
+      ? `${sectionTitle(t("TOP_WATCHED"))}${listHtml(
           topWatched,
           (item) =>
             `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${item.Plays} plays · ${formatWatchTime(item.WatchSeconds)}</span></div>`,
-          "No watch activity yet."
+          t("NO_WATCH_ACTIVITY")
         )}`
       : "";
   const activeUsersHtml =
     !perUser && sections.activeUsers
-      ? `${sectionTitle("Active Viewers")}${listHtml(
+      ? `${sectionTitle(t("ACTIVE_VIEWERS"))}${listHtml(
           data.activeUsers || [],
           (item) =>
             `<div style="padding:8px 0;border-bottom:1px solid #243246;color:#d7e2f2;font-size:14px;"><strong>${escapeHtml(item.Name)}</strong> <span style="color:#8fa3bd;">${item.Plays} plays · ${formatWatchTime(item.WatchSeconds)}</span></div>`,
-          "No active viewers this period."
+          t("NO_ACTIVE_VIEWERS")
         )}`
       : "";
   const repairHtml =
     !perUser && sections.repairSummary
-      ? `${sectionTitle("Repair Snapshot")}<p style="color:#9fb0c7;font-size:14px;margin:0;">Missing posters ${repairSummary.missingPosters || 0} · logos ${repairSummary.missingLogos || 0} · runtime ${repairSummary.missingRuntime || 0} · unmatched imports ${repairSummary.unmatchedImports || 0}</p>`
+      ? `${sectionTitle(t("REPAIR"))}<p style="color:#9fb0c7;font-size:14px;margin:0;">${t("MISSING_LINE", { posters: repairSummary.missingPosters || 0, logos: repairSummary.missingLogos || 0, runtime: repairSummary.missingRuntime || 0, unmatched: repairSummary.unmatchedImports || 0 })}</p>`
       : "";
   const customHtml = sections.customHtml ? `<div style="margin-top:20px;">${sections.customHtml}</div>` : "";
   const metricRow = perUser
-    ? `${metricBox("Continue", String((data.continueWatching || []).length), "In progress")}
-       ${metricBox("Requests", String((data.myRequests || []).length), "Your Seerr queue", "#a78bfa")}
-       ${metricBox("New", String((data.recentlyAdded || []).length), "Recently added", "#34d399")}
-       ${metricBox("For", escapeHtml(data.personName || "You"), "Personal digest", "#fbbf24")}`
-    : `${metricBox("Plays", totalPlays.toLocaleString(), "Top titles this week")}
-       ${metricBox("Watch", formatWatchTime(totalWatchSeconds), "Across top titles", "#a78bfa")}
-       ${metricBox("New", String((data.recentlyAdded || []).length), "Recently added items", "#34d399")}
-       ${metricBox("Repair", String(totalRepairIssues), "Open metadata issues", "#fbbf24")}`;
+    ? `${metricBox(t("CONTINUE"), String((data.continueWatching || []).length), t("IN_PROGRESS"))}
+       ${metricBox(t("REQUESTS"), String((data.myRequests || []).length), t("SEERR_QUEUE"), "#a78bfa")}
+       ${metricBox(t("NEW"), String((data.recentlyAdded || []).length), t("RECENTLY_ADDED_SHORT"), "#34d399")}
+       ${metricBox(t("FOR"), escapeHtml(data.personName || t("YOU")), t("PERSONAL_DIGEST"), "#fbbf24")}`
+    : `${metricBox(t("PLAYS"), totalPlays.toLocaleString(), t("TOP_TITLES"))}
+       ${metricBox(t("WATCH"), formatWatchTime(totalWatchSeconds), t("ACROSS_TITLES"), "#a78bfa")}
+       ${metricBox(t("NEW"), String((data.recentlyAdded || []).length), t("RECENTLY_ADDED_ITEMS"), "#34d399")}
+       ${metricBox(t("REPAIR_METRIC"), String(totalRepairIssues), t("OPEN_ISSUES"), "#fbbf24")}`;
   const bodyHtml = perUser
     ? `${continueWatchingHtml}${myRequestsHtml}${recentlyAddedHtml}${customHtml}`
     : `${recentlyAddedHtml}${topWatchedHtml}${activeUsersHtml}${repairHtml}${customHtml}`;
 
-  return `
-    <!doctype html>
-    <html>
-      <body style="margin:0;background:#0b111a;font-family:Arial,sans-serif;color:#d7e2f2;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#0b111a;padding:24px 12px;">
-          <tr>
-            <td align="center">
-              <table width="640" cellpadding="0" cellspacing="0" style="background:#151d29;border:1px solid #27364a;border-radius:18px;overflow:hidden;">
-                <tr>
-                  <td style="padding:28px 28px 12px;">
-                    ${logoSrc ? `<img src="${logoSrc}" alt="JellyGlance" width="48" height="48" style="display:block;margin-bottom:14px;" />` : ""}
-                    <div style="color:#8fa3bd;font-size:12px;font-weight:800;text-transform:uppercase;">${escapeHtml(options.campaignName || "JellyGlance Newsletter")}</div>
-                    <h1 style="margin:8px 0 6px;color:#f4f8ff;font-size:28px;">${escapeHtml(data.subject)}</h1>
-                    <p style="margin:0;color:#9fb0c7;font-size:14px;">Generated ${escapeHtml(formatDate(data.generatedAt))}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 22px 8px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        ${metricRow}
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 28px 32px;">
-                    ${bodyHtml}
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-    </html>
-  `;
+  return newsletterTheme.wrapEmailDocument({
+    bodyHtml,
+    metricHtml: `<table width="100%" cellpadding="0" cellspacing="0"><tr>${metricRow}</tr></table>`,
+    subject: escapeHtml(data.subject),
+    campaignName: escapeHtml(options.campaignName || t("DEFAULT_CAMPAIGN")),
+    generatedAt: t("GENERATED", { date: escapeHtml(formatDate(data.generatedAt)) }),
+    logoSrc,
+    branding,
+    htmlBody: options.htmlBody || "",
+    date: options.date,
+    assetBase: options.assetBase || "",
+  });
 }
 
 function buildNewsletterText(data) {
@@ -557,6 +592,8 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
     };
     let sent = 0;
     let lastMessageId = null;
+    let lastHtml = "";
+    let lastText = "";
     let lastSubject = campaign.name ? `${campaign.name} - ${formatDate(new Date())}` : "";
     const errors = [];
     for (const delivery of deliveries) {
@@ -568,6 +605,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
               subject: lastSubject || `Your JellyGlance digest - ${formatDate(new Date())}`,
               perUser: true,
               personName: delivery.person.name,
+              userId: delivery.person.userId || "",
               continueWatching: [],
               myRequests: [],
               recentlyAdded: [],
@@ -582,6 +620,8 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
               logoSrc: "cid:jellyglance-logo",
               personData: data,
               perUser: true,
+              ...templateRenderOptions(campaign, { assetBase: publicAssetBase(req), settings: await getSettings().catch(() => ({})) }),
+              locale: newsletterI18n.localeForRecipient(delivery.person),
             })
           : null;
         if (built) data.subject = built.subject;
@@ -598,10 +638,14 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
                 campaignName: campaign.name,
                 sections,
                 perUser: true,
+                ...templateRenderOptions(campaign),
+                locale: newsletterI18n.localeForRecipient(delivery.person),
               }),
           attachments,
         });
         lastMessageId = result.messageId;
+        lastHtml = built ? built.html : "";
+        lastText = built ? built.text : buildNewsletterText(data);
         sent += delivery.emails.length;
       } catch (error) {
         errors.push(error.message);
@@ -627,6 +671,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
       subject: lastSubject,
       meta: { messageId: lastMessageId, perUser: true, errors },
     });
+    await afterSuccessfulSend({ req, campaign, subject: lastSubject, html: lastHtml, text: lastText, newsletter });
     return { ok: true, messageId: lastMessageId, recipientCount: sent, subject: lastSubject, campaignId: campaign.id };
   }
 
@@ -650,24 +695,47 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
     ...(campaign?.sections || {}),
     ...(campaign?.template?.blocks || {}),
   };
-  const built = reportEnabled(campaign)
-    ? await reportBuilder.renderReport(campaign.sections.report, { campaignName: campaign.name, logoSrc: "cid:jellyglance-logo" })
+  const reportOptions = templateRenderOptions(campaign, { assetBase: publicAssetBase(req), settings: await getSettings().catch(() => ({})) });
+  const builtDefault = reportEnabled(campaign)
+    ? await reportBuilder.renderReport(campaign.sections.report, { campaignName: campaign.name, logoSrc: "cid:jellyglance-logo", ...reportOptions, locale: newsletterI18n.FALLBACK_LOCALE })
     : null;
-  if (built) data.subject = built.subject;
-  const result = await transporter.sendMail({
-    from,
-    to: targets,
-    subject: data.subject,
-    text: built ? built.text : buildNewsletterText(data),
-    html: built
+  if (builtDefault) data.subject = builtDefault.subject;
+  const directory = await campaigns.listAudienceDirectory().catch(() => []);
+  const directoryByEmail = new Map(directory.filter((user) => user.email).map((user) => [user.email, user]));
+  let result = { messageId: null };
+  let lastHtml = "";
+  let lastText = "";
+  for (const email of targets) {
+    const locale = newsletterI18n.localeForRecipient(directoryByEmail.get(email) || { email });
+    const built = reportEnabled(campaign)
+      ? await reportBuilder.renderReport(campaign.sections.report, {
+          campaignName: campaign.name,
+          logoSrc: "cid:jellyglance-logo",
+          ...reportOptions,
+          locale,
+        })
+      : null;
+    if (built) data.subject = built.subject;
+    const html = built
       ? built.html
       : buildNewsletterHtml(data, {
           logoSrc: "cid:jellyglance-logo",
           campaignName: campaign?.name,
           sections,
-        }),
-    attachments,
-  });
+          ...reportOptions,
+          locale,
+        });
+    result = await transporter.sendMail({
+      from,
+      to: [email],
+      subject: data.subject,
+      text: built ? built.text : buildNewsletterText(data),
+      html,
+      attachments,
+    });
+    lastHtml = html;
+    lastText = built ? built.text : buildNewsletterText(data);
+  }
 
   await addNewsletterHistory(req, {
     ok: true,
@@ -684,7 +752,7 @@ async function sendNewsletter(req, recipients, mode, options = {}) {
     subject: data.subject,
     meta: { messageId: result.messageId },
   });
-
+  await afterSuccessfulSend({ req, campaign, subject: data.subject, html: lastHtml, text: lastText, newsletter });
   return { ok: true, messageId: result.messageId, recipientCount: targets.length, subject: data.subject, campaignId: campaign?.id || null };
 }
 
@@ -692,10 +760,27 @@ function reportEnabled(campaign) {
   return Boolean(campaign?.sections?.report?.enabled && campaign.sections.report.blocks?.length);
 }
 
+async function resolvePreviewPerson(campaign, userId) {
+  const people = await campaigns.resolvePerUserCampaignRecipients(campaign || { id: null }).catch(() => []);
+  const match = people.find((row) => String(row.userId) === String(userId || ""));
+  if (match?.userId) return match;
+  if (!userId && people[0]?.userId) return people[0];
+  const { rows } = await db
+    .query(
+      `SELECT a."UserId" AS "userId", COALESCE(NULLIF(MAX(a."UserName"), ''), MAX(u."Name"), a."UserId") AS name
+         FROM jf_playback_activity a
+         LEFT JOIN jf_users u ON u."Id" = a."UserId"
+        GROUP BY a."UserId"
+        ORDER BY SUM(a."PlaybackDuration") DESC
+        LIMIT 20`
+    )
+    .catch(() => ({ rows: [] }));
+  const fallback = rows.find((row) => String(row.userId) === String(userId || "")) || (!userId ? rows[0] : null);
+  return fallback || people[0] || { userId: userId || "", name: "Viewer" };
+}
+
 async function previewPersonData(campaign, userId) {
-  const people = await campaigns.resolvePerUserCampaignRecipients(campaign || { id: null });
-  const person = people.find((row) => String(row.userId) === String(userId || "")) || people[0] || { userId: "", name: "Viewer" };
-  return buildUserNewsletterData(person);
+  return buildUserNewsletterData(await resolvePreviewPerson(campaign, userId));
 }
 
 async function sendDueCampaigns(req = null) {
@@ -748,14 +833,14 @@ router.get("/preview", async (req, res) => {
     let data = await buildNewsletterData();
     let sections = { ...campaigns.DEFAULT_SECTIONS };
     let campaignName = "JellyGlance Newsletter";
+    let campaign = null;
     if (req.query?.campaignId) {
-      const campaign = await campaigns.getCampaign(req.query.campaignId);
+      campaign = await campaigns.getCampaign(req.query.campaignId);
       if (campaign) {
         campaignName = campaign.name;
         if (campaign.type === "per-user") {
-          const people = await campaigns.resolvePerUserCampaignRecipients(campaign);
-          const person = people.find((row) => String(row.userId) === String(req.query.userId || "")) || people[0] || { userId: "", name: "Viewer" };
-          data = person.userId ? await buildUserNewsletterData(person) : await buildUserNewsletterData({ userId: "", name: person.name });
+          const person = await resolvePreviewPerson(campaign, req.query.userId);
+          data = await buildUserNewsletterData(person.userId ? person : { userId: "", name: person.name || "Viewer" });
           sections = { ...campaigns.PER_USER_SECTIONS, ...(campaign.sections || {}), ...(campaign.template?.blocks || {}) };
         } else {
           sections = { ...sections, ...(campaign.sections || {}), ...(campaign.template?.blocks || {}) };
@@ -767,12 +852,24 @@ router.get("/preview", async (req, res) => {
             logoSrc: getLogoDataUri(),
             personData: campaign.type === "per-user" ? data : null,
             perUser: campaign.type === "per-user",
+            ...templateRenderOptions(campaign, { assetBase: publicAssetBase(req), settings: await getSettings().catch(() => ({})) }),
+            locale: req.query?.locale || req.body?.locale,
           });
           return res.json({ ...built, report: true });
         }
       }
     }
-    res.json({ ...data, html: buildNewsletterHtml(data, { sections, campaignName, perUser: data.perUser }), text: buildNewsletterText(data) });
+    const previewTemplate = req.query?.templateId ? await campaigns.getTemplate(req.query.templateId) : campaign?.template;
+    res.json({
+      ...data,
+      html: buildNewsletterHtml(data, {
+        sections,
+        campaignName,
+        perUser: data.perUser,
+        ...templateRenderOptions(campaign, { template: previewTemplate, assetBase: publicAssetBase(req), locale: req.query?.locale || req.body?.locale }),
+      }),
+      text: buildNewsletterText(data),
+    });
   } catch (error) {
     console.error("Newsletter preview failed:", error);
     res.status(503).json({ error: "Unable to generate newsletter preview" });
@@ -797,6 +894,14 @@ router.post("/report/preview", async (req, res) => {
       logoSrc: getLogoDataUri(),
       personData,
       perUser: type === "per-user",
+      isAdmin: true,
+      ...templateRenderOptions(campaign, {
+        branding: req.body?.branding,
+        htmlBody: req.body?.htmlBody,
+        assetBase: publicAssetBase(req),
+        settings: await getSettings().catch(() => ({})),
+      }),
+      locale: req.body?.locale || req.query?.locale,
     });
     res.json({ ...built, report: true });
   } catch (error) {
@@ -807,12 +912,18 @@ router.post("/report/preview", async (req, res) => {
 
 router.post("/test", async (req, res) => {
   try {
-    res.json(await sendNewsletter(req, normalizeRecipients(req.body?.recipients), "test", { campaignId: req.body?.campaignId }));
+    const email = await campaigns.resolveSelfEmail(req.user);
+    if (!email) {
+      const error = new Error(audience.NO_SELF_EMAIL_MESSAGE);
+      error.statusCode = 400;
+      throw error;
+    }
+    res.json(await sendNewsletter(req, [email], "test", { campaignId: req.body?.campaignId }));
   } catch (error) {
     await addNewsletterHistory(req, {
       ok: false,
       mode: "test",
-      recipientCount: normalizeRecipients(req.body?.recipients).length,
+      recipientCount: 0,
       error: error.message,
     }).catch(() => {});
     res.status(error.statusCode || 503).json({ error: error.message || "Unable to send test newsletter" });
@@ -837,15 +948,28 @@ router.post("/send", async (req, res) => {
   }
 });
 
-router.get("/campaigns", async (_req, res) => {
+router.get("/campaigns", async (req, res) => {
   try {
     const schemaReady = await campaigns.isCampaignSchemaReady();
+    const audienceOptions = await campaigns.listAudienceOptions().catch(() => ({
+      roles: [],
+      users: [],
+      timeZone: process.env.TZ || "UTC",
+    }));
+    const selfEmail = await campaigns.resolveSelfEmail(req.user).catch(() => "");
     res.json({
       schemaReady,
       campaigns: schemaReady ? await campaigns.listCampaigns() : [],
       templates: schemaReady ? await campaigns.listTemplates() : [],
       history: schemaReady ? await campaigns.listHistory({ limit: 30 }) : [],
       legacyFallback: !schemaReady,
+      roles: audienceOptions.roles,
+      users: audienceOptions.users,
+      timeZone: audienceOptions.timeZone,
+      fonts: audienceOptions.fonts || [],
+      selfEmail: selfEmail || "",
+      locales: newsletterI18n.listLocales(),
+      selfEmailMessage: selfEmail ? "" : audience.NO_SELF_EMAIL_MESSAGE,
     });
   } catch (error) {
     console.error("List newsletter campaigns failed:", error);
@@ -917,6 +1041,226 @@ router.post("/templates", async (req, res) => {
   }
 });
 
+router.post("/templates/preview", async (req, res) => {
+  try {
+    const data = await buildNewsletterData();
+    if (req.body?.subject) data.subject = String(req.body.subject);
+    const html = buildNewsletterHtml(data, {
+      campaignName: String(req.body?.name || "Template preview"),
+      branding: req.body?.branding || {},
+      htmlBody: req.body?.htmlBody || "",
+      assetBase: publicAssetBase(req),
+      locale: req.body?.locale || req.query?.locale,
+    });
+    res.json({ html, subject: data.subject, generatedAt: data.generatedAt, preview: true });
+  } catch (error) {
+    console.error("Newsletter template preview failed:", error);
+    res.status(503).json({ error: "Unable to preview newsletter template" });
+  }
+});
+
+router.post("/templates/:id/duplicate", async (req, res) => {
+  try {
+    const template = await campaigns.duplicateTemplate(req.params.id);
+    if (!template) return res.status(404).json({ error: "Template not found" });
+    res.json(template);
+  } catch (error) {
+    console.error("Duplicate newsletter template failed:", error);
+    res.status(503).json({ error: "Unable to duplicate newsletter template" });
+  }
+});
+
+router.delete("/templates/:id", async (req, res) => {
+  try {
+    const removed = await campaigns.deleteTemplate(req.params.id);
+    if (!removed) return res.status(404).json({ error: "Template not found" });
+    res.json({ ok: true, id: req.params.id });
+  } catch (error) {
+    console.error("Delete newsletter template failed:", error);
+    res.status(503).json({ error: "Unable to delete newsletter template" });
+  }
+});
+
+
+function digestLinks(base, t) {
+  const root = String(base || "").replace(/\/+$/, "");
+  return [
+    { label: t("CHANNEL_OPEN"), url: root },
+    { label: t("CHANNEL_REQUESTS"), url: root ? `${root}/requests` : "" },
+    { label: t("CHANNEL_STATUS"), url: root ? `${root}/status` : "" },
+  ];
+}
+
+async function buildChannelPreview({ req, campaign, locale, periodDays = 7 }) {
+  const { t, locale: resolved } = newsletterI18n.translator(locale);
+  const base = publicAssetBase(req);
+  const items = (await extraBlocks.listTrendingWeek({ limit: 6, days: periodDays }).catch(() => [])) || [];
+  const mapped = items.map((item) => ({
+    name: item.Name || item.name,
+    meta: [item.Type, item.Library || item.library].filter(Boolean).join(" · "),
+    plays: item.Plays || item.plays,
+    id: item.Id || item.id,
+  }));
+  const firstId = mapped[0]?.id;
+  const posterUrl = firstId ? publicUrl.posterSrc(base, firstId) : "";
+  const subject = campaign?.name ? `${campaign.name} - ${formatDate(new Date())}` : t("CHANNELS_TITLE");
+  const summary = mapped.length
+    ? `${mapped.length} ${mapped.length === 1 ? "title" : "titles"} from the last ${periodDays} days`
+    : "";
+  const links = digestLinks(base, t);
+  const discord = newsletterChannels.buildDiscordDigest({
+    campaignName: campaign?.name || t("CHANNELS_TITLE"),
+    subject,
+    generatedAt: new Date().toISOString(),
+    summary,
+    items: mapped,
+    links,
+    posterUrl,
+    footer: t("DISCORD_DIGEST_FOOTER"),
+  });
+  const telegram = newsletterChannels.buildTelegramDigest({
+    campaignName: campaign?.name || t("CHANNELS_TITLE"),
+    subject,
+    summary,
+    items: mapped,
+    links,
+    posterUrl,
+  });
+  return { locale: resolved, subject, items: mapped, posterUrl, discord, telegram };
+}
+
+async function afterSuccessfulSend({ req, campaign, subject, html, text, newsletter }) {
+  try {
+    await newsletterArchive.addEntry({
+      campaignId: campaign?.id,
+      subject,
+      html,
+      text,
+      audienceLabel: campaign?.name || "Digest",
+      kind: "campaign",
+    });
+  } catch (error) {
+    console.warn("Newsletter archive snapshot skipped:", error.message);
+  }
+  try {
+    const preview = await buildChannelPreview({ req, campaign, locale: "en-GB" });
+    await newsletterChannels.deliverDigestChannels({
+      channels: newsletter?.channels,
+      discordPayload: preview.discord,
+      telegramPayload: preview.telegram,
+    });
+  } catch (error) {
+    console.warn("Newsletter channel delivery skipped:", error.message);
+  }
+}
+
+async function runDueNewsletterAutomations(req = null) {
+  if (newsletterChannels.notificationsDisabled()) {
+    return { skipped: "notifications-disabled", results: [] };
+  }
+  const settings = await getSettings();
+  const newsletter = {
+    ...defaultNewsletterSettings(),
+    ...(settings[SETTINGS_KEY] || {}),
+  };
+  const directory = await campaigns.listAudienceDirectory().catch(() => []);
+  const base = publicAssetBase(req) || publicUrl.configuredPublicBase(settings);
+  return newsletterAutomations.runDueAutomations({
+    automations: newsletter.automations,
+    directory,
+    base,
+    assetBase: base,
+  });
+}
+
+router.post("/channels/preview", async (req, res) => {
+  try {
+    const campaign = req.body?.campaignId ? await campaigns.getCampaign(req.body.campaignId) : null;
+    res.json({ preview: true, ...(await buildChannelPreview({ req, campaign, locale: req.body?.locale })) });
+  } catch (error) {
+    console.error("Newsletter channel preview failed:", error);
+    res.status(503).json({ error: "Unable to preview digest channels" });
+  }
+});
+
+router.post("/automations/preview", async (req, res) => {
+  try {
+    const kind = String(req.body?.kind || req.query?.kind || "welcome");
+    const base = publicAssetBase(req);
+    const preview = await newsletterAutomations.previewAutomation(kind, {
+      locale: req.body?.locale || req.query?.locale,
+      assetBase: base,
+      base,
+    });
+    res.json({ preview: true, kind: preview.kind, subject: preview.subject, html: preview.html, text: preview.text, person: preview.person ? { name: preview.person.name || preview.person.Name } : null });
+  } catch (error) {
+    console.error("Newsletter automation preview failed:", error);
+    res.status(503).json({ error: "Unable to preview this automatic email" });
+  }
+});
+
+router.get("/archive", async (req, res) => {
+  try {
+    const entries = await newsletterArchive.listEntries({ includeHtml: false });
+    res.json({ entries: entries.map(newsletterArchive.summaryOf), publicPath: "/newsletter-archive" });
+  } catch (error) {
+    res.status(503).json({ error: "Unable to load the newsletter archive" });
+  }
+});
+
+router.post("/archive/preview", async (req, res) => {
+  try {
+    const settings = await getSettings();
+    const newsletter = { ...defaultNewsletterSettings(), ...(settings[SETTINGS_KEY] || {}) };
+    const archive = newsletterArchive.publicArchive(newsletter.archive);
+    const entries = await newsletterArchive.listEntries({ includeHtml: false });
+    const campaign = req.body?.campaignId ? await campaigns.getCampaign(req.body.campaignId) : (await campaigns.listCampaigns({ includePersonal: false }))[0];
+    let preview = null;
+    if (campaign) {
+      const report = campaign.sections?.report;
+      let built = report
+        ? await reportBuilder.renderReport(report, {
+            campaignName: campaign.name,
+            isAdmin: true,
+            assetBase: publicAssetBase(req),
+            locale: req.body?.locale,
+          }).catch(() => null)
+        : null;
+      if (!built?.html) {
+        const data = await buildNewsletterData();
+        built = {
+          subject: `${campaign.name} - ${formatDate(new Date())}`,
+          html: buildNewsletterHtml(data, {
+            campaignName: campaign.name,
+            sections: campaign.sections,
+            assetBase: publicAssetBase(req),
+            locale: req.body?.locale,
+          }),
+          text: buildNewsletterText(data),
+        };
+      }
+      preview = newsletterArchive.virtualEntry({
+        subject: built?.subject || `${campaign.name} - ${formatDate(new Date())}`,
+        html: built?.html || "",
+        text: built?.text || "",
+        audienceLabel: campaign.name,
+        kind: "preview",
+      });
+    }
+    const payload = newsletterArchive.buildArchivePayload({
+      enabled: archive.enabled,
+      entries,
+      preview,
+      locale: req.body?.locale,
+    });
+    res.json({ ...payload, previewHtml: preview?.html || "", previewSubject: preview?.subject || "" });
+  } catch (error) {
+    console.error("Newsletter archive preview failed:", error);
+    res.status(503).json({ error: "Unable to preview the newsletter archive" });
+  }
+});
+
 module.exports = router;
 module.exports.sendDueCampaigns = sendDueCampaigns;
 module.exports.sendNewsletter = sendNewsletter;
+module.exports.runDueNewsletterAutomations = runDueNewsletterAutomations;

@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./App.jsx";
 import PublicStatusPage from "./pages/public-status.jsx";
+import PublicNewsletterArchive from "./pages/public-newsletter-archive.jsx";
 
 import "./pages/css/variables.css";
 import "./index.css";
@@ -27,7 +28,9 @@ import { isEmby } from "./lib/media-server";
 initPwaInstall();
 
 // The public status page works without logging in, so it skips the app shell entirely.
-const isPublicStatusPath = window.location.pathname.replace(/\/+$/, "") === `${baseUrl}/status`;
+const publicPath = window.location.pathname.replace(/\/+$/, "");
+const isPublicStatusPath = publicPath === `${baseUrl}/status`;
+const isNewsletterArchivePath = publicPath === `${baseUrl}/newsletter-archive` || publicPath.startsWith(`${baseUrl}/newsletter-archive/`);
 
 const setupFlowNeedsDefaultTheme = !localStorage.getItem("token") || localStorage.getItem(FIRST_RUN_EXTRAS_KEY) === "true";
 applyTheme(setupFlowNeedsDefaultTheme ? DEFAULT_THEME : undefined);
@@ -80,6 +83,8 @@ i18n
         <Suspense fallback={<Loading />}>
           {isPublicStatusPath ? (
             <PublicStatusPage />
+          ) : isNewsletterArchivePath ? (
+            <PublicNewsletterArchive />
           ) : (
             <BrowserRouter basename={baseUrl}>
               <App />

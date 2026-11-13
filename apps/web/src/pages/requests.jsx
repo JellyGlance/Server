@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ChatCheckFillIcon from "remixicon-react/ChatCheckFillIcon";
 import CheckboxCircleLineIcon from "remixicon-react/CheckboxCircleLineIcon";
 import CloseCircleLineIcon from "remixicon-react/CloseCircleLineIcon";
@@ -20,13 +20,32 @@ import FilterOffLineIcon from "remixicon-react/FilterOffLineIcon";
 import InboxLineIcon from "remixicon-react/InboxLineIcon";
 import BugLineIcon from "remixicon-react/BugLineIcon";
 import StackLineIcon from "remixicon-react/StackLineIcon";
+import CompassDiscoverLineIcon from "remixicon-react/CompassDiscoverLineIcon";
+import ForbidLineIcon from "remixicon-react/ForbidLineIcon";
 import { Modal } from "react-bootstrap";
 import axios from "../lib/axios_instance";
 import { cachedGet, clearApiCache } from "../lib/api-cache";
 import "./css/integrations.css";
 import RequestTimeline from "./requests/RequestTimeline";
-import RequestSkeleton from "./requests/RequestSkeleton";
 import RequestRulesModal from "./requests/RequestRulesModal";
+import RequestDiscover from "./requests/RequestDiscover";
+import { BulkBar, BulkDialog } from "./requests/BulkActions";
+import { isSelectable, pruneSelection, resultSummary } from "./requests/bulk";
+import CheckboxMultipleLineIcon from "remixicon-react/CheckboxMultipleLineIcon";
+import { readQueueView, saveQueueView } from "./requests/view";
+import { discoverSectionFromSearch } from "./requests/discover-grid";
+import TrailerDialog from "./requests/TrailerDialog";
+import { trailerTarget } from "./requests/trailer";
+import PlayCircleLineIcon from "remixicon-react/PlayCircleLineIcon";
+import RequestAsk from "./requests/RequestAsk";
+import ChatSmile3LineIcon from "remixicon-react/ChatSmile3LineIcon";
+import RequestStats from "./requests/RequestStats";
+import BarChartLineIcon from "remixicon-react/BarChartLineIcon";
+import RequestCalendar from "./requests/RequestCalendar";
+import CalendarLineIcon from "remixicon-react/CalendarLineIcon";
+import { RequestCard, IssueCard, RequestPoster, RequestSkeleton, RequesterAvatar, StatusChip, DownloadProgress } from "./requests/RequestCard";
+import BlobboEmpty from "./requests/BlobboEmpty";
+import "./css/requests-polish.css";
 import ScalesLineIcon from "remixicon-react/Scales3LineIcon";
 import { useTranslation } from "react-i18next";
 import {
@@ -40,8 +59,10 @@ import {
   getRequesterName,
   hasRatingValue,
   isOwnRequest,
-  matchesPipelineFilter,
-  PIPELINE_FILTERS,
+  requestStatusChip,
+  REQUEST_FILTERS,
+  matchesRequestFilter,
+  normalizeRequestTab,
 } from "./requests/helpers";
 
 function brandIconUrl(slug, color = "FFFFFF") {
@@ -55,11 +76,6 @@ function requestMediaKind(request) {
   return "other";
 }
 
-function isAttentionStatus(request) {
-  const status = String(request?.status || "").toLowerCase();
-  return status === "failed" || status === "error";
-}
-
 function formatSyncedAgo(value) {
   if (!value) return "";
   const minutes = Math.floor((Date.now() - new Date(value).getTime()) / 60000);
@@ -69,26 +85,9 @@ function formatSyncedAgo(value) {
   return `Synced ${Math.floor(minutes / 60)} h ago`;
 }
 
-const PIPELINE_ICONS = {
-  all: StackLineIcon,
-  requested: TimeLineIcon,
-  approved: CheckboxCircleLineIcon,
-  grabbed: DownloadCloud2LineIcon,
-  available: CheckDoubleLineIcon,
-  declined: CloseCircleLineIcon,
-};
-
-function RequestFilterOptionAvatar({ option }) {
+function RequestFilterOptionAvatar({ option, size = 24 }) {
   if (!option?.avatarUrl && !option?.initials) return null;
-
-  return (
-    <span className="requests-filter-option-avatar">
-      {option.avatarUrl ? (
-        <img src={option.avatarUrl} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} />
-      ) : null}
-      <span>{option.initials}</span>
-    </span>
-  );
+  return <RequesterAvatar name={option.label} url={option.avatarUrl} size={size} />;
 }
 
 function RequestFilterDropdown({ label, value, options, onChange }) {
@@ -124,7 +123,7 @@ function RequestFilterDropdown({ label, value, options, onChange }) {
                 setIsOpen(false);
               }}
             >
-              <RequestFilterOptionAvatar option={option} />
+              <RequestFilterOptionAvatar option={option} size={32} />
               <span>{option.label}</span>
             </button>
           ))}
@@ -134,88 +133,34 @@ function RequestFilterDropdown({ label, value, options, onChange }) {
   );
 }
 
-function RequesterIdentity({ request, compact = false }) {
-  const { t } = useTranslation();
+function RequesterIdentity({ request }) {
   const name = getRequesterName(request);
-  const avatarUrl = getRequesterAvatarUrl(request);
-  const initials = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "?";
-
   return (
-    <span className={`requests-user-chip${compact ? " is-compact" : ""}`}>
-      <span className="requests-user-avatar">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} />
-        ) : (
-          <span>{initials}</span>
-        )}
-        <AccountCircleFillIcon />
-      </span>
-      <span>
-        <small>{compact ? t("FEATURES.REQUESTS.REQUESTED_BY") : t("FEATURES.REQUESTS.REQUESTER")}</small>
-        <strong>{name}</strong>
-      </span>
+    <span className="rq-identity">
+      <RequesterAvatar name={name} url={getRequesterAvatarUrl(request)} size={32} />
+      <strong>{name}</strong>
     </span>
   );
 }
 
-function RequesterByline({ request }) {
-  const { t } = useTranslation();
-  const name = getRequesterName(request);
-  const avatarUrl = getRequesterAvatarUrl(request);
-  const initials = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "?";
-
-  return (
-    <span className="requests-requester-byline">
-      <span className="requests-requester-avatar">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} />
-        ) : (
-          <span>{initials}</span>
-        )}
-      </span>
-      <span>{t("FEATURES.REQUESTS.REQUESTED_BY")} <strong>{name}</strong></span>
-    </span>
-  );
-}
-
-function RequestPoster({ request, large = false }) {
-  const urls = request.posterUrls?.length ? request.posterUrls : request.posterUrl ? [request.posterUrl] : [];
-  const [posterIndex, setPosterIndex] = useState(0);
-  const posterUrl = urls[posterIndex];
-
-  if (posterUrl) {
-    return (
-      <img
-        src={posterUrl}
-        alt=""
-        loading={large ? undefined : "lazy"}
-        decoding="async"
-        onError={() => {
-          if (posterIndex < urls.length - 1) {
-            setPosterIndex((current) => current + 1);
-          }
-        }}
-      />
-    );
-  }
-
-  return String(request.status).toLowerCase() === "error" ? <ErrorWarningLineIcon /> : <ChatCheckFillIcon />;
+// Cards turn into rows below 900px so nothing squashes.
+function useNarrowScreen(query = "(max-width: 899px)") {
+  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && Boolean(window.matchMedia?.(query).matches));
+  useEffect(() => {
+    const mql = window.matchMedia?.(query);
+    if (!mql) return undefined;
+    const onChange = (event) => setNarrow(event.matches);
+    mql.addEventListener?.("change", onChange);
+    return () => mql.removeEventListener?.("change", onChange);
+  }, []);
+  return narrow;
 }
 
 export default function Requests() {
   const { t } = useTranslation();
   const [data, setData] = useState({ sources: [], requests: [], syncedAt: null });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [showRules, setShowRules] = useState(false);
   const [quota, setQuota] = useState(null);
@@ -230,22 +175,40 @@ export default function Requests() {
   const [requestOptions, setRequestOptions] = useState({});
   const [requestOptionForms, setRequestOptionForms] = useState({});
   const [requestOptionsLoading, setRequestOptionsLoading] = useState({});
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
-  const [attentionOnly, setAttentionOnly] = useState(false);
   const searchInputRef = useRef(null);
-  const [pipelineFilter, setPipelineFilter] = useState("all");
   const [requesterFilter, setRequesterFilter] = useState("all");
   const [sortMode, setSortMode] = useState("newest");
-  const [queueView, setQueueView] = useState("cards");
+  const [queueView, setQueueViewState] = useState(() => (typeof window !== "undefined" ? readQueueView(window.localStorage) : "cards"));
+  const setQueueView = useCallback((view) => {
+    setQueueViewState(view);
+    saveQueueView(window.localStorage, view);
+  }, []);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedRequestLoading, setSelectedRequestLoading] = useState(false);
   const [editingRequestId, setEditingRequestId] = useState("");
   const [requestPreferences, setRequestPreferences] = useState({ is4k: false });
   const [userRequestFolders, setUserRequestFolders] = useState({ movieRootFolder: "", tvRootFolder: "" });
-  const [pageSection, setPageSection] = useState("queue");
+  const [pageSection, setPageSection] = useState(() =>
+    typeof window !== "undefined" ? normalizeRequestTab(window.location.search, window.location.hash) : "queue"
+  );
+  const [discoverNonce, setDiscoverNonce] = useState(0);
+  // Which Discover section is open as a full grid (?section=trending&chip=28), if any.
+  const [discoverView, setDiscoverView] = useState(() =>
+    typeof window !== "undefined" ? discoverSectionFromSearch(window.location.search) : { section: "", chip: "" }
+  );
+  const [seerrReadOnly, setSeerrReadOnly] = useState(false);
+  const [blockedIds, setBlockedIds] = useState(() => new Set());
+  const [progress, setProgress] = useState({ items: {}, simulated: false });
+  const [trailer, setTrailer] = useState(null);
+  // Bulk actions: select mode, the picked request ids, and the confirm dialog's run.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkRun, setBulkRun] = useState(null);
   const [issues, setIssues] = useState([]);
   const [issuesLoading, setIssuesLoading] = useState(false);
+  const [issuesError, setIssuesError] = useState("");
   const [issueFilter, setIssueFilter] = useState("Open");
   const [issueSearch, setIssueSearch] = useState("");
   const [selectedIssue, setSelectedIssue] = useState(null);
@@ -259,6 +222,71 @@ export default function Requests() {
   }, []);
   const currentRole = currentConfig?.settings?.auth?.role || "Viewer";
   const canManageRequests = currentRole === "Owner" || currentRole === "Admin";
+  // Set by the API when the Seerr connection is read-only (demo); admin write controls go away.
+  const readOnly = Boolean(data.readOnly || seerrReadOnly);
+  const bulkAvailable = canManageRequests && !readOnly && pageSection === "queue";
+  useEffect(() => {
+    if (!bulkAvailable && selectMode) {
+      setSelectMode(false);
+      setSelectedIds(new Set());
+    }
+  }, [bulkAvailable, selectMode]);
+  useEffect(() => {
+    setSelectedIds((current) => (current.size ? pruneSelection(current, data.requests) : current));
+  }, [data.requests]);
+  const toggleSelected = useCallback((id) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const narrow = useNarrowScreen();
+  const phone = useNarrowScreen("(max-width: 699px)");
+  const boardView = queueView === "cards" ? "cards" : "list";
+  const seerrName = (data.sources || [])[0]?.name || "Seerr";
+
+  useEffect(() => {
+    if (pageSection === "issues" && !canManageRequests) setPageSection("queue");
+  }, [pageSection, canManageRequests]);
+
+  // The URL carries the tab, and on Discover the open section: ?tab=discover&section=trending.
+  // Opening a section adds a history entry, so the browser Back button closes it too.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const section = pageSection === "discover" ? discoverView.section : "";
+    const chip = section ? discoverView.chip : "";
+    const clean =
+      url.searchParams.get("tab") === pageSection &&
+      (url.searchParams.get("section") || "") === section &&
+      (url.searchParams.get("chip") || "") === chip &&
+      !url.searchParams.has("view") &&
+      !url.hash;
+    if (clean) return;
+    const sectionChanged = (url.searchParams.get("section") || "") !== section;
+    url.searchParams.set("tab", pageSection);
+    url.searchParams.delete("view");
+    if (section) url.searchParams.set("section", section);
+    else url.searchParams.delete("section");
+    if (chip) url.searchParams.set("chip", chip);
+    else url.searchParams.delete("chip");
+    url.hash = "";
+    if (sectionChanged && section) window.history.pushState(window.history.state, "", url);
+    else window.history.replaceState(window.history.state, "", url);
+  }, [pageSection, discoverView]);
+
+  useEffect(() => {
+    const onPop = () => {
+      setPageSection(normalizeRequestTab(window.location.search, window.location.hash));
+      setDiscoverView(discoverSectionFromSearch(window.location.search));
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const openDiscoverSection = useCallback((section, chip) => setDiscoverView({ section: section || "", chip: chip != null && chip !== "" ? String(chip) : "" }), []);
+  const setDiscoverChip = useCallback((chip) => setDiscoverView((current) => (current.section && current.chip !== String(chip) ? { ...current, chip: String(chip) } : current)), []);
 
   function loadQuota() {
     axios
@@ -277,11 +305,8 @@ export default function Requests() {
     const filtered = (data.requests || []).filter((request) => {
       if (!canManageRequests && !isOwnRequest(request, currentOwnerCandidates)) return false;
       if (canManageRequests && requesterFilter !== "all" && getRequesterName(request) !== requesterFilter) return false;
-      const statusMatches = statusFilter === "All" || String(request.status).toLowerCase() === statusFilter.toLowerCase();
-      if (!statusMatches) return false;
-      if (!matchesPipelineFilter(request, pipelineFilter)) return false;
+      if (!matchesRequestFilter(request, statusFilter)) return false;
       if (mediaTypeFilter !== "all" && requestMediaKind(request) !== mediaTypeFilter) return false;
-      if (attentionOnly && !isAttentionStatus(request)) return false;
       if (!normalizedSearch) return true;
 
       return [request.title, request.requestedBy, request.source, request.mediaType, request.status, request.pipelineLabel, request.availability?.status]
@@ -301,7 +326,7 @@ export default function Requests() {
       return new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime();
     });
     return sorted;
-  }, [attentionOnly, canManageRequests, currentOwnerCandidates, data.requests, mediaSearch, mediaTypeFilter, pipelineFilter, requesterFilter, sortMode, statusFilter]);
+  }, [canManageRequests, currentOwnerCandidates, data.requests, mediaSearch, mediaTypeFilter, requesterFilter, sortMode, statusFilter]);
 
   const scopedRequests = useMemo(
     () => (data.requests || []).filter((request) => canManageRequests || isOwnRequest(request, currentOwnerCandidates)),
@@ -315,35 +340,34 @@ export default function Requests() {
     }, 0);
     return {
       pending,
-      inProgress: scopedRequests.filter((request) => ["approved", "grabbed"].includes(String(request.pipelineStatus || "").toLowerCase())).length,
-      available: scopedRequests.filter((request) => String(request.pipelineStatus || "").toLowerCase() === "available").length,
-      attention: scopedRequests.filter(isAttentionStatus).length,
+      inProgress: scopedRequests.filter((request) => matchesRequestFilter(request, "progress")).length,
+      available: scopedRequests.filter((request) => matchesRequestFilter(request, "available")).length,
+      attention: scopedRequests.filter((request) => matchesRequestFilter(request, "failed")).length,
       oldestPending: oldestPending ? getRequestAge(new Date(oldestPending).toISOString()) : null,
       movies: scopedRequests.filter((request) => requestMediaKind(request) === "movie").length,
       tv: scopedRequests.filter((request) => requestMediaKind(request) === "tv").length,
     };
   }, [scopedRequests]);
   const filtersActive =
-    statusFilter !== "All" || pipelineFilter !== "all" || requesterFilter !== "all" || mediaTypeFilter !== "all" || attentionOnly || Boolean(mediaSearch.trim());
+    statusFilter !== "all" || requesterFilter !== "all" || mediaTypeFilter !== "all" || Boolean(mediaSearch.trim());
 
   function clearFilters() {
-    setStatusFilter("All");
-    setPipelineFilter("all");
+    setStatusFilter("all");
     setRequesterFilter("all");
     setMediaTypeFilter("all");
-    setAttentionOnly(false);
     setMediaSearch("");
   }
 
   function focusTile(tile) {
     clearFilters();
-    if (tile === "pending") setStatusFilter("Pending");
-    if (tile === "progress") setPipelineFilter("grabbed");
-    if (tile === "available") setPipelineFilter("available");
-    if (tile === "attention") setAttentionOnly(true);
+    if (tile === "pending") setStatusFilter("pending");
+    if (tile === "progress") setStatusFilter("progress");
+    if (tile === "available") setStatusFilter("available");
+    if (tile === "attention") setStatusFilter("failed");
   }
 
   async function approveAllPending() {
+    if (readOnly) return;
     const targets = overview.pending.filter((request) => request.requestId && request.sourceId);
     if (!targets.length) return;
     if (!window.confirm(`Approve all ${targets.length} pending request${targets.length === 1 ? "" : "s"}?`)) return;
@@ -370,7 +394,6 @@ export default function Requests() {
     await loadRequests(true);
   }
 
-  const statuses = useMemo(() => ["All", ...new Set((data.requests || []).map((request) => request.status).filter(Boolean))], [data.requests]);
   const sortOptions = useMemo(
     () => [
       { value: "newest", label: t("FEATURES.REQUESTS.SORT_NEWEST") },
@@ -382,15 +405,13 @@ export default function Requests() {
     ],
     [t]
   );
-  const pipelineCounts = useMemo(() => {
-    const counts = Object.fromEntries(PIPELINE_FILTERS.map((filter) => [filter.id, 0]));
-    counts.all = (data.requests || []).length;
-    (data.requests || []).forEach((request) => {
-      const key = request.pipelineStatus || "requested";
-      counts[key] = (counts[key] || 0) + 1;
+  const filterCounts = useMemo(() => {
+    const counts = {};
+    REQUEST_FILTERS.forEach((filter) => {
+      counts[filter.id] = scopedRequests.filter((request) => matchesRequestFilter(request, filter.id)).length;
     });
     return counts;
-  }, [data.requests]);
+  }, [scopedRequests]);
   const requesterOptions = useMemo(
     () => {
       const requesters = new Map();
@@ -618,6 +639,7 @@ export default function Requests() {
   async function loadRequests(force = false) {
     try {
       setLoading(true);
+      setLoadError("");
       const params = force ? { force: "true" } : undefined;
       if (force) clearApiCache("/api/requests");
       const response = await cachedGet(
@@ -633,8 +655,19 @@ export default function Requests() {
       const badgeCount = Number(response.data?.stats?.badgeCount || 0);
       localStorage.setItem("jellyglance_request_badge_count", String(badgeCount));
       window.dispatchEvent(new CustomEvent("jellyglance-request-count", { detail: badgeCount }));
+    } catch (error) {
+      setLoadError(error.response?.data?.error || error.message || "Could not load requests");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadProgress() {
+    try {
+      const response = await axios.get("/api/requests/progress", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      setProgress({ items: response.data?.items || {}, simulated: Boolean(response.data?.simulated) });
+    } catch {
+      // Progress is a bonus on top of the list; a failed poll just keeps the last bars.
     }
   }
 
@@ -642,6 +675,7 @@ export default function Requests() {
     if (!canManageRequests) return [];
     try {
       setIssuesLoading(true);
+      setIssuesError("");
       const response = await axios.get("/api/requests/issues", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -652,7 +686,7 @@ export default function Requests() {
       }
       return nextIssues;
     } catch (error) {
-      setActionMessage(error.response?.data?.error || error.message || "Unable to load issues");
+      setIssuesError(error.response?.data?.error || error.message || "Unable to load issues");
       return [];
     } finally {
       setIssuesLoading(false);
@@ -672,7 +706,7 @@ export default function Requests() {
 
   async function runIssueAction(issue, action, event) {
     event?.stopPropagation();
-    if (!issue?.id || !issue?.sourceId) return;
+    if (readOnly || !issue?.id || !issue?.sourceId) return;
     if (action === "delete" && !window.confirm(t("FEATURES.REQUESTS.DELETE_ISSUE"))) return;
 
     try {
@@ -700,7 +734,7 @@ export default function Requests() {
 
   async function runRequestAction(request, action, event) {
     event?.stopPropagation();
-    if (!request?.requestId || !request?.sourceId) return;
+    if (readOnly || !request?.requestId || !request?.sourceId) return;
 
     try {
       setBusyAction(`${request.id}-${action}`);
@@ -791,7 +825,13 @@ export default function Requests() {
       await loadRequests(true);
       runMediaSearch(true);
     } catch (error) {
-      setActionMessage(error.response?.data?.error || error.message || "Media request failed");
+      if (error.response?.data?.readOnly) {
+        // The Seerr connection is read-only: remember it for this title and say so plainly.
+        setBlockedIds((current) => new Set(current).add(result.id));
+        setActionMessage(`Demo: request blocked. ${result.title} was not sent; this Seerr connection is read-only.`);
+      } else {
+        setActionMessage(error.response?.data?.error || error.message || "Media request failed");
+      }
     } finally {
       setBusyAction("");
     }
@@ -934,6 +974,16 @@ export default function Requests() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Download bars refresh every 15 seconds while the queue is open and the tab is visible.
+  useEffect(() => {
+    if (pageSection !== "queue" && pageSection !== "ask") return undefined;
+    loadProgress();
+    const intervalId = setInterval(() => {
+      if (!document.hidden) loadProgress();
+    }, 15000);
+    return () => clearInterval(intervalId);
+  }, [pageSection]);
+
   useEffect(() => {
     if (pageSection !== "issues" || !canManageRequests) return;
     loadIssues();
@@ -965,99 +1015,137 @@ export default function Requests() {
   const selectedRequestRoot = selectedRequestServer?.rootFolders?.find((folder) => folder.path === selectedRequestForm.rootFolder);
 
   return (
-    <div className="requests-page">
-      {actionMessage ? <div className="requests-action-message">{actionMessage}</div> : null}
-
-      <section className="requests-discovery">
-        <div className="requests-discovery-head">
-          <div>
-            <h2>{pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_TITLE") : t("FEATURES.REQUESTS.TITLE")}</h2>
-            <span>
-              {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : t("FEATURES.REQUESTS.INTRO")}
-            </span>
-          </div>
-          <div className="requests-discovery-tools">
+    <div className="requests-page rq">
+      <section className="requests-discovery rq-panel">
+        <div className="rq-header">
+          <h2>Requests</h2>
+          <p>
+            {pageSection === "issues" ? t("FEATURES.REQUESTS.ISSUES_INTRO") : pageSection === "discover" ? "Browse what Seerr suggests and request what\u2019s missing." : pageSection === "calendar" ? "Requested titles arriving over the next seven days." : pageSection === "stats" ? "What gets requested, how fast it arrives and who asks the most." : pageSection === "ask" ? "Ask Blobbo about your requests in plain words." : "Search the queue, or pick a title to request."}
+          </p>
+        </div>
+        <div className="rq-toolbar">
+          <div className="rq-tabs" role="tablist" aria-label={t("FEATURES.REQUESTS.SECTIONS")}>
+            <button type="button" role="tab" aria-label={t("FEATURES.REQUESTS.QUEUE")} aria-selected={pageSection === "queue"} className={pageSection === "queue" ? "is-active" : ""} onClick={() => setPageSection("queue")}>
+              <InboxLineIcon size={16} />
+              <span className="rq-tab-label">{t("FEATURES.REQUESTS.QUEUE")}</span>
+            </button>
+            <button type="button" role="tab" aria-selected={pageSection === "discover"} className={pageSection === "discover" ? "is-active" : ""} aria-label="Discover" onClick={() => { setPageSection("discover"); setDiscoverView({ section: "", chip: "" }); }}>
+              <CompassDiscoverLineIcon size={16} />
+              <span className="rq-tab-label">Discover</span>
+            </button>
+            <button type="button" role="tab" aria-selected={pageSection === "calendar"} className={pageSection === "calendar" ? "is-active" : ""} aria-label="Calendar" onClick={() => setPageSection("calendar")}>
+              <CalendarLineIcon size={16} />
+              <span className="rq-tab-label">Calendar</span>
+            </button>
+            <button type="button" role="tab" aria-selected={pageSection === "stats"} className={pageSection === "stats" ? "is-active" : ""} aria-label="Stats" onClick={() => setPageSection("stats")}>
+              <BarChartLineIcon size={16} />
+              <span className="rq-tab-label">Stats</span>
+            </button>
+            <button type="button" role="tab" aria-selected={pageSection === "ask"} className={pageSection === "ask" ? "is-active" : ""} aria-label="Ask Blobbo" onClick={() => setPageSection("ask")}>
+              <ChatSmile3LineIcon size={16} />
+              <span className="rq-tab-label">Ask</span>
+            </button>
             {canManageRequests ? (
-              <div className="requests-section-tabs" role="tablist" aria-label={t("FEATURES.REQUESTS.SECTIONS")}>
-                <button type="button" role="tab" aria-selected={pageSection === "queue"} className={pageSection === "queue" ? "is-active" : ""} onClick={() => setPageSection("queue")}>
-                  <InboxLineIcon size={16} />
-                  {t("FEATURES.REQUESTS.QUEUE")}
-                </button>
-                <button type="button" role="tab" aria-selected={pageSection === "issues"} className={pageSection === "issues" ? "is-active" : ""} onClick={() => setPageSection("issues")}>
-                  <BugLineIcon size={16} />
-                  {t("FEATURES.REQUESTS.ISSUES")}
-                  {issues.filter((issue) => issue.status === "Open").length ? <em>{issues.filter((issue) => issue.status === "Open").length}</em> : null}
-                </button>
-              </div>
+              <button type="button" role="tab" aria-label={t("FEATURES.REQUESTS.ISSUES")} aria-selected={pageSection === "issues"} className={pageSection === "issues" ? "is-active" : ""} onClick={() => setPageSection("issues")}>
+                <BugLineIcon size={16} />
+                <span className="rq-tab-label">{t("FEATURES.REQUESTS.ISSUES")}</span>
+                {issues.filter((issue) => issue.status === "Open").length ? <em>{issues.filter((issue) => issue.status === "Open").length}</em> : null}
+              </button>
             ) : null}
+          </div>
+          <div className="rq-tools">
             {quota?.enabled && quota.usage && !quota.usage.unlimited ? (
-              <span className="requests-quota-chip" title="Your request allowance">
+              <span className="rq-tool" title="Your request allowance">
                 <MovieLineIcon size={14} /> {quota.usage.movie.used}/{quota.usage.movie.limit}
                 <Tv2LineIcon size={14} /> {quota.usage.tv.used}/{quota.usage.tv.limit}
               </span>
             ) : null}
-            {canManageRequests ? (
-              <button type="button" className="requests-refresh-button" onClick={() => setShowRules(true)} title="Request quotas and auto-approve rules">
+            {canManageRequests && !readOnly ? (
+              <button type="button" className="rq-tool" onClick={() => setShowRules(true)} title="Request quotas and auto-approve rules">
                 <ScalesLineIcon size={16} />
                 <span>Rules</span>
               </button>
             ) : null}
             <button
               type="button"
-              className="requests-refresh-button"
-              onClick={() => (pageSection === "issues" ? loadIssues() : loadRequests(true))}
+              className="rq-tool"
+              onClick={() => (pageSection === "issues" ? loadIssues() : pageSection === "discover" ? setDiscoverNonce((value) => value + 1) : loadRequests(true))}
               disabled={loading || issuesLoading}
               title={formatSyncedAgo(data.syncedAt) || "Refresh"}
             >
               <RefreshLineIcon size={16} className={loading || issuesLoading ? "is-spinning" : ""} />
               <span>{pageSection === "queue" && data.syncedAt ? formatSyncedAgo(data.syncedAt) : "Refresh"}</span>
             </button>
+            {bulkAvailable ? (
+              <button
+                type="button"
+                className={`rq-tool${selectMode ? " is-active" : ""}`}
+                aria-pressed={selectMode}
+                title="Select several requests"
+                onClick={() => {
+                  setSelectMode((value) => !value);
+                  setSelectedIds(new Set());
+                }}
+              >
+                <CheckboxMultipleLineIcon size={16} />
+                <span>Select</span>
+              </button>
+            ) : null}
             {pageSection === "queue" ? (
-              <div className="requests-view-toggle" role="group" aria-label={t("FEATURES.REQUESTS.QUEUE_VIEW")}>
-                <button type="button" className={queueView === "cards" ? "is-active" : ""} aria-pressed={queueView === "cards"} onClick={() => setQueueView("cards")} title={t("FEATURES.REQUESTS.CARD_VIEW")} aria-label={t("FEATURES.REQUESTS.CARD_VIEW")}>
-                  <GridLineIcon size={18} />
+              <div className="rq-view-toggle" role="group" aria-label={t("FEATURES.REQUESTS.QUEUE_VIEW")}>
+                <button type="button" className={boardView === "cards" ? "" : "is-active"} aria-pressed={boardView === "list"} onClick={() => setQueueView("list")} title={t("FEATURES.REQUESTS.LIST_VIEW")} aria-label={t("FEATURES.REQUESTS.LIST_VIEW")}>
+                  <FileList3LineIcon size={16} />
                 </button>
-                <button type="button" className={queueView === "list" ? "is-active" : ""} aria-pressed={queueView === "list"} onClick={() => setQueueView("list")} title={t("FEATURES.REQUESTS.LIST_VIEW")} aria-label={t("FEATURES.REQUESTS.LIST_VIEW")}>
-                  <FileList3LineIcon size={18} />
+                <button type="button" className={boardView === "cards" ? "is-active" : ""} aria-pressed={boardView === "cards"} onClick={() => setQueueView("cards")} title={t("FEATURES.REQUESTS.CARD_VIEW")} aria-label={t("FEATURES.REQUESTS.CARD_VIEW")}>
+                  <GridLineIcon size={16} />
                 </button>
               </div>
             ) : null}
           </div>
         </div>
+        {readOnly ? (
+          <div className="rq-readonly-hint" role="note">
+            <ForbidLineIcon size={16} />
+            <span>Demo: {seerrName} is connected read-only. You can browse and open titles; changes are turned off.{progress.simulated ? " Download bars are simulated demo data." : ""}</span>
+          </div>
+        ) : null}
+        {actionMessage ? (
+          <div className={`rq-banner${/fail|could not|unable|error|denied|blocked/i.test(actionMessage) ? " is-error" : ""}`} role="status">{actionMessage}</div>
+        ) : null}
         {pageSection === "queue" ? (
           <>
         <div className="requests-overview" aria-label="Request summary">
-          <button type="button" className={`requests-overview-tile is-pending ${statusFilter === "Pending" ? "is-active" : ""}`} onClick={() => focusTile("pending")}>
+          <button type="button" className={`requests-overview-tile is-pending ${statusFilter === "pending" ? "is-active" : ""}`} onClick={() => focusTile("pending")}>
             <TimeLineIcon size={20} />
             <strong>{overview.pending.length}</strong>
             <span>Pending approval</span>
             {overview.oldestPending ? <small>Oldest waiting {overview.oldestPending.label}</small> : <small>Nothing waiting</small>}
           </button>
-          <button type="button" className={`requests-overview-tile is-progress ${pipelineFilter === "grabbed" ? "is-active" : ""}`} onClick={() => focusTile("progress")}>
+          <button type="button" className={`requests-overview-tile is-progress ${statusFilter === "progress" ? "is-active" : ""}`} onClick={() => focusTile("progress")}>
             <DownloadCloud2LineIcon size={20} />
             <strong>{overview.inProgress}</strong>
             <span>In progress</span>
             <small>Approved or downloading</small>
           </button>
-          <button type="button" className={`requests-overview-tile is-available ${pipelineFilter === "available" ? "is-active" : ""}`} onClick={() => focusTile("available")}>
+          <button type="button" className={`requests-overview-tile is-available ${statusFilter === "available" ? "is-active" : ""}`} onClick={() => focusTile("available")}>
             <CheckDoubleLineIcon size={20} />
             <strong>{overview.available}</strong>
             <span>Available</span>
             <small>Ready to watch</small>
           </button>
-          <button type="button" className={`requests-overview-tile is-attention ${attentionOnly ? "is-active" : ""}`} onClick={() => focusTile("attention")}>
+          <button type="button" className={`requests-overview-tile is-attention ${statusFilter === "failed" ? "is-active" : ""}`} onClick={() => focusTile("attention")}>
             <AlertLineIcon size={20} />
             <strong>{overview.attention}</strong>
             <span>Needs attention</span>
             <small>Failed or errored</small>
           </button>
-          {canManageRequests && overview.pending.length ? (
-            <button type="button" className="requests-approve-all" onClick={approveAllPending} disabled={Boolean(busyAction)}>
-              <CheckboxCircleLineIcon size={18} />
-              {busyAction === "approve-all" ? "Approving..." : `Approve all pending (${overview.pending.length})`}
-            </button>
-          ) : null}
         </div>
+        {canManageRequests && !readOnly && overview.pending.length ? (
+          <button type="button" className="requests-approve-all" onClick={approveAllPending} disabled={Boolean(busyAction)}>
+            <CheckboxCircleLineIcon size={16} />
+            {busyAction === "approve-all" ? "Approving..." : `Approve all pending (${overview.pending.length})`}
+          </button>
+        ) : null}
         <label className="requests-media-search">
           <SearchLineIcon size={18} />
           <input
@@ -1093,39 +1181,6 @@ export default function Requests() {
               );
             })}
           </div>
-          <strong>
-            {t("FEATURES.REQUESTS.SHOWN", { shown: visibleRequests.length, total: scopedRequests.length })}
-            {filtersActive ? (
-              <button type="button" className="requests-clear-filters" onClick={clearFilters}>
-                <FilterOffLineIcon size={14} />
-                Clear filters
-              </button>
-            ) : null}
-          </strong>
-        </section>
-        <nav className="requests-filter-strip" aria-label={t("FEATURES.REQUESTS.STATUS_FILTERS")}>
-          {statuses.map((status) => (
-            <button type="button" key={status} className={statusFilter === status ? "is-active" : ""} onClick={() => setStatusFilter(status)}>
-              {status === "All" ? t("FEATURES.REQUESTS.ALL") : status}
-            </button>
-          ))}
-        </nav>
-        <nav className="requests-pipeline-strip" aria-label={t("FEATURES.REQUESTS.PIPELINE_FILTERS")}>
-          {PIPELINE_FILTERS.map((filter) => (
-            <button
-              type="button"
-              key={filter.id}
-              className={pipelineFilter === filter.id ? "is-active" : ""}
-              onClick={() => setPipelineFilter(filter.id)}
-            >
-              {(() => {
-                const Icon = PIPELINE_ICONS[filter.id];
-                return Icon ? <Icon size={14} /> : null;
-              })()}
-              {t(`FEATURES.REQUESTS.PIPELINE_${filter.id}`)}
-              <em>{pipelineCounts[filter.id] || 0}</em>
-            </button>
-          ))}
           <label className="requests-pref-4k">
             <input
               type="checkbox"
@@ -1138,6 +1193,23 @@ export default function Requests() {
             />
             {t("FEATURES.REQUESTS.PREFER_4K")}
           </label>
+          <strong>
+            {t("FEATURES.REQUESTS.SHOWN", { shown: visibleRequests.length, total: scopedRequests.length })}
+            {filtersActive ? (
+              <button type="button" className="requests-clear-filters" onClick={clearFilters}>
+                <FilterOffLineIcon size={14} />
+                Clear filters
+              </button>
+            ) : null}
+          </strong>
+        </section>
+        <nav className="requests-filter-strip" aria-label={t("FEATURES.REQUESTS.STATUS_FILTERS")}>
+          {REQUEST_FILTERS.map((filter) => (
+            <button type="button" key={filter.id} className={statusFilter === filter.id ? "is-active" : ""} aria-pressed={statusFilter === filter.id} onClick={() => setStatusFilter(filter.id)}>
+              {filter.label}
+              <em>{filterCounts[filter.id] || 0}</em>
+            </button>
+          ))}
         </nav>
         {mediaSearchMessage ? <div className="requests-discovery-message">{mediaSearchMessage}</div> : null}
         {mediaResults.length ? (
@@ -1198,7 +1270,7 @@ export default function Requests() {
           <div className="requests-discovery-empty">No Seerr results found.</div>
         ) : null}
           </>
-        ) : (
+        ) : pageSection === "issues" ? (
           <>
             <label className="requests-media-search">
               <SearchLineIcon size={18} />
@@ -1218,171 +1290,122 @@ export default function Requests() {
               <strong>{visibleIssues.length} shown from {issues.length}</strong>
             </nav>
           </>
-        )}
+        ) : null}
       </section>
+
+      {pageSection === "discover" ? (
+        <section className="requests-discover-board">
+          <RequestDiscover blockedIds={blockedIds} onOpen={openMediaResultDetail} onTrailer={setTrailer} section={discoverView.section} chip={discoverView.chip} onSection={openDiscoverSection} onChip={setDiscoverChip} onReadOnly={setSeerrReadOnly} readOnly={readOnly} nonce={discoverNonce} />
+        </section>
+      ) : null}
+
+      {pageSection === "stats" ? <RequestStats /> : null}
+
+      {pageSection === "ask" ? <RequestAsk requests={data.requests || []} progress={progress} readOnly={readOnly} onOpenRequest={openRequestDetail} onOpenResult={openMediaResultDetail} /> : null}
+
+      {pageSection === "calendar" ? (
+        <RequestCalendar requests={data.requests || []} onOpen={openRequestDetail} />
+      ) : null}
 
       {pageSection === "queue" ? (
-      <section className={`requests-board is-${queueView}`}>
-        {loading && !(data.requests || []).length ? <RequestSkeleton /> : null}
-        {visibleRequests.map((request) => {
-          const age = getRequestAge(request.createdAt);
-          return (
-            <article
-              key={request.id}
-              className={String(request.status).toLowerCase() === "error" ? "is-error" : ""}
-              style={{ "--request-backdrop": request.backdropUrl ? `url("${request.backdropUrl}")` : "none" }}
-              role="button"
-              tabIndex={0}
-              onClick={() => openRequestDetail(request)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  openRequestDetail(request);
-                }
-              }}
-            >
-              <div className="requests-card-poster">
-                <RequestPoster request={request} />
-              </div>
-              <div className="requests-card-title">
-                <div>
-                  <strong>{request.title}{request.year ? ` (${request.year})` : ""}</strong>
-                  <span>{request.mediaType}</span>
-                </div>
-                <RequesterByline request={request} />
-              </div>
-              <div className="requests-card-meta">
-                <div className="requests-card-status">
-                  <b>{request.pipelineLabel || request.status}</b>
-                </div>
-                <div className={`requests-availability is-${String(request.availability?.status || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>
-                  <b>{request.availability?.status || t("FEATURES.REQUESTS.UNKNOWN")}</b>
-                </div>
-                <span className={`requests-age-badge is-${age.level}`}>{age.label}</span>
-                {request.rootFolder ? <span className="requests-root-folder" title="Root folder">{request.rootFolder}</span> : null}
-              </div>
-              <RequestTimeline request={request} />
-              {request.genres?.length ? (
-                <div className="requests-card-tags">
-                  {request.genres.slice(0, 4).map((genre) => (
-                    <span key={`${request.id}-${genre}`}>{genre}</span>
-                  ))}
-                </div>
-              ) : null}
-              {request.overview ? <p className="requests-card-overview">{request.overview}</p> : null}
-              <div className="requests-card-footer">
-                <time>{formatDate(request.createdAt)}</time>
-              </div>
-              <div className="requests-card-actions">
-                {canManageRequests && request.status === "Pending" ? (
-                  <>
-                    <button type="button" title={t("FEATURES.REQUESTS.APPROVE")} disabled={Boolean(busyAction)} onClick={(event) => runRequestAction(request, "approve", event)}>
-                      <CheckboxCircleLineIcon size={16} />
-                      <span>{t("FEATURES.REQUESTS.APPROVE")}</span>
-                    </button>
-                    <button type="button" title={t("FEATURES.REQUESTS.DECLINE")} disabled={Boolean(busyAction)} onClick={(event) => runRequestAction(request, "decline", event)}>
-                      <CloseCircleLineIcon size={16} />
-                      <span>{t("FEATURES.REQUESTS.DECLINE")}</span>
-                    </button>
-                  </>
-                ) : null}
-                {canManageRequests && request.requestId && request.status === "Failed" ? (
-                  <button type="button" title={t("FEATURES.REQUESTS.RETRY")} disabled={Boolean(busyAction)} onClick={(event) => runRequestAction(request, "retry", event)}>
-                    <RefreshLineIcon size={16} />
-                    <span>{t("FEATURES.REQUESTS.RETRY")}</span>
-                  </button>
-                ) : null}
-                {canManageRequests && request.requestId ? (
-                  <button type="button" title={t("FEATURES.REQUESTS.EDIT_ROUTING")} disabled={Boolean(busyAction)} onClick={(event) => openRequestEditor(request, event)}>
-                    <Edit2LineIcon size={16} />
-                    <span>Edit</span>
-                  </button>
-                ) : null}
-                {canManageRequests && request.openUrl ? (
-                  <button type="button" title={`Open in ${request.source}`} onClick={(event) => openSeerrRequest(request, event)}>
-                    <ExternalLinkLineIcon size={16} />
-                    <span>Open</span>
-                  </button>
-                ) : null}
-              </div>
-            </article>
-          );
-        })}
-
-        {!visibleRequests.length ? (
-          <div className="requests-empty-state">
-            <ChatCheckFillIcon size={30} />
-            <strong>No requests found</strong>
-            <span>{data.requests?.length ? t("FEATURES.REQUESTS.EMPTY_FILTER") : t("FEATURES.REQUESTS.EMPTY_SETUP")}</span>
+      <section className={`rq-board is-${boardView}`} aria-busy={loading}>
+        {loading && !(data.requests || []).length && !loadError ? <RequestSkeleton view={boardView} /> : null}
+        {loadError && !(data.requests || []).length ? (
+          <div className="rq-state is-error" role="alert">
+            <ErrorWarningLineIcon size={32} />
+            <strong>Couldn&rsquo;t load requests.</strong>
+            <span>Check the Seerr connection and try again.</span>
+            <button type="button" className="rq-btn is-primary" onClick={() => loadRequests(true)}>
+              <RefreshLineIcon size={16} />
+              Try again
+            </button>
           </div>
         ) : null}
-      </section>
-      ) : (
-      <section className="requests-board is-cards requests-issues-board">
-        {issuesLoading && !issues.length ? <RequestSkeleton /> : null}
-        {visibleIssues.map((issue) => (
-          <article
-            key={issueKey(issue)}
-            className={issue.status === "Resolved" ? "is-resolved" : ""}
-            role="button"
-            tabIndex={0}
-            onClick={() => { setSelectedIssue(issue); setIssueComment(""); }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                setSelectedIssue(issue);
-                setIssueComment("");
-              }
+        {selectMode && bulkAvailable ? (
+          <BulkBar
+            selected={visibleRequests.filter((request) => selectedIds.has(request.id))}
+            total={visibleRequests.filter(isSelectable).length}
+            onClear={() => {
+              setSelectMode(false);
+              setSelectedIds(new Set());
             }}
-          >
-            <div className="requests-card-poster">
-              <RequestPoster request={issue} />
-            </div>
-            <div className="requests-card-title">
-              <div>
-                <strong>{issue.title}</strong>
-                <span>{issue.mediaType || t("FEATURES.REQUESTS.MEDIA")}{issueEpisodeLabel(issue) ? ` · ${issueEpisodeLabel(issue)}` : ""}</span>
-              </div>
-            </div>
-            <div className="requests-card-meta">
-              <div className="requests-card-status">
-                <b>{issue.status}</b>
-              </div>
-              <div className="requests-availability">
-                <b>{issue.issueType}</b>
-              </div>
-            </div>
-            {issue.message ? <p className="requests-card-overview">{issue.message}</p> : null}
-            <div className="requests-card-footer">
-              <time>{formatDate(issue.createdAt)}</time>
-              <span>Reported by {issue.createdBy}</span>
-            </div>
-            <div className="requests-card-actions">
-              {issue.status === "Open" ? (
-                <button type="button" title={t("FEATURES.REQUESTS.RESOLVE")} disabled={Boolean(busyAction)} onClick={(event) => runIssueAction(issue, "resolve", event)}>
-                  <CheckboxCircleLineIcon size={16} />
-                  <span>Resolve</span>
-                </button>
-              ) : (
-                <button type="button" title={t("FEATURES.REQUESTS.REOPEN")} disabled={Boolean(busyAction)} onClick={(event) => runIssueAction(issue, "reopen", event)}>
-                  <RefreshLineIcon size={16} />
-                  <span>Reopen</span>
-                </button>
-              )}
-              <button type="button" title={t("FEATURES.REQUESTS.DELETE")} disabled={Boolean(busyAction)} onClick={(event) => runIssueAction(issue, "delete", event)}>
-                <CloseCircleLineIcon size={16} />
-                <span>Delete</span>
+            onSelectAll={() => setSelectedIds(new Set(visibleRequests.filter(isSelectable).map((request) => request.id)))}
+            onRun={(action, requests) => setBulkRun({ action, requests })}
+          />
+        ) : null}
+        {visibleRequests.map((request) => (
+          <RequestCard
+            key={request.id}
+            request={request}
+            selection={selectMode && bulkAvailable && isSelectable(request) ? { selected: selectedIds.has(request.id), onToggle: () => toggleSelected(request.id) } : undefined}
+            view={boardView}
+            canManage={canManageRequests}
+            readOnly={readOnly}
+            busy={Boolean(busyAction)}
+            progress={progress.items[request.id]}
+            compact={boardView === "cards" ? phone : narrow}
+            onOpen={openRequestDetail}
+            onAction={runRequestAction}
+            onEdit={openRequestEditor}
+            onOpenSeerr={openSeerrRequest}
+          />
+        ))}
+
+        {!visibleRequests.length && !loading && !loadError ? (
+          data.requests?.length ? (
+            <div className="rq-state">
+              <strong>No requests match these filters.</strong>
+              <span>{t("FEATURES.REQUESTS.EMPTY_FILTER")}</span>
+              <button type="button" className="rq-btn is-primary" onClick={clearFilters}>
+                <FilterOffLineIcon size={16} />
+                Clear filters
               </button>
             </div>
-          </article>
-        ))}
-        {!visibleIssues.length && !issuesLoading ? (
-          <div className="requests-empty-state">
-            <ErrorWarningLineIcon size={30} />
-            <strong>No issues found</strong>
-            <span>{issues.length ? t("FEATURES.REQUESTS.EMPTY_ISSUE_FILTER") : t("FEATURES.REQUESTS.EMPTY_ISSUES")}</span>
-          </div>
+          ) : (
+            <BlobboEmpty
+              title="Nothing in the queue."
+              action={
+                <button type="button" className="rq-btn" onClick={() => setPageSection("discover")}>
+                  Open Discover
+                </button>
+              }
+            >
+              When someone requests a movie or show, it will land here.
+            </BlobboEmpty>
+          )
         ) : null}
       </section>
-      )}
+      ) : pageSection === "issues" ? (
+      <section className={`rq-board is-${boardView}`} aria-busy={issuesLoading}>
+        {issuesLoading && !issues.length && !issuesError ? <RequestSkeleton view={boardView} /> : null}
+        {issuesError && !issues.length ? (
+          <div className="rq-state is-error" role="alert">
+            <ErrorWarningLineIcon size={32} />
+            <strong>Couldn&rsquo;t load issues.</strong>
+            <span>Check the Seerr connection and try again.</span>
+            <button type="button" className="rq-btn is-primary" onClick={() => loadIssues()}>
+              <RefreshLineIcon size={16} />
+              Try again
+            </button>
+          </div>
+        ) : null}
+        {visibleIssues.map((issue) => (
+          <IssueCard
+            key={issueKey(issue)}
+            issue={issue}
+            view={boardView}
+            readOnly={readOnly}
+            busy={Boolean(busyAction)}
+            episodeLabel={issueEpisodeLabel(issue)}
+            onOpen={(item) => { setSelectedIssue(item); setIssueComment(""); }}
+            onAction={runIssueAction}
+          />
+        ))}
+        {!visibleIssues.length && !issuesLoading && !issuesError ? (
+          <BlobboEmpty title="No issues found.">{issues.length ? t("FEATURES.REQUESTS.EMPTY_ISSUE_FILTER") : t("FEATURES.REQUESTS.EMPTY_ISSUES")}</BlobboEmpty>
+        ) : null}
+      </section>
+      ) : null}
 
       {canManageRequests ? <RequestRulesModal show={showRules} onHide={() => { setShowRules(false); loadQuota(); }} /> : null}
       <Modal show={Boolean(selectedRequest)} onHide={() => { setSelectedRequest(null); setEditingRequestId(""); }} centered size="xl" contentClassName="requests-modal">
@@ -1444,16 +1467,37 @@ export default function Requests() {
                     <span className="is-type">{selectedRequest.mediaType}</span>
                     {selectedRequest.year ? <span className="is-fact">{selectedRequest.year}</span> : null}
                     {selectedRequest.runtime ? <span className="is-fact">{selectedRequest.runtime} min</span> : null}
-                    <span className={`is-status is-${String(selectedRequest.status || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>{selectedRequest.status}</span>
+                    {selectedRequest.isSearchResult ? (
+                      <span className="is-status">{selectedRequest.status}</span>
+                    ) : (
+                      <StatusChip tone={requestStatusChip(selectedRequest).key} label={requestStatusChip(selectedRequest).label} />
+                    )}
                     <span className={`is-availability is-${String(selectedRequest.availability?.status || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>{t("FEATURES.REQUESTS.IN_JELLYFIN", { status: selectedRequest.availability?.status || t("FEATURES.REQUESTS.UNKNOWN") })}</span>
                     {selectedRequest.userInterest?.watchlistedBy?.length ? <span className="is-interest">Watchlisted by {selectedRequest.userInterest.watchlistedBy.join(", ")}</span> : null}
                     {selectedRequest.userInterest?.favouritedBy?.length ? <span className="is-interest">Favourited by {selectedRequest.userInterest.favouritedBy.join(", ")}</span> : null}
                   </div>
 
+                  {!selectedRequest.isSearchResult && progress.items[selectedRequest.id] ? (
+                    <div className="rq-dl-detail">
+                      <DownloadProgress entry={progress.items[selectedRequest.id]} barWidth={160} />
+                    </div>
+                  ) : null}
                   {!selectedRequest.isSearchResult ? <RequestTimeline request={selectedRequest} /> : null}
 
+                  {!selectedRequest.isSearchResult && canManageRequests && readOnly ? (
+                    <div className="rq-readonly-hint is-modal" role="note">
+                      <ForbidLineIcon size={16} />
+                      <span>Read-only demo: approve, decline and edit are turned off.</span>
+                    </div>
+                  ) : null}
                   <div className="requests-detail-actions">
-                    {!selectedRequest.isSearchResult && canManageRequests && selectedRequest.status === "Pending" ? (
+                    {trailerTarget(selectedRequest) ? (
+                      <button type="button" onClick={() => setTrailer(trailerTarget(selectedRequest))}>
+                        <PlayCircleLineIcon size={17} />
+                        Trailer
+                      </button>
+                    ) : null}
+                    {!selectedRequest.isSearchResult && canManageRequests && !readOnly && selectedRequest.status === "Pending" ? (
                       <>
                         <button type="button" disabled={Boolean(busyAction)} onClick={(event) => runRequestAction(selectedRequest, "approve", event)}>
                           <CheckboxCircleLineIcon size={17} />
@@ -1465,7 +1509,7 @@ export default function Requests() {
                         </button>
                       </>
                     ) : null}
-                    {!selectedRequest.isSearchResult && canManageRequests && selectedRequest.requestId ? (
+                    {!selectedRequest.isSearchResult && canManageRequests && !readOnly && selectedRequest.requestId ? (
                       <button type="button" disabled={Boolean(busyAction)} onClick={(event) => openRequestEditor(selectedRequest, event)}>
                         <Edit2LineIcon size={17} />
                         {editingRequestId === selectedRequest.id ? t("FEATURES.REQUESTS.HIDE_EDIT") : t("FEATURES.REQUESTS.EDIT_REQUEST")}
@@ -1582,8 +1626,10 @@ export default function Requests() {
                         {(() => {
                           const isAlreadyAvailable = selectedRequest.availability?.status === "Available";
                           const isAlreadyRequested = selectedRequest.requested && !isAlreadyAvailable;
+                          const isDemoBlocked = blockedIds.has(selectedRequest.id);
                           const requestDisabled =
                             Boolean(busyAction) ||
+                            isDemoBlocked ||
                             isAlreadyAvailable ||
                             isAlreadyRequested ||
                             Boolean(requestOptionsLoading[selectedRequest.id]) ||
@@ -1592,15 +1638,20 @@ export default function Requests() {
                           return (
                             <button type="button" disabled={requestDisabled} onClick={() => requestMedia(selectedRequest)}>
                               <ChatCheckFillIcon size={17} />
-                              {isAlreadyAvailable ? t("FEATURES.REQUESTS.AVAILABLE") : isAlreadyRequested ? t("FEATURES.REQUESTS.ALREADY_REQUESTED") : t("FEATURES.REQUESTS.REQUEST_THIS")}
+                              {isDemoBlocked ? "Demo: request blocked" : isAlreadyAvailable ? t("FEATURES.REQUESTS.AVAILABLE") : isAlreadyRequested ? t("FEATURES.REQUESTS.ALREADY_REQUESTED") : t("FEATURES.REQUESTS.REQUEST_THIS")}
                             </button>
                           );
                         })()}
+                        {blockedIds.has(selectedRequest.id) || seerrReadOnly ? (
+                          <small className="requests-options-status">
+                            {blockedIds.has(selectedRequest.id) ? "Nothing was sent. This Seerr connection is read-only in the demo." : "Demo: this Seerr connection is read-only, so requests are blocked."}
+                          </small>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}
 
-                  {!selectedRequest.isSearchResult && canManageRequests && editingRequestId === selectedRequest.id ? (
+                  {!selectedRequest.isSearchResult && canManageRequests && !readOnly && editingRequestId === selectedRequest.id ? (
                     <div className="requests-edit-panel">
                       <div className="requests-edit-heading">
                         <div>
@@ -1764,6 +1815,18 @@ export default function Requests() {
           </>
         ) : null}
       </Modal>
+      <BulkDialog
+        run={bulkRun}
+        onHide={() => setBulkRun(null)}
+        onFinished={(result) => {
+          setActionMessage(resultSummary(result));
+          setSelectedIds(new Set());
+          loadRequests(true);
+        }}
+      />
+
+      <TrailerDialog target={trailer} onHide={() => setTrailer(null)} />
+
       <Modal show={Boolean(selectedIssue)} onHide={() => setSelectedIssue(null)} centered size="lg" contentClassName="requests-modal">
         {selectedIssue ? (
           <>
@@ -1788,22 +1851,30 @@ export default function Requests() {
                     <span className={`is-status is-${String(selectedIssue.status).toLowerCase()}`}>{selectedIssue.status}</span>
                     <span className="is-fact">Reported by {selectedIssue.createdBy}</span>
                   </div>
+                  {readOnly ? (
+                    <div className="rq-readonly-hint is-modal" role="note">
+                      <ForbidLineIcon size={16} />
+                      <span>Read-only demo: resolve, reopen, delete and comments are turned off.</span>
+                    </div>
+                  ) : null}
                   <div className="requests-detail-actions">
-                    {selectedIssue.status === "Open" ? (
+                    {!readOnly && selectedIssue.status === "Open" ? (
                       <button type="button" disabled={Boolean(busyAction)} onClick={(event) => runIssueAction(selectedIssue, "resolve", event)}>
                         <CheckboxCircleLineIcon size={17} />
                         Resolve
                       </button>
-                    ) : (
+                    ) : !readOnly ? (
                       <button type="button" disabled={Boolean(busyAction)} onClick={(event) => runIssueAction(selectedIssue, "reopen", event)}>
                         <RefreshLineIcon size={17} />
                         Reopen
                       </button>
-                    )}
-                    <button type="button" disabled={Boolean(busyAction)} onClick={(event) => runIssueAction(selectedIssue, "delete", event)}>
-                      <CloseCircleLineIcon size={17} />
-                      Delete
-                    </button>
+                    ) : null}
+                    {!readOnly ? (
+                      <button type="button" disabled={Boolean(busyAction)} onClick={(event) => runIssueAction(selectedIssue, "delete", event)}>
+                        <CloseCircleLineIcon size={17} />
+                        Delete
+                      </button>
+                    ) : null}
                     {canManageRequests && selectedIssue.openUrl ? (
                       <button type="button" onClick={(event) => openSeerrRequest(selectedIssue, event)}>
                         <ExternalLinkLineIcon size={17} />
@@ -1824,13 +1895,17 @@ export default function Requests() {
                     ) : (
                       <span>No comments yet.</span>
                     )}
-                    <label>
-                      <span>Add a comment</span>
-                      <textarea value={issueComment} onChange={(event) => setIssueComment(event.target.value)} rows={3} placeholder={t("FEATURES.REQUESTS.REPLY_PLACEHOLDER")} />
-                    </label>
-                    <button type="button" disabled={Boolean(busyAction) || !issueComment.trim()} onClick={(event) => runIssueAction(selectedIssue, "comment", event)}>
-                      Send comment
-                    </button>
+                    {!readOnly ? (
+                      <>
+                        <label>
+                          <span>Add a comment</span>
+                          <textarea value={issueComment} onChange={(event) => setIssueComment(event.target.value)} rows={3} placeholder={t("FEATURES.REQUESTS.REPLY_PLACEHOLDER")} />
+                        </label>
+                        <button type="button" disabled={Boolean(busyAction) || !issueComment.trim()} onClick={(event) => runIssueAction(selectedIssue, "comment", event)}>
+                          Send comment
+                        </button>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               </div>

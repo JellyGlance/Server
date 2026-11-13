@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ArrowLeftSLineIcon from "remixicon-react/ArrowLeftSLineIcon";
+import ArrowDownSLineIcon from "remixicon-react/ArrowDownSLineIcon";
 import ArrowRightSLineIcon from "remixicon-react/ArrowRightSLineIcon";
 import FolderOpenLineIcon from "remixicon-react/FolderOpenLineIcon";
 import SearchLineIcon from "remixicon-react/SearchLineIcon";
@@ -77,6 +78,7 @@ export default function RecentlyAddedPage() {
   const [libraryFilter, setLibraryFilter] = useState(localStorage.getItem(libraryFilterKey) || "All");
   const [itemOrder, setItemOrder] = useState(localStorage.getItem(itemOrderKey) || "newest");
   const [shelfOrder, setShelfOrder] = useState(localStorage.getItem(shelfOrderKey) || "library-asc");
+  const [showEmpty, setShowEmpty] = useState(false);
   const shelfRefs = useRef({});
   const token = localStorage.getItem("token");
 
@@ -184,6 +186,15 @@ export default function RecentlyAddedPage() {
 
     return sortShelves(nextShelves, shelfOrder);
   }, [itemOrder, libraryFilter, searchQuery, shelfOrder, shelves, typeFilter]);
+
+  // Libraries with something recent come first; the empty ones fold into one line at the end.
+  const { filledShelves, emptyShelves } = useMemo(
+    () => ({
+      filledShelves: filteredShelves.filter((shelf) => shelf.items.length > 0),
+      emptyShelves: filteredShelves.filter((shelf) => shelf.items.length === 0),
+    }),
+    [filteredShelves]
+  );
 
   const visibleItemCount = useMemo(
     () => filteredShelves.reduce((count, shelf) => count + shelf.items.length, 0),
@@ -304,7 +315,7 @@ export default function RecentlyAddedPage() {
           </div>
         ) : null}
 
-        {filteredShelves.map((shelf) => (
+        {filledShelves.map((shelf) => (
           <section className="recent-library-shelf" key={shelf.id}>
             <div className="recent-library-shelf-header">
               <div className="recent-library-shelf-title">
@@ -344,18 +355,41 @@ export default function RecentlyAddedPage() {
                 shelfRefs.current[shelf.id] = node;
               }}
             >
-              {shelf.items.length > 0 ? (
-                shelf.items.map((item) => (
-                  <ErrorBoundary key={`${shelf.id}-${item.EpisodeId || item.Id}`}>
-                    <RecentlyAddedCard data={item} />
-                  </ErrorBoundary>
-                ))
-              ) : (
-                <div className="recent-library-shelf-empty">No recent items in this library.</div>
-              )}
+              {shelf.items.map((item) => (
+                <ErrorBoundary key={`${shelf.id}-${item.EpisodeId || item.Id}`}>
+                  <RecentlyAddedCard data={item} />
+                </ErrorBoundary>
+              ))}
             </div>
           </section>
         ))}
+
+        {emptyShelves.length > 0 ? (
+          <div className="recent-empty-libraries">
+            <button
+              type="button"
+              className="recent-empty-libraries-toggle"
+              aria-expanded={showEmpty}
+              aria-controls="recent-empty-libraries-list"
+              onClick={() => setShowEmpty((open) => !open)}
+            >
+              {showEmpty ? <ArrowDownSLineIcon size={18} /> : <ArrowRightSLineIcon size={18} />}
+              <span>Empty libraries</span>
+              <em>{emptyShelves.length}</em>
+            </button>
+            {showEmpty ? (
+              <ul id="recent-empty-libraries-list">
+                {emptyShelves.map((shelf) => (
+                  <li key={shelf.id}>
+                    <FolderOpenLineIcon size={16} />
+                    <span>{shelf.name}</span>
+                    <small>No recent items</small>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -1,4 +1,66 @@
 {
+  "1.4.3-beta": [
+    {
+      "icon": "movie",
+      "title": "Requests Overhaul",
+      "body": "Requests now has Discover as sideways shelves with a See all view, a cards layout you can switch to on any screen, a calendar of requested titles arriving this week, trailers from Discover and the title dialog, bulk approve, decline or retry, a stats tab for genres, fulfilment time and the busiest requester, and Ask Blobbo for plain questions about the queue. Live download progress and ETA also show on rows and cards."
+    },
+    {
+      "icon": "magic",
+      "title": "Libraries Overview, Storage And Forecast",
+      "body": "Libraries is split into Overview, Storage and Forecast tabs. Overview cards have a clearer title, even stats, relative last-played time and hide empty sizes, and the list view lines up on a shared column grid. A library such as DC TV no longer appears twice; the stats view now picks one latest activity per library and matches episodes by season as well as episode."
+    },
+    {
+      "icon": "shield",
+      "title": "Cleanup Rules With A Dry Run",
+      "body": "A cleanup rules engine lets you set conditions and actions per library. Dry run is on by default, so you can preview matches before anything is removed."
+    },
+    {
+      "icon": "chat",
+      "title": "Stop A Stream With A Message",
+      "body": "You can stop a playback session in one click and show an on-screen message on the player."
+    },
+    {
+      "icon": "palette",
+      "title": "Collections And Poster Overlays",
+      "body": "Build collection rules and preview poster overlays before you apply them. Apply stays off until you turn it on."
+    },
+    {
+      "icon": "mail",
+      "title": "Newsletter Builder, Channels And Automatic Emails",
+      "body": "The newsletter report builder adds more digest blocks, poster cards, per-recipient language, and Halloween and winter themes. You can post the same digest to Discord or Telegram, send automatic welcome, milestone, admin digest and welcome-back emails, and publish a public archive. Channels, automations and the archive stay off until you turn them on."
+    },
+    {
+      "icon": "rocket",
+      "title": "Home Layout, Session Cards And Recently Added",
+      "body": "Home can be rearranged in place with new widgets, and Active Sessions has Simple, Detailed and Wall views with fuller posters and clearer playback info. Recently Added fills shelves first, folds away empty libraries, and uses one arrow on every dropdown."
+    },
+    {
+      "icon": "movie",
+      "title": "Full Jellyfin Sync Finishes Again",
+      "body": "Full Jellyfin Sync no longer stops partway through Media Sync when a library has Live TV channels, extras or other items with no media files attached. Those items are skipped for file info and the rest of the sync carries on, so titles you removed from Jellyfin get marked as gone again and Purge Cached Library Items Only has something to clear. Run one full sync after updating, then purge."
+    },
+    {
+      "icon": "shield",
+      "title": "Postgres 18 Recommended",
+      "body": "Postgres 18 is the recommended database again. The bundled Docker Compose files, the Proxmox and Unraid packaging and the README all use postgres:18-alpine. Postgres 18 keeps its data under /var/lib/postgresql/18/docker, so mount the database volume at /var/lib/postgresql, not the old /var/lib/postgresql/data. Changing the image tag or the mount does not move existing data: dump it with your current version, restore it into a fresh Postgres 18 volume and check it before removing the old one. Purging items removed from Jellyfin still shows an error when it fails, instead of a success message."
+    },
+    {
+      "icon": "speed",
+      "title": "Active Sessions Wall Stays Put",
+      "body": "The Active Sessions wall on Home no longer shuffles its tiles every few seconds. Jellyfin reorders sessions on every progress update and the wall used to follow along. Wall and Cards now keep the same fixed order, so a tile only moves when someone starts or stops watching."
+    },
+    {
+      "icon": "speed",
+      "title": "Active Sessions Timings Fixed",
+      "body": "Active Sessions cards now read position, runtime, time left and the progress bar from the same playback values, so they always agree. The ETA field is now Left: it shows the time remaining, plus the clock time it ends while playing. Paused streams just show what's left instead of an end time that keeps moving. A stream that hasn't reported its position yet shows --:--:-- instead of NaN or Invalid Date, and an empty bar no longer shows a stray dot. The progress bar now sits between the two timestamps, and the poster fills the card with space before the text, so nothing crowds the artwork."
+    },
+    {
+      "icon": "rocket",
+      "title": "One-Click Deploy and Updates",
+      "body": "The README Quick start now links a one-click deploy option. Under the hood, follow-redirects is on 1.16.3, eslint on 10.14.0 and the Renovate action on 46.3.13."
+    }
+  ],
   "1.4.2": [
     {
       "icon": "shield",
@@ -13,7 +75,7 @@
     {
       "icon": "palette",
       "title": "Blobbo Costumes and Seasonal Looks",
-      "body": "Blobbo now has 20 looks: Classic plus Halloween, festive winter, Valentine's hearts and summer outfits, and 15 costumes including New Year, Easter, Pride, birthday, gaming, St Patrick's, harvest, cozy night, chef, space, music, bookworm, sports, wizard and movie night. Each look keeps Blobbo's soft bouncy idle. Pick one from Blobbo's Options or Settings → General → Blobbo look and it stays on. Leave it on Auto and Blobbo dresses for the calendar: New Year's Eve, winter in December, Valentine's week, St Patrick's, Easter, Pride week, summer, harvest and Halloween. Choices stay in this browser only."
+      "body": "Blobbo now has 20 looks: Classic plus Halloween, festive winter, Valentine's hearts and summer outfits, and 15 costumes including New Year, Easter, Pride, birthday, gaming, St Patrick's, harvest, cozy night, chef, space, music, bookworm, sports, wizard and movie night. Each look keeps Blobbo's soft bouncy idle. Pick one from Blobbo's Options or Settings \u2192 General \u2192 Blobbo look and it stays on. Leave it on Auto and Blobbo dresses for the calendar: New Year's Eve, winter in December, Valentine's week, St Patrick's, Easter, Pride week, summer, harvest and Halloween. Choices stay in this browser only."
     },
     {
       "icon": "rocket",
@@ -23,17 +85,17 @@
     {
       "icon": "movie",
       "title": "Incomplete Season Hunter",
-      "body": "Server → Incomplete Seasons lists every series with a season that is short on episodes. With Sonarr connected under Integrations it compares what is on disk against Sonarr's aired episode count; without it, gaps in episode numbering (like E01, E02, E04) are flagged. Each row shows which seasons are short and the missing episode numbers, with buttons to open the series in Sonarr (or add it if Sonarr doesn't have it yet) and on TVDB."
+      "body": "Server \u2192 Incomplete Seasons lists every series with a season that is short on episodes. With Sonarr connected under Integrations it compares what is on disk against Sonarr's aired episode count; without it, gaps in episode numbering (like E01, E02, E04) are flagged. Each row shows which seasons are short and the missing episode numbers, with buttons to open the series in Sonarr (or add it if Sonarr doesn't have it yet) and on TVDB."
     },
     {
       "icon": "speed",
       "title": "Why Is This Transcoding?",
-      "body": "Active Sessions now explains every transcode for admins. Each transcoding stream gets a small chip such as “Transcode: Subtitle burn-in” or “Remux: Container”; tap it for a plain-English reason (HEVC to H.264, audio codec, bitrate over the limit, HDR tone-mapping, image subtitles being burned in, resolution caps or direct play turned off) plus a fix hint for that device, like enabling HEVC in Infuse or Android TV, raising the max streaming bitrate, or switching to SRT subtitles. Remuxes and audio-only transcodes are labelled separately so you can tell the cheap ones from the heavy ones."
+      "body": "Active Sessions now explains every transcode for admins. Each transcoding stream gets a small chip such as \u201cTranscode: Subtitle burn-in\u201d or \u201cRemux: Container\u201d; tap it for a plain-English reason (HEVC to H.264, audio codec, bitrate over the limit, HDR tone-mapping, image subtitles being burned in, resolution caps or direct play turned off) plus a fix hint for that device, like enabling HEVC in Infuse or Android TV, raising the max streaming bitrate, or switching to SRT subtitles. Remuxes and audio-only transcodes are labelled separately so you can tell the cheap ones from the heavy ones."
     },
     {
       "icon": "magic",
       "title": "Watching Heat Map",
-      "body": "Statistics → Play Count and Watch Duration now open with a heat map of when your household watches, by day of the week and hour of the day, in your server's time zone. Hover or tap a square for plays and watch time in that hour, and see the busiest slot, day and hour at a glance. Filter by library, and admins can pick a single user; everyone else sees just their own viewing."
+      "body": "Statistics \u2192 Play Count and Watch Duration now open with a heat map of when your household watches, by day of the week and hour of the day, in your server's time zone. Hover or tap a square for plays and watch time in that hour, and see the busiest slot, day and hour at a glance. Filter by library, and admins can pick a single user; everyone else sees just their own viewing."
     },
     {
       "icon": "shield",
@@ -43,27 +105,27 @@
     {
       "icon": "speed",
       "title": "Device Profiles",
-      "body": "Insights → Devices gives every TV, phone, browser and cast device its own card: how often it direct plays versus transcodes, its typical bitrate, which apps and versions it runs, who uses it and when it was last seen. Devices that transcode get their top reasons with a fix hint for that device. Admins only."
+      "body": "Insights \u2192 Devices gives every TV, phone, browser and cast device its own card: how often it direct plays versus transcodes, its typical bitrate, which apps and versions it runs, who uses it and when it was last seen. Devices that transcode get their top reasons with a fix hint for that device. Admins only."
     },
     {
       "icon": "speed",
       "title": "Quiet Hours For Scans And Intros",
-      "body": "Server → Server Jobs now has Quiet hours. Pick a start and end time, an optional time zone and which days it applies to, and JellyGlance holds Jellyfin library scans and intro / credits detection during that window so evening or overnight playback is not slowed down. Jobs that start on their own schedule are stopped and run once as soon as the window ends (or you can let them wait for their next schedule instead). Held jobs show an In quiet hours tag, and pressing Run still starts a job straight away."
+      "body": "Server \u2192 Server Jobs now has Quiet hours. Pick a start and end time, an optional time zone and which days it applies to, and JellyGlance holds Jellyfin library scans and intro / credits detection during that window so evening or overnight playback is not slowed down. Jobs that start on their own schedule are stopped and run once as soon as the window ends (or you can let them wait for their next schedule instead). Held jobs show an In quiet hours tag, and pressing Run still starts a job straight away."
     },
     {
       "icon": "chat",
       "title": "Subtitle And Audio Gap Report",
-      "body": "Server → Subtitle Gaps lists every movie and series missing your household's preferred subtitle or audio languages, using the tracks Jellyfin already knows about. Set the languages once (codes or names like en, fr or German), filter by missing subtitles or audio, and with Bazarr connected under Integrations hit Search in Bazarr on any row, or tick several and search them together."
+      "body": "Server \u2192 Subtitle Gaps lists every movie and series missing your household's preferred subtitle or audio languages, using the tracks Jellyfin already knows about. Set the languages once (codes or names like en, fr or German), filter by missing subtitles or audio, and with Bazarr connected under Integrations hit Search in Bazarr on any row, or tick several and search them together."
     },
     {
       "icon": "upload",
       "title": "Outbound Webhook Rules",
-      "body": "Settings → Notifications now has outbound webhook rules. Pick a trigger such as a stuck or failed download, Cleanuparr needing attention, low disk space or playback starting, and JellyGlance POSTs it as JSON to Home Assistant, ntfy, Discord or any URL. Filter on any field, add headers, write your own JSON body with placeholders, preview the payload and send a test. Recent deliveries show the status code or error, and saved URLs and header values stay encrypted and hidden."
+      "body": "Settings \u2192 Notifications now has outbound webhook rules. Pick a trigger such as a stuck or failed download, Cleanuparr needing attention, low disk space or playback starting, and JellyGlance POSTs it as JSON to Home Assistant, ntfy, Discord or any URL. Filter on any field, add headers, write your own JSON body with placeholders, preview the payload and send a test. Recent deliveries show the status code or error, and saved URLs and header values stay encrypted and hidden."
     },
     {
       "icon": "users",
       "title": "Taste Map",
-      "body": "Statistics → Taste map shows what each person watches by genre and decade, with their most watched titles. Admins also get a household view: a match grid showing how closely everyone's tastes line up, the genres you share, and the shows and films more than one of you has watched. Everyone else sees their own map."
+      "body": "Statistics \u2192 Taste map shows what each person watches by genre and decade, with their most watched titles. Admins also get a household view: a match grid showing how closely everyone's tastes line up, the genres you share, and the shows and films more than one of you has watched. Everyone else sees their own map."
     },
     {
       "icon": "magic",
@@ -83,22 +145,22 @@
     {
       "icon": "rocket",
       "title": "Smart Request Routing",
-      "body": "Requests → Rules now has Smart routing. Build rules that match on who is asking, the genre and whether it is a movie or TV show, then choose Approve to send it straight to Sonarr/Radarr or Hold to keep it for an admin. Rules run top to bottom and the first match wins; anything that matches no rule keeps your existing settings, which hold requests unless auto-approve is on. A routing log shows every request, the rule that caught it and whether it was sent on or held."
+      "body": "Requests \u2192 Rules now has Smart routing. Build rules that match on who is asking, the genre and whether it is a movie or TV show, then choose Approve to send it straight to Sonarr/Radarr or Hold to keep it for an admin. Rules run top to bottom and the first match wins; anything that matches no rule keeps your existing settings, which hold requests unless auto-approve is on. A routing log shows every request, the rule that caught it and whether it was sent on or held."
     },
     {
       "icon": "rocket",
       "title": "Ops Copilot Preview",
-      "body": "Server → Ops Copilot lets admins ask plain questions like “why is Dune buffering for Mum?”, “free 500 GB without touching favourites” or “anything stuck in downloads?”. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."
+      "body": "Server \u2192 Ops Copilot lets admins ask plain questions like \u201cwhy is Dune buffering for Mum?\u201d, \u201cfree 500 GB without touching favourites\u201d or \u201canything stuck in downloads?\u201d. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."
     },
     {
       "icon": "mail",
       "title": "Wrapped Recaps By Email Or Webhook",
-      "body": "Statistics → Recap now lets you schedule a weekly or monthly Wrapped for any user, with top shows, hours watched and the busiest day. Recaps arrive by email or on one of your webhooks as soon as each week or month finishes, with the recap card attached. Users can set up email delivery of their own recap, and Send now resends the last finished period whenever you like."
+      "body": "Statistics \u2192 Recap now lets you schedule a weekly or monthly Wrapped for any user, with top shows, hours watched and the busiest day. Recaps arrive by email or on one of your webhooks as soon as each week or month finishes, with the recap card attached. Users can set up email delivery of their own recap, and Send now resends the last finished period whenever you like."
     },
     {
       "icon": "rocket",
       "title": "Meet Blobbo",
-      "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it, or press Shift+A anywhere to say hello, for tips, quick links and answers about your server. Its chat now matches your chosen theme colours, it stays still if you prefer reduced motion, and you can show or hide it under Settings → General. Blobbo's idle animation now has a properly transparent background, so the dark square behind it is gone."
+      "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it, or press Shift+A anywhere to say hello, for tips, quick links and answers about your server. Its chat now matches your chosen theme colours, it stays still if you prefer reduced motion, and you can show or hide it under Settings \u2192 General. Blobbo's idle animation now has a properly transparent background, so the dark square behind it is gone."
     },
     {
       "icon": "chat",
@@ -108,7 +170,7 @@
     {
       "icon": "movie",
       "title": "Find A Title With Blobbo",
-      "body": "Ask Blobbo to find a film or show, for example “find Dune” or “do I have The Expanse?”, and it lists the matches from your libraries. Each result, and titles in answers about what is playing, what is new and what is most watched, comes with Open in… buttons that take you straight to the title in JellyGlance or Jellyfin."
+      "body": "Ask Blobbo to find a film or show, for example \u201cfind Dune\u201d or \u201cdo I have The Expanse?\u201d, and it lists the matches from your libraries. Each result, and titles in answers about what is playing, what is new and what is most watched, comes with Open in\u2026 buttons that take you straight to the title in JellyGlance or Jellyfin."
     },
     {
       "icon": "chat",
@@ -133,7 +195,7 @@
     {
       "icon": "shield",
       "title": "Cleanuparr Integration",
-      "body": "Connect Cleanuparr under Integrations → 3rd party apps to see its strikes, removals, cleaned downloads and client and arr health on the Downloads page. Point Cleanuparr's Gotify notifications at JellyGlance and downloads it is already handling are tagged instead of raising stuck download alerts, while failed imports, errored downloads and repeated stalls alert you because they need a look."
+      "body": "Connect Cleanuparr under Integrations \u2192 3rd party apps to see its strikes, removals, cleaned downloads and client and arr health on the Downloads page. Point Cleanuparr's Gotify notifications at JellyGlance and downloads it is already handling are tagged instead of raising stuck download alerts, while failed imports, errored downloads and repeated stalls alert you because they need a look."
     }
   ],
   "1.4.2-beta": [
@@ -150,7 +212,7 @@
     {
       "icon": "palette",
       "title": "Blobbo Costumes and Seasonal Looks",
-      "body": "Blobbo now has 20 looks: Classic plus Halloween, festive winter, Valentine's hearts and summer outfits, and 15 costumes including New Year, Easter, Pride, birthday, gaming, St Patrick's, harvest, cozy night, chef, space, music, bookworm, sports, wizard and movie night. Each look keeps Blobbo's soft bouncy idle. Pick one from Blobbo's Options or Settings → General → Blobbo look and it stays on. Leave it on Auto and Blobbo dresses for the calendar: New Year's Eve, winter in December, Valentine's week, St Patrick's, Easter, Pride week, summer, harvest and Halloween. Choices stay in this browser only."
+      "body": "Blobbo now has 20 looks: Classic plus Halloween, festive winter, Valentine's hearts and summer outfits, and 15 costumes including New Year, Easter, Pride, birthday, gaming, St Patrick's, harvest, cozy night, chef, space, music, bookworm, sports, wizard and movie night. Each look keeps Blobbo's soft bouncy idle. Pick one from Blobbo's Options or Settings \u2192 General \u2192 Blobbo look and it stays on. Leave it on Auto and Blobbo dresses for the calendar: New Year's Eve, winter in December, Valentine's week, St Patrick's, Easter, Pride week, summer, harvest and Halloween. Choices stay in this browser only."
     },
     {
       "icon": "rocket",
@@ -160,17 +222,17 @@
     {
       "icon": "movie",
       "title": "Incomplete Season Hunter",
-      "body": "Server → Incomplete Seasons lists every series with a season that is short on episodes. With Sonarr connected under Integrations it compares what is on disk against Sonarr's aired episode count; without it, gaps in episode numbering (like E01, E02, E04) are flagged. Each row shows which seasons are short and the missing episode numbers, with buttons to open the series in Sonarr (or add it if Sonarr doesn't have it yet) and on TVDB."
+      "body": "Server \u2192 Incomplete Seasons lists every series with a season that is short on episodes. With Sonarr connected under Integrations it compares what is on disk against Sonarr's aired episode count; without it, gaps in episode numbering (like E01, E02, E04) are flagged. Each row shows which seasons are short and the missing episode numbers, with buttons to open the series in Sonarr (or add it if Sonarr doesn't have it yet) and on TVDB."
     },
     {
       "icon": "speed",
       "title": "Why Is This Transcoding?",
-      "body": "Active Sessions now explains every transcode for admins. Each transcoding stream gets a small chip such as “Transcode: Subtitle burn-in” or “Remux: Container”; tap it for a plain-English reason (HEVC to H.264, audio codec, bitrate over the limit, HDR tone-mapping, image subtitles being burned in, resolution caps or direct play turned off) plus a fix hint for that device, like enabling HEVC in Infuse or Android TV, raising the max streaming bitrate, or switching to SRT subtitles. Remuxes and audio-only transcodes are labelled separately so you can tell the cheap ones from the heavy ones."
+      "body": "Active Sessions now explains every transcode for admins. Each transcoding stream gets a small chip such as \u201cTranscode: Subtitle burn-in\u201d or \u201cRemux: Container\u201d; tap it for a plain-English reason (HEVC to H.264, audio codec, bitrate over the limit, HDR tone-mapping, image subtitles being burned in, resolution caps or direct play turned off) plus a fix hint for that device, like enabling HEVC in Infuse or Android TV, raising the max streaming bitrate, or switching to SRT subtitles. Remuxes and audio-only transcodes are labelled separately so you can tell the cheap ones from the heavy ones."
     },
     {
       "icon": "magic",
       "title": "Watching Heat Map",
-      "body": "Statistics → Play Count and Watch Duration now open with a heat map of when your household watches, by day of the week and hour of the day, in your server's time zone. Hover or tap a square for plays and watch time in that hour, and see the busiest slot, day and hour at a glance. Filter by library, and admins can pick a single user; everyone else sees just their own viewing."
+      "body": "Statistics \u2192 Play Count and Watch Duration now open with a heat map of when your household watches, by day of the week and hour of the day, in your server's time zone. Hover or tap a square for plays and watch time in that hour, and see the busiest slot, day and hour at a glance. Filter by library, and admins can pick a single user; everyone else sees just their own viewing."
     },
     {
       "icon": "shield",
@@ -180,27 +242,27 @@
     {
       "icon": "speed",
       "title": "Device Profiles",
-      "body": "Insights → Devices gives every TV, phone, browser and cast device its own card: how often it direct plays versus transcodes, its typical bitrate, which apps and versions it runs, who uses it and when it was last seen. Devices that transcode get their top reasons with a fix hint for that device. Admins only."
+      "body": "Insights \u2192 Devices gives every TV, phone, browser and cast device its own card: how often it direct plays versus transcodes, its typical bitrate, which apps and versions it runs, who uses it and when it was last seen. Devices that transcode get their top reasons with a fix hint for that device. Admins only."
     },
     {
       "icon": "speed",
       "title": "Quiet Hours For Scans And Intros",
-      "body": "Server → Server Jobs now has Quiet hours. Pick a start and end time, an optional time zone and which days it applies to, and JellyGlance holds Jellyfin library scans and intro / credits detection during that window so evening or overnight playback is not slowed down. Jobs that start on their own schedule are stopped and run once as soon as the window ends (or you can let them wait for their next schedule instead). Held jobs show an In quiet hours tag, and pressing Run still starts a job straight away."
+      "body": "Server \u2192 Server Jobs now has Quiet hours. Pick a start and end time, an optional time zone and which days it applies to, and JellyGlance holds Jellyfin library scans and intro / credits detection during that window so evening or overnight playback is not slowed down. Jobs that start on their own schedule are stopped and run once as soon as the window ends (or you can let them wait for their next schedule instead). Held jobs show an In quiet hours tag, and pressing Run still starts a job straight away."
     },
     {
       "icon": "chat",
       "title": "Subtitle And Audio Gap Report",
-      "body": "Server → Subtitle Gaps lists every movie and series missing your household's preferred subtitle or audio languages, using the tracks Jellyfin already knows about. Set the languages once (codes or names like en, fr or German), filter by missing subtitles or audio, and with Bazarr connected under Integrations hit Search in Bazarr on any row, or tick several and search them together."
+      "body": "Server \u2192 Subtitle Gaps lists every movie and series missing your household's preferred subtitle or audio languages, using the tracks Jellyfin already knows about. Set the languages once (codes or names like en, fr or German), filter by missing subtitles or audio, and with Bazarr connected under Integrations hit Search in Bazarr on any row, or tick several and search them together."
     },
     {
       "icon": "upload",
       "title": "Outbound Webhook Rules",
-      "body": "Settings → Notifications now has outbound webhook rules. Pick a trigger such as a stuck or failed download, Cleanuparr needing attention, low disk space or playback starting, and JellyGlance POSTs it as JSON to Home Assistant, ntfy, Discord or any URL. Filter on any field, add headers, write your own JSON body with placeholders, preview the payload and send a test. Recent deliveries show the status code or error, and saved URLs and header values stay encrypted and hidden."
+      "body": "Settings \u2192 Notifications now has outbound webhook rules. Pick a trigger such as a stuck or failed download, Cleanuparr needing attention, low disk space or playback starting, and JellyGlance POSTs it as JSON to Home Assistant, ntfy, Discord or any URL. Filter on any field, add headers, write your own JSON body with placeholders, preview the payload and send a test. Recent deliveries show the status code or error, and saved URLs and header values stay encrypted and hidden."
     },
     {
       "icon": "users",
       "title": "Taste Map",
-      "body": "Statistics → Taste map shows what each person watches by genre and decade, with their most watched titles. Admins also get a household view: a match grid showing how closely everyone's tastes line up, the genres you share, and the shows and films more than one of you has watched. Everyone else sees their own map."
+      "body": "Statistics \u2192 Taste map shows what each person watches by genre and decade, with their most watched titles. Admins also get a household view: a match grid showing how closely everyone's tastes line up, the genres you share, and the shows and films more than one of you has watched. Everyone else sees their own map."
     },
     {
       "icon": "magic",
@@ -220,22 +282,22 @@
     {
       "icon": "rocket",
       "title": "Smart Request Routing",
-      "body": "Requests → Rules now has Smart routing. Build rules that match on who is asking, the genre and whether it is a movie or TV show, then choose Approve to send it straight to Sonarr/Radarr or Hold to keep it for an admin. Rules run top to bottom and the first match wins; anything that matches no rule keeps your existing settings, which hold requests unless auto-approve is on. A routing log shows every request, the rule that caught it and whether it was sent on or held."
+      "body": "Requests \u2192 Rules now has Smart routing. Build rules that match on who is asking, the genre and whether it is a movie or TV show, then choose Approve to send it straight to Sonarr/Radarr or Hold to keep it for an admin. Rules run top to bottom and the first match wins; anything that matches no rule keeps your existing settings, which hold requests unless auto-approve is on. A routing log shows every request, the rule that caught it and whether it was sent on or held."
     },
     {
       "icon": "rocket",
       "title": "Ops Copilot Preview",
-      "body": "Server → Ops Copilot lets admins ask plain questions like “why is Dune buffering for Mum?”, “free 500 GB without touching favourites” or “anything stuck in downloads?”. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."
+      "body": "Server \u2192 Ops Copilot lets admins ask plain questions like \u201cwhy is Dune buffering for Mum?\u201d, \u201cfree 500 GB without touching favourites\u201d or \u201canything stuck in downloads?\u201d. It explains transcodes, library space and download health from your own data, and anything that would change something is shown as a dry-run plan you approve or cancel. Pausing a stalled download and messaging a session can run after approval (pauses can be undone); deletions stay as proposals for now. Every question and decision is kept in an audit log."
     },
     {
       "icon": "mail",
       "title": "Wrapped Recaps By Email Or Webhook",
-      "body": "Statistics → Recap now lets you schedule a weekly or monthly Wrapped for any user, with top shows, hours watched and the busiest day. Recaps arrive by email or on one of your webhooks as soon as each week or month finishes, with the recap card attached. Users can set up email delivery of their own recap, and Send now resends the last finished period whenever you like."
+      "body": "Statistics \u2192 Recap now lets you schedule a weekly or monthly Wrapped for any user, with top shows, hours watched and the busiest day. Recaps arrive by email or on one of your webhooks as soon as each week or month finishes, with the recap card attached. Users can set up email delivery of their own recap, and Send now resends the last finished period whenever you like."
     },
     {
       "icon": "rocket",
       "title": "Meet Blobbo",
-      "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it, or press Shift+A anywhere to say hello, for tips, quick links and answers about your server. Its chat now matches your chosen theme colours, it stays still if you prefer reduced motion, and you can show or hide it under Settings → General. Blobbo's idle animation now has a properly transparent background, so the dark square behind it is gone."
+      "body": "Blobbo, a friendly little jellyfish, now floats in the corner of your dashboard. Tap it, or press Shift+A anywhere to say hello, for tips, quick links and answers about your server. Its chat now matches your chosen theme colours, it stays still if you prefer reduced motion, and you can show or hide it under Settings \u2192 General. Blobbo's idle animation now has a properly transparent background, so the dark square behind it is gone."
     },
     {
       "icon": "chat",
@@ -245,7 +307,7 @@
     {
       "icon": "movie",
       "title": "Find A Title With Blobbo",
-      "body": "Ask Blobbo to find a film or show, for example “find Dune” or “do I have The Expanse?”, and it lists the matches from your libraries. Each result, and titles in answers about what is playing, what is new and what is most watched, comes with Open in… buttons that take you straight to the title in JellyGlance or Jellyfin."
+      "body": "Ask Blobbo to find a film or show, for example \u201cfind Dune\u201d or \u201cdo I have The Expanse?\u201d, and it lists the matches from your libraries. Each result, and titles in answers about what is playing, what is new and what is most watched, comes with Open in\u2026 buttons that take you straight to the title in JellyGlance or Jellyfin."
     },
     {
       "icon": "chat",
@@ -270,7 +332,7 @@
     {
       "icon": "shield",
       "title": "Cleanuparr Integration",
-      "body": "Connect Cleanuparr under Integrations → 3rd party apps to see its strikes, removals, cleaned downloads and client and arr health on the Downloads page. Point Cleanuparr's Gotify notifications at JellyGlance and downloads it is already handling are tagged instead of raising stuck download alerts, while failed imports, errored downloads and repeated stalls alert you because they need a look."
+      "body": "Connect Cleanuparr under Integrations \u2192 3rd party apps to see its strikes, removals, cleaned downloads and client and arr health on the Downloads page. Point Cleanuparr's Gotify notifications at JellyGlance and downloads it is already handling are tagged instead of raising stuck download alerts, while failed imports, errored downloads and repeated stalls alert you because they need a look."
     }
   ],
   "1.4.0": [
@@ -302,7 +364,7 @@
     {
       "icon": "speed",
       "title": "Faster Stats And Optional History Clean-Up",
-      "body": "Views over time and Popular days now load several times faster on big libraries, with the same numbers. You can also trim old per-play history under Settings → Health → Playback History Retention. It's off by default and permanent, so back up first."
+      "body": "Views over time and Popular days now load several times faster on big libraries, with the same numbers. You can also trim old per-play history under Settings \u2192 Health \u2192 Playback History Retention. It's off by default and permanent, so back up first."
     },
     {
       "icon": "chat",
@@ -349,7 +411,7 @@
     {
       "icon": "magic",
       "title": "Test Your Media Server Connection",
-      "body": "Settings → Media server now has a Test connection panel for admins. It checks the saved Jellyfin or Emby address and API key live and tells you in plain language what is wrong, instead of leaving you with empty lists and a 404 in the logs."
+      "body": "Settings \u2192 Media server now has a Test connection panel for admins. It checks the saved Jellyfin or Emby address and API key live and tells you in plain language what is wrong, instead of leaving you with empty lists and a 404 in the logs."
     },
     {
       "icon": "download",
@@ -402,8 +464,8 @@
     },
     {
       "icon": "chat",
-      "title": "Čeština",
-      "body": "JellyGlance now speaks Czech. Pick Čeština from the language menu to switch, with proper Czech plural forms throughout."
+      "title": "\u010ce\u0161tina",
+      "body": "JellyGlance now speaks Czech. Pick \u010ce\u0161tina from the language menu to switch, with proper Czech plural forms throughout."
     },
     {
       "icon": "users",
@@ -469,7 +531,7 @@
     {
       "icon": "rocket",
       "title": "Achievements And Watch Goals",
-      "body": "My Glance now has 13 badges with Bronze to Platinum tiers, a yearly watch goal, and “Because you watched” suggestions."
+      "body": "My Glance now has 13 badges with Bronze to Platinum tiers, a yearly watch goal, and \u201cBecause you watched\u201d suggestions."
     },
     {
       "icon": "speed",
@@ -536,7 +598,7 @@
     {
       "icon": "rocket",
       "title": "Token Widget API",
-      "body": "Homarr and Homepage poll compact JSON for sessions, queues, catalog, requests, and ops — real Glance data, not a health ping."
+      "body": "Homarr and Homepage poll compact JSON for sessions, queues, catalog, requests, and ops \u2014 real Glance data, not a health ping."
     },
     {
       "icon": "shield",
@@ -546,7 +608,7 @@
     {
       "icon": "magic",
       "title": "Homarr And Homepage Kit",
-      "body": "Copy or download 36 Homarr widgets and a Homepage YAML pack from Settings → API Key. Homarr never stores the key in the file — paste x-api-token after import."
+      "body": "Copy or download 36 Homarr widgets and a Homepage YAML pack from Settings \u2192 API Key. Homarr never stores the key in the file \u2014 paste x-api-token after import."
     },
     {
       "icon": "movie",
@@ -648,7 +710,7 @@
     {
       "icon": "movie",
       "title": "Cleaner Tdarr Labels",
-      "body": "Active Transcodes no longer prints [object Object] for format, status, or reason — those fields resolve to readable text."
+      "body": "Active Transcodes no longer prints [object Object] for format, status, or reason \u2014 those fields resolve to readable text."
     },
     {
       "icon": "palette",
@@ -680,7 +742,7 @@
     {
       "icon": "chat",
       "title": "Requests Pipeline and Seerr Issues",
-      "body": "Requests show a clearer requested → approved → grabbed → available timeline, with stage filters, richer cards, and an admin Issues inbox for Overseerr/Jellyseerr reports."
+      "body": "Requests show a clearer requested \u2192 approved \u2192 grabbed \u2192 available timeline, with stage filters, richer cards, and an admin Issues inbox for Overseerr/Jellyseerr reports."
     },
     {
       "icon": "users",

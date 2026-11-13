@@ -62,8 +62,13 @@
   min-height: 40px;
   border: 1px solid rgba(255, 255, 255, 0.11) !important;
   border-radius: 10px !important;
-  background: rgba(5, 8, 13, 0.72) !important;
+  background-color: rgba(5, 8, 13, 0.72) !important;
   color: white !important;
+}
+
+.api-key-create .form-control,
+.api-key-widget-form .form-control {
+  background-image: none !important;
 }
 
 .api-key-create .btn {

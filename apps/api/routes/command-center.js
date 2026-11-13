@@ -431,6 +431,11 @@ router.get("/autobrr/hits", async (req, res) => {
 
 router.post("/retry-grab", async (req, res) => {
   try {
+    // Retrying a grab changes things in Sonarr/Radarr, so a read-only setup refuses it here.
+    if (require("../classes/request-discover").isReadOnlySeerr()) {
+      res.status(403).send({ error: "Read-only demo: retrying grabs is blocked.", readOnly: true });
+      return;
+    }
     const result = await retryFailedGrab(req.body || {});
     if (!result.ok) {
       res.status(502).send({ error: result.error || "Unable to retry grab", ...result });

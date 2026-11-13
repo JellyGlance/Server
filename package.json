@@ -1,6 +1,6 @@
 {
   "name": "jellyglance",
-  "version": "1.4.2-beta",
+  "version": "1.4.3-beta.2",
   "private": true,
   "description": "JellyGlance - a modern Jellyfin analytics and media control dashboard by Nerdy-Technician.",
   "keywords": [
@@ -54,7 +54,7 @@
   },
   "overrides": {
     "eslint": {
-      ".": "10.13.0",
+      ".": "10.14.0",
       "minimatch": "11.0.3"
     },
     "fast-uri": "4.2.3",
@@ -67,7 +67,7 @@
     "brace-expansion@5": "5.0.12",
     "shell-quote": "1.12.0",
     "source-map-js": "1.2.2",
-    "follow-redirects": "1.16.2",
+    "follow-redirects": "1.16.3",
     "deepmerge": "4.3.1",
     "@eslint/config-array": {
       "minimatch": "11.0.3"

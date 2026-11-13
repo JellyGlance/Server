@@ -89,6 +89,7 @@ async function appendLog(entries) {
 }
 
 async function send(rule, context, { http } = {}) {
+  if (process.env.JG_DISABLE_NOTIFICATIONS === "1") return { ok: false, skipped: true };
   const started = Date.now();
   const entry = { id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, ruleId: rule.id, ruleName: rule.name, trigger: rule.trigger, format: rule.format, test: Boolean(context.data?.test), title: context.title, at: new Date().toISOString() };
   try {
@@ -105,6 +106,7 @@ async function send(rule, context, { http } = {}) {
 
 // Called for every event on the webhook bus. Never throws.
 async function dispatch(eventType, data = {}, options = {}) {
+  if (process.env.JG_DISABLE_NOTIFICATIONS === "1") return [];
   try {
     const rules = rulesLib.rulesFor(await loadRules(), eventType, data);
     if (!rules.length) return [];

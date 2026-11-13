@@ -6,6 +6,8 @@ import HeadphoneLineIcon from "remixicon-react/HeadphoneLineIcon";
 import TerminalBoxLineIcon from "remixicon-react/TerminalBoxLineIcon";
 import Tv2LineIcon from "remixicon-react/Tv2LineIcon";
 import ClosedCaptioningLineIcon from "remixicon-react/ClosedCaptioningLineIcon";
+import DeleteBin6LineIcon from "remixicon-react/DeleteBin6LineIcon";
+import StackLineIcon from "remixicon-react/StackLineIcon";
 import PageTabs, { readAuth, readNavAvailability } from "./components/general/PageTabs";
 
 const ServerManagement = lazy(() => import("./server-management"));
@@ -15,6 +17,8 @@ const Audiobookshelf = lazy(() => import("./audiobookshelf"));
 const OpsCopilot = lazy(() => import("./ops-copilot"));
 const IncompleteSeasons = lazy(() => import("./incomplete-seasons"));
 const SubtitleGap = lazy(() => import("./subtitle-gap"));
+const CleanupRules = lazy(() => import("./cleanup-rules"));
+const AutoCollections = lazy(() => import("./auto-collections"));
 
 export default function ServerHub() {
   const { isAdmin } = readAuth();
@@ -23,6 +27,8 @@ export default function ServerHub() {
     { id: "ops-copilot", label: "Ops Copilot", icon: TerminalBoxLineIcon, visible: isAdmin, render: () => <OpsCopilot /> },
     { id: "incomplete-seasons", label: "Incomplete Seasons", icon: Tv2LineIcon, visible: isAdmin, render: () => <IncompleteSeasons /> },
     { id: "subtitle-gaps", label: "Subtitle Gaps", icon: ClosedCaptioningLineIcon, visible: isAdmin, render: () => <SubtitleGap /> },
+    { id: "cleanup", label: "Cleanup", icon: DeleteBin6LineIcon, visible: isAdmin, render: () => <CleanupRules /> },
+    { id: "collections", label: "Collections", icon: StackLineIcon, visible: isAdmin, render: () => <AutoCollections /> },
     { id: "automation", label: "Automation Health", icon: RadarLineIcon, visible: readNavAvailability("jellyglance_automation_health_nav_available"), render: () => <AutomationHealth /> },
     { id: "maintainerr", label: "Maintainerr", icon: Database2LineIcon, visible: readNavAvailability("jellyglance_maintainerr_nav_available"), render: () => <Maintainerr /> },
     { id: "audiobooks", label: "Audiobooks", icon: HeadphoneLineIcon, visible: readNavAvailability("jellyglance_audiobookshelf_nav_available"), render: () => <Audiobookshelf /> },

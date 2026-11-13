@@ -270,14 +270,22 @@ Connect these under **Settings > Integrations**. See the [integration directory]
 
 ## Quick start
 
+### One-Click Deploy
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/JellyGlance/)
+
 ### Docker Compose
 
 Create a `docker-compose.yml` (or start from the one in this repo):
 
+> **Postgres version:** Use `postgres:18-alpine` for new installations. The official Postgres 18 image defaults to `PGDATA=/var/lib/postgresql/18/docker`; mount the data volume at `/var/lib/postgresql`, not the old `/var/lib/postgresql/data` path used by Postgres 17 and earlier. See the [official image documentation](https://hub.docker.com/_/postgres#pgdata).
+>
+> **Existing databases:** Do not switch an existing volume between major versions just by changing the image tag or mount path. Back up with the old version, dump the database, restore into a fresh Postgres 18 volume, and verify the restore before retiring the old data. Changing the mount does not migrate the database.
+
 ```yaml
 services:
   jellyglance-db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: jellyglance-db
     restart: unless-stopped
     shm_size: "1gb"
@@ -286,7 +294,7 @@ services:
       POSTGRES_PASSWORD: change-me
       POSTGRES_DB: jellyglance
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready --dbname=jellyglance --username=postgres"]
       interval: 10s

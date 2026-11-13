@@ -310,6 +310,9 @@ async function ActivityMonitor(defaultInterval) {
         currentIntervalId = setInterval(runMonitoring, currentInterval);
       }
 
+      // Demo sessions are for looking at Home only: no webhooks, no watchdog or history writes.
+      if (require("../classes/demo-sessions").isDemoSessionsActive()) return;
+
       const { started: playbackStarted, ended: playbackEnded } = playbackNotifier.collect(SessionData);
       if (playbackStarted.length > 0) {
         await Promise.all(
