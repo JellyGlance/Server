@@ -92,4 +92,61 @@ describe("newsletter automations", () => {
       else process.env.JG_DISABLE_NOTIFICATIONS = previous;
     }
   });
+
+  it("shows the kicker once and a Europe/London timestamp instead of a raw ISO date", () => {
+    const generatedAt = new Date("2026-11-13T00:07:39.088Z");
+    const welcome = automations.buildWelcomeEmail({
+      person: { name: "Alex" },
+      items: [{ Id: "1", Name: "A Very Long Title That Should Wrap Without Clipping", Type: "Movie" }],
+      locale: "en-GB",
+      base: "http://192.168.0.200:3410",
+      generatedAt,
+    });
+    const kickers = welcome.html.match(/text-transform:uppercase;">Welcome<\/div>/g) || [];
+    assert.equal(kickers.length, 1);
+    assert.doesNotMatch(welcome.html, /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
+    assert.match(welcome.html, /13 Nov 2026, 00:07 GMT/);
+    assert.match(welcome.html, /Welcome, Alex/);
+    assert.match(welcome.html, /overflow-wrap:anywhere/);
+    assert.equal(welcome.generatedAt, "13 Nov 2026, 00:07 GMT");
+    assert.equal(automations.formatLondonTime(generatedAt), "13 Nov 2026, 00:07 GMT");
+  });
+
+  it("prefers a recent used Wizarr invitee and falls back to a labelled sample user", () => {
+    const users = [
+      { name: "Ben", email: "ben@example.com" },
+      { name: "Sam", email: "sam@example.com" },
+    ];
+    const invitee = automations.pickWelcomePerson({
+      users,
+      invitees: [
+        { displayName: "Pending Pat", status: "pending", created: "2026-11-12T12:00:00Z" },
+        { usedBy: "Sam", status: "used", usedAt: "2026-11-10T10:00:00Z" },
+        { usedBy: "Casey", status: "used", usedAt: "2026-11-11T09:00:00Z" },
+      ],
+    });
+    assert.equal(invitee.name, "Casey");
+    assert.equal(invitee.invitee, true);
+    assert.equal(invitee.sample, false);
+
+    const matched = automations.pickWelcomePerson({
+      users,
+      invitees: [{ usedBy: { username: "Sam" }, status: "used", usedAt: "2026-11-10T10:00:00Z" }],
+    });
+    assert.equal(matched.name, "Sam");
+    assert.equal(matched.email, "sam@example.com");
+
+    const sample = automations.pickWelcomePerson({ users, invitees: [], sampleName: "Sample viewer" });
+    assert.equal(sample.name, "Sample viewer");
+    assert.equal(sample.sample, true);
+
+    const preview = automations.buildWelcomeEmail({
+      person: sample,
+      items: [],
+      locale: "en-GB",
+      generatedAt: new Date("2026-11-13T00:07:39.088Z"),
+    });
+    assert.match(preview.html, /Sample viewer/);
+    assert.match(preview.html, /This is a sample preview\. No recent Wizarr invitee was found\./);
+  });
 });

@@ -95,7 +95,7 @@ export default function NewsletterChannels({ campaignId, locale, settings, onSav
             <Form.Check
               type="switch"
               id="channel-discord"
-              label={t("FEATURES.NEWSLETTER.CHANNEL_ENABLED")}
+              label={t("FEATURES.NEWSLETTER.DISCORD_ENABLED")}
               checked={Boolean(draft.discord?.enabled)}
               onChange={(event) => update("discord", "enabled", event.target.checked)}
             />
@@ -114,7 +114,7 @@ export default function NewsletterChannels({ campaignId, locale, settings, onSav
             <Form.Check
               type="switch"
               id="channel-telegram"
-              label={t("FEATURES.NEWSLETTER.CHANNEL_ENABLED")}
+              label={t("FEATURES.NEWSLETTER.TELEGRAM_ENABLED")}
               checked={Boolean(draft.telegram?.enabled)}
               onChange={(event) => update("telegram", "enabled", event.target.checked)}
             />

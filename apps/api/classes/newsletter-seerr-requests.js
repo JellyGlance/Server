@@ -53,11 +53,21 @@ function normalizeLite(item, app) {
 }
 
 async function fetchLiteSeerrRequests({ userName = "", take = 100, fetchJson } = {}) {
+  const needle = String(userName || "").toLowerCase();
+  const requests = [];
+  if (typeof fetchJson === "function") {
+    const data = await fetchJson("/api/v1/request", { take, skip: 0, sort: "added" });
+    const rows = data?.results || data || [];
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const item = normalizeLite(row, { name: "Seerr" });
+      if (needle && !String(item.requestedBy).toLowerCase().includes(needle)) continue;
+      requests.push(item);
+    }
+    return requests;
+  }
   const integrations = await getIntegrations().catch(() => ({ arrApps: [] }));
   const apps = (integrations.arrApps || []).filter(isSeerrApp);
   if (!apps.length) return [];
-  const needle = String(userName || "").toLowerCase();
-  const requests = [];
   for (const app of apps) {
     const url = cleanUrl(app.values?.url);
     if (!url) continue;
@@ -134,6 +144,20 @@ async function listFulfilledRequests({ lastSentAt = null, days = 7, limit = 12, 
   return listFulfilledFrom(requests, { lastSentAt, days, limit, now });
 }
 
+function isOpenRequest(request) {
+  const status = String(request?.status || "").trim().toLowerCase();
+  return status === "pending" || status === "approved";
+}
+
+function countOpenRequests(requests = []) {
+  return (requests || []).filter(isOpenRequest).length;
+}
+
+async function countOpenSeerrRequests({ take = 100, fetchJson } = {}) {
+  const requests = await fetchLiteSeerrRequests({ take, fetchJson }).catch(() => []);
+  return countOpenRequests(requests);
+}
+
 module.exports = {
   fetchLiteSeerrRequests,
   listFulfilledRequests,
@@ -141,4 +165,7 @@ module.exports = {
   fulfilledAt,
   normalizeLite,
   enrichFromLibrary,
+  isOpenRequest,
+  countOpenRequests,
+  countOpenSeerrRequests,
 };

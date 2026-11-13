@@ -220,7 +220,7 @@ function wrapEmailDocument({
                 ${theme.seasonalImage ? `<img src="${theme.seasonalImage}" alt="${theme.resolvedTheme}" width="640" height="180" style="display:block;width:100%;max-width:640px;height:180px;object-fit:cover;object-position:center;margin:0 0 16px;border-radius:12px;" />` : ""}
                 ${logo}
                 <div style="color:${theme.muted};font-size:12px;font-weight:800;text-transform:uppercase;">${campaignName}</div>
-                <h1 style="margin:8px 0 6px;color:${theme.heading};font-size:28px;font-family:${theme.font};">${subject}</h1>
+                <h1 style="margin:8px 0 6px;color:${theme.heading};font-size:28px;line-height:1.2;font-family:${theme.font};overflow-wrap:anywhere;word-break:break-word;">${subject}</h1>
                 ${generatedAt ? `<p style="margin:0;color:${theme.muted};font-size:14px;">${generatedAt}</p>` : ""}
               </td>
             </tr>

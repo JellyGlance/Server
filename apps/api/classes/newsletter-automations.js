@@ -7,6 +7,9 @@ const newsletterI18n = require("./newsletter-i18n");
 const newsletterTheme = require("./newsletter-theme");
 const publicUrl = require("./newsletter-public-url");
 const { notificationsDisabled } = require("./newsletter-channels");
+const { axios } = require("./axios");
+const { getIntegrations, getIntegrationData } = require("./integration-store");
+const seerrRequests = require("./newsletter-seerr-requests");
 
 const PLAY_MILESTONES = [100, 500, 1000];
 const YEAR_MS = 365.25 * 24 * 60 * 60 * 1000;
@@ -84,34 +87,43 @@ function itemListHtml(items, env, theme) {
       const href = publicUrl.itemHref(env.base, item.Id || item.id);
       const name = escapeHtml(item.Name || item.name);
       const meta = escapeHtml([item.ProductionYear || item.year, item.Type || item.type].filter(Boolean).join(" · "));
-      const title = href ? `<a href="${escapeHtml(href)}" style="color:${theme.heading};text-decoration:none;font-weight:700;">${name}</a>` : `<strong>${name}</strong>`;
-      return `<tr><td style="padding:6px 0;border-bottom:1px solid ${theme.border};">${title}${meta ? ` <span style="color:${theme.muted};font-size:13px;">${meta}</span>` : ""}</td></tr>`;
+      const title = href ? `<a href="${escapeHtml(href)}" style="color:${theme.heading};text-decoration:none;font-weight:700;overflow-wrap:anywhere;word-break:break-word;">${name}</a>` : `<strong style="overflow-wrap:anywhere;word-break:break-word;">${name}</strong>`;
+      return `<tr><td style="padding:6px 0;border-bottom:1px solid ${theme.border};overflow-wrap:anywhere;word-break:break-word;">${title}${meta ? ` <span style="color:${theme.muted};font-size:13px;">${meta}</span>` : ""}</td></tr>`;
     })
     .join("");
   return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${rows}</table>`;
 }
 
-function wrapEmail({ subject, campaignName, kicker, heading, bodyHtml, locale, assetBase, generatedAt }) {
-  const { t } = newsletterI18n.translator(locale);
-  const theme = newsletterTheme.applySeasonalBranding({}, generatedAt || new Date(), { assetBase });
-  const inner = `
-    <div style="color:${theme.muted};font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">${escapeHtml(kicker)}</div>
-    <h1 style="margin:8px 0 16px;color:${theme.heading};font-size:28px;line-height:1.15;">${escapeHtml(heading)}</h1>
-    ${bodyHtml}
-  `;
+function formatLondonTime(value = new Date()) {
+  const at = value instanceof Date ? value : new Date(value);
+  if (!Number.isFinite(at.getTime())) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZoneName: "short",
+  }).format(at);
+}
+
+function wrapEmail({ subject, campaignName, kicker, heading, bodyHtml, assetBase, generatedAt }) {
+  const when = formatLondonTime(generatedAt || new Date());
   return {
     subject,
     html: newsletterTheme.wrapEmailDocument({
-      bodyHtml: inner,
-      subject,
-      campaignName,
-      generatedAt: generatedAt || new Date().toISOString(),
+      bodyHtml,
+      subject: escapeHtml(heading || subject),
+      campaignName: escapeHtml(kicker || campaignName),
+      generatedAt: when,
+      date: generatedAt || new Date(),
       branding: {},
       assetBase,
     }),
-    text: `${kicker}\n${heading}\n\n${String(bodyHtml || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`,
-    t,
-    theme,
+    text: `${kicker}\n${heading}\n${when}\n\n${String(bodyHtml || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`,
+    generatedAt: when,
   };
 }
 
@@ -129,26 +141,29 @@ function crossedYearMilestone(firstPlay, marks = [1], now = new Date()) {
   return marks.filter((mark) => years >= mark);
 }
 
-function buildWelcomeEmail({ person = {}, items = [], locale, assetBase, base } = {}) {
-  const { t, locale: resolved } = newsletterI18n.translator(locale);
+function buildWelcomeEmail({ person = {}, items = [], locale, assetBase, base, generatedAt } = {}) {
+  const { t } = newsletterI18n.translator(locale);
   const theme = newsletterTheme.applySeasonalBranding({}, new Date(), { assetBase });
   const name = person.name || person.Name || t("FRIEND");
   const heading = t("WELCOME_TITLE", { name });
   const recentHeading = items.length ? `<h2 style="margin:22px 0 8px;color:${theme.heading};font-size:18px;">${escapeHtml(t("WELCOME_RECENT"))}</h2>${itemListHtml(items, { base }, theme)}` : "";
-  const bodyHtml = `<p style="margin:0 0 12px;color:${theme.text};line-height:1.55;">${escapeHtml(t("WELCOME_BODY", { name }))}</p>${recentHeading}${ctaButton(t("WELCOME_CTA"), base, theme)}`;
+  const sampleNote = person.sample
+    ? `<p style="margin:0 0 12px;color:${theme.muted};font-size:13px;line-height:1.5;">${escapeHtml(t("WELCOME_SAMPLE_NOTE"))}</p>`
+    : "";
+  const bodyHtml = `${sampleNote}<p style="margin:0 0 12px;color:${theme.text};line-height:1.55;">${escapeHtml(t("WELCOME_BODY", { name }))}</p>${recentHeading}${ctaButton(t("WELCOME_CTA"), base, theme)}`;
   return wrapEmail({
     subject: t("WELCOME_SUBJECT", { name }),
     campaignName: t("WELCOME_KICKER"),
     kicker: t("WELCOME_KICKER"),
     heading,
     bodyHtml,
-    locale: resolved,
     assetBase,
+    generatedAt,
   });
 }
 
-function buildMilestoneEmail({ person = {}, kind = "plays", mark = 100, favourite = "", locale, assetBase, base } = {}) {
-  const { t, locale: resolved } = newsletterI18n.translator(locale);
+function buildMilestoneEmail({ person = {}, kind = "plays", mark = 100, favourite = "", locale, assetBase, base, generatedAt } = {}) {
+  const { t } = newsletterI18n.translator(locale);
   const theme = newsletterTheme.applySeasonalBranding({}, new Date(), { assetBase });
   const name = person.name || person.Name || t("FRIEND");
   const isYear = kind === "year";
@@ -161,13 +176,13 @@ function buildMilestoneEmail({ person = {}, kind = "plays", mark = 100, favourit
     kicker: t("MILESTONE_KICKER"),
     heading,
     bodyHtml,
-    locale: resolved,
     assetBase,
+    generatedAt,
   });
 }
 
-function buildReengagementEmail({ person = {}, items = [], inactiveDays = DEFAULT_INACTIVE_DAYS, lastWatched = "", locale, assetBase, base } = {}) {
-  const { t, locale: resolved } = newsletterI18n.translator(locale);
+function buildReengagementEmail({ person = {}, items = [], inactiveDays = DEFAULT_INACTIVE_DAYS, lastWatched = "", locale, assetBase, base, generatedAt } = {}) {
+  const { t } = newsletterI18n.translator(locale);
   const theme = newsletterTheme.applySeasonalBranding({}, new Date(), { assetBase });
   const name = person.name || person.Name || t("FRIEND");
   const heading = t("REENGAGE_TITLE", { name });
@@ -179,8 +194,8 @@ function buildReengagementEmail({ person = {}, items = [], inactiveDays = DEFAUL
     kicker: t("REENGAGE_KICKER"),
     heading,
     bodyHtml,
-    locale: resolved,
     assetBase,
+    generatedAt,
   });
 }
 
@@ -188,8 +203,8 @@ function statRow(label, value, theme) {
   return `<tr><td style="padding:8px 0;color:${theme.muted};">${escapeHtml(label)}</td><td style="padding:8px 0;text-align:right;color:${theme.heading};font-weight:800;">${escapeHtml(value)}</td></tr>`;
 }
 
-function buildAdminDigestEmail({ stats = {}, items = [], locale, assetBase, base, periodLabel = "" } = {}) {
-  const { t, locale: resolved } = newsletterI18n.translator(locale);
+function buildAdminDigestEmail({ stats = {}, items = [], locale, assetBase, base, periodLabel = "", generatedAt } = {}) {
+  const { t } = newsletterI18n.translator(locale);
   const theme = newsletterTheme.applySeasonalBranding({}, new Date(), { assetBase });
   const heading = t("ADMIN_DIGEST_TITLE");
   const rows = [
@@ -207,8 +222,8 @@ function buildAdminDigestEmail({ stats = {}, items = [], locale, assetBase, base
     kicker: t("ADMIN_DIGEST_KICKER"),
     heading,
     bodyHtml,
-    locale: resolved,
     assetBase,
+    generatedAt,
   });
 }
 
@@ -303,11 +318,17 @@ async function loadAdminStats(days = 7) {
       LIMIT 6`,
     [days]
   );
+  let openRequests = 0;
+  try {
+    openRequests = await seerrRequests.countOpenSeerrRequests({ take: 100 });
+  } catch {
+    openRequests = 0;
+  }
   return {
     storageLabel,
     newItems: added?.count || 0,
     newUsers: newUsers?.count || 0,
-    openRequests: 0,
+    openRequests,
     missingPosters: repair?.missing || 0,
     items,
   };
@@ -339,6 +360,111 @@ function isoWeekKey(date = new Date()) {
   return `${stamp.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
+
+function inviteeName(invite = {}) {
+  const usedBy = invite.usedBy || invite.used_by || invite.user;
+  if (usedBy && typeof usedBy === "object") {
+    return String(usedBy.username || usedBy.name || usedBy.display_name || usedBy.email || "").trim();
+  }
+  const text = String(usedBy || "").trim();
+  if (text && !/^<User\s+\d+>$/.test(text)) return text;
+  return String(invite.displayName || invite.display_name || invite.name || "").trim();
+}
+
+function inviteeStamp(invite = {}) {
+  const raw = invite.usedAt || invite.used_at || invite.created || invite.created_at || "";
+  const time = Date.parse(raw);
+  return Number.isFinite(time) ? time : 0;
+}
+
+function isUsedInvite(invite = {}) {
+  const status = String(invite.status || "").toLowerCase();
+  return Boolean(invite.usedAt || invite.used_at || invite.used) || status === "used" || status === "accepted";
+}
+
+function pickWelcomePerson({ users = [], invitees = [], sampleName = "Sample viewer" } = {}) {
+  const ranked = [...(invitees || [])].sort((a, b) => {
+    const usedDiff = Number(isUsedInvite(b)) - Number(isUsedInvite(a));
+    if (usedDiff) return usedDiff;
+    return inviteeStamp(b) - inviteeStamp(a);
+  });
+  for (const invite of ranked) {
+    const name = inviteeName(invite);
+    if (!name) continue;
+    const match = (users || []).find((user) => String(user.name || user.Name || "").toLowerCase() === name.toLowerCase());
+    return {
+      ...(match || {}),
+      name: match?.name || match?.Name || name,
+      email: match?.email || "",
+      invitee: true,
+      sample: false,
+    };
+  }
+  return { name: sampleName, sample: true };
+}
+
+async function listRecentWizarrInvitees() {
+  const invitees = [];
+  const seen = new Set();
+  const add = (invite) => {
+    const name = inviteeName(invite);
+    if (!name) return;
+    const key = name.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    invitees.push({
+      name,
+      usedBy: name,
+      displayName: invite.displayName || invite.display_name || "",
+      status: invite.status,
+      usedAt: invite.usedAt || invite.used_at || null,
+      created: invite.created || invite.created_at || null,
+    });
+  };
+
+  try {
+    const integrations = await getIntegrations();
+    const sources = (integrations.thirdParty || []).filter((integration) => {
+      const name = String(integration?.name || integration?.slug || "").toLowerCase();
+      return integration.connected && (name === "wizarr" || name.includes("wizarr"));
+    });
+    for (const integration of sources) {
+      const url = String(integration.values?.url || "").trim().replace(/\/+$/, "");
+      if (!url || !integration.values?.secret) continue;
+      const response = await axios.get(`${url}/api/invitations`, {
+        timeout: 12000,
+        headers: {
+          Accept: "application/json",
+          "X-API-Key": integration.values.secret,
+        },
+      });
+      const invitations = Array.isArray(response.data?.invitations)
+        ? response.data.invitations
+        : Array.isArray(response.data)
+          ? response.data
+          : [];
+      invitations.forEach(add);
+    }
+  } catch {
+    // Fall back to the local invite cache; never create or write invites.
+  }
+
+  if (!invitees.length) {
+    try {
+      const cached = await getIntegrationData();
+      const items = cached?.invites?.items || [];
+      items.forEach(add);
+    } catch {
+      /* ignore */
+    }
+  }
+  return invitees.sort((a, b) => {
+    const usedDiff = Number(isUsedInvite(b)) - Number(isUsedInvite(a));
+    if (usedDiff) return usedDiff;
+    return inviteeStamp(b) - inviteeStamp(a);
+  });
+}
+
 async function previewAutomation(kind, options = {}) {
   const locale = options.locale;
   const assetBase = options.assetBase || options.base || "";
@@ -346,7 +472,15 @@ async function previewAutomation(kind, options = {}) {
   const items = Array.isArray(options.items) ? options.items : await recentlyAdded(6);
   const users = Array.isArray(options.users) ? options.users : await userActivityRows();
   if (kind === "welcome") {
-    const person = options.person || users[0] || { name: "Alex" };
+    const { t } = newsletterI18n.translator(locale);
+    const invitees = Array.isArray(options.invitees) ? options.invitees : await listRecentWizarrInvitees();
+    const person =
+      options.person ||
+      pickWelcomePerson({
+        users,
+        invitees,
+        sampleName: t("WELCOME_SAMPLE_NAME"),
+      });
     return { kind, person, ...buildWelcomeEmail({ person, items, locale, assetBase, base }) };
   }
   if (kind === "milestone") {
@@ -598,4 +732,8 @@ module.exports = {
   previewAutomation,
   runDueAutomations,
   isoWeekKey,
+  formatLondonTime,
+  pickWelcomePerson,
+  inviteeName,
+  listRecentWizarrInvitees,
 };

@@ -20,3 +20,37 @@ describe("newsletter fulfilled request filter", () => {
     assert.deepEqual(items.map((item) => item.Name), ["Recent"]);
   });
 });
+
+describe("newsletter open request count", () => {
+  it("counts pending and approved requests and ignores closed ones", () => {
+    assert.equal(seerr.countOpenRequests([
+      { Name: "One", status: "Pending" },
+      { Name: "Two", status: "Approved" },
+      { Name: "Three", status: "Available" },
+      { Name: "Four", status: "Declined" },
+      { Name: "Five", status: "Failed" },
+    ]), 2);
+  });
+
+  it("counts open requests from a GET-only Seerr read", async () => {
+    let method;
+    let path;
+    const count = await seerr.countOpenSeerrRequests({
+      take: 20,
+      fetchJson: async (url) => {
+        method = "GET";
+        path = String(url);
+        return {
+          results: [
+            { id: 1, status: 1, media: { status: 3 } },
+            { id: 2, status: 2, media: { status: 3 } },
+            { id: 3, status: 5, media: { status: 5 } },
+          ],
+        };
+      },
+    });
+    assert.equal(method, "GET");
+    assert.match(path, /\/api\/v1\/request/);
+    assert.equal(count, 2);
+  });
+});

@@ -6858,6 +6858,9 @@
   background: #1e1f22;
   border-left: 4px solid #6ee7f9;
   color: #dce3ee;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .telegram-preview {
