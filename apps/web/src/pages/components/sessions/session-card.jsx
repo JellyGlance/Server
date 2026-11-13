@@ -21,68 +21,42 @@ import IpInfoModal from "../ip-info";
 import { Trans } from "react-i18next";
 import baseUrl from "../../../lib/baseurl";
 import axios from "../../../lib/axios_instance";
-import SessionGlanceStrip from "./session-glance-strip";
 import TranscodeExplainer from "./transcode-explainer";
+import { SessionField, SessionPlaybackFields, SessionPlaybackPills, formatTranscodeReasons } from "./session-playback";
 import { formatTicks, getSessionProgress } from "../../../lib/session-progress";
 
-function formatTranscodeReasons(session) {
-  const reasons = session?.TranscodingInfo?.TranscodeReasons;
-  if (Array.isArray(reasons) && reasons.length) {
-    return reasons
-      .map((reason) => String(reason).replace(/([a-z])([A-Z])/g, "$1 $2"))
-      .join(", ");
-  }
-  const transcoding = session?.TranscodingInfo;
-  if (!transcoding) return "";
-  const parts = [];
-  if (transcoding.IsVideoDirect === false) parts.push("Video remux/transcode");
-  if (transcoding.IsAudioDirect === false) parts.push("Audio remux/transcode");
-  return parts.join(", ");
+// Simple card art, best first: an episode's still, a movie's backdrop, then
+// the series backdrop, then the poster. A failed image steps to the next one.
+function getSessionArtSources(item, root) {
+  const backdrop = (id, label) => id && { label, url: `${root}/proxy/Items/Images/Backdrop?id=${id}&fillWidth=720&quality=60` };
+  const primary = (id, label) => id && { label, url: `${root}/proxy/Items/Images/Primary?id=${id}&fillWidth=720&quality=60` };
+  const parentId = item.SeriesId || item.ParentBackdropItemId || item.AlbumId;
+  const list =
+    item.Type === "Episode"
+      ? [primary(item.Id, "episode still"), backdrop(item.SeriesId, "series backdrop"), primary(item.SeriesId, "series poster")]
+      : [
+          backdrop(item.Id, `${(item.Type || "item").toLowerCase()} backdrop`),
+          backdrop(parentId, "parent backdrop"),
+          primary(item.AlbumId, "album art"),
+          primary(item.Id, "poster"),
+        ];
+  return list.filter(Boolean).filter((source, index, all) => all.findIndex((other) => other.url === source.url) === index);
 }
 
-function lastStreamPart(value) {
-  const parts = String(value || "").split("->");
-  return parts[parts.length - 1].trim();
-}
-
-// Short, client-agnostic pills: playback method, resolution/codec and bitrate.
-function getSessionPills(session) {
-  const item = session.NowPlayingItem || {};
-  const transcoding = session.TranscodingInfo;
-  const pills = [];
-  const videoTranscode = Boolean(transcoding) && transcoding.IsVideoDirect === false;
-  const audioTranscode = Boolean(transcoding) && transcoding.IsAudioDirect === false;
-
-  if (videoTranscode) {
-    pills.push({ key: "method", label: "Video transcode", tone: "warn" });
-  } else {
-    pills.push({ key: "method", label: session.PlayState?.PlayMethod === "DirectStream" ? "Direct stream" : "Direct play", tone: "ok" });
-  }
-  if (audioTranscode) {
-    pills.push({ key: "audio", label: "Audio transcode", tone: "warn" });
-  }
-
-  const videoMatch = /\(([^-\s)]+)-([^\s)]+)/.exec(item.VideoStream || "");
-  if (videoMatch) {
-    const target = /->\s*([^-\s)]+)-([^\s)]+)/.exec(item.VideoStream || "");
-    const codec = target ? target[1] : videoMatch[1];
-    const resolution = target ? target[2] : videoMatch[2];
-    pills.push({ key: "video", label: `${resolution} · ${codec}` });
-  }
-
-  const bitrate = lastStreamPart(item.VideoBitrateStream);
-  if (bitrate) {
-    pills.push({ key: "bitrate", label: bitrate });
-  }
-  return pills;
-}
-
-function formatStreamDetail(value) {
-  const inner = /\((.*)\)/.exec(String(value || ""));
-  return (inner ? inner[1] : String(value || ""))
-    .replace(/->/g, "→")
-    .replace(/-(\d+)Ch/gi, " $1ch")
-    .trim();
+function SessionCardArt({ sources }) {
+  const [index, setIndex] = useState(0);
+  const source = sources[index];
+  if (!source) return null;
+  return (
+    <img
+      className="session-card-art"
+      src={source.url}
+      data-art-source={source.label}
+      alt=""
+      decoding="async"
+      onError={() => setIndex((value) => value + 1)}
+    />
+  );
 }
 
 function formatClock(date) {
@@ -106,18 +80,6 @@ function SessionDetailItem({ label, value, wide = false }) {
     <div className={`session-popout-detail${wide ? " is-wide" : ""}`}>
       <span>{label}</span>
       <strong>{value}</strong>
-    </div>
-  );
-}
-
-function SessionField({ label, value, title }) {
-  if (value === undefined || value === null || value === "") return null;
-  return (
-    <div className="session-field">
-      <span className="session-field-label">{label}</span>
-      <Tooltip title={title || (typeof value === "string" ? value : "")}>
-        <span className="session-field-value">{value}</span>
-      </Tooltip>
     </div>
   );
 }
@@ -198,6 +160,47 @@ const SESSION_MESSAGE_TEMPLATES = [
 
 const SESSION_MESSAGE_TEMPLATE_GROUPS = [...new Set(SESSION_MESSAGE_TEMPLATES.map((template) => template.group))];
 
+const STOP_WITH_MESSAGE_PRESETS = [
+  { id: "maintenance", label: "Server maintenance", text: "The server is going down for maintenance. Playback will stop in a few seconds." },
+  { id: "too-many", label: "Too many streams", text: "This account has too many streams running. Playback will stop in a few seconds." },
+  { id: "direct-play", label: "Please use direct play", text: "Please switch to direct play. This transcode will be stopped in a few seconds." },
+  { id: "sharing", label: "Account sharing", text: "This session looks like account sharing. Playback will stop in a few seconds." },
+  { id: "custom", label: "Custom message", text: "" },
+];
+const STOP_WITH_MESSAGE_DELAY_MS = 5000;
+
+function userInitials(name) {
+  const words = String(name || "").trim().split(/[\s._-]+/).filter(Boolean);
+  if (!words.length) return "?";
+  const letters = words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0].slice(0, 2);
+  return letters.toUpperCase();
+}
+
+// The user's Jellyfin avatar through the image proxy, or their initials when
+// they have none or it fails to load. Live sessions say whether an image
+// exists (UserPrimaryImageTag); demo sessions don't, so those just try it.
+function SessionUserAvatar({ session }) {
+  const [failed, setFailed] = useState(false);
+  const mayHaveImage = session.UserPrimaryImageTag !== undefined || session.IsDemo;
+  if (!session.UserId || !mayHaveImage || failed) {
+    return (
+      <span className="session-card-user-image session-user-initials" aria-hidden="true">
+        {userInitials(session.UserName)}
+      </span>
+    );
+  }
+  return (
+    <img
+      className="session-card-user-image"
+      src={baseUrl + "/proxy/Users/Images/Primary?id=" + session.UserId + "&fillWidth=72&quality=55"}
+      loading="lazy"
+      decoding="async"
+      alt=""
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function SessionCard(props) {
   const session = props.data.session;
   const hideIpAddress = Boolean(props.hideIpAddress);
@@ -216,7 +219,11 @@ function SessionCard(props) {
   const [messageWhen, setMessageWhen] = useState(() => defaultMessageDateTime(15));
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [stopMessageOpen, setStopMessageOpen] = useState(false);
+  const [stopMessagePresetId, setStopMessagePresetId] = useState("maintenance");
+  const [stopMessageText, setStopMessageText] = useState(STOP_WITH_MESSAGE_PRESETS[0].text);
 
+  const simple = Boolean(props.simple);
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => setLoadBackdrop(true));
     return () => window.cancelAnimationFrame(frameId);
@@ -226,16 +233,12 @@ function SessionCard(props) {
     if (!messageOpen) setTemplateMenuOpen(false);
   }, [messageOpen]);
 
-  const cardStyle = {
+  // Detailed backdrop: only behind the text column (never under the poster),
+  // blurred by the image server instead of a CSS backdrop filter.
+  const backdropStyle = {
     backgroundImage: loadBackdrop
-      ? `url(/proxy/Items/Images/Backdrop?id=${mediaItemId}&fillWidth=560&quality=38), linear-gradient(135deg, var(--primary-color), #0b1119)`
+      ? `url(${baseUrl}/proxy/Items/Images/Backdrop?id=${mediaItemId}&fillWidth=560&quality=38&blur=12), linear-gradient(135deg, var(--primary-color), #0b1119)`
       : "linear-gradient(135deg, rgba(var(--primary-rgb), 0.28), #0b1119)",
-    backgroundSize: "cover",
-  };
-
-  const cardBgStyle = {
-    backdropFilter: "blur(8px)",
-    backgroundColor: "rgb(0, 0, 0, 0.46)",
   };
   const progress = getSessionProgress(nowPlaying, playState);
   const progressPercent = progress.percent;
@@ -270,6 +273,13 @@ function SessionCard(props) {
       : nowPlaying.Type === "Audio" && nowPlaying.Artists?.length > 0
         ? nowPlaying.Artists[0]
         : nowPlaying.SeriesName || nowPlaying.Type;
+  const artSources = simple ? getSessionArtSources(nowPlaying, baseUrl) : [];
+  const cardSubtitle =
+    nowPlaying.Type === "Episode"
+      ? [`S${nowPlaying.ParentIndexNumber ?? "?"} E${nowPlaying.IndexNumber ?? "?"}`, nowPlaying.Name].filter(Boolean).join(" · ")
+      : nowPlaying.Type === "Audio" && nowPlaying.Artists?.length > 0
+        ? nowPlaying.Artists[0]
+        : [nowPlaying.ProductionYear, nowPlaying.Type === "Movie" ? null : nowPlaying.Type].filter(Boolean).join(" · ") || nowPlaying.Type;
   const timecode = `${formatTicks(progress.positionTicks)}${progress.runtimeTicks ? `/${formatTicks(progress.runtimeTicks)}` : ""}`;
   const selectedMessageTemplate = SESSION_MESSAGE_TEMPLATES.find((item) => item.id === messageTemplateId) || SESSION_MESSAGE_TEMPLATES[0];
 
@@ -324,8 +334,8 @@ function SessionCard(props) {
 
   return (
     <Card
-      className="session-card"
-      style={cardStyle}
+      className={`session-card has-card-layout${simple ? " is-simple-card" : ""}`}
+
       role="button"
       tabIndex={0}
       onClick={handleCardClick}
@@ -378,7 +388,6 @@ function SessionCard(props) {
                 {isTranscoding ? <span className="is-transcoding">Transcoding</span> : <span>Direct</span>}
               </div>
               {transcodeReason ? <p className="session-popout-reason">{transcodeReason}</p> : null}
-              {canManage && isTranscoding ? <TranscodeExplainer session={session} defaultOpen /> : null}
               <h2>{title}</h2>
               <p>{subtitle}</p>
               <div className="session-popout-progress" aria-label={`Playback progress ${Math.round(progressPercent)} percent`}>
@@ -397,6 +406,11 @@ function SessionCard(props) {
               </div>
             </div>
           </div>
+          {canManage && isTranscoding ? (
+            <div className="session-popout-transcode">
+              <TranscodeExplainer session={session} defaultOpen />
+            </div>
+          ) : null}
           <div className="session-popout-grid">
             <div className="session-popout-detail">
               <span>Viewer</span>
@@ -472,6 +486,20 @@ function SessionCard(props) {
               >
                 <StopCircleLineIcon size={17} />
                 Stop playback
+              </button>
+              <button
+                type="button"
+                className="session-command is-stop-message"
+                disabled={actionBusy}
+                onClick={() => {
+                  setActionError("");
+                  setStopMessagePresetId("maintenance");
+                  setStopMessageText(STOP_WITH_MESSAGE_PRESETS[0].text);
+                  setStopMessageOpen(true);
+                }}
+              >
+                <StopCircleLineIcon size={17} />
+                Stop with message
               </button>
             </div>
           ) : null}
@@ -604,80 +632,136 @@ function SessionCard(props) {
           </button>
         </Modal.Footer>
       </Modal>
-      <div style={cardBgStyle} className="session-card-main rounded-top">
+      <Modal
+        show={stopMessageOpen}
+        onHide={() => setStopMessageOpen(false)}
+        centered
+        contentClassName="session-message-modal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Stop {session.UserName} with a message</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {actionError ? <p className="session-action-error">{actionError}</p> : null}
+          <p className="session-stop-message-lead">Jellyfin will show this on screen, then stop the stream after 5 seconds. This cannot be undone from here.</p>
+          <label className="session-message-select-label" htmlFor="stop-message-preset">Reason</label>
+          <select
+            id="stop-message-preset"
+            className="session-stop-message-preset"
+            value={stopMessagePresetId}
+            onChange={(event) => {
+              const preset = STOP_WITH_MESSAGE_PRESETS.find((item) => item.id === event.target.value) || STOP_WITH_MESSAGE_PRESETS[0];
+              setStopMessagePresetId(preset.id);
+              if (preset.id !== "custom") setStopMessageText(preset.text);
+            }}
+          >
+            {STOP_WITH_MESSAGE_PRESETS.map((preset) => (
+              <option key={preset.id} value={preset.id}>{preset.label}</option>
+            ))}
+          </select>
+          <textarea
+            className="session-message-text"
+            rows={4}
+            value={stopMessageText}
+            onChange={(event) => {
+              setStopMessagePresetId("custom");
+              setStopMessageText(event.target.value);
+            }}
+            placeholder="Write the on-screen message"
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <button type="button" className="session-command is-ghost" onClick={() => setStopMessageOpen(false)}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="session-command is-stop"
+            disabled={actionBusy || !stopMessageText.trim()}
+            onClick={async () => {
+              setActionBusy(true);
+              setActionError("");
+              try {
+                await axios.post(
+                  "/api/sessions/stop-with-message",
+                  { sessionId: session.Id, header: "JellyGlance", text: stopMessageText.trim(), delayMs: STOP_WITH_MESSAGE_DELAY_MS },
+                  { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+                );
+                setStopMessageOpen(false);
+                setSessionModalVisible(false);
+              } catch (error) {
+                setActionError(error?.response?.data?.error || "Unable to stop this session");
+              } finally {
+                setActionBusy(false);
+              }
+            }}
+          >
+            <StopCircleLineIcon size={17} />
+            {actionBusy ? "Stopping…" : "Confirm and stop"}
+          </button>
+        </Modal.Footer>
+      </Modal>
+      <div className="session-card-main has-card-layout rounded-top">
         <Row className="h-100 p-0 m-0">
           <Col className="session-card-banner-image">
-            <Card.Img
-              variant="top"
-              className={
-                props.data.session.NowPlayingItem.Type === "Audio"
-                  ? "stat-card-image-audio rounded-0 rounded-start"
-                  : "session-card-item-image"
-              }
-              src={
-                baseUrl +
-                "/proxy/Items/Images/Primary?id=" +
-                mediaItemId +
-                "&fillHeight=240&fillWidth=160&quality=45"
-              }
-              loading="lazy"
-              decoding="async"
-            />
+            {props.data.session.NowPlayingItem.Type === "Audio" ? (
+              <Card.Img
+                variant="top"
+                className="stat-card-image-audio rounded-0 rounded-start"
+                src={baseUrl + "/proxy/Items/Images/Primary?id=" + mediaItemId + "&fillHeight=240&fillWidth=160&quality=45"}
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              // The Primary poster (series poster for episodes) filling a 2:3
+              // panel exactly as tall as the card (object-fit: cover).
+              <img
+                className="session-card-poster"
+                src={`${baseUrl}/proxy/Items/Images/Primary?id=${mediaItemId}&fillHeight=380&fillWidth=254&quality=60`}
+                loading="lazy"
+                decoding="async"
+                alt=""
+              />
+            )}
           </Col>
-          <Col className="w-100 h-100 m-0 px-0">
-            <Card.Body className="session-card-body w-100 h-100">
+          <Col className="w-100 h-100 m-0 px-0 session-card-art-area">
+            {simple ? (
+              <>
+                <SessionCardArt key={artSources.map((source) => source.url).join("|")} sources={artSources} />
+                <span className="session-card-art-shade" aria-hidden="true" />
+              </>
+            ) : (
+              <>
+                <span className="session-card-backdrop" style={backdropStyle} aria-hidden="true" />
+                <span className="session-card-backdrop-shade" aria-hidden="true" />
+              </>
+            )}
+            <Card.Body className="session-card-body has-card-layout w-100 h-100">
               <Container className="h-100 d-flex flex-column justify-content-between g-0 session-card-layout">
                 <div className="session-card-head">
                   <div className="session-title-copy">
                     <Card.Text className="session-title">
                       <span className="session-play-state">{playState.IsPaused ? <PauseFillIcon /> : <PlayFillIcon />}</span>
-                      <Link to={`/libraries/item/${nowPlaying.Id}`} target="_blank" className="item-name">
+                      <Link to={`/libraries/item/${nowPlaying.Id}`} target="_blank" className="item-name" title={title}>
                         {title}
                       </Link>
                     </Card.Text>
-                    <Tooltip title={`${session.DeviceName} · ${session.Client} ${session.ApplicationVersion}`}>
-                      <Card.Text className="session-subtitle">
-                        {[subtitle, session.Client && `${session.Client} ${session.ApplicationVersion || ""}`.trim()].filter(Boolean).join(" · ")}
-                      </Card.Text>
+                    <Tooltip title={`${cardSubtitle} · ${session.DeviceName} · ${session.Client} ${session.ApplicationVersion || ""}`.trim()}>
+                      <Card.Text className="session-subtitle">{cardSubtitle}</Card.Text>
                     </Tooltip>
                   </div>
-                  <Tooltip title={session.UserName}>
-                    <Link to={`/users/${session.UserId}`} className="session-user-chip">
-                      {session.UserPrimaryImageTag !== undefined ? (
-                        <img
-                          className="session-card-user-image"
-                          src={baseUrl + "/proxy/Users/Images/Primary?id=" + session.UserId + "&fillWidth=72&quality=55"}
-                          loading="lazy"
-                          decoding="async"
-                          alt=""
-                        />
-                      ) : (
-                        <AccountCircleFillIcon className="session-card-user-image" />
-                      )}
-                      <span className="session-user-name">{session.UserName}</span>
-                    </Link>
-                  </Tooltip>
                 </div>
 
-                <div className="session-pills">
-                  {getSessionPills(session).map((pill) => (
-                    <span key={pill.key} className={`session-pill${pill.tone ? ` is-${pill.tone}` : ""}`}>
-                      {pill.label}
-                    </span>
-                  ))}
-                </div>
+                <SessionPlaybackPills session={session} simple={simple} canManage={canManage} />
 
+                {simple ? (
+                  <div className="session-fields">
+                    <SessionField label="Left" value={timeLeft || <Trans i18nKey="ERROR_MESSAGES.N/A" />} />
+                  </div>
+                ) : (
                 <div className="session-fields">
-                  <SessionField label="Device" value={session.DeviceName} />
+                  <SessionPlaybackFields session={session} />
                   <SessionField label="Left" value={timeLeft || <Trans i18nKey="ERROR_MESSAGES.N/A" />} />
-                  {nowPlaying.AudioStream ? (
-                    <SessionField
-                      label="Audio"
-                      value={[formatStreamDetail(nowPlaying.AudioStream), lastStreamPart(nowPlaying.AudioBitrateStream)].filter(Boolean).join(" · ")}
-                      title={`${nowPlaying.AudioStream} ${nowPlaying.AudioBitrateStream || ""}`.trim()}
-                    />
-                  ) : null}
-                  {nowPlaying.SubtitleStream ? <SessionField label="Subtitles" value={nowPlaying.SubtitleStream} /> : null}
                   {!hideIpAddress ? (
                     <SessionField
                       label="IP"
@@ -694,28 +778,35 @@ function SessionCard(props) {
                     />
                   ) : null}
                 </div>
-                {canManage && isTranscoding ? <TranscodeExplainer session={session} compact /> : null}
-                <SessionGlanceStrip stitch={props.stitch} />
+                )}
 
-                <div className="session-timecode">
-                  <span className="session-timecode-value">{formatTicks(progress.positionTicks)}</span>
-                  <div
-                    className="progress-bar session-progress-inline"
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={Math.round(progressPercent)}
-                  >
-                    {progressPercent > 0 ? <div className="progress-custom" style={{ width: `${progressPercent}%` }} /> : null}
-                    {isTranscoding && transcodePercent !== null ? (
-                      <div
-                        className="progress-transcode"
-                        style={{ width: `${transcodePercent}%` }}
-                        aria-label={`Transcode progress ${Math.round(transcodePercent)} percent`}
-                      />
-                    ) : null}
+                <div className="session-card-foot">
+                  <Tooltip title={session.UserName}>
+                    <Link to={`/users/${session.UserId}`} className="session-user-chip has-name" aria-label={session.UserName}>
+                      <SessionUserAvatar session={session} />
+                      <span className="session-user-name">{session.UserName}</span>
+                    </Link>
+                  </Tooltip>
+                  <div className="session-timecode">
+                    <span className="session-timecode-value">{formatTicks(progress.positionTicks)}</span>
+                    <div
+                      className="progress-bar session-progress-inline"
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(progressPercent)}
+                    >
+                      {progressPercent > 0 ? <div className="progress-custom" style={{ width: `${progressPercent}%` }} /> : null}
+                      {isTranscoding && transcodePercent !== null ? (
+                        <div
+                          className="progress-transcode"
+                          style={{ width: `${transcodePercent}%` }}
+                          aria-label={`Transcode progress ${Math.round(transcodePercent)} percent`}
+                        />
+                      ) : null}
+                    </div>
+                    <span className="session-timecode-value">{progress.runtimeTicks ? formatTicks(progress.runtimeTicks) : ""}</span>
                   </div>
-                  <span className="session-timecode-value">{progress.runtimeTicks ? formatTicks(progress.runtimeTicks) : ""}</span>
                 </div>
               </Container>
             </Card.Body>

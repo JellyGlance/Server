@@ -4,7 +4,7 @@ import Tooltip from "@mui/material/Tooltip";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import { explainTranscode, summarizeTranscode } from "../../../lib/transcode-explainer";
 
-function TranscodeExplainer({ session, compact = false, defaultOpen = false }) {
+function TranscodeExplainer({ session, compact = false, defaultOpen = false, label = "" }) {
   const [open, setOpen] = useState(defaultOpen);
   const explained = explainTranscode(session);
   if (!explained) return null;
@@ -39,7 +39,7 @@ function TranscodeExplainer({ session, compact = false, defaultOpen = false }) {
       }}
       title={compact ? undefined : "Why is this transcoding?"}
     >
-      <span>{summary}</span>
+      <span>{label || summary}</span>
       <ArrowDownSLineIcon size={14} aria-hidden="true" />
     </button>
   );

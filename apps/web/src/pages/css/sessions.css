@@ -1348,40 +1348,58 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Wall playback info: the session cards' pills and Device / Audio lines. */
+.session-wall-playback {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+  min-width: 0;
+  margin-top: auto;
+}
+
+.session-wall-playback > * {
+  min-width: 0;
+}
+
+/* Everything above is BETA's original card styling (818e7af^). Every rule below
+   is for the newer card and carries :not(:where(.sessions-classic, ...)), so the
+   original card shown by the Simple look (.sessions-classic) is untouched by it.
+   :where() keeps the specificity of these rules unchanged. */
+
 /* Active Sessions card: title + user first, status pills, consistent fields */
-.session-card-layout {
+.session-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
   gap: 7px;
   padding-top: 12px;
 }
 
-.session-card-main:has(.session-card-layout) {
+.session-card-main.has-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
   height: auto;
   min-height: 176px;
 }
 
-.session-card-body:has(.session-card-layout) {
+.session-card-body.has-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
   padding-right: 14px !important;
   padding-left: 14px !important;
 }
 
 /* Poster fills the full card height and never shrinks under the text column. */
-.session-card-main:has(.session-card-layout) .session-card-banner-image {
+.session-card-main.has-card-layout .session-card-banner-image:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 0 0 120px;
   width: 120px;
   align-self: stretch;
 }
 
-.session-card-main:has(.session-card-layout) .session-card-item-image {
+.session-card-main.has-card-layout .session-card-item-image:not(:where(.sessions-classic, .sessions-classic *)) {
   height: 100%;
   min-height: 176px;
   border-radius: 16px 0 0 16px !important;
 }
 
-.session-card:has(.session-card-layout) .card-device-image-overlay {
+.session-card.has-card-layout .card-device-image-overlay:not(:where(.sessions-classic, .sessions-classic *)) {
   display: none;
 }
 
-.session-card-head {
+.session-card-head:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1389,33 +1407,33 @@
   min-width: 0;
 }
 
-.session-card-head .session-title {
+.session-card-head .session-title:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.session-card-head .session-play-state {
+.session-card-head .session-play-state:not(:where(.sessions-classic, .sessions-classic *)) {
   width: 18px;
   height: 18px;
   flex-basis: 18px;
 }
 
-.session-card-head .session-play-state svg {
+.session-card-head .session-play-state svg:not(:where(.sessions-classic, .sessions-classic *)) {
   width: 12px;
   height: 12px;
 }
 
-.session-card-head .session-title a {
+.session-card-head .session-title a:not(:where(.sessions-classic, .sessions-classic *)) {
   font-size: 15px;
 }
 
-.session-card-head .session-subtitle {
+.session-card-head .session-subtitle:not(:where(.sessions-classic, .sessions-classic *)) {
   color: #94a3b8;
   font-weight: 600;
 }
 
-.session-user-chip {
+.session-user-chip:not(:where(.sessions-classic, .sessions-classic *)) {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -1428,20 +1446,20 @@
   text-decoration: none !important;
 }
 
-.session-user-chip .session-card-user-image {
+.session-user-chip .session-card-user-image:not(:where(.sessions-classic, .sessions-classic *)) {
   width: 22px;
   height: 22px;
   margin: 0;
   border-width: 1px;
 }
 
-.session-pills {
+.session-pills:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
 }
 
-.session-pill {
+.session-pill:not(:where(.sessions-classic, .sessions-classic *)) {
   display: inline-flex;
   align-items: center;
   padding: 1px 8px;
@@ -1455,26 +1473,26 @@
   white-space: nowrap;
 }
 
-.session-pill.is-ok {
+.session-pill.is-ok:not(:where(.sessions-classic, .sessions-classic *)) {
   border-color: rgba(52, 211, 153, 0.36);
   background: rgba(6, 78, 59, 0.34);
   color: #a7f3d0;
 }
 
-.session-pill.is-warn {
+.session-pill.is-warn:not(:where(.sessions-classic, .sessions-classic *)) {
   border-color: rgba(250, 204, 21, 0.4);
   background: rgba(113, 63, 18, 0.34);
   color: #fde68a;
 }
 
-.session-fields {
+.session-fields:not(:where(.sessions-classic, .sessions-classic *)) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2px 14px;
   min-width: 0;
 }
 
-.session-field {
+.session-field:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   gap: 6px;
   min-width: 0;
@@ -1482,12 +1500,12 @@
   line-height: 1.45;
 }
 
-.session-field-label {
+.session-field-label:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 0 0 auto;
   color: #8b95a7;
 }
 
-.session-field-value {
+.session-field-value:not(:where(.sessions-classic, .sessions-classic *)) {
   min-width: 0;
   overflow: hidden;
   color: #f1f5f9;
@@ -1496,7 +1514,7 @@
   white-space: nowrap;
 }
 
-.session-card-layout .session-timecode {
+.session-card-layout .session-timecode:not(:where(.sessions-classic, .sessions-classic *)) {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1507,36 +1525,867 @@
   font-weight: 600;
 }
 
-.session-card .progress-custom {
+.session-card .progress-custom:not(:where(.sessions-classic, .sessions-classic *)) {
   background: linear-gradient(90deg, #8b5cf6, #ec4899);
 }
 
-.session-card-layout .session-timecode-value {
+.session-card-layout .session-timecode-value:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 0 0 auto;
 }
 
-.session-card-layout .session-progress-inline {
+.session-card-layout .session-progress-inline:not(:where(.sessions-classic, .sessions-classic *)) {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
 }
 
 @media (max-width: 900px) {
-  .session-card-main:has(.session-card-layout) .session-card-banner-image {
+  .session-card-main.has-card-layout .session-card-banner-image:not(:where(.sessions-classic, .sessions-classic *)) {
     flex-basis: clamp(72px, 18vw, 96px);
     width: clamp(72px, 18vw, 96px);
   }
 
-  .session-card-main:has(.session-card-layout) .session-card-item-image {
+  .session-card-main.has-card-layout .session-card-item-image:not(:where(.sessions-classic, .sessions-classic *)) {
     min-height: clamp(124px, 31vw, 154px);
     border-radius: 12px 0 0 12px !important;
   }
 
-  .session-card-body:has(.session-card-layout) {
+  .session-card-body.has-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
     padding-left: 10px !important;
   }
 
-  .session-card-layout .session-timecode {
+  .session-card-layout .session-timecode:not(:where(.sessions-classic, .sessions-classic *)) {
     gap: 8px;
   }
+}
+
+/* Cards view: every card in a row is the same height. The grid stretches the
+   cards; the card is a flex column and its dark body fills it, so a shorter
+   card no longer shows a strip of backdrop under its content. */
+.sessions-container:not(:where(.sessions-classic, .sessions-classic *)) {
+  align-items: stretch;
+}
+
+.session-card:not(:where(.sessions-classic, .sessions-classic *)) {
+  height: 100%;
+}
+
+.session-card-main.has-card-layout:not(:where(.sessions-classic, .sessions-classic *)) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.session-card-main.has-card-layout > .row:not(:where(.sessions-classic, .sessions-classic *)) {
+  flex: 1 1 auto;
+  height: auto;
+  flex-wrap: nowrap;
+}
+
+/* Poster column (the 2:3 panel itself is set further down). */
+.session-card-main.has-card-layout .session-card-banner-image:not(:where(.sessions-classic, .sessions-classic *)) {
+  display: flex;
+  flex: 0 0 120px !important;
+  align-self: stretch;
+  width: 120px;
+  max-width: 120px !important;
+  padding: 0 !important;
+}
+
+
+/* The text column takes the rest of the row and may shrink below its content
+   width. Without this, Bootstrap's .col (flex-shrink: 0) plus .w-100 made it a
+   full card width wide next to the 120px poster, so long content pushed it
+   past the card's right edge and the title and "Ends" time were clipped. */
+.session-card-main.has-card-layout > .row > .col:not(.session-card-banner-image):not(:where(.sessions-classic, .sessions-classic *)) {
+  flex: 1 1 0% !important;
+  width: auto !important;
+  min-width: 0;
+}
+
+.session-card-body:not(:where(.sessions-classic, .sessions-classic *)),
+.session-card-layout:not(:where(.sessions-classic, .sessions-classic *)),
+.session-card-head:not(:where(.sessions-classic, .sessions-classic *)),
+.session-title-copy:not(:where(.sessions-classic, .sessions-classic *)) {
+  min-width: 0;
+}
+
+/* Device, audio and the other fields wrap (two lines at most) instead of
+   being cut off; the full text stays in the tooltip. */
+.session-card-layout .session-field-value:not(:where(.sessions-classic, .sessions-classic *)) {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-overflow: clip;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* The transcode pill stays compact and wraps inside the card. */
+.session-card-layout .transcode-explainer.is-compact:not(:where(.sessions-classic, .sessions-classic *)) {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.session-card-layout .transcode-explainer-chip:not(:where(.sessions-classic, .sessions-classic *)) {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.25;
+}
+
+/* Session details: the transcode hints get their own section under the
+   poster and title instead of sitting inside the title block. */
+.session-popout-transcode:not(:where(.sessions-classic, .sessions-classic *)) {
+  padding: 14px 38px 4px;
+  background: rgba(7, 9, 13, 0.92);
+}
+
+.session-popout-transcode .transcode-explainer:not(:where(.sessions-classic, .sessions-classic *)) {
+  margin-top: 0;
+}
+
+.session-popout-transcode .transcode-explainer-detail:not(:where(.sessions-classic, .sessions-classic *)) {
+  max-height: min(260px, 40vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .session-card-main.has-card-layout .session-card-banner-image:not(:where(.sessions-classic, .sessions-classic *)) {
+    flex-basis: 96px !important;
+    width: 96px;
+    max-width: 96px !important;
+  }
+
+  .session-popout-transcode:not(:where(.sessions-classic, .sessions-classic *)) {
+    padding: 12px 18px 4px;
+  }
+
+  .session-card-layout .session-field-value:not(:where(.sessions-classic, .sessions-classic *)) {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+}
+
+/* Cards grid: columns share the panel's full width (1fr), so the left and
+   right gutters match and the last card in a row never runs past the panel.
+   The old tracks were capped at 496px and packed to the left. */
+.sessions-widget:not(:where(.sessions-classic, .sessions-classic *)),
+.sessions-container:not(:where(.sessions-classic, .sessions-classic *)) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sessions-container:not(:where(.sessions-classic, .sessions-classic *)) {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap: 18px;
+}
+
+.sessions-container > *:not(:where(.sessions-classic, .sessions-classic *)) {
+  min-width: 0;
+}
+
+.sessions-container .session-card:not(:where(.sessions-classic, .sessions-classic *)) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* No Bootstrap gutters or negative margins inside a card. */
+.session-card-main.has-card-layout > .row:not(:where(.sessions-classic, .sessions-classic *)) {
+  --bs-gutter-x: 0;
+  --bs-gutter-y: 0;
+  margin: 0 !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Titles are cut with an ellipsis only; the full title shows on hover. */
+.session-card-head .session-title:not(:where(.sessions-classic, .sessions-classic *)) {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.session-card-head .session-title a:not(:where(.sessions-classic, .sessions-classic *)) {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Simple look in Wall and List: hide the device and playback method. */
+
+
+
+
+.sessions-widget.is-simple .session-wall-meta:not(:where(.sessions-classic, .sessions-classic *)),
+.sessions-widget.is-simple .session-list-device:not(:where(.sessions-classic, .sessions-classic *)),
+.sessions-widget.is-simple .session-list-method:not(:where(.sessions-classic, .sessions-classic *)) {
+  display: none !important;
+}
+
+.sessions-widget.is-simple .session-list-row:not(:where(.sessions-classic, .sessions-classic *)) {
+  grid-template-columns: minmax(5rem, 0.8fr) minmax(0, 2fr) minmax(4rem, 0.8fr);
+}
+
+.sessions-density-toggle:not(:where(.sessions-classic, .sessions-classic *)) {
+  margin-left: 8px;
+}
+
+@media (max-width: 900px) {
+  .sessions-container:not(:where(.sessions-classic, .sessions-classic *)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sessions-widget.is-simple .session-list-row:not(:where(.sessions-classic, .sessions-classic *)) {
+    grid-template-columns: minmax(0, 1fr) 5.5rem;
+  }
+}
+
+.sessions-widget-controls:not(:where(.sessions-classic, .sessions-classic *)) {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 8px;
+  max-width: 100%;
+}
+
+.sessions-widget-controls .sessions-density-toggle:not(:where(.sessions-classic, .sessions-classic *)) {
+  margin-left: 0;
+}
+
+/* Header spacing: a clear gap under the title and toggles in every view, and
+   room between the view and Detailed/Simple groups; they wrap onto their own
+   lines on narrow screens instead of crowding. */
+.sessions-widget-header {
+  column-gap: 16px;
+  row-gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sessions-widget-header .sessions-view-toggle {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+/* Simple look: BETA's original card (.sessions-classic). Two changes from
+   BETA, asked for in the demo:
+   1. Posters show whole: a 2:3 panel with the image contained (letterboxed),
+      where BETA cropped a 120x176 box with object-fit: cover.
+   2. The card grows to fit its rows and transcode badges (BETA fixed the top
+      at 176px and hid what did not fit, so badges were cut off). Cards in a
+      row still share one height: the grid stretches them and the top part
+      takes up the extra space. */
+.sessions-classic .session-card-main {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  height: auto;
+}
+
+.sessions-classic .session-card-main > .row {
+  flex: 1 0 auto;
+  height: auto;
+  flex-wrap: nowrap;
+}
+
+.sessions-classic .session-card-banner-image {
+  flex: 0 0 120px !important;
+  align-self: flex-start;
+  width: 120px;
+  max-width: 120px !important;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 16px 0 0 0;
+  background: #0b1119;
+}
+
+.sessions-classic .session-card-item-image,
+.sessions-classic .stat-card-image-audio.rounded-0.rounded-start {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  border-radius: 0 !important;
+}
+
+.sessions-classic .session-card-main > .row > .col:not(.session-card-banner-image) {
+  flex: 1 1 0% !important;
+  width: auto !important;
+  min-width: 0;
+}
+
+.sessions-classic .session-details,
+.sessions-classic .session-details-list {
+  max-height: none;
+  overflow: visible;
+}
+
+.sessions-classic .transcode-explainer.is-compact {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.sessions-classic .transcode-explainer-chip {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.25;
+}
+
+@media (max-width: 900px) {
+  .sessions-classic .session-card-main {
+    height: auto;
+  }
+
+  .sessions-classic .session-card-banner-image {
+    flex-basis: clamp(72px, 18vw, 96px) !important;
+    width: clamp(72px, 18vw, 96px) !important;
+    max-width: clamp(72px, 18vw, 96px) !important;
+    border-radius: 12px 0 0 0;
+  }
+
+  .sessions-classic .session-details-list {
+    max-height: none;
+  }
+}
+
+/* Detailed card: a compact landscape rectangle, 430 x 190px (about 2.25:1),
+   the same size for every session. The 2:3 poster (127 x 190) fills the left
+   side exactly, never cropped. Text is trimmed to single lines so it always
+   fits that height: title, episode or year, one row of badges ("+N" for the
+   ones that don't fit), a 2x2 grid of fields, then avatar and progress. */
+.sessions-container.sessions-detailed {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+  justify-content: stretch;
+  align-items: start;
+  gap: 18px;
+}
+
+.sessions-container.sessions-detailed .session-card.has-card-layout {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.session-card.has-card-layout .session-card-main {
+  flex: 0 0 190px;
+  height: 190px;
+  min-height: 190px;
+  max-height: 190px;
+}
+
+.session-card.has-card-layout .session-card-main > .row {
+  height: 100%;
+  flex-wrap: nowrap;
+}
+
+.session-card.has-card-layout .session-card-banner-image {
+  position: relative;
+  display: block;
+  flex: 0 0 127px !important;
+  align-self: stretch;
+  width: 127px;
+  max-width: 127px !important;
+  height: 100%;
+  overflow: hidden;
+  padding: 0 !important;
+  border-radius: 16px 0 0 16px;
+  background: #0b1119;
+}
+
+.session-card.has-card-layout .session-card-poster,
+.session-card.has-card-layout .session-card-banner-image .stat-card-image-audio {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0;
+  object-fit: contain;
+  border-radius: 0 !important;
+}
+
+.session-card.has-card-layout .session-card-main > .row > .col:not(.session-card-banner-image) {
+  flex: 1 1 0% !important;
+  width: auto !important;
+  height: 100%;
+  min-width: 0;
+}
+
+.session-card.has-card-layout .session-card-body {
+  height: 100%;
+  padding: 0 12px !important;
+}
+
+.session-card.has-card-layout .session-card-layout {
+  justify-content: flex-start !important;
+  gap: 6px;
+  height: 100%;
+  padding: 9px 0 !important;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+.session-card.has-card-layout .session-card-layout > * {
+  flex: 0 0 auto;
+  min-width: 0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.session-card.has-card-layout .session-card-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+/* Single-line text clips sideways only (overflow-x: clip keeps the ellipsis)
+   and every line box is a whole number of pixels tall with room for
+   descenders, so nothing is cut at the bottom or crowds the row below. */
+.session-card.has-card-layout .session-title-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow: visible;
+}
+
+.session-card.has-card-layout .session-card-head .session-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.session-card.has-card-layout .session-card-head .session-play-state {
+  flex: 0 0 18px;
+}
+
+.session-card.has-card-layout .session-card-head .session-title a {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: clip;
+  overflow-y: visible;
+  font-size: 14px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-card.has-card-layout .session-card-head .session-subtitle {
+  margin: 0 !important;
+  overflow-x: clip;
+  overflow-y: visible;
+  font-size: 11.5px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 5px;
+  height: auto;
+  overflow-x: clip;
+  overflow-y: visible;
+  line-height: 15px;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .session-pill {
+  position: static;
+  transform: none;
+  line-height: 15px;
+  white-space: nowrap;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills > * {
+  flex: 0 0 auto;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-transcode-badge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  max-width: 55%;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer.is-compact,
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer.is-compact > span {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer-chip {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer-chip > span {
+  min-width: 0;
+  overflow-x: clip;
+  overflow-y: visible;
+  text-overflow: ellipsis;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer-chip > svg {
+  flex: 0 0 auto;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pills .transcode-explainer-chip {
+  padding: 1px 8px;
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-pill-more {
+  cursor: default;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-field {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+:is(.session-card.has-card-layout, .session-wall-tile) .session-field-label {
+  flex: 0 0 auto;
+}
+
+:is(.session-card.has-card-layout .session-card-layout, .session-wall-tile) .session-field-value {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: clip;
+  overflow-y: visible;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  -webkit-line-clamp: unset;
+  line-clamp: none;
+}
+
+.session-card.has-card-layout .session-card-layout > .session-card-foot {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto !important;
+}
+
+.session-card.has-card-layout .session-user-chip.is-avatar-only {
+  flex: 0 0 auto;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.session-card.has-card-layout .session-user-chip .session-card-user-image {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.session-card.has-card-layout .session-user-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(var(--primary-rgb), 0.55);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.session-card.has-card-layout .session-card-layout .session-card-foot .session-timecode {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-top: 0 !important;
+  padding-top: 0;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.session-card.has-card-layout .session-card-layout .session-card-foot .session-timecode-value {
+  line-height: 15px;
+}
+
+@media (max-width: 900px) {
+  .sessions-container.sessions-detailed {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+    gap: 12px;
+  }
+
+  .session-card.has-card-layout .session-card-banner-image {
+    border-radius: 12px 0 0 12px;
+  }
+}
+
+/* Bottom row in both looks: avatar and display name (ellipsis, full name in
+   the tooltip), then the progress. */
+.session-card.has-card-layout .session-user-chip.has-name {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 38%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+.session-card.has-card-layout .session-user-chip.has-name .session-card-user-image {
+  flex: 0 0 24px;
+}
+
+.session-card.has-card-layout .session-user-chip.has-name .session-user-name {
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  overflow-x: clip;
+  overflow-y: visible;
+  color: #e2e8f0 !important;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Simple look: the same compact card and poster as Detailed, with less text.
+   The art (episode still, backdrop, then poster) covers the area to the right
+   of the poster, under a dark shade so the text stays readable. */
+.session-card.has-card-layout .session-card-art-area {
+  position: relative;
+  overflow: hidden;
+  background: #0b1119;
+}
+
+.session-card.is-simple-card .session-card-art,
+.session-card.is-simple-card .session-card-art-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.session-card.is-simple-card .session-card-art {
+  z-index: 0;
+  display: block;
+  object-fit: cover;
+}
+
+.session-card.is-simple-card .session-card-art-shade {
+  z-index: 1;
+  background:
+    linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 55%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.86) 0%, rgba(0, 0, 0, 0.76) 60%, rgba(0, 0, 0, 0.7) 100%);
+  pointer-events: none;
+}
+
+.session-card.has-card-layout .session-card-art-area > .session-card-body {
+  position: relative;
+  z-index: 2;
+}
+
+.session-card.is-simple-card .session-card-layout {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.session-card.is-simple-card .session-card-head .session-subtitle,
+.session-card.is-simple-card .session-field-label {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+:is(.session-card.is-simple-card, .session-wall-tile) .session-state-chip {
+  text-shadow: none;
+  cursor: default;
+}
+
+.session-card.is-simple-card .session-card-layout > .session-fields {
+  margin-top: auto !important;
+}
+
+.session-card.is-simple-card .session-card-layout > .session-card-foot {
+  margin-top: 0 !important;
+}
+
+/* Clean rounded edges on both looks. The card's background used to paint
+   under its translucent 1px border, so the art showed through as a thin line
+   along the top edge. The background now stops inside the border and every
+   inner layer uses the inner radius (16px - 1px border). */
+.session-card.has-card-layout {
+  isolation: isolate;
+  background-clip: padding-box !important;
+}
+
+.session-card.has-card-layout .session-card-main {
+  overflow: hidden;
+  border-radius: 15px !important;
+}
+
+.session-card.has-card-layout .session-card-banner-image {
+  border-radius: 15px 0 0 15px;
+}
+
+.session-card.has-card-layout .session-card-art-area {
+  border-radius: 0 15px 15px 0;
+}
+
+/* The progress times never get cut; on narrow cards the name gives way
+   (ellipsis, full name in the tooltip) and the bar shrinks. */
+.session-card.has-card-layout .session-card-layout .session-card-foot .session-timecode {
+  flex: 1 0 auto;
+}
+
+.session-card.has-card-layout .session-card-foot .session-timecode-value {
+  flex: 0 0 auto;
+}
+
+.session-card.has-card-layout .session-card-foot .session-progress-inline {
+  flex: 1 1 24px;
+  min-width: 24px;
+}
+
+@media (max-width: 900px) {
+  /* The card's radius drops to 12px here, so the inner layers use 11px. */
+  .session-card.has-card-layout .session-card-main {
+    border-radius: 11px !important;
+  }
+
+  .session-card.has-card-layout .session-card-banner-image {
+    border-radius: 11px 0 0 11px;
+  }
+
+  .session-card.has-card-layout .session-card-art-area {
+    border-radius: 0 11px 11px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Phone width: keep the elapsed time and the bar, drop the runtime so the
+     user's name still has room. */
+  .session-card.has-card-layout .session-card-foot .session-timecode-value:last-child {
+    display: none;
+  }
+}
+
+/* Card edges, both looks. The card itself is a solid dark box with a solid
+   border; no art, accent gradient or theme colour is painted under the
+   poster. (The accent gradient + backdrop used to sit on the card itself and
+   bled through the anti-aliased edge of the poster's rounded corner, and the
+   hover state turned the border accent-coloured.) The backdrop now lives
+   only in the text column, to the right of the poster. */
+.session-card.has-card-layout {
+  overflow: hidden;
+  border-color: #1d232c !important;
+  background: #0b1119 !important;
+  background-clip: padding-box !important;
+}
+
+.session-card.has-card-layout:hover {
+  transform: none;
+  border-color: #1d232c !important;
+}
+
+/* Keyboard focus keeps a ring, but a neutral one instead of the accent. */
+.session-card.has-card-layout:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 3px;
+}
+
+.session-card.has-card-layout .session-card-main {
+  background: transparent;
+}
+
+.session-card.has-card-layout .session-card-banner-image {
+  background: #0b1119;
+}
+
+.session-card.has-card-layout .session-card-poster {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  /* Fill the wrapper edge to edge. Jellyfin returns posters a pixel or two
+     off 2:3 (254x374 for Rivals), so "contain" left a 1-2px strip along the
+     top/bottom or sides where whatever sat behind the poster showed through
+     as a thin coloured line. "cover" trims at most ~1px of the poster. */
+  object-fit: cover;
+}
+
+.session-card.has-card-layout .session-card-backdrop,
+.session-card.has-card-layout .session-card-backdrop-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.session-card.has-card-layout .session-card-backdrop {
+  z-index: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.session-card.has-card-layout .session-card-backdrop-shade {
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.46);
+}
+
+.session-command.is-stop-message {
+  border-color: rgba(248, 113, 113, 0.32);
+  color: #fecaca;
+}
+
+.session-command.is-stop-message:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.16);
+}
+
+.session-stop-message-lead {
+  margin: 0 0 0.75rem;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
+.session-stop-message-preset {
+  width: 100%;
+  min-height: 2.2rem;
+  margin: 0.25rem 0 0.7rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.55rem;
+  background: rgba(7, 10, 15, 0.9);
+  color: #f8fafc;
 }

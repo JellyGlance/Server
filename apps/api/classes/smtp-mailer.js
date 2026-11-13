@@ -23,6 +23,9 @@ function defaultNewsletterSettings() {
       rejectUnauthorized: true,
     },
     history: [],
+    channels: { discord: { enabled: false, webhookUrl: "" }, telegram: { enabled: false, botToken: "", chatId: "" } },
+    automations: { welcome: { enabled: false }, milestone: { enabled: false }, adminDigest: { enabled: false }, reengagement: { enabled: false } },
+    archive: { enabled: false },
   };
 }
 
@@ -92,6 +95,7 @@ function createTransport(newsletter) {
 }
 
 async function sendConfiguredMail({ to, subject, text, html, attachments = [] }) {
+  if (process.env.JG_DISABLE_NOTIFICATIONS === "1") throw new Error("Email is turned off on this copy (JG_DISABLE_NOTIFICATIONS=1)");
   const settings = await getAppSettings();
   const newsletter = getNewsletterSettings(settings);
   const validationError = validateSmtpSettings(newsletter);

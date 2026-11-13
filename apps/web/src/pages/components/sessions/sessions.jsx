@@ -6,9 +6,22 @@ import "../../css/sessions.css";
 import ErrorBoundary from "../general/ErrorBoundary";
 import SessionCard from "./session-card";
 import SessionWall from "./session-wall";
+import { SessionBandwidth, SessionList } from "./session-views";
+import { resolveSessionsView } from "../../../lib/home-settings";
 import { orderSessions } from "../../../lib/session-order";
 
 const SESSION_VIEW_KEY = "jellyglance_sessions_view";
+
+const SESSION_DENSITY_KEY = "jellyglance_sessions_density";
+const DENSITY_LABELS = { detailed: "Detailed", simple: "Simple" };
+
+function getStoredSessionDensity() {
+  try {
+    return localStorage.getItem(SESSION_DENSITY_KEY) === "simple" ? "simple" : "detailed";
+  } catch {
+    return "detailed";
+  }
+}
 
 function getStoredSessionView() {
   try {
@@ -47,9 +60,17 @@ function canManageSessions(config) {
   }
 }
 
-function Sessions({ surface = "home" }) {
+const VIEW_LABELS = { auto: "Auto", cards: "Cards", wall: "Wall", list: "List", bandwidth: "Bandwidth" };
+
+// Home passes view/onViewChange so the choice lives in the Home layout; other
+// pages keep the old Cards/Wall toggle stored on its own.
+function Sessions({ surface = "home", view: controlledView, onViewChange }) {
   const [data, setData] = useState(() => getCachedActiveSessions());
-  const [view, setView] = useState(() => getStoredSessionView());
+  const [storedView, setView] = useState(() => getStoredSessionView());
+  const [density, setDensity] = useState(() => getStoredSessionDensity());
+  const simple = density === "simple";
+  const isControlled = Boolean(controlledView);
+  const chosenView = isControlled ? controlledView : storedView;
   const [ipPrivacy, setIpPrivacy] = useState(() => getActiveSessionIpPrivacy());
   const [config, setConfig] = useState(() => {
     try {
@@ -113,7 +134,20 @@ function Sessions({ surface = "home" }) {
     }
   }, [config]);
 
+  const changeDensity = (nextDensity) => {
+    setDensity(nextDensity);
+    try {
+      localStorage.setItem(SESSION_DENSITY_KEY, nextDensity);
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   const changeView = (nextView) => {
+    if (isControlled) {
+      onViewChange?.(nextView);
+      return;
+    }
     setView(nextView);
     try {
       localStorage.setItem(SESSION_VIEW_KEY, nextView);
@@ -127,22 +161,68 @@ function Sessions({ surface = "home" }) {
     return null;
   }
 
+  const view = resolveSessionsView(chosenView, data.length);
+  const viewOptions = isControlled ? ["auto", "cards", "wall", "list", "bandwidth"] : ["cards", "wall"];
+  const isDemo = data.some((session) => session?.IsDemo);
+
   return (
-    <div className="sessions-widget">
+    <div className={`sessions-widget${simple ? " is-simple" : ""}`}>
       <div className="sessions-widget-header">
         <h1 className="my-3">
           Active Sessions
+          {isDemo ? <span className="home-demo-badge">Demo sessions</span> : null}
         </h1>
+        <div className="sessions-widget-controls">
         <div className="sessions-view-toggle" role="group" aria-label="Session layout">
-          <button type="button" className={view === "cards" ? "is-active" : ""} aria-pressed={view === "cards"} onClick={() => changeView("cards")}>
-            Cards
-          </button>
-          <button type="button" className={view === "wall" ? "is-active" : ""} aria-pressed={view === "wall"} onClick={() => changeView("wall")}>
-            Wall
-          </button>
+          {viewOptions.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={chosenView === option ? "is-active" : ""}
+              aria-pressed={chosenView === option}
+              title={option === "auto" ? `Auto: showing ${VIEW_LABELS[view]}` : undefined}
+              onClick={() => changeView(option)}
+            >
+              {VIEW_LABELS[option]}
+              {option === "auto" && chosenView === "auto" ? <small> · {VIEW_LABELS[view]}</small> : null}
+            </button>
+          ))}
+        </div>
+        <div className="sessions-view-toggle sessions-density-toggle" role="group" aria-label="Session detail">
+          {Object.keys(DENSITY_LABELS).map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={density === option ? "is-active" : ""}
+              aria-pressed={density === option}
+              data-sessions-density={option}
+              title={option === "simple" ? "Compact card on the artwork" : "Compact card with poster and details"}
+              onClick={() => changeDensity(option)}
+            >
+              {DENSITY_LABELS[option]}
+            </button>
+          ))}
+        </div>
         </div>
       </div>
-      {view === "wall" ? <SessionWall sessions={data} /> : <div className="sessions-container">
+      {view === "list" ? <SessionList sessions={data} /> : null}
+      {view === "bandwidth" ? <SessionBandwidth sessions={data} /> : null}
+      {view === "wall" ? <SessionWall sessions={data} simple={simple} canManage={canManage && surface !== "kiosk"} /> : null}
+      {view === "cards" && simple ? <div className="sessions-container sessions-detailed sessions-simple-cards">
+        {orderSessions(data).map((session) => (
+          <ErrorBoundary key={session.Id}>
+            <SessionCard
+              simple
+              data={{ session: session, base_url: config?.base_url }}
+              hideIpAddress={hideIpAddress}
+              kiosk={surface === "kiosk"}
+              canManage={canManage}
+              stitch={stitchByItemId.get(session.NowPlayingItem?.Id) || null}
+            />
+          </ErrorBoundary>
+        ))}
+      </div> : null}
+      {view === "cards" && !simple ? <div className="sessions-container sessions-detailed">
         {orderSessions(data).map((session) => (
           <ErrorBoundary key={session.Id}>
             <SessionCard
@@ -154,7 +234,7 @@ function Sessions({ surface = "home" }) {
             />
           </ErrorBoundary>
         ))}
-      </div>}
+      </div> : null}
     </div>
   );
 }

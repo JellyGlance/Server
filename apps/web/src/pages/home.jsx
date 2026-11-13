@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 import axios from "../lib/axios_instance";
@@ -37,6 +37,9 @@ import User3LineIcon from "remixicon-react/User3LineIcon";
 import MenuLineIcon from "remixicon-react/MenuLineIcon";
 
 import Sessions from "./components/sessions/sessions";
+import { AllQuietSlot, DiskRunwayWidget, NowPlayingStrip, PeakHoursWidget, UpNextWidget, useHomeWidgetData } from "./components/home/home-widgets";
+import { AddWidgetDrawer, HomeEditBar, HomeLayoutEditor, UndoToast } from "./components/home/home-layout-editor";
+import "./css/home-editor.css";
 import { fetchActiveSessions, getCachedActiveSessions, subscribeActiveSessions } from "../lib/session-cache";
 import "./css/home.css";
 import {
@@ -440,6 +443,14 @@ export default function Home({ kioskMode = false }) {
   const [gapBusyId, setGapBusyId] = useState("");
   const [gapMessage, setGapMessage] = useState("");
   const [, setError] = useState("");
+  const [layoutHistory, setLayoutHistory] = useState([]);
+  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+  const [showLayoutOptions, setShowLayoutOptions] = useState(false);
+  const [undoToast, setUndoToast] = useState("");
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
+  const [connectedIntegrations, setConnectedIntegrations] = useState(null);
+  const [demoSessions, setDemoSessions] = useState(null);
+  const homeStackRef = useRef(null);
 
   useEffect(() => {
     if (kioskMode) return undefined;
@@ -680,7 +691,49 @@ export default function Home({ kioskMode = false }) {
   }, [homeSettings, kioskMode]);
 
   function updateHomeSettings(updater) {
+    if (isOrderingHome) setLayoutHistory((history) => [...history.slice(-19), homeSettings]);
     setHomeSettings((current) => normalizeHomeSettings(typeof updater === "function" ? updater(current) : { ...current, ...updater }));
+  }
+
+  function undoLayoutChange() {
+    setLayoutHistory((history) => {
+      if (!history.length) return history;
+      setHomeSettings(normalizeHomeSettings(history[history.length - 1]));
+      return history.slice(0, -1);
+    });
+    setUndoToast("");
+  }
+
+  function placeSection(sectionId, targetId, after) {
+    if (!sectionId || !targetId || sectionId === targetId) return;
+    updateHomeSettings((current) => {
+      const order = normalizeHomeOrder(current.order).filter((id) => id !== sectionId);
+      const targetIndex = order.indexOf(targetId);
+      order.splice(targetIndex < 0 ? order.length : targetIndex + (after ? 1 : 0), 0, sectionId);
+      return { ...current, order, preset: "custom", pinned: current.pinned === sectionId || current.pinned === targetId ? "" : current.pinned };
+    });
+  }
+
+  // Keyboard moves step past hidden widgets so every press visibly moves one slot.
+  function moveVisibleSection(sectionId, direction) {
+    const visible = orderedSectionIds;
+    const index = visible.indexOf(sectionId);
+    const target = visible[index + direction];
+    if (index < 0 || !target) return null;
+    placeSection(sectionId, target, direction > 0);
+    return { index: index + direction, count: visible.length };
+  }
+
+  function hideSectionWithUndo(sectionId) {
+    updateHomeSettings((current) => ({ ...current, hidden: [...new Set([...(current.hidden || []), sectionId])], preset: "custom" }));
+    setUndoToast(`${sectionLabels[sectionId]} hidden`);
+  }
+
+  function addSectionFromDrawer(sectionId) {
+    updateHomeSettings((current) => ({ ...current, hidden: (current.hidden || []).filter((id) => id !== sectionId), preset: "custom" }));
+    setIsAddDrawerOpen(false);
+    setLiveAnnouncement(`${sectionLabels[sectionId]} added.`);
+    setTimeout(() => document.querySelector(`.home-widget-id-${sectionId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
   }
 
   function moveHomeSection(sectionId, direction) {
@@ -700,6 +753,7 @@ export default function Home({ kioskMode = false }) {
 
   function resetHomeOrder() {
     updateHomeSettings(DEFAULT_HOME_SETTINGS);
+    setUndoToast("Home layout reset");
   }
 
   function toggleHomeSection(sectionId) {
@@ -800,8 +854,60 @@ export default function Home({ kioskMode = false }) {
   const activeRotateSection = effectiveAutoRotate && orderedSectionIds.length ? orderedSectionIds[rotateIndex % orderedSectionIds.length] : null;
   const homeSectionOrder = useMemo(() => Object.fromEntries(orderedSectionIds.map((sectionId, index) => [sectionId, index])), [orderedSectionIds]);
   const getHomeSectionStyle = (sectionId) => ({ order: homeSectionOrder[sectionId] ?? DEFAULT_HOME_ORDER.indexOf(sectionId) });
-  const getHomeSectionClass = (sectionId, className = "") => `${className} home-widget-size-${homeSettings.sizes?.[sectionId] || "medium"} ${isOrderingHome ? "is-home-widget-editing" : ""}`.trim();
+  const getHomeSectionClass = (sectionId, className = "") => `${className} home-widget-id-${sectionId} home-widget-size-${homeSettings.sizes?.[sectionId] || "medium"} ${isOrderingHome ? "is-home-widget-editing" : ""}`.trim();
   const shouldRenderSection = (sectionId) => orderedSectionIds.includes(sectionId) && (!activeRotateSection || activeRotateSection === sectionId);
+  const sessionsIdle = orderedSectionIds.includes("sessions") && activeSessionCount === 0;
+  const peakWidget = useHomeWidgetData("/stats/home/peakHours", { enabled: !kioskMode && (orderedSectionIds.includes("peakHours") || sessionsIdle) });
+  const upNextWidget = useHomeWidgetData("/stats/home/upNext", { enabled: orderedSectionIds.includes("upNext") });
+  const diskRunwayWidget = useHomeWidgetData("/stats/home/diskRunway", { enabled: orderedSectionIds.includes("diskRunway") });
+  const lastPlaybackWidget = useHomeWidgetData("/stats/home/lastPlayback", { enabled: sessionsIdle, refreshMs: 60 * 1000 });
+
+  useEffect(() => {
+    if (!isOrderingHome) return undefined;
+    const onKey = (event) => {
+      const tag = String(event.target?.tagName || "").toLowerCase();
+      if (["input", "select", "textarea"].includes(tag)) return;
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        undoLayoutChange();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOrderingHome]);
+
+  useEffect(() => {
+    if (!isOrderingHome || connectedIntegrations) return;
+    axios
+      .get("/api/integrations")
+      .then((response) => {
+        const all = [...(response.data?.arrApps || []), ...(response.data?.clients || []), ...(response.data?.thirdParty || [])];
+        setConnectedIntegrations(new Set(all.filter((item) => item?.connected).map((item) => item.slug)));
+      })
+      .catch(() => setConnectedIntegrations(new Set()));
+  }, [isOrderingHome, connectedIntegrations]);
+
+  useEffect(() => {
+    if (kioskMode) return;
+    axios
+      .get("/stats/home/demoSessions")
+      .then((response) => setDemoSessions(response.data?.enabled ? response.data : null))
+      .catch(() => setDemoSessions(null));
+  }, [kioskMode]);
+
+  const closeUndoToast = useCallback(() => setUndoToast(""), []);
+  const closeAddDrawer = useCallback(() => setIsAddDrawerOpen(false), []);
+
+  const changeDemoSessions = useCallback((mode) => {
+    axios
+      .post("/stats/home/demoSessions", { mode })
+      .then((response) => {
+        setDemoSessions(response.data);
+        fetchActiveSessions().catch(() => {});
+      })
+      .catch(() => {});
+  }, []);
+
   const visibleIntegrationWidgets = useMemo(
     () => ({
       tdarr: orderedSectionIds.includes("tdarr"),
@@ -933,33 +1039,15 @@ export default function Home({ kioskMode = false }) {
           <button
             type="button"
             onClick={() => {
-              loadDashboardData();
-              setIsHomeActionsOpen(false);
-            }}
-          >
-            <RefreshLineIcon size={17} />
-            Dashboard
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              loadOperationsData(true);
-              setIsHomeActionsOpen(false);
-            }}
-          >
-            <RefreshLineIcon size={17} />
-            Ops
-          </button>
-          <button
-            type="button"
-            onClick={() => {
               setIsOrderingHome((current) => !current);
+              setLayoutHistory([]);
+              setShowLayoutOptions(false);
               setIsHomeActionsOpen(false);
             }}
             aria-pressed={isOrderingHome}
           >
             <Settings3LineIcon size={17} />
-            Edit widgets
+            {isOrderingHome ? "Done editing" : "Edit Home"}
           </button>
         </div>
       </div>
@@ -976,6 +1064,35 @@ export default function Home({ kioskMode = false }) {
       ) : null}
 
       {isOrderingHome ? (
+        <HomeEditBar
+          canUndo={layoutHistory.length > 0}
+          onUndo={undoLayoutChange}
+          onReset={resetHomeOrder}
+          onDone={() => {
+            setIsOrderingHome(false);
+            setShowLayoutOptions(false);
+            setLayoutHistory([]);
+          }}
+          onAdd={() => setIsAddDrawerOpen(true)}
+          onOptions={() => setShowLayoutOptions((current) => !current)}
+          optionsOpen={showLayoutOptions}
+          hiddenCount={homeSettings.hidden.length}
+        />
+      ) : null}
+
+      {demoSessions && !kioskMode ? (
+        <div className="home-demo-switch" role="group" aria-label="Demo sessions">
+          <span className="home-demo-badge">Demo</span>
+          <span>Active sessions: live, or demo streams from playback history:</span>
+          {demoSessions.modes.map((mode) => (
+            <button key={mode} type="button" className={demoSessions.mode === mode ? "is-active" : ""} aria-pressed={demoSessions.mode === mode} onClick={() => changeDemoSessions(mode)}>
+              {mode === "off" ? "Live" : mode === "idle" ? "Nobody" : mode}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {isOrderingHome && showLayoutOptions ? (
         <div className="home-order-panel home-glass-card">
           <div className="home-order-panel-heading">
             <div>
@@ -1086,6 +1203,7 @@ export default function Home({ kioskMode = false }) {
                   <select title={t("HOME_PAGE.WIDGET_SIZE")} value={homeSettings.sizes?.[sectionId] || "medium"} onChange={(event) => updateWidgetSize(sectionId, event.target.value)}>
                     <option value="small">{t("HOME_PAGE.SIZE_SMALL")}</option>
                     <option value="medium">{t("HOME_PAGE.SIZE_MEDIUM")}</option>
+                    <option value="wide">{HOME_WIDGET_SIZE_LABELS.wide}</option>
                     <option value="large">{t("HOME_PAGE.SIZE_LARGE")}</option>
                   </select>
                   <button type="button" title={isHidden ? t("HOME_PAGE.SHOW_SECTION") : t("HOME_PAGE.HIDE_SECTION")} onClick={() => toggleHomeSection(sectionId)}>
@@ -1105,10 +1223,43 @@ export default function Home({ kioskMode = false }) {
         </div>
       ) : null}
 
-      <div className="home-section-stack">
+      {!kioskMode && homeSettings.nowPlayingStrip && activeSessionCount > 0 ? (
+        <NowPlayingStrip sessions={liveSessions} onOpen={() => document.querySelector(".home-widget-id-sessions")?.scrollIntoView({ behavior: "smooth", block: "start" })} />
+      ) : null}
+
+      <div className={`home-stack-wrapper${isOrderingHome ? " is-editing" : ""}`}>
+      <div className="home-section-stack" ref={homeStackRef}>
       {shouldRenderSection("sessions") && activeSessionCount > 0 ? <section className={getHomeSectionClass("sessions", "home-active-sessions home-glass-card")} style={getHomeSectionStyle("sessions")}>
-        <Sessions surface={kioskMode ? "kiosk" : "home"} />
+        <Sessions
+          surface={kioskMode ? "kiosk" : "home"}
+          view={kioskMode ? undefined : homeSettings.sessionsView}
+          onViewChange={(view) => updateHomeSettings((current) => ({ ...current, sessionsView: view }))}
+        />
       </section> : null}
+
+      {shouldRenderSection("sessions") && activeSessionCount === 0 && !kioskMode ? (
+        <section className={getHomeSectionClass("sessions", "home-all-quiet-section home-glass-card")} style={getHomeSectionStyle("sessions")} aria-label="Active sessions">
+          <AllQuietSlot lastPlayback={lastPlaybackWidget.data} peak={peakWidget.data} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("peakHours") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("peakHours", "home-peak-hours home-glass-card")} style={getHomeSectionStyle("peakHours")}>
+          <PeakHoursWidget data={peakWidget.data} error={peakWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("upNext") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("upNext", "home-up-next home-glass-card")} style={getHomeSectionStyle("upNext")}>
+          <UpNextWidget data={upNextWidget.data} error={upNextWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("diskRunway") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("diskRunway", "home-disk-runway home-glass-card")} style={getHomeSectionStyle("diskRunway")}>
+          <DiskRunwayWidget data={diskRunwayWidget.data} error={diskRunwayWidget.error} />
+        </section>
+      ) : null}
 
       {shouldRenderSection("streamCapacity") ? (
         <section className={getHomeSectionClass("streamCapacity", "home-stream-capacity home-glass-card")} aria-label="Stream capacity" style={getHomeSectionStyle("streamCapacity")}>
@@ -1623,6 +1774,30 @@ export default function Home({ kioskMode = false }) {
         </div>
       </section> : null}
       </div>
+      {isOrderingHome ? (
+        <HomeLayoutEditor
+          stackRef={homeStackRef}
+          sectionIds={orderedSectionIds}
+          sizes={homeSettings.sizes || {}}
+          labels={sectionLabels}
+          onMove={placeSection}
+          onMoveBy={moveVisibleSection}
+          onResize={updateWidgetSize}
+          onHide={hideSectionWithUndo}
+          announce={setLiveAnnouncement}
+        />
+      ) : null}
+      </div>
+      <AddWidgetDrawer
+        open={isAddDrawerOpen}
+        hiddenIds={normalizeHomeOrder(homeSettings.order).filter((id) => homeSettings.hidden.includes(id))}
+        labels={sectionLabels}
+        connected={connectedIntegrations}
+        onAdd={addSectionFromDrawer}
+        onClose={closeAddDrawer}
+      />
+      <UndoToast message={undoToast} onUndo={undoLayoutChange} onClose={closeUndoToast} />
+      <div className="visually-hidden" aria-live="polite">{liveAnnouncement}</div>
       <Modal show={Boolean(detailModal)} onHide={() => setDetailModal(null)} centered contentClassName="home-detail-modal">
         <Modal.Header closeButton>
           <Modal.Title>{detailModal?.title}</Modal.Title>

@@ -19,6 +19,9 @@ export const HOME_SECTION_DEFINITIONS = [
   { id: "issues", label: "Library issues" },
   { id: "watchParty", label: "Watch party" },
   { id: "watchTonight", label: "Watch tonight" },
+  { id: "upNext", label: "Up next tonight" },
+  { id: "peakHours", label: "Peak hours" },
+  { id: "diskRunway", label: "Disk runway" },
   { id: "seasonGaps", label: "Season gaps" },
   { id: "tdarr", label: "Tdarr transcodes" },
   { id: "wizarr", label: "Wizarr invites" },
@@ -44,6 +47,9 @@ export const CURATED_DEFAULT_HOME_ORDER = [
   "trends",
   "watchParty",
   "watchTonight",
+  "upNext",
+  "peakHours",
+  "diskRunway",
   "quickActions",
   "library",
   "catalog",
@@ -68,9 +74,14 @@ export const DEFAULT_HOME_SETTINGS = {
   theme: "default",
   alertRules: { backupDays: 7, requestThreshold: 1, missingPosterThreshold: 1, streamCap: 0, transcodeCap: 0 },
   dismissedAlerts: {},
+  sessionsView: "auto",
+  nowPlayingStrip: true,
   sizes: {
     sessions: "large",
     streamCapacity: "small",
+    upNext: "small",
+    peakHours: "wide",
+    diskRunway: "small",
     overview: "large",
     hall: "large",
     operations: "large",
@@ -173,8 +184,33 @@ export const HOME_PRESETS = {
 export const HOME_WIDGET_SIZE_LABELS = {
   small: "Compact",
   medium: "Half width",
+  wide: "Two thirds",
   large: "Full width",
 };
+
+// Widget sizes as columns of the 12-column Home grid. Resizing snaps to these.
+export const HOME_WIDGET_SIZE_COLUMNS = { small: 4, medium: 6, wide: 8, large: 12 };
+export const HOME_WIDGET_SNAP_COLUMNS = [4, 6, 8, 12];
+
+export function snapColumns(columns) {
+  return HOME_WIDGET_SNAP_COLUMNS.reduce((best, value) => (Math.abs(value - columns) < Math.abs(best - columns) ? value : best), HOME_WIDGET_SNAP_COLUMNS[0]);
+}
+
+export function sizeForColumns(columns) {
+  const snapped = snapColumns(columns);
+  return Object.keys(HOME_WIDGET_SIZE_COLUMNS).find((size) => HOME_WIDGET_SIZE_COLUMNS[size] === snapped) || "large";
+}
+
+export const HOME_SESSIONS_VIEWS = ["auto", "cards", "wall", "list", "bandwidth"];
+
+// Auto picks a view from how busy the server is: one stream gets the full card,
+// a few share the wall, and five or more fold into the compact list.
+export function resolveSessionsView(view, count) {
+  if (view && view !== "auto") return view;
+  if (count >= 5) return "list";
+  if (count >= 2) return "wall";
+  return "cards";
+}
 
 function insertAtDefaultPosition(order, sectionId) {
   const curatedIndex = CURATED_DEFAULT_HOME_ORDER.indexOf(sectionId);
@@ -263,6 +299,9 @@ export function normalizeHomeSettings(settings) {
   };
   normalized.dismissedAlerts = normalized.dismissedAlerts && typeof normalized.dismissedAlerts === "object" ? normalized.dismissedAlerts : {};
   normalized.sizes = normalized.sizes && typeof normalized.sizes === "object" ? { ...DEFAULT_HOME_SETTINGS.sizes, ...normalized.sizes } : DEFAULT_HOME_SETTINGS.sizes;
+  normalized.sizes = Object.fromEntries(Object.entries(normalized.sizes).filter(([, size]) => HOME_WIDGET_SIZE_COLUMNS[size]));
+  normalized.sessionsView = HOME_SESSIONS_VIEWS.includes(normalized.sessionsView) ? normalized.sessionsView : "auto";
+  normalized.nowPlayingStrip = normalized.nowPlayingStrip !== false;
   normalized.version = Math.max(savedVersion, HOME_LAYOUT_VERSION);
   return normalized;
 }

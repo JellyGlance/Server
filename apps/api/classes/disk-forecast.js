@@ -166,4 +166,4 @@ async function getDiskForecast({ db, fetchDisks, now = new Date() }) {
   return buildForecast({ additions, oldest, disks, now });
 }
 
-module.exports = { growthFromAdditions, forecastFill, summariseDisks, roundDays, buildForecast, getDiskForecast, STABLE_BYTES_PER_DAY, MIN_HISTORY_DAYS };
+module.exports = { growthFromAdditions, forecastFill, summariseDisks, roundDays, buildForecast, getDiskForecast, STABLE_BYTES_PER_DAY, MIN_HISTORY_DAYS, ADDITIONS_SQL, OLDEST_SQL };
