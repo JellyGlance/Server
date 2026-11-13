@@ -209,11 +209,11 @@ function wrapEmailDocument({
   const footer = footerHtml(theme);
   const defaultDocument = `<!doctype html>
 <html>
-  <body style="margin:0;background:${theme.background};font-family:${theme.font};color:${theme.text};">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:${theme.background};padding:24px 12px;">
+  <body style="margin:0;width:100%;max-width:100%;background:${theme.background};font-family:${theme.font};color:${theme.text};">
+    <table width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:100%;background:${theme.background};padding:24px 12px;">
       <tr>
         <td align="center">
-          <table width="640" cellpadding="0" cellspacing="0" style="background:${theme.surface};border:1px solid ${theme.border};border-radius:18px;overflow:hidden;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:640px;background:${theme.surface};border:1px solid ${theme.border};border-radius:18px;overflow:hidden;">
             <tr><td style="height:4px;background:${kickerColor || theme.accent};font-size:0;line-height:0;">&nbsp;</td></tr>
             <tr>
               <td style="padding:28px 28px 12px;">
