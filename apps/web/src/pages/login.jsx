@@ -411,11 +411,6 @@ function Login() {
               <Button type="button" className="setup-button quick-connect-open-button" disabled={processing} onClick={openQuickConnectInJellyfin}>
                 Open in Jellyfin · code ready
               </Button>
-              {quickConnectDeepLink(quickConnect) && (
-                <small className="quick-connect-link-hint" title={quickConnectDeepLink(quickConnect)}>
-                  …/web/#/quickconnect?code={quickConnect.code}
-                </small>
-              )}
 
               <div className="quick-connect-code-panel">
                 <div className="quick-connect-code-chip">

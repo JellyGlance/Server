@@ -2,6 +2,12 @@
 
 Local packaging for **Unraid Community Apps** and **Proxmox LXC**.
 
+## Database version and persistent data
+
+The Compose files and Unraid database template use `postgres:18-alpine` for new installations. Postgres 18 defaults to `PGDATA=/var/lib/postgresql/18/docker`, so mount persistent data at `/var/lib/postgresql`, not the old `/var/lib/postgresql/data` path.
+
+Do not switch an existing volume between major versions by changing the tag or mount. Dump with the old version, restore into a fresh Postgres 18 volume, and verify the restore before retiring the old data. Changing the mount does not migrate the database.
+
 ## Unraid store
 
 Files in `unraid/templates/` are Community Applications XML templates.

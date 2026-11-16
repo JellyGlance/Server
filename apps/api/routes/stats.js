@@ -1163,6 +1163,75 @@ router.get("/getDiskForecast", async (req, res) => {
   }
 });
 
+router.get("/home/peakHours", async (req, res) => {
+  try {
+    if (!canViewAllUsers(req)) {
+      return res.status(403).send({ error: "Only admins can see household peak hours" });
+    }
+    const { getPeakHours } = require("../classes/home-widgets");
+    res.send(await getPeakHours({ db, days: req.query.days }));
+  } catch (error) {
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
+router.get("/home/upNext", async (req, res) => {
+  try {
+    if (!canViewAllUsers(req)) {
+      return res.status(403).send({ error: "Only admins can see what is up next" });
+    }
+    const { getUpNext } = require("../classes/home-widgets");
+    res.send(await getUpNext({ db }));
+  } catch (error) {
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
+router.get("/home/diskRunway", async (req, res) => {
+  try {
+    if (!canViewAllUsers(req)) {
+      return res.status(403).send({ error: "Only admins can see disk runway" });
+    }
+    const { getDiskRunway } = require("../classes/home-widgets");
+    const { fetchDisks } = require("../classes/threshold-alerts");
+    res.send(await getDiskRunway({ db, fetchDisks }));
+  } catch (error) {
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
+router.get("/home/lastPlayback", async (req, res) => {
+  try {
+    if (!canViewAllUsers(req)) {
+      return res.status(403).send({ error: "Only admins can see the last playback" });
+    }
+    const { getLastPlayback } = require("../classes/home-widgets");
+    res.send((await getLastPlayback({ db })) || {});
+  } catch (error) {
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
+router.get("/home/demoSessions", async (req, res) => {
+  const { getDemoSessionsMode } = require("../classes/demo-sessions");
+  res.send(getDemoSessionsMode());
+});
+
+router.post("/home/demoSessions", async (req, res) => {
+  const { isDemoSessionsEnabled, setDemoSessionsMode, getDemoSessionsMode } = require("../classes/demo-sessions");
+  if (!canViewAllUsers(req)) {
+    return res.status(403).send({ error: "Only admins can change demo sessions" });
+  }
+  if (!isDemoSessionsEnabled() || !setDemoSessionsMode(req.body?.mode)) {
+    return res.status(400).send({ error: "Demo sessions are off or the mode is not valid" });
+  }
+  res.send(getDemoSessionsMode());
+});
+
 router.get("/getLibraryCardStats", async (req, res) => {
   try {
     const { rows } = await db.query(

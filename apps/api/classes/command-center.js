@@ -99,7 +99,8 @@ async function fetchSeerrSnapshot() {
       const response = await axios.get(`${cleanUrl(app.values.url)}/api/v1/request`, {
         timeout: 12000,
         headers: { "X-Api-Key": app.values.secret },
-        params: { take: 100, skip: 0, sort: "added", skipCount: "false" },
+        // Seerr 3.x rejects unknown query parameters (skipCount gave a 400).
+        params: { take: 100, skip: 0, sort: "added" },
       });
       const rows = response.data?.results || response.data || [];
       for (const row of Array.isArray(rows) ? rows : []) {

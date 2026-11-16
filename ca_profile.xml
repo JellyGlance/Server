@@ -19,7 +19,7 @@ Sits **beside** Jellyfin. Not a Seerr, Sonarr, or Jellyfin admin replacement.
 | Template | What it is |
 | --- | --- |
 | **jellyglance** | The app — `ghcr.io/jellyglance/server` |
-| **jellyglance-db** | Postgres 16 companion (skip if you already have Postgres) |
+| **jellyglance-db** | Postgres 18 companion (skip if you already have Postgres) |
 
 ### Install in 3 steps
 1. Create a **custom Docker network**; install **jellyglance-db** (or point at existing Postgres).

@@ -112,8 +112,11 @@ function mapIntegrationSecrets(integrations, mapper) {
 }
 
 async function getSettings() {
-  const rows = await db.query('SELECT settings FROM app_config where "ID"=1').then((res) => res.rows);
-  const settings = rows[0]?.settings || {};
+  const result = await db.query('SELECT settings FROM app_config where "ID"=1');
+  // db.query() returns [] on failure; never treat that as empty settings, or a
+  // later save could write defaults over the real ones.
+  if (!Array.isArray(result?.rows)) throw new Error("Settings unavailable: database query failed");
+  const settings = result.rows[0]?.settings || {};
   return settings;
 }
 

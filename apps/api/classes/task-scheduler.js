@@ -64,7 +64,7 @@ class TaskScheduler {
         ...TaskList.IntegrationHealthCheck,
       },
       NewsletterCampaigns: {
-        Interval: 60,
+        Interval: 5,
         ...TaskList.NewsletterCampaigns,
       },
       WrappedRecaps: {
@@ -82,6 +82,10 @@ class TaskScheduler {
   }
 
   async initializeTasks() {
+    if (process.env.JG_DISABLE_SCHEDULED_TASKS === "1") {
+      console.log("[TASK-SCHEDULER] Scheduled tasks are disabled (JG_DISABLE_SCHEDULED_TASKS=1)");
+      return;
+    }
     let canTaskSchedulerRun = false;
     const _config = new configClass();
 
@@ -162,6 +166,14 @@ class TaskScheduler {
             this.defaultIntervals[taskEnumKey].Interval = taskSettings.Interval;
           } else {
             taskSettings.Interval = this.defaultIntervals[taskEnumKey].Interval;
+          }
+
+          // Newsletter campaigns used to run hourly. The due check is now a
+          // cron match with last-sent dedupe, so the inherited 60-minute
+          // default becomes a check every five minutes.
+          if (taskEnumKey === "NewsletterCampaigns" && Number(this.defaultIntervals[taskEnumKey].Interval) === 60) {
+            this.defaultIntervals[taskEnumKey].Interval = 5;
+            taskSettings.Interval = 5;
           }
 
           if (!settings.Tasks) {

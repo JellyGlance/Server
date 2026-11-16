@@ -6,7 +6,7 @@
   },
   "jellyglance-db": {
     "name": "jellyglance-db",
-    "desc": "PostgreSQL 16 for JellyGlance",
-    "image": "postgres:16-alpine"
+    "desc": "PostgreSQL 18 for JellyGlance",
+    "image": "postgres:18-alpine"
   }
 }

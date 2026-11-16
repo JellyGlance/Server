@@ -23,7 +23,7 @@ const { jf_libraries_columns, jf_libraries_mapping } = require("../models/jf_lib
 const { jf_library_items_columns, jf_library_items_mapping } = require("../models/jf_library_items");
 const { jf_library_seasons_columns, jf_library_seasons_mapping } = require("../models/jf_library_seasons");
 const { jf_library_episodes_columns, jf_library_episodes_mapping } = require("../models/jf_library_episodes");
-const { jf_item_info_columns, jf_item_info_mapping } = require("../models/jf_item_info");
+const { jf_item_info_columns, jf_item_info_mapping, jf_item_info_rows } = require("../models/jf_item_info");
 const { columnsPlaybackReporting, mappingPlaybackReporting } = require("../models/jf_playback_reporting_plugin_data");
 
 function isPlaybackReportingPlugin(plugin) {
@@ -372,7 +372,7 @@ async function syncItemInfo(seasons_and_episodes, library_items) {
 
     if ((existingItemInfo.length == 0 && syncTask.taskName === taskName.partialsync) || syncTask.taskName === taskName.fullsync) {
       //dont update item info if it already exists and running a partial sync
-      const mapped_data = await Item.MediaSources.map((item) => jf_item_info_mapping(item, "Item"));
+      const mapped_data = jf_item_info_rows(Item, "Item");
       data_to_insert.push(...mapped_data);
 
       if (mapped_data.length !== 0) {
@@ -393,7 +393,7 @@ async function syncItemInfo(seasons_and_episodes, library_items) {
       syncTask.taskName === taskName.fullsync
     ) {
       //dont update item info if it already exists and running a partial sync
-      const mapped_data = await Episode.MediaSources.map((item) => jf_item_info_mapping(item, "Episode"));
+      const mapped_data = jf_item_info_rows(Episode, "Episode");
       data_to_insert.push(...mapped_data);
 
       //filter fix if jf_libraries is empty

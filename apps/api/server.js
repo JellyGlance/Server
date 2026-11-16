@@ -47,10 +47,13 @@ const newsletterRouter = require("./routes/newsletter");
 const insightsRouter = require("./routes/insights");
 const opsCopilotRouter = require("./routes/ops-copilot");
 const incompleteSeasonsRouter = require("./routes/incomplete-seasons");
+const cleanupRulesRouter = require("./routes/cleanup-rules");
+const autoCollectionsRouter = require("./routes/auto-collections");
 const subtitleGapRouter = require("./routes/subtitle-gap");
 const alertsRouter = require("./routes/alerts");
 const webhookOutRouter = require("./routes/webhook-out");
 const { publicRouter: publicStatusRouter, adminRouter: publicStatusAdminRouter } = require("./routes/public-status");
+const { publicRouter: publicNewsletterArchiveRouter } = require("./routes/newsletter-public");
 const thresholdAlerts = require("./classes/threshold-alerts");
 
 // tasks
@@ -169,7 +172,7 @@ app.use((req, res, next) => {
       "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
       "connect-src 'self' ws: wss: http: https:",
-      "frame-src 'self'",
+      "frame-src 'self' https://www.youtube-nocookie.com",
       "frame-ancestors 'self'",
       "object-src 'none'",
       "base-uri 'self'",
@@ -250,6 +253,19 @@ function indexStaticAssets(dir, baseDir = dir) {
   }
 }
 
+// The asset list is built when the server starts. A new web build brings new hashed file
+// names, so on a miss (or a file that has gone) the list is rebuilt, at most every 2 seconds.
+// Lookups still only ever return files found under the web root.
+let lastStaticAssetScan = 0;
+function refreshStaticAssetIndex() {
+  const now = Date.now();
+  if (now - lastStaticAssetScan < 2000) return false;
+  lastStaticAssetScan = now;
+  staticAssetIndex.clear();
+  indexStaticAssets(root);
+  return true;
+}
+
 function getRequestPathname(req) {
   try {
     return decodeURIComponent(new URL(req.originalUrl || req.url, "http://jellyglance.local").pathname);
@@ -258,12 +274,7 @@ function getRequestPathname(req) {
   }
 }
 
-function getStaticAssetPath(req) {
-  let pathname = getRequestPathname(req);
-  if (BASE_NAME && pathname.startsWith(BASE_NAME)) {
-    pathname = pathname.slice(BASE_NAME.length) || "/";
-  }
-
+function lookupStaticAsset(pathname) {
   const exactPath = staticAssetIndex.get(pathname);
   if (exactPath) {
     return exactPath;
@@ -275,6 +286,22 @@ function getStaticAssetPath(req) {
   }
 
   return null;
+}
+
+function getStaticAssetPath(req) {
+  let pathname = getRequestPathname(req);
+  if (BASE_NAME && pathname.startsWith(BASE_NAME)) {
+    pathname = pathname.slice(BASE_NAME.length) || "/";
+  }
+
+  let found = lookupStaticAsset(pathname);
+  if (found && !fs.existsSync(found)) {
+    found = null;
+  }
+  if (!found && refreshStaticAssetIndex()) {
+    found = lookupStaticAsset(pathname);
+  }
+  return found;
 }
 
 function getTranslationFilePath(req) {
@@ -398,11 +425,14 @@ app.use("/insights-data/streams", apiRateLimit, authenticate, restrictApiKeyScop
 app.use("/insights-data", apiRateLimit, authenticate, restrictApiKeyScope, insightsRouter);
 app.use("/ops-copilot", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), opsCopilotRouter);
 app.use("/incomplete-seasons", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), incompleteSeasonsRouter);
+app.use("/cleanup-rules", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), cleanupRulesRouter);
+app.use("/auto-collections", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), autoCollectionsRouter);
 app.use("/subtitle-gap", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), subtitleGapRouter);
 app.use("/alerts-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), alertsRouter);
 app.use("/webhook-out-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), webhookOutRouter);
 app.use("/status-data/admin", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), publicStatusAdminRouter);
 app.use("/status-data", apiRateLimit, publicStatusRouter);
+app.use("/newsletter-archive-data", apiRateLimit, publicNewsletterArchiveRouter);
 app.use("/stats", apiRateLimit, authenticate, restrictApiKeyScope, statsRouter, () => {
   /*  #swagger.tags = ['Stats']*/
 }); // mount the API router at /stats, with JWT middleware
@@ -468,6 +498,7 @@ mountSwaggerUi(app, swaggerUi, swaggerDocument);
 writeEnvVariables().then(() => {
   staticAssetIndex.clear();
   indexStaticAssets(root);
+  lastStaticAssetScan = Date.now();
   // staticRateLimit already applied globally; attach again so CodeQL sees these
   // async-registered file handlers as rate-limited.
   app.use(
@@ -551,8 +582,14 @@ async function authenticate(req, res, next) {
     typeof authorization === "string" && authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
 
   if (extractedToken && extractedToken !== "null") {
+    let decoded;
     try {
-      const decoded = jwt.verify(extractedToken, JWT_SECRET, { algorithms: ["HS256"] });
+      decoded = jwt.verify(extractedToken, JWT_SECRET, { algorithms: ["HS256"] });
+    } catch (error) {
+      console.log("Invalid token");
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    try {
       if (!decoded || typeof decoded !== "object" || decoded.user == null) {
         return res.status(401).json({ message: "Invalid token" });
       }
@@ -565,8 +602,11 @@ async function authenticate(req, res, next) {
       req.permissions = access.permissions;
       return next(); // codeql[js/user-controlled-bypass]
     } catch (error) {
-      console.log("Invalid token");
-      return res.status(401).json({ message: "Invalid token" });
+      // A valid token whose role could not be looked up (database busy or down) is
+      // not an invalid token: answer 503 so the browser keeps it and retries,
+      // instead of 401, which signs the user out and loops back to the login page.
+      console.log("Token access lookup failed:", error.message);
+      return res.status(503).json({ message: "JellyGlance is busy, try again in a moment" });
     }
   }
 
@@ -643,14 +683,21 @@ function getTokenPermissions(user) {
   return DEFAULT_ROLE_PERMISSIONS.Owner;
 }
 
+// db.query() returns [] instead of throwing when a query fails; treat that as an
+// error so a lookup failure is never read as "no role".
+async function readAccessSettings() {
+  const result = await dbInstance.query('SELECT settings FROM app_config where "ID"=1');
+  if (!Array.isArray(result?.rows)) throw new Error("settings query failed");
+  return result.rows[0]?.settings || {};
+}
+
 async function resolveTokenAccess(user) {
   if (user === "internal") {
     return { user, permissions: DEFAULT_ROLE_PERMISSIONS.Owner };
   }
 
   if (user?.authMode === "quick-connect" && user?.id) {
-    const { rows } = await dbInstance.query('SELECT settings FROM app_config where "ID"=1');
-    const settings = rows[0]?.settings || {};
+    const settings = await readAccessSettings();
     const role = settings.userRoles?.[user.id] || (user.jellyfinUser?.isAdministrator ? "Admin" : "Viewer");
     const permissions = getRolePermissions(settings, role);
 
@@ -665,8 +712,7 @@ async function resolveTokenAccess(user) {
   }
 
   if (user?.authMode === "oidc" && user?.jellyfinUser?.id) {
-    const { rows } = await dbInstance.query('SELECT settings FROM app_config where "ID"=1');
-    const settings = rows[0]?.settings || {};
+    const settings = await readAccessSettings();
     const role = settings.userRoles?.[user.jellyfinUser.id] || (user.jellyfinUser?.isAdministrator ? "Admin" : "Viewer");
     const permissions = getRolePermissions(settings, role);
 
@@ -681,8 +727,9 @@ async function resolveTokenAccess(user) {
   }
 
   if (user?.authMode === "local") {
-    const { rows } = await dbInstance.query('SELECT "APP_USER", settings FROM app_config where "ID"=1');
-    const config = rows[0] || {};
+    const result = await dbInstance.query('SELECT "APP_USER", settings FROM app_config where "ID"=1');
+    if (!Array.isArray(result?.rows)) throw new Error("settings query failed");
+    const config = result.rows[0] || {};
     const settings = config.settings || {};
     const localUser = (settings.localUsers || []).find((item) => item.id === user.id || item.username === user.username);
     const role = user.id === 1 || config.APP_USER === user.username ? "Owner" : localUser?.role || user.role || "Viewer";
@@ -721,7 +768,7 @@ function authorizeApiRoute(req, res, next) {
     return;
   }
 
-  if (pathName === "/sessions/stop" || pathName === "/sessions/message") {
+  if (pathName === "/sessions/stop" || pathName === "/sessions/message" || pathName === "/sessions/stop-with-message") {
     if (!["Owner", "Admin"].includes(req.user?.role)) {
       return res.status(403).json({ message: "Admin role required" });
     }

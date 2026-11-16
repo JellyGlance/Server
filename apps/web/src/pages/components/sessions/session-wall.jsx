@@ -1,4 +1,7 @@
+/* eslint-disable react/prop-types */
 import baseUrl from "../../../lib/baseurl";
+import { orderSessions } from "../../../lib/session-order";
+import { SessionPlaybackFields, SessionPlaybackPills } from "./session-playback";
 
 function ticksToClock(ticks) {
   const totalSeconds = Math.max(0, Math.floor(Number(ticks || 0) / 10000000));
@@ -30,13 +33,12 @@ function getArtId(item) {
   return item.SeriesId || item.ParentBackdropItemId || item.Id || "";
 }
 
-function SessionWallTile({ session }) {
+function SessionWallTile({ session, simple, canManage }) {
   const item = session.NowPlayingItem || {};
   const playState = session.PlayState || {};
   const runtime = Number(item.RunTimeTicks || 0);
   const position = Number(playState.PositionTicks || 0);
   const progress = runtime > 0 ? Math.min(100, Math.max(0, (position / runtime) * 100)) : 0;
-  const transcoding = isTranscodingSession(session);
   const paused = Boolean(playState.IsPaused);
   const title = getTitle(item);
   const artId = getArtId(item);
@@ -63,13 +65,14 @@ function SessionWallTile({ session }) {
         </div>
         <div className="session-wall-title" title={title.main}>{title.main}</div>
         {title.sub ? <div className="session-wall-sub" title={title.sub}>{title.sub}</div> : null}
-        <div className="session-wall-meta">
-          <span className="session-wall-device" title={`${session.Client || ""} ${session.ApplicationVersion || ""}`.trim()}>
-            {session.DeviceName || session.Client || "Unknown device"}
-          </span>
-          <span className={`session-wall-method ${transcoding ? "is-transcode" : "is-direct"}`}>
-            {transcoding ? "Transcode" : "Direct"}
-          </span>
+        {/* Same playback info as the session cards, from the same components. */}
+        <div className="session-wall-playback">
+          <SessionPlaybackPills session={session} simple={simple} canManage={canManage} />
+          {simple ? null : (
+            <div className="session-fields">
+              <SessionPlaybackFields session={session} />
+            </div>
+          )}
         </div>
         <div className="session-wall-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>
           <span style={{ width: `${progress}%` }} />
@@ -83,13 +86,13 @@ function SessionWallTile({ session }) {
   );
 }
 
-function SessionWall({ sessions }) {
-  const list = Array.isArray(sessions) ? sessions.filter((session) => session?.NowPlayingItem) : [];
+function SessionWall({ sessions, simple = false, canManage = false }) {
+  const list = orderSessions(sessions).filter((session) => session?.NowPlayingItem);
   if (list.length === 0) return null;
   return (
     <div className="session-wall-grid">
       {list.map((session) => (
-        <SessionWallTile key={session.Id} session={session} />
+        <SessionWallTile key={session.Id} session={session} simple={simple} canManage={canManage} />
       ))}
     </div>
   );

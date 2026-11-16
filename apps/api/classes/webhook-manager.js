@@ -134,6 +134,7 @@ class WebhookManager {
     }
 
     async flushQuietHoursDigest() {
+        if (process.env.JG_DISABLE_NOTIFICATIONS === "1") return;
         if (this._flushingDigest) return true;
         this._flushingDigest = true;
         try {
@@ -175,6 +176,7 @@ class WebhookManager {
     }
 
     async triggerEventWebhooks(eventType, data = {}, webhookIds = null) {
+        if (process.env.JG_DISABLE_NOTIFICATIONS === "1") return [];
         try {
             if (!webhookIds && !data?.test) {
                 // Outbound webhook rules run alongside the classic webhooks and never block them.
@@ -279,6 +281,7 @@ class WebhookManager {
     }
 
     async executeWebhook(webhook, data = {}) {
+        if (process.env.JG_DISABLE_NOTIFICATIONS === "1") return false;
         try {
             let headers = {};
             let payload = {};
@@ -555,6 +558,7 @@ class WebhookManager {
     }
 
     async flushCoalescedWebhooks() {
+        if (process.env.JG_DISABLE_NOTIFICATIONS === "1") return;
         if (!this.coalescedWebhooks?.size) return true;
         const entries = [...this.coalescedWebhooks.values()];
         this.coalescedWebhooks.clear();
@@ -691,6 +695,7 @@ class WebhookManager {
     }
 
     async triggerEvent(eventType, eventData = {}) {
+        if (process.env.JG_DISABLE_NOTIFICATIONS === "1") return [];
         try {
             const webhooks = this.eventWebhooks?.[eventType] || [];
             
@@ -922,6 +927,7 @@ class WebhookManager {
     }
 
     async executeDiscordWebhook(webhook, data) {
+        if (process.env.JG_DISABLE_NOTIFICATIONS === "1") return false;
         try {
             console.log(`Execution of discord webhook: ${webhook.name}`);
 

@@ -455,7 +455,8 @@ router.post("/jellyfin-quick-connect/initiate", async (req, res) => {
     res.json({
       code: data.Code,
       secret: data.Secret,
-      quickConnectUrl: `${config.host}/web/#/quickconnect`,
+      // JG_QUICK_CONNECT_URL_BASE: the address people open Jellyfin on, when JF_HOST is an internal-only name.
+      quickConnectUrl: `${process.env.JG_QUICK_CONNECT_URL_BASE || config.host}/web/#/quickconnect`,
       authenticated: data.Authenticated === true,
       dateAdded: data.DateAdded || null,
     });
