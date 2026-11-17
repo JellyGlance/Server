@@ -112,7 +112,10 @@ const materializedViews = [
   "js_library_items_with_playcount_playtime",
 ];
 
-const DEBOUNCE_MS = Number(process.env.MATERIALIZED_VIEW_REFRESH_DEBOUNCE_MS) || 3000;
+// Longest time a playback write waits before the views refresh. Refreshes run at most once per
+// window: each REFRESH MATERIALIZED VIEW rewrites the whole view, so refreshing on every write
+// turns steady playback activity into constant full-table rewrites.
+const DEBOUNCE_MS = Number(process.env.MATERIALIZED_VIEW_REFRESH_DEBOUNCE_MS) || 5 * 60 * 1000;
 
 let debounceTimer = null;
 let inFlight = null;
@@ -170,7 +173,10 @@ async function runRefreshBatch() {
 
 function scheduleMaterializedViewRefreshes() {
   pendingRefresh = true;
-  clearTimeout(debounceTimer);
+  // Keep the timer that is already running. Restarting it on every call meant a server with
+  // steady activity never went quiet long enough for it to fire, or refreshed after nearly
+  // every write once activity had gaps longer than the delay.
+  if (debounceTimer) return;
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
     runRefreshBatch().catch((error) => {
