@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Favorito em comum",
       "UNFINISHED": "Começado, não terminado",
       "NO_PICKS": "Nada na fila para hoje à noite.",
-      "USERS": "{{count}} espectadores"
+      "USERS": "{{count}} espectadores",
+      "USERS_one": "{{count}} espectadores",
+      "USERS_other": "{{count}} espectadores"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Procurar no Sonarr",

@@ -371,7 +371,7 @@ router.get("/Audiobookshelf/Images/:itemId", async (req, res) => {
 
 // Sonarr/Radarr/Lidarr/Readarr artwork that only exists on the Arr itself (no public URL).
 // Only MediaCover image paths are allowed, and the Arr API key never leaves the server.
-const ARR_MEDIACOVER_PATH = /^(\/[A-Za-z0-9_-]+)*\/MediaCover\/[A-Za-z0-9_.\/-]+\.(jpg|jpeg|png|webp|gif)$/i;
+const ARR_MEDIACOVER_PATH = /^(\/[A-Za-z0-9_-]+)*\/MediaCover\/[A-Za-z0-9_./-]+\.(jpg|jpeg|png|webp|gif)$/i;
 router.get("/Arr/Images/:instanceId", async (req, res) => {
   try {
     const path = String(req.query.path || "").split("?")[0];

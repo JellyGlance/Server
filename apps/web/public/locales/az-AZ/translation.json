@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Ortaq sevimli",
       "UNFINISHED": "Başlanıb, bitməyib",
       "NO_PICKS": "Bu axşam üçün növbədə heç nə yoxdur.",
-      "USERS": "{{count}} izləyici"
+      "USERS": "{{count}} izləyici",
+      "USERS_one": "{{count}} izləyici",
+      "USERS_other": "{{count}} izləyici"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr-da axtar",

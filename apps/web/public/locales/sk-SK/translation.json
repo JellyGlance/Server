@@ -752,7 +752,9 @@
       "SHARED_FAVOURITE": "Spoločný obľúbený",
       "UNFINISHED": "Začaté, nedokončené",
       "NO_PICKS": "Na dnešný večer nie je nič vo fronte.",
-      "USERS": "Diváci: {{count}}"
+      "USERS": "Diváci: {{count}}",
+      "USERS_one": "Diváci: {{count}}",
+      "USERS_other": "Diváci: {{count}}"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Hľadať v Sonarr",

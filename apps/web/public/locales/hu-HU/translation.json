@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Közös kedvenc",
       "UNFINISHED": "Elkezdve, nincs befejezve",
       "NO_PICKS": "Nincs semmi sorban ma estére.",
-      "USERS": "{{count}} néző"
+      "USERS": "{{count}} néző",
+      "USERS_one": "{{count}} néző",
+      "USERS_other": "{{count}} néző"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Keresés a Sonarrban",

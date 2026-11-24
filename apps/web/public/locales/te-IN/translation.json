@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "భాగస్వామ్య ఇష్టమైనది",
       "UNFINISHED": "ప్రారంభించారు, పూర్తి కాలేదు",
       "NO_PICKS": "ఈ రాత్రికి ఏమీ క్యూలో లేదు.",
-      "USERS": "{{count}} వీక్షకులు"
+      "USERS": "{{count}} వీక్షకులు",
+      "USERS_one": "{{count}} వీక్షకులు",
+      "USERS_other": "{{count}} వీక్షకులు"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr లో వెతుకు",

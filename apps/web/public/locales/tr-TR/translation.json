@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Ortak favori",
       "UNFINISHED": "Başlandı, bitirilmedi",
       "NO_PICKS": "Bu akşam için kuyrukta bir şey yok.",
-      "USERS": "{{count}} izleyici"
+      "USERS": "{{count}} izleyici",
+      "USERS_one": "{{count}} izleyici",
+      "USERS_other": "{{count}} izleyici"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr'da ara",

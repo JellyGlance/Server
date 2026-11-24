@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Favorit bersama",
       "UNFINISHED": "Dimulai, belum selesai",
       "NO_PICKS": "Tidak ada antrean untuk malam ini.",
-      "USERS": "{{count}} penonton"
+      "USERS": "{{count}} penonton",
+      "USERS_one": "{{count}} penonton",
+      "USERS_other": "{{count}} penonton"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Cari di Sonarr",

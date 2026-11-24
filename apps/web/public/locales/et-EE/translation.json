@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Ühine lemmik",
       "UNFINISHED": "Alustatud, lõpetamata",
       "NO_PICKS": "Täna õhtuks pole midagi järjekorras.",
-      "USERS": "{{count}} vaatajat"
+      "USERS": "{{count}} vaatajat",
+      "USERS_one": "{{count}} vaatajat",
+      "USERS_other": "{{count}} vaatajat"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Otsi Sonarris",

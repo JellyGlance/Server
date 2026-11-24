@@ -750,7 +750,9 @@
       "SHARED_FAVOURITE": "Favorit comun",
       "UNFINISHED": "Început, neterminat",
       "NO_PICKS": "Nimic programat pentru diseară.",
-      "USERS": "{{count}} spectatori"
+      "USERS": "{{count}} spectatori",
+      "USERS_one": "{{count}} spectatori",
+      "USERS_other": "{{count}} spectatori"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Caută în Sonarr",

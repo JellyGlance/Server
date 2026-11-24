@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "সবার প্রিয়",
       "UNFINISHED": "শুরু হয়েছে, শেষ হয়নি",
       "NO_PICKS": "আজ রাতের জন্য কিছু সারিতে নেই।",
-      "USERS": "{{count}} জন দর্শক"
+      "USERS": "{{count}} জন দর্শক",
+      "USERS_one": "{{count}} জন দর্শক",
+      "USERS_other": "{{count}} জন দর্শক"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr-এ খুঁজুন",

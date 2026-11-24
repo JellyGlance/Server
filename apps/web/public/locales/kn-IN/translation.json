@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "ಹಂಚಿಕೊಂಡ ಮೆಚ್ಚಿನದು",
       "UNFINISHED": "ಪ್ರಾರಂಭಿಸಲಾಗಿದೆ, ಮುಗಿದಿಲ್ಲ",
       "NO_PICKS": "ಇಂದು ರಾತ್ರಿಗೆ ಏನೂ ಸರತಿಯಲ್ಲಿಲ್ಲ.",
-      "USERS": "{{count}} ವೀಕ್ಷಕರು"
+      "USERS": "{{count}} ವೀಕ್ಷಕರು",
+      "USERS_one": "{{count}} ವೀಕ್ಷಕರು",
+      "USERS_other": "{{count}} ವೀಕ್ಷಕರು"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr ನಲ್ಲಿ ಹುಡುಕಿ",

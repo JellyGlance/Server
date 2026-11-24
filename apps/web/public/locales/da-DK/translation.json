@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Fælles favorit",
       "UNFINISHED": "Startet, ikke færdig",
       "NO_PICKS": "Intet i kø til i aften.",
-      "USERS": "{{count}} seere"
+      "USERS": "{{count}} seere",
+      "USERS_one": "{{count}} seere",
+      "USERS_other": "{{count}} seere"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Søg i Sonarr",

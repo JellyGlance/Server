@@ -274,7 +274,7 @@ export default function CleanupRules() {
       return next;
     });
 
-  const usePresetAsTemplate = (preset) => {
+  const applyPresetAsTemplate = (preset) => {
     const target =
       libraries.find((library) => libraryKind(library) === preset.kind && isLibraryPicked(library.id)) ||
       libraries.find((library) => libraryKind(library) === preset.kind);
@@ -546,7 +546,7 @@ export default function CleanupRules() {
                         `${missing.length} ${missing.length === 1 ? "library" : "libraries"}`
                       )}
                     </span>
-                    <button type="button" className="cleanup-link" disabled={noLibraryOfKind} onClick={() => usePresetAsTemplate(preset)}>
+                    <button type="button" className="cleanup-link" disabled={noLibraryOfKind} onClick={() => applyPresetAsTemplate(preset)}>
                       Use as template
                     </button>
                   </footer>

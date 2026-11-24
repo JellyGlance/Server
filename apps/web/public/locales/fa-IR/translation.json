@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "محبوب مشترک",
       "UNFINISHED": "شروع شده، تمام نشده",
       "NO_PICKS": "چیزی برای امشب در صف نیست.",
-      "USERS": "{{count}} بیننده"
+      "USERS": "{{count}} بیننده",
+      "USERS_one": "{{count}} بیننده",
+      "USERS_other": "{{count}} بیننده"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "جست‌وجو در Sonarr",

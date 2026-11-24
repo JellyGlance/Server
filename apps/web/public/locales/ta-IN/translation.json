@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "பகிரப்பட்ட பிடித்தவை",
       "UNFINISHED": "தொடங்கியது, முடியவில்லை",
       "NO_PICKS": "இன்றிரவுக்கு எதுவும் வரிசையில் இல்லை.",
-      "USERS": "{{count}} பார்வையாளர்கள்"
+      "USERS": "{{count}} பார்வையாளர்கள்",
+      "USERS_one": "{{count}} பார்வையாளர்கள்",
+      "USERS_other": "{{count}} பார்வையாளர்கள்"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr-இல் தேடு",

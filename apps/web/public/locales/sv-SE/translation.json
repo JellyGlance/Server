@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Gemensam favorit",
       "UNFINISHED": "Påbörjad, inte klar",
       "NO_PICKS": "Inget köat för i kväll.",
-      "USERS": "{{count}} tittare"
+      "USERS": "{{count}} tittare",
+      "USERS_one": "{{count}} tittare",
+      "USERS_other": "{{count}} tittare"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sök i Sonarr",

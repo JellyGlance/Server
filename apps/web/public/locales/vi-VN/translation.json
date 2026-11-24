@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Yêu thích chung",
       "UNFINISHED": "Đã bắt đầu, chưa xem xong",
       "NO_PICKS": "Chưa có gì cho tối nay.",
-      "USERS": "{{count}} người xem"
+      "USERS": "{{count}} người xem",
+      "USERS_one": "{{count}} người xem",
+      "USERS_other": "{{count}} người xem"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Tìm trong Sonarr",
