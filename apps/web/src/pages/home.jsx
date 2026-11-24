@@ -27,7 +27,6 @@ import Music2LineIcon from "remixicon-react/Music2LineIcon";
 import PlayCircleLineIcon from "remixicon-react/PlayCircleLineIcon";
 import RestartLineIcon from "remixicon-react/RestartLineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
-import ServerFillIcon from "remixicon-react/ServerFillIcon";
 import Settings3LineIcon from "remixicon-react/Settings3LineIcon";
 import StarSmileLineIcon from "remixicon-react/StarSmileLineIcon";
 import TimeLineIcon from "remixicon-react/TimeLineIcon";
@@ -562,7 +561,6 @@ export default function Home({ kioskMode = false }) {
   const runners = hallOfFame.slice(3, 5);
   const concentration = Number(dashboard?.libraryBalance?.concentration || 0);
   const requestStats = operations.requests?.stats || {};
-  const recentRequests = (operations.requests?.requests || []).slice(0, 4);
   const healthChecks = operations.health?.checks || [];
   const jellyfinCheck = healthChecks.find((check) => check.key === "jellyfin");
   const failingChecks = healthChecks.filter((check) => !check.ok);
@@ -589,7 +587,6 @@ export default function Home({ kioskMode = false }) {
   const maintainerrData = operations.maintainerr || null;
   const digestItems = operations.digest?.items || [];
   const storage = operations.storage || null;
-  const runningJobs = operations.jobs?.running || [];
   const maintainerrScheduled = Number(maintainerrData?.stats?.scheduledItems || 0);
   const maintainerrUpcoming = Number(maintainerrData?.stats?.upcomingWeek || 0);
   const maintainerrFailures = Number(maintainerrData?.stats?.collectionFailures || 0);
@@ -1716,14 +1713,6 @@ export default function Home({ kioskMode = false }) {
 
         <div className="home-ops-grid">
           <HomeOpsCard
-            icon={ChatCheckLineIcon}
-            label="Request queue"
-            value={`${formatNumber(requestStats.pending)} pending`}
-            detail={`${formatNumber(requestStats.failed)} failed · ${formatNumber(requestStats.available)} available`}
-            to="/requests"
-            accent="purple"
-          />
-          <HomeOpsCard
             icon={operations.health?.ok ? CheckboxCircleLineIcon : ErrorWarningLineIcon}
             label="System health"
             value={healthLabel}
@@ -1738,39 +1727,6 @@ export default function Home({ kioskMode = false }) {
             to="/settings"
             accent="purple"
           />
-          <HomeOpsCard
-            icon={ServerFillIcon}
-            label="Server jobs"
-            value={runningJobs.length ? `${runningJobs.length} running` : "Idle"}
-            detail={runningJobs[0]?.name || "No library scans in progress"}
-            to="/server-management"
-          />
-        </div>
-
-        <div className="home-request-preview home-glass-card">
-          <div className="home-request-preview-heading">
-            <div>
-              <p>Recent requests</p>
-              <strong>{formatNumber(operations.requests?.requests?.length || 0)} total</strong>
-            </div>
-            <Link to="/requests">Open Requests</Link>
-          </div>
-          <div className="home-request-list">
-            {recentRequests.length ? (
-              recentRequests.map((request) => (
-                <article key={request.id}>
-                  <span className={`home-request-status is-${String(request.pipelineStatus || request.status || "unknown").toLowerCase()}`}>{request.pipelineLabel || request.status}</span>
-                  <div>
-                    <strong>{request.title}{request.year ? ` (${request.year})` : ""}</strong>
-                    <small>{request.requestedBy} · {request.source}</small>
-                  </div>
-                  <em>{request.availability?.status || "Unknown"}</em>
-                </article>
-              ))
-            ) : (
-              <span className="home-request-empty">No requests to show yet.</span>
-            )}
-          </div>
         </div>
       </section> : null}
       </div>
