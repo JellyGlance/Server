@@ -54,8 +54,8 @@
   },
   "overrides": {
     "eslint": {
-      ".": "10.14.0",
-      "minimatch": "11.0.3"
+      ".": "10.15.0",
+      "minimatch": "11.0.9"
     },
     "fast-uri": "4.2.4",
     "js-yaml": "5.5.0",
@@ -70,7 +70,7 @@
     "follow-redirects": "1.16.3",
     "deepmerge": "4.3.1",
     "@eslint/config-array": {
-      "minimatch": "11.0.3"
+      "minimatch": "11.0.9"
     },
     "swagger-jsdoc": {
       "glob": "14.0.6"
