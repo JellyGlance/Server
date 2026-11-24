@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Kipendwa cha pamoja",
       "UNFINISHED": "Kimeanzishwa, hakijamalizika",
       "NO_PICKS": "Hakuna kilichowekwa kwenye foleni kwa usiku huu.",
-      "USERS": "Watazamaji {{count}}"
+      "USERS": "Watazamaji {{count}}",
+      "USERS_one": "Watazamaji {{count}}",
+      "USERS_other": "Watazamaji {{count}}"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Tafuta katika Sonarr",

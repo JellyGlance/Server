@@ -752,7 +752,9 @@
       "SHARED_FAVOURITE": "Спільне улюблене",
       "UNFINISHED": "Розпочато, але не завершено",
       "NO_PICKS": "На сьогодні нічого не заплановано.",
-      "USERS": "Глядачів: {{count}}"
+      "USERS": "Глядачів: {{count}}",
+      "USERS_one": "Глядачів: {{count}}",
+      "USERS_other": "Глядачів: {{count}}"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Шукати в Sonarr",

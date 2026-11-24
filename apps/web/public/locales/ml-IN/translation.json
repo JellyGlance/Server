@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "പങ്കിട്ട പ്രിയപ്പെട്ടത്",
       "UNFINISHED": "തുടങ്ങി, പൂർത്തിയാക്കിയില്ല",
       "NO_PICKS": "ഇന്ന് രാത്രിക്കായി ഒന്നും ക്യൂവിലില്ല.",
-      "USERS": "{{count}} കാഴ്ചക്കാർ"
+      "USERS": "{{count}} കാഴ്ചക്കാർ",
+      "USERS_one": "{{count}} കാഴ്ചക്കാർ",
+      "USERS_other": "{{count}} കാഴ്ചക്കാർ"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr-ൽ തിരയുക",

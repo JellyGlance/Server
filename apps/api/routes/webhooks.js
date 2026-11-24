@@ -16,6 +16,8 @@ const eventTypes = [
     'task_completed',
     'task_failed',
     'calendar_refreshed',
+    'calendar_digest',
+    'leaving_soon',
     'download_queue_refreshed',
     'download_added',
     'download_started',

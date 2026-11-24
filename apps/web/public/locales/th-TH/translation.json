@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "รายการโปรดร่วมกัน",
       "UNFINISHED": "เริ่มแล้วแต่ยังไม่จบ",
       "NO_PICKS": "ไม่มีอะไรในคิวสำหรับคืนนี้",
-      "USERS": "ผู้ชม {{count}} คน"
+      "USERS": "ผู้ชม {{count}} คน",
+      "USERS_one": "ผู้ชม {{count}} คน",
+      "USERS_other": "ผู้ชม {{count}} คน"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "ค้นหาใน Sonarr",

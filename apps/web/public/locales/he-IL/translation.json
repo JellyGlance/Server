@@ -752,7 +752,9 @@
       "SHARED_FAVOURITE": "מועדף משותף",
       "UNFINISHED": "התחיל, לא הסתיים",
       "NO_PICKS": "אין שום דבר בתור להערב.",
-      "USERS": "{{count}} צופים"
+      "USERS": "{{count}} צופים",
+      "USERS_one": "{{count}} צופים",
+      "USERS_other": "{{count}} צופים"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "חיפוש ב-Sonarr",

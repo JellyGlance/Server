@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AccountCircleFillIcon from "remixicon-react/AccountCircleFillIcon";
+import ArrowLeftSLineIcon from "remixicon-react/ArrowLeftSLineIcon";
+import ArrowRightSLineIcon from "remixicon-react/ArrowRightSLineIcon";
 import axios from "../lib/axios_instance";
 import Config from "../lib/config";
 import { fetchActiveSessions, getCachedActiveSessions, subscribeActiveSessions } from "../lib/session-cache";
@@ -109,19 +111,48 @@ function matchesUserLibrary(name, itemIds, { titles, ids }) {
   return titles.some((title) => namesOverlap(title, name));
 }
 
+// Most rails hold 15-50 titles. Shown as wrapping grids they made this page
+// ~10,000px tall, so each rail is one scrolling row with arrows, and "Expand"
+// opens the full grid when you want to see everything at once.
+const RAIL_ROW_LIMIT = 40;
+
 function Rail({ title, subtitle, items = [], empty, actions = [], onAction }) {
   const { t } = useTranslation();
-  const preview = items.slice(0, 18);
+  const [expanded, setExpanded] = useState(false);
+  const rowRef = useRef(null);
+  const preview = expanded ? items : items.slice(0, RAIL_ROW_LIMIT);
+  const canExpand = items.length > 6;
+  const scrollBy = (direction) => {
+    const row = rowRef.current;
+    if (row) row.scrollBy({ left: direction * row.clientWidth * 0.9, behavior: "smooth" });
+  };
   return (
-    <section className="user-media-rail">
+    <section className={`user-media-rail${items.length ? "" : " is-empty"}`}>
       <div className="user-media-rail-heading">
         <div>
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
-        <strong>{items.length}</strong>
+        <div className="user-media-rail-tools">
+          {canExpand && !expanded ? (
+            <>
+              <button type="button" className="user-media-arrow" aria-label={`Scroll ${title} left`} onClick={() => scrollBy(-1)}>
+                <ArrowLeftSLineIcon size={18} />
+              </button>
+              <button type="button" className="user-media-arrow" aria-label={`Scroll ${title} right`} onClick={() => scrollBy(1)}>
+                <ArrowRightSLineIcon size={18} />
+              </button>
+            </>
+          ) : null}
+          {canExpand ? (
+            <button type="button" className="user-media-expand" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
+              {expanded ? "Collapse" : `Expand`}
+            </button>
+          ) : null}
+          <strong>{items.length}</strong>
+        </div>
       </div>
-      <div className="user-media-grid">
+      <div ref={rowRef} className={`user-media-grid${canExpand && !expanded ? " is-row" : ""}`}>
         {preview.length ? (
           preview.map((item) => {
             const heading = item.type === "Episode" && item.seriesName ? item.seriesName : item.seriesName || item.name || item.title;
@@ -159,7 +190,11 @@ function Rail({ title, subtitle, items = [], empty, actions = [], onAction }) {
           <div className="user-media-empty">{empty}</div>
         )}
       </div>
-      {items.length > preview.length ? <div className="user-media-more">{t("FEATURES.MY_GLANCE.MORE", { count: items.length - preview.length })}</div> : null}
+      {items.length > preview.length ? (
+        <button type="button" className="user-media-more" onClick={() => setExpanded(true)}>
+          {t("FEATURES.MY_GLANCE.MORE", { count: items.length - preview.length })}
+        </button>
+      ) : null}
     </section>
   );
 }

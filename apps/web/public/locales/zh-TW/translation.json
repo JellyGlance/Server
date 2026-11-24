@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "共同最愛",
       "UNFINISHED": "已開始，未看完",
       "NO_PICKS": "今晚沒有排定的內容。",
-      "USERS": "{{count}} 位觀眾"
+      "USERS": "{{count}} 位觀眾",
+      "USERS_one": "{{count}} 位觀眾",
+      "USERS_other": "{{count}} 位觀眾"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "在 Sonarr 中搜尋",

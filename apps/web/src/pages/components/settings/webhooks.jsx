@@ -97,6 +97,18 @@ const eventCards = [
     Icon: CalendarEventLineIcon,
   },
   {
+    id: "calendar_digest",
+    title: "Airing today digest",
+    text: "Once a day: what is due today and what went missing this week (turn it on from Calendar → Subscribe).",
+    Icon: CalendarEventLineIcon,
+  },
+  {
+    id: "leaving_soon",
+    title: "Leaving soon",
+    text: "When a cleanup rule puts titles in Leaving soon, so people can watch them before they go.",
+    Icon: CalendarEventLineIcon,
+  },
+  {
     id: "download_queue_refreshed",
     title: "Downloads refreshed",
     text: "When download clients are polled.",

@@ -752,7 +752,9 @@
       "SHARED_FAVOURITE": "Skupni priljubljeni",
       "UNFINISHED": "Začeto, ne dokončano",
       "NO_PICKS": "Za nocoj ni ničesar v vrsti.",
-      "USERS": "Gledalci: {{count}}"
+      "USERS": "Gledalci: {{count}}",
+      "USERS_one": "Gledalci: {{count}}",
+      "USERS_other": "Gledalci: {{count}}"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Išči v Sonarr",

@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { HOME_WIDGET_SIZE_COLUMNS, HOME_WIDGET_SNAP_COLUMNS, sizeForColumns } from "../../../lib/home-settings";
+import {
+  HOME_WIDGET_HEIGHT_LABELS,
+  HOME_WIDGET_HEIGHTS,
+  HOME_WIDGET_SIZE_COLUMNS,
+  HOME_WIDGET_SNAP_COLUMNS,
+  sizeForColumns,
+} from "../../../lib/home-settings";
 
 import AddLineIcon from "remixicon-react/AddLineIcon";
 import ArrowGoBackLineIcon from "remixicon-react/ArrowGoBackLineIcon";
@@ -51,12 +57,37 @@ function findDropTarget(rects, draggedId, x, y) {
 // a grip (drag with a mouse, long-press on touch, or Space + arrows from the
 // keyboard), a hide button and a corner handle that resizes in 4/6/8/12 column
 // steps.
-export function HomeLayoutEditor({ stackRef, sectionIds, sizes, labels, onMove, onMoveBy, onResize, onHide, announce }) {
+// Quick picks in the size menu, as fractions of the 12-column grid.
+const SIZE_MENU = [
+  { size: "quarter", label: "¼" },
+  { size: "small", label: "⅓" },
+  { size: "medium", label: "½" },
+  { size: "wide", label: "⅔" },
+  { size: "threeQuarter", label: "¾" },
+  { size: "large", label: "Full" },
+];
+
+export function HomeLayoutEditor({ stackRef, sectionIds, sizes, heights = {}, labels, onMove, onMoveBy, onResize, onHeight, onHide, announce }) {
   const wrapperRef = useRef(null);
   const [layout, setLayout] = useState({ rects: {}, columns: null });
   const [drag, setDrag] = useState(null);
   const [resize, setResize] = useState(null);
   const [picked, setPicked] = useState("");
+  const [menuFor, setMenuFor] = useState("");
+
+  useEffect(() => {
+    if (!menuFor) return undefined;
+    const onKey = (event) => event.key === "Escape" && setMenuFor("");
+    const onDown = (event) => {
+      if (!event.target.closest?.(".home-editor-menu, .home-editor-size")) setMenuFor("");
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onDown);
+    };
+  }, [menuFor]);
   const pressRef = useRef(null);
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
@@ -246,11 +277,65 @@ export function HomeLayoutEditor({ stackRef, sectionIds, sizes, labels, onMove, 
                 <DragMove2LineIcon size={15} />
                 <span>{labels[sectionId]}</span>
               </button>
-              <span className="home-editor-size">{columns}/12</span>
+              <button
+                type="button"
+                className="home-editor-size"
+                aria-haspopup="menu"
+                aria-expanded={menuFor === sectionId}
+                aria-label={`Size and height of ${labels[sectionId]}, now ${columns} of 12 columns`}
+                onClick={() => setMenuFor((current) => (current === sectionId ? "" : sectionId))}
+              >
+                {columns}/12
+                {heights[sectionId] ? ` · ${HOME_WIDGET_HEIGHT_LABELS[heights[sectionId]]}` : ""}
+              </button>
               <button type="button" className="home-editor-hide" aria-label={`Hide ${labels[sectionId]}`} onClick={() => onHide(sectionId)}>
                 <CloseLineIcon size={15} />
               </button>
             </div>
+            {menuFor === sectionId ? (
+              <div className="home-editor-menu" role="menu" aria-label={`${labels[sectionId]} size`}>
+                <span className="home-editor-menu-label">Width</span>
+                <div className="home-editor-menu-row">
+                  {SIZE_MENU.map((option) => (
+                    <button
+                      key={option.size}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={(sizes[sectionId] || "medium") === option.size}
+                      className={(sizes[sectionId] || "medium") === option.size ? "is-active" : ""}
+                      onClick={() => {
+                        onResize(sectionId, option.size);
+                        announce?.(`${labels[sectionId]} is ${HOME_WIDGET_SIZE_COLUMNS[option.size]} of 12 columns wide.`);
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                {onHeight ? (
+                  <>
+                    <span className="home-editor-menu-label">Height</span>
+                    <div className="home-editor-menu-row">
+                      {HOME_WIDGET_HEIGHTS.map((height) => (
+                        <button
+                          key={height}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={(heights[sectionId] || "auto") === height}
+                          className={(heights[sectionId] || "auto") === height ? "is-active" : ""}
+                          onClick={() => {
+                            onHeight(sectionId, height);
+                            announce?.(`${labels[sectionId]} height is ${HOME_WIDGET_HEIGHT_LABELS[height]}.`);
+                          }}
+                        >
+                          {HOME_WIDGET_HEIGHT_LABELS[height]}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
             <button
               type="button"
               className="home-editor-resize"
@@ -327,6 +412,16 @@ export const HOME_WIDGET_BLURBS = {
   upNext: "What airs or is next to watch in the next 24 hours.",
   peakHours: "When the household watches, by weekday and hour.",
   diskRunway: "Days until the media disks are full at the current rate.",
+  recentlyAdded: "Posters of the newest movies and shows across your libraries.",
+  downloadQueue: "Active downloads from your download clients, with progress and stalls.",
+  requests: "Latest Jellyseerr or Overseerr requests and how many are pending.",
+  playbackQuality: "How much plays direct, and what forces a transcode, over 30 days.",
+  topClients: "The apps people watch with over the last 30 days.",
+  clock: "A big clock and date, handy on a wall display.",
+  appHealth: "One status light for Jellyfin and every connected app, with the last failure when one is red.",
+  nowListening: "Who is listening on Audiobookshelf and what was just added.",
+  autoCollections: "Each auto collection's poster, size and when it last refreshed.",
+  spaceToFree: "Extra copies of duplicated movies and current cleanup rule matches.",
   seasonGaps: "Shows with whole seasons missing.",
   tdarr: "Tdarr transcode queue.",
   wizarr: "Pending Wizarr invites.",
@@ -345,51 +440,98 @@ export const HOME_WIDGET_INTEGRATIONS = {
   bazarr: { slug: "bazarr", name: "Bazarr" },
   prowlarr: { slug: "prowlarr", name: "Prowlarr" },
   upNext: { slug: "sonarr", name: "Sonarr", optional: true },
+  nowListening: { slug: "audiobookshelf", name: "Audiobookshelf" },
 };
 
+// Groups for the Add widget drawer. Anything not listed falls under "More".
+export const HOME_WIDGET_CATEGORIES = [
+  { label: "Right now", ids: ["sessions", "streamCapacity", "nowListening", "upNext", "watchTonight", "watchParty"] },
+  { label: "Stats", ids: ["overview", "hall", "week", "trends", "milestones", "peakHours", "playbackQuality", "topClients"] },
+  { label: "Library", ids: ["recentlyAdded", "library", "catalog", "issues", "seasonGaps", "diskRunway", "autoCollections", "spaceToFree"] },
+  { label: "Requests and downloads", ids: ["requests", "downloadQueue"] },
+  { label: "Server and automation", ids: ["appHealth", "operations", "attention", "quickActions", "automation"] },
+  { label: "Integrations", ids: ["tdarr", "wizarr", "maintainerr", "bazarr", "prowlarr"] },
+  { label: "Display", ids: ["clock"] },
+];
+
 export function AddWidgetDrawer({ open, hiddenIds, labels, connected, onAdd, onClose }) {
-  const closeRef = useRef(null);
+  const searchRef = useRef(null);
+  const [query, setQuery] = useState("");
+  const close = useCallback(() => {
+    setQuery("");
+    onClose();
+  }, [onClose]);
   useEffect(() => {
     if (!open) return undefined;
-    closeRef.current?.focus();
-    const onKey = (event) => event.key === "Escape" && onClose();
+    searchRef.current?.focus();
+    const onKey = (event) => event.key === "Escape" && close();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, close]);
   if (!open) return null;
+
+  const needle = query.trim().toLowerCase();
+  const matches = (sectionId) =>
+    !needle || `${labels[sectionId] || sectionId} ${HOME_WIDGET_BLURBS[sectionId] || ""}`.toLowerCase().includes(needle);
+  const listed = new Set(HOME_WIDGET_CATEGORIES.flatMap((category) => category.ids));
+  const groups = [
+    ...HOME_WIDGET_CATEGORIES.map((category) => ({ label: category.label, ids: category.ids.filter((id) => hiddenIds.includes(id)) })),
+    { label: "More", ids: hiddenIds.filter((id) => !listed.has(id)) },
+  ]
+    .map((group) => ({ ...group, ids: group.ids.filter(matches) }))
+    .filter((group) => group.ids.length);
+
   return (
-    <div className="home-add-drawer-backdrop" onClick={onClose}>
+    <div className="home-add-drawer-backdrop" onClick={close}>
       <aside className="home-add-drawer" role="dialog" aria-modal="true" aria-label="Add a widget" onClick={(event) => event.stopPropagation()}>
         <header>
           <strong>Add a widget</strong>
-          <button ref={closeRef} type="button" aria-label="Close" onClick={onClose}>
+          <button type="button" aria-label="Close" onClick={close}>
             <CloseLineIcon size={18} />
           </button>
         </header>
-        {hiddenIds.length ? null : <p>Every widget is already on Home.</p>}
+        {hiddenIds.length ? (
+          <input
+            ref={searchRef}
+            className="home-add-drawer-search"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={`Search ${hiddenIds.length} widgets`}
+            aria-label="Search widgets"
+          />
+        ) : (
+          <p>Every widget is already on Home.</p>
+        )}
+        {hiddenIds.length && !groups.length ? <p>No widgets match “{query}”.</p> : null}
         <div className="home-add-drawer-list">
-          {hiddenIds.map((sectionId) => {
-            const integration = HOME_WIDGET_INTEGRATIONS[sectionId];
-            const needsConnection = integration && !integration.optional && connected && !connected.has(integration.slug);
-            return (
-              <article key={sectionId} className={needsConnection ? "is-unavailable" : ""}>
-                <div>
-                  <strong>{labels[sectionId]}</strong>
-                  <small>{HOME_WIDGET_BLURBS[sectionId] || ""}</small>
-                </div>
-                {needsConnection ? (
-                  <Link to="/integrations" onClick={onClose}>
-                    Connect {integration.name} first
-                  </Link>
-                ) : (
-                  <button type="button" onClick={() => onAdd(sectionId)}>
-                    <AddLineIcon size={16} />
-                    Add
-                  </button>
-                )}
-              </article>
-            );
-          })}
+          {groups.map((group) => (
+            <section key={group.label} className="home-add-drawer-group">
+              <h3>{group.label}</h3>
+              {group.ids.map((sectionId) => {
+                const integration = HOME_WIDGET_INTEGRATIONS[sectionId];
+                const needsConnection = integration && !integration.optional && connected && !connected.has(integration.slug);
+                return (
+                  <article key={sectionId} className={needsConnection ? "is-unavailable" : ""}>
+                    <div>
+                      <strong>{labels[sectionId]}</strong>
+                      <small>{HOME_WIDGET_BLURBS[sectionId] || ""}</small>
+                    </div>
+                    {needsConnection ? (
+                      <Link to="/integrations" onClick={close}>
+                        Connect {integration.name} first
+                      </Link>
+                    ) : (
+                      <button type="button" onClick={() => onAdd(sectionId)}>
+                        <AddLineIcon size={16} />
+                        Add
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
+            </section>
+          ))}
         </div>
       </aside>
     </div>

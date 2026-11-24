@@ -15,7 +15,6 @@ const { getBackupDir } = require("./utils/storage-paths");
 const {
   apiRateLimit,
   assertPathInside,
-  authRateLimit,
   fileRateLimit,
   staticRateLimit,
   taskRateLimit,
@@ -49,6 +48,8 @@ const opsCopilotRouter = require("./routes/ops-copilot");
 const incompleteSeasonsRouter = require("./routes/incomplete-seasons");
 const cleanupRulesRouter = require("./routes/cleanup-rules");
 const autoCollectionsRouter = require("./routes/auto-collections");
+const calendarFeedRoutes = require("./routes/calendar-feed");
+const libraryToolsRouter = require("./routes/library-tools");
 const subtitleGapRouter = require("./routes/subtitle-gap");
 const alertsRouter = require("./routes/alerts");
 const webhookOutRouter = require("./routes/webhook-out");
@@ -180,13 +181,6 @@ app.use((req, res, next) => {
   );
   next();
 });
-
-function authRateLimitUnlessPublicStatus(req, res, next) {
-  if (req.method === "GET" && req.path === "/isConfigured") {
-    return next();
-  }
-  return authRateLimit(req, res, next);
-}
 
 function isSocketIoPath(pathnameOrUrl) {
   try {
@@ -392,7 +386,9 @@ app.use((req, res, next) => {
 });
 
 // initiate routes
-app.use(`/auth`, authRateLimitUnlessPublicStatus, authRouter, () => {
+// Rate limits for /auth live in routes/auth.js. Applying authRateLimit here as well
+// counted every request twice against the same limit.
+app.use(`/auth`, authRouter, () => {
   /*  #swagger.tags = ['Auth'] */
 }); // mount the API router at /auth
 app.use("/proxy", apiRateLimit, authenticateProxyAsset, restrictApiKeyScope, authorizeProxyRoute, proxyRouter, () => {
@@ -427,6 +423,10 @@ app.use("/ops-copilot", apiRateLimit, authenticate, restrictApiKeyScope, require
 app.use("/incomplete-seasons", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), incompleteSeasonsRouter);
 app.use("/cleanup-rules", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), cleanupRulesRouter);
 app.use("/auto-collections", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), autoCollectionsRouter);
+app.use("/calendar-feed/admin", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), calendarFeedRoutes.adminRouter);
+// Public iCal feed; the secret token in the URL is the credential.
+app.use("/calendar-feed", apiRateLimit, calendarFeedRoutes.publicRouter);
+app.use("/library-tools", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), libraryToolsRouter);
 app.use("/subtitle-gap", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), subtitleGapRouter);
 app.use("/alerts-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), alertsRouter);
 app.use("/webhook-out-data", apiRateLimit, authenticate, restrictApiKeyScope, requirePermission("settings"), webhookOutRouter);
@@ -645,6 +645,8 @@ function isPublicProxyAssetRequest(req) {
     pathName.startsWith("/users/images/") ||
     pathName.startsWith("/plugins/images/") ||
     pathName.startsWith("/audiobookshelf/images/") ||
+    // Arr artwork (MediaCover paths only, validated in the route) used by the calendar.
+    pathName.startsWith("/arr/images/") ||
     pathName.startsWith("/web/assets/img/devices/")
   );
 }
@@ -943,6 +945,7 @@ function installShutdownHandlers(server) {
       background.taskScheduler = new TaskScheduler();
       thresholdAlerts.start();
       require("./classes/status-page").startStatusChecks();
+      require("./classes/background-jobs").start();
       try {
         await bootstrapFromEnv({ afterTaskManager: true });
       } catch (error) {

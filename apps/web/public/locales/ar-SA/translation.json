@@ -756,7 +756,9 @@
       "SHARED_FAVOURITE": "مفضّل مشترك",
       "UNFINISHED": "بدأ ولم ينتهِ",
       "NO_PICKS": "لا شيء مجدول لهذه الليلة.",
-      "USERS": "{{count}} مشاهدين"
+      "USERS": "{{count}} مشاهدين",
+      "USERS_one": "{{count}} مشاهدين",
+      "USERS_other": "{{count}} مشاهدين"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "البحث في Sonarr",

@@ -6786,3 +6786,170 @@
 .request-routing-genres { flex: 2 1 200px !important; }
 .request-routing-outcome.is-approved { color: var(--bs-success, #3fb950); }
 .request-routing-outcome.is-held { color: var(--bs-warning, #d29922); }
+
+/* Downloads add bar: room for Sync now on the same row, and the app's purple
+   instead of the default bright blue. */
+@media (min-width: 1101px) {
+  .download-add-bar {
+    grid-template-columns: minmax(6.5rem, 8.5rem) minmax(9rem, 12rem) minmax(14rem, 1fr) auto auto auto;
+  }
+}
+
+.download-add-button {
+  border-color: rgba(var(--primary-light-rgb), 0.45);
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-light-color));
+  color: #fff;
+  white-space: nowrap;
+}
+
+.download-add-button.is-secondary {
+  border-color: rgba(var(--primary-light-rgb), 0.35);
+  background: rgba(var(--primary-rgb), 0.14);
+  color: #e9dcff;
+}
+
+.download-file-button svg {
+  color: var(--primary-light-color);
+}
+
+.integration-empty-state a {
+  color: var(--primary-light-color);
+  font-weight: 800;
+}
+
+/* Between tablet and desktop: two columns. At 900px and below the existing
+   one-column layout (earlier in this file) applies. */
+@media (min-width: 901px) and (max-width: 1100px) {
+  .download-add-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .download-add-bar::before,
+  .download-add-bar .download-magnet-field {
+    grid-column: 1 / -1;
+  }
+
+  .download-add-bar label:first-child {
+    grid-column: auto;
+  }
+}
+
+.download-progress-track span {
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-light-color));
+}
+
+/* Client rows: the 32px logo sat in a 24px box and spilled over the name. */
+.download-client-row {
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.download-client-row .download-client-icon {
+  display: grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.download-client-row .download-client-icon img,
+.download-client-row .download-client-icon svg {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.download-client-row > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.download-client-row .integration-status-light {
+  flex: none;
+}
+
+/* Integration cards: a word beside the status light, so "never set up" and
+   "set up but not answering" no longer look the same. */
+.integration-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.integration-status .integration-status-light {
+  width: 8px;
+  height: 8px;
+  box-shadow: none;
+}
+
+.integration-status.is-connected {
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+}
+
+.integration-status.is-disconnected {
+  background: rgba(248, 113, 113, 0.12);
+  color: #fca5a5;
+}
+
+.integration-status-light.is-unset {
+  background: #64748b;
+}
+
+/* Apps you haven't set up are quieter until you start filling them in. */
+.integration-card.is-unset {
+  border-style: dashed;
+}
+
+.integration-card.is-unset .integration-card-header {
+  opacity: 0.85;
+}
+
+/* Test and Save fill the card instead of leaving a gap where Remove would go. */
+.integration-actions {
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+}
+
+/* Compact first-run rows: dot only, the word doesn't fit there. */
+.first-run-group-cards .integration-status {
+  padding: 0;
+  background: none;
+}
+
+.first-run-group-cards .integration-status-text {
+  display: none;
+}
+
+/* Metadata tab (TMDB) */
+.integration-fields.integration-fields-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.integration-auth-hint a {
+  color: var(--primary-light-color);
+  font-weight: 800;
+}
+
+.integration-metadata-card .integration-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.integration-metadata-copy {
+  margin: 0;
+  color: #b9c5d6;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}

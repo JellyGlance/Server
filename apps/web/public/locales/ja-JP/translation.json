@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "共通のお気に入り",
       "UNFINISHED": "視聴途中",
       "NO_PICKS": "今夜の予定はありません。",
-      "USERS": "{{count}} 人の視聴者"
+      "USERS": "{{count}} 人の視聴者",
+      "USERS_one": "{{count}} 人の視聴者",
+      "USERS_other": "{{count}} 人の視聴者"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr で検索",

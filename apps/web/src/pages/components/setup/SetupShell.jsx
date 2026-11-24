@@ -65,9 +65,12 @@ const features = [
 const defaultPosterTiles = Array.from({ length: 42 }, (_, index) => index);
 
 export default function SetupShell({ step, eyebrow, title, description, children, minimal = false }) {
-  const progress = Math.round((step / steps.length) * 100);
   const activeStepMeta = steps.find((item) => item.id === step) || steps[0];
   const completedSteps = Math.max(0, step - 1);
+  // Progress counts finished steps only (used by the mobile header). The bar
+  // runs to the middle of the current step so it lines up with the active tile.
+  const progress = Math.round((completedSteps / steps.length) * 100);
+  const barProgress = Math.min(100, Math.round(((step - 0.5) / steps.length) * 100));
 
   useEffect(() => {
     document.body.classList.add("setup-mode");
@@ -104,10 +107,10 @@ export default function SetupShell({ step, eyebrow, title, description, children
             </div>
           </div>
 
-          <div className="setup-progress-badges" aria-hidden="true">
-            <span>{completedSteps} done</span>
-            <span>{steps.length - step} left</span>
-            <span>{progress}% ready</span>
+          <div className="setup-progress-badges">
+            <span>
+              Step {step} of {steps.length}
+            </span>
           </div>
         </header>
 
@@ -119,17 +122,22 @@ export default function SetupShell({ step, eyebrow, title, description, children
             const stepGraphic = item.logo && !isDone ? <img src={item.logo} alt="" /> : isDone ? <CheckLineIcon /> : <Icon />;
 
             return (
-              <div className={`setup-progress-step ${isActive ? "is-active" : ""} ${isDone ? "is-done" : ""}`} key={item.id}>
+              <div
+                className={`setup-progress-step ${isActive ? "is-active" : ""} ${isDone ? "is-done" : ""}`}
+                key={item.id}
+                aria-current={isActive ? "step" : undefined}
+              >
                 <span className="setup-progress-node">{stepGraphic}</span>
                 <div className="setup-progress-copy">
                   <small>{String(item.id).padStart(2, "0")}</small>
                   <strong>{item.title}</strong>
+                  <span className="setup-progress-hint">{item.hint}</span>
                 </div>
               </div>
             );
           })}
           <div className="setup-progress-line" aria-hidden="true">
-            <span style={{ width: `${progress}%` }} />
+            <span style={{ width: `${barProgress}%` }} />
           </div>
         </div>
 
@@ -190,7 +198,7 @@ export default function SetupShell({ step, eyebrow, title, description, children
             );
           })}
           <div className="setup-progress-track">
-            <span style={{ width: `${progress}%` }} />
+            <span style={{ width: `${barProgress}%` }} />
           </div>
         </div>
       </div>

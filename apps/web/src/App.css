@@ -42,6 +42,15 @@
   align-self: start;
 }
 
+/* Pages drawn at --jg-content-scale are widened to 100% / scale so they still fill
+   the screen (top of this file). The max-width: 100% above capped that widening for
+   these four, so they rendered at 82% and left the right fifth of the screen empty. */
+@media (min-width: 901px) and (hover: hover) {
+  .app-shell-main > :is(.integrations-page, .repair-hub, .settings, .user-profile-page) {
+    max-width: none;
+  }
+}
+
 .app-shell-main > :is(.about-page, .downloads-page, .integrations-page, .settings) > * {
   min-height: 0;
   align-self: start;

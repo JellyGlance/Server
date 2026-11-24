@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Κοινό αγαπημένο",
       "UNFINISHED": "Ξεκίνησε, δεν ολοκληρώθηκε",
       "NO_PICKS": "Τίποτα στην ουρά για απόψε.",
-      "USERS": "{{count}} θεατές"
+      "USERS": "{{count}} θεατές",
+      "USERS_one": "{{count}} θεατές",
+      "USERS_other": "{{count}} θεατές"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Αναζήτηση στο Sonarr",

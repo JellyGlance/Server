@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Pinagsasaluhang paborito",
       "UNFINISHED": "Sinimulan, hindi tinapos",
       "NO_PICKS": "Walang nakapila para ngayong gabi.",
-      "USERS": "{{count}} manonood"
+      "USERS": "{{count}} manonood",
+      "USERS_one": "{{count}} manonood",
+      "USERS_other": "{{count}} manonood"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Maghanap sa Sonarr",

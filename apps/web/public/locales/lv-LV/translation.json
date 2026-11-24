@@ -750,7 +750,9 @@
       "SHARED_FAVOURITE": "Kopīga izlase",
       "UNFINISHED": "Sākts, nav pabeigts",
       "NO_PICKS": "Šovakaram nekas nav rindā.",
-      "USERS": "{{count}} skatītāji"
+      "USERS": "{{count}} skatītāji",
+      "USERS_one": "{{count}} skatītāji",
+      "USERS_other": "{{count}} skatītāji"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Meklēt Sonarr",

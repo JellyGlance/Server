@@ -2,7 +2,8 @@ export const HOME_SETTINGS_STORAGE_PREFIX = "jellyglance_home_settings";
 export const LEGACY_HOME_ORDER_STORAGE_KEY = "jellyglance_home_section_order";
 export const HOME_LAYOUT_VERSION = 5;
 
-const DEFAULT_HIDDEN_SECTION_IDS = ["seasonGaps", "tdarr", "wizarr", "maintainerr", "bazarr", "prowlarr"];
+// New widgets start hidden so existing layouts don't change; add them from the drawer.
+const DEFAULT_HIDDEN_SECTION_IDS = ["seasonGaps", "tdarr", "wizarr", "maintainerr", "bazarr", "prowlarr", "downloadQueue", "requests", "recentlyAdded", "playbackQuality", "topClients", "clock", "appHealth", "nowListening", "autoCollections", "spaceToFree"];
 const INTEGRATION_WIDGET_SECTION_IDS = ["tdarr", "wizarr", "maintainerr", "bazarr", "prowlarr"];
 
 export const HOME_SECTION_DEFINITIONS = [
@@ -22,6 +23,16 @@ export const HOME_SECTION_DEFINITIONS = [
   { id: "upNext", label: "Up next tonight" },
   { id: "peakHours", label: "Peak hours" },
   { id: "diskRunway", label: "Disk runway" },
+  { id: "recentlyAdded", label: "Recently added" },
+  { id: "downloadQueue", label: "Download queue" },
+  { id: "requests", label: "Requests" },
+  { id: "playbackQuality", label: "Playback quality" },
+  { id: "topClients", label: "Top clients" },
+  { id: "clock", label: "Clock" },
+  { id: "appHealth", label: "App health" },
+  { id: "nowListening", label: "Now listening" },
+  { id: "autoCollections", label: "Collections" },
+  { id: "spaceToFree", label: "Space you could free" },
   { id: "seasonGaps", label: "Season gaps" },
   { id: "tdarr", label: "Tdarr transcodes" },
   { id: "wizarr", label: "Wizarr invites" },
@@ -50,6 +61,16 @@ export const CURATED_DEFAULT_HOME_ORDER = [
   "upNext",
   "peakHours",
   "diskRunway",
+  "recentlyAdded",
+  "downloadQueue",
+  "requests",
+  "playbackQuality",
+  "topClients",
+  "clock",
+  "appHealth",
+  "nowListening",
+  "autoCollections",
+  "spaceToFree",
   "quickActions",
   "library",
   "catalog",
@@ -76,12 +97,24 @@ export const DEFAULT_HOME_SETTINGS = {
   dismissedAlerts: {},
   sessionsView: "auto",
   nowPlayingStrip: true,
+  packGaps: false,
+  heights: {},
   sizes: {
     sessions: "large",
     streamCapacity: "small",
     upNext: "small",
     peakHours: "wide",
     diskRunway: "small",
+    recentlyAdded: "wide",
+    downloadQueue: "small",
+    requests: "small",
+    playbackQuality: "small",
+    topClients: "small",
+    clock: "quarter",
+    appHealth: "large",
+    nowListening: "medium",
+    autoCollections: "medium",
+    spaceToFree: "small",
     overview: "large",
     hall: "large",
     operations: "large",
@@ -182,15 +215,22 @@ export const HOME_PRESETS = {
 };
 
 export const HOME_WIDGET_SIZE_LABELS = {
+  quarter: "Quarter",
   small: "Compact",
   medium: "Half width",
   wide: "Two thirds",
+  threeQuarter: "Three quarters",
   large: "Full width",
 };
 
 // Widget sizes as columns of the 12-column Home grid. Resizing snaps to these.
-export const HOME_WIDGET_SIZE_COLUMNS = { small: 4, medium: 6, wide: 8, large: 12 };
-export const HOME_WIDGET_SNAP_COLUMNS = [4, 6, 8, 12];
+export const HOME_WIDGET_SIZE_COLUMNS = { quarter: 3, small: 4, medium: 6, wide: 8, threeQuarter: 9, large: 12 };
+export const HOME_WIDGET_SNAP_COLUMNS = [3, 4, 6, 8, 9, 12];
+
+// Per-widget height. Auto follows the content; short caps it and scrolls inside;
+// tall gives it room to breathe on a wall display.
+export const HOME_WIDGET_HEIGHTS = ["auto", "short", "tall"];
+export const HOME_WIDGET_HEIGHT_LABELS = { auto: "Auto", short: "Short", tall: "Tall" };
 
 export function snapColumns(columns) {
   return HOME_WIDGET_SNAP_COLUMNS.reduce((best, value) => (Math.abs(value - columns) < Math.abs(best - columns) ? value : best), HOME_WIDGET_SNAP_COLUMNS[0]);
@@ -302,6 +342,15 @@ export function normalizeHomeSettings(settings) {
   normalized.sizes = Object.fromEntries(Object.entries(normalized.sizes).filter(([, size]) => HOME_WIDGET_SIZE_COLUMNS[size]));
   normalized.sessionsView = HOME_SESSIONS_VIEWS.includes(normalized.sessionsView) ? normalized.sessionsView : "auto";
   normalized.nowPlayingStrip = normalized.nowPlayingStrip !== false;
+  normalized.packGaps = Boolean(normalized.packGaps);
+  normalized.heights =
+    normalized.heights && typeof normalized.heights === "object"
+      ? Object.fromEntries(
+          Object.entries(normalized.heights).filter(
+            ([sectionId, height]) => knownSections.has(sectionId) && HOME_WIDGET_HEIGHTS.includes(height) && height !== "auto"
+          )
+        )
+      : {};
   normalized.version = Math.max(savedVersion, HOME_LAYOUT_VERSION);
   return normalized;
 }

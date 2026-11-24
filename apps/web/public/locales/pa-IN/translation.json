@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "ਸਾਂਝਾ ਮਨਪਸੰਦ",
       "UNFINISHED": "ਸ਼ੁਰੂ ਕੀਤਾ, ਪੂਰਾ ਨਹੀਂ ਹੋਇਆ",
       "NO_PICKS": "ਅੱਜ ਰਾਤ ਲਈ ਕੁਝ ਵੀ ਕਤਾਰ ਵਿੱਚ ਨਹੀਂ।",
-      "USERS": "{{count}} ਦਰਸ਼ਕ"
+      "USERS": "{{count}} ਦਰਸ਼ਕ",
+      "USERS_one": "{{count}} ਦਰਸ਼ਕ",
+      "USERS_other": "{{count}} ਦਰਸ਼ਕ"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr ਵਿੱਚ ਖੋਜੋ",

@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "साझा मनपर्ने",
       "UNFINISHED": "सुरु गरिएको, नसकिएको",
       "NO_PICKS": "आज रातिका लागि केही पनि लाइनमा छैन।",
-      "USERS": "{{count}} दर्शकहरू"
+      "USERS": "{{count}} दर्शकहरू",
+      "USERS_one": "{{count}} दर्शकहरू",
+      "USERS_other": "{{count}} दर्शकहरू"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr मा खोज्नुहोस्",

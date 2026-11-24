@@ -750,7 +750,9 @@
       "SHARED_FAVOURITE": "Заједнички омиљено",
       "UNFINISHED": "Започето, није завршено",
       "NO_PICKS": "Ништа није у реду за вечерас.",
-      "USERS": "Гледалаца: {{count}}"
+      "USERS": "Гледалаца: {{count}}",
+      "USERS_one": "Гледалаца: {{count}}",
+      "USERS_other": "Гледалаца: {{count}}"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Тражи у Sonarr-у",

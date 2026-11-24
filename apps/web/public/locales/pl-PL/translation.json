@@ -750,7 +750,9 @@
       "SHARED_FAVOURITE": "Shared favourite",
       "UNFINISHED": "Started, not finished",
       "NO_PICKS": "Nothing queued for tonight.",
-      "USERS": "{{count}} viewers"
+      "USERS": "{{count}} viewers",
+      "USERS_one": "{{count}} viewer",
+      "USERS_other": "{{count}} viewers"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Search in Sonarr",

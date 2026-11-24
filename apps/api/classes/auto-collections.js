@@ -1,7 +1,10 @@
 const sharp = require("sharp");
 const db = require("../db");
+const mediaServer = require("./media-server-collections");
+const { getSettings, saveSettings, encryptSecret, decryptSecret } = require("./integration-store");
 
-const BUILDER_TYPES = ["trending", "recently_added", "oscar_winners", "imdb_top_250", "franchise"];
+const BUILDER_TYPES = ["trending", "recently_added", "oscar_winners", "imdb_top_250", "franchise", "trakt_list", "letterboxd_list"];
+const listSources = require("./list-sources");
 const DEFAULT_LIMIT = 20;
 const TMDB_LISTS = {
   oscar_winners: process.env.TMDB_OSCAR_LIST_ID || "28",
@@ -29,11 +32,16 @@ function normalizeTitle(value) {
 function createTmdbClient({ apiKey = process.env.TMDB_API_KEY, http } = {}) {
   const key = String(apiKey || "").trim();
   if (!key) return null;
+  // v3 keys are 32 hex characters and go in the query; v4 read access tokens are JWTs sent as a bearer token.
+  const isBearer = key.length > 40 && key.includes(".");
   const get = http || (async (path) => {
     const url = new URL(`https://api.themoviedb.org/3/${path.replace(/^\//, "")}`);
-    url.searchParams.set("api_key", key);
+    if (!isBearer) url.searchParams.set("api_key", key);
     const axios = require("axios");
-    const { data } = await axios.get(url.toString(), { timeout: 15000 });
+    const { data } = await axios.get(url.toString(), {
+      timeout: 15000,
+      headers: isBearer ? { Authorization: `Bearer ${key}`, Accept: "application/json" } : { Accept: "application/json" },
+    });
     return data;
   });
   return {
@@ -58,7 +66,56 @@ function createTmdbClient({ apiKey = process.env.TMDB_API_KEY, http } = {}) {
     async collection(collectionId) {
       return get(`/collection/${collectionId}`);
     },
+    async searchCollections(query) {
+      const data = await get(`/search/collection?query=${encodeURIComponent(query)}`);
+      return data.results || [];
+    },
+    async check() {
+      return get("/configuration");
+    },
   };
+}
+
+// The key saved from the Collections page wins; TMDB_API_KEY in the environment is the fallback.
+async function getTmdbKeyInfo() {
+  const settings = await getSettings().catch(() => ({}));
+  const saved = settings?.TmdbApiKey ? decryptSecret(settings.TmdbApiKey) : "";
+  if (saved) return { key: saved, source: "settings" };
+  const envKey = String(process.env.TMDB_API_KEY || "").trim();
+  if (envKey) return { key: envKey, source: "env" };
+  return { key: "", source: null };
+}
+
+async function getTmdbClient() {
+  const { key } = await getTmdbKeyInfo();
+  return createTmdbClient({ apiKey: key });
+}
+
+async function tmdbStatus() {
+  const { key, source } = await getTmdbKeyInfo();
+  return { configured: Boolean(key), source, hint: key ? `••••${key.slice(-4)}` : "" };
+}
+
+async function saveTmdbApiKey(apiKey) {
+  const key = String(apiKey || "").trim();
+  if (key) {
+    const client = createTmdbClient({ apiKey: key });
+    try {
+      await client.check();
+    } catch (error) {
+      const status = error.response?.status;
+      throw httpError(status === 401 ? "TMDB rejected that API key" : `Could not reach TMDB (${error.message})`, 400, "TMDB_INVALID");
+    }
+  }
+  await saveSettings({ TmdbApiKey: key ? encryptSecret(key) : null });
+  return tmdbStatus();
+}
+
+async function searchTmdbCollections(query) {
+  const tmdb = await getTmdbClient();
+  if (!tmdb) throw httpError("Add a TMDB API key first", 503, "TMDB_MISSING");
+  const results = await tmdb.searchCollections(String(query || "").trim());
+  return results.slice(0, 12).map((row) => ({ id: row.id, name: row.name, poster: row.poster_path ? `https://image.tmdb.org/t/p/w185${row.poster_path}` : null }));
 }
 
 function matchLibraryItem(entry, libraryItems) {
@@ -116,7 +173,8 @@ function buildCollectionPreview({ type, options = {}, tmdbResults = [], libraryI
 function detectOverlayBadges(streams = {}, rating) {
   const video = streams.video || {};
   const audio = streams.audio || {};
-  const height = Number(video.height || 0);
+  // Use the 16:9-equivalent height so scope films (e.g. 1920x800) count as 1080p.
+  const height = Math.max(Number(video.height || 0), Math.round((Number(video.width || 0) * 9) / 16));
   const labels = [];
   if (height >= 2160 || /2160|4k|uhd/i.test(String(video.displayTitle || video.codec || ""))) labels.push("4K");
   else if (height >= 1080) labels.push("1080p");
@@ -132,40 +190,47 @@ function detectOverlayBadges(streams = {}, rating) {
   return labels;
 }
 
-function badgeSvg(text, { rating = false } = {}) {
-  const width = Math.max(46, 14 + String(text).length * 8);
+function badgeSvg(text, { rating = false, scale = 1 } = {}) {
+  const width = Math.round(Math.max(46, 14 + String(text).length * 8) * scale);
+  const height = Math.round(22 * scale);
   const fill = rating ? "#f5c518" : "rgba(8,10,16,0.86)";
   const color = rating ? "#111" : "#f8fafc";
   return Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="22"><rect width="${width}" height="22" rx="4" fill="${fill}"/><text x="7" y="16" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="${color}">${String(text).replace(/[<>&]/g, "")}</text></svg>`
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="${Math.round(4 * scale)}" fill="${fill}"/><text x="${Math.round(7 * scale)}" y="${Math.round(16 * scale)}" font-family="Arial, sans-serif" font-size="${Math.round(11 * scale)}" font-weight="700" fill="${color}">${String(text).replace(/[<>&]/g, "")}</text></svg>`
   );
 }
 
-async function renderPosterOverlay(posterBuffer, badges = []) {
+// Layout is designed at 300x450 and scaled, so previews stay small and applied posters stay sharp.
+async function renderPosterOverlay(posterBuffer, badges = [], { width: outWidth = 300, format = "png" } = {}) {
   if (!posterBuffer) throw httpError("A poster image is required");
-  const base = sharp(posterBuffer).resize(300, 450, { fit: "cover" });
+  const scale = outWidth / 300;
+  const outHeight = Math.round(450 * scale);
+  const s = (value) => Math.round(value * scale);
+  const base = sharp(posterBuffer).resize(outWidth, outHeight, { fit: "cover" });
   const composites = [];
-  let left = 10;
-  let top = 412;
+  let left = s(10);
+  let top = outHeight - s(38);
   for (const badge of badges) {
     const isRating = typeof badge === "object" && badge.kind === "rating";
     const text = isRating ? badge.text : badge;
-    const input = badgeSvg(text, { rating: isRating });
+    const input = badgeSvg(text, { rating: isRating, scale });
     const meta = await sharp(input).metadata();
-    const width = meta.width || 46;
+    const width = meta.width || s(46);
     if (isRating) {
-      composites.push({ input, top: 10, left: Math.max(10, 300 - width - 10) });
+      composites.push({ input, top: s(10), left: Math.max(s(10), outWidth - width - s(10)) });
     } else {
-      if (left + width > 290) {
-        left = 10;
-        top -= 26;
+      if (left + width > outWidth - s(10)) {
+        left = s(10);
+        top -= s(26);
       }
       composites.push({ input, top, left });
-      left += width + 6;
+      left += width + s(6);
     }
   }
-  const buffer = await base.composite(composites).png().toBuffer();
-  return { contentType: "image/png", buffer, dataUrl: `data:image/png;base64,${buffer.toString("base64")}` };
+  const pipeline = base.composite(composites);
+  const buffer = format === "jpeg" ? await pipeline.jpeg({ quality: 92 }).toBuffer() : await pipeline.png().toBuffer();
+  const contentType = format === "jpeg" ? "image/jpeg" : "image/png";
+  return { contentType, buffer, dataUrl: `data:${contentType};base64,${buffer.toString("base64")}` };
 }
 
 function normalizeBuilderInput(input = {}, { isCreate = false } = {}) {
@@ -284,8 +349,14 @@ async function deleteBuilder(id) {
 
 async function fetchTmdbResults(type, options, tmdb) {
   if (type === "recently_added") return [];
+  if (type === "trakt_list") return listSources.fetchTraktList(options.url);
+  if (type === "letterboxd_list") return listSources.fetchLetterboxdList(options.url);
   if (!tmdb) throw httpError("TMDB is not configured. Set TMDB_API_KEY to preview Trending, Oscars, IMDb Top 250 or Franchise lists.", 503, "TMDB_MISSING");
-  if (type === "trending") return tmdb.trending(options.media || "movie", options.window || "week");
+  if (type === "trending") {
+    const results = await tmdb.trending(options.media || "movie", options.window || "week");
+    // TMDB returns 20 per page; a second page gives the library match more to work with.
+    return results;
+  }
   if (type === "oscar_winners") {
     try {
       return await tmdb.list(options.listId || TMDB_LISTS.oscar_winners);
@@ -316,23 +387,33 @@ async function fetchTmdbResults(type, options, tmdb) {
   return [];
 }
 
-async function previewBuilder(id, { tmdb = createTmdbClient(), now } = {}) {
+async function previewBuilder(id, { tmdb, now } = {}) {
   const builder = await getBuilder(id);
+  if (tmdb === undefined) tmdb = await getTmdbClient();
   const libraryItems = await loadLibraryItems(builder.libraryId);
   let tmdbResults = [];
   let tmdbError = null;
   try {
     tmdbResults = await fetchTmdbResults(builder.type, builder.options, tmdb);
   } catch (error) {
-    if (error.code === "TMDB_MISSING") tmdbError = error.message;
+    // Missing keys and bad or private list links are shown on the preview instead of failing it.
+    if (["TMDB_MISSING", "TRAKT_MISSING", "BAD_URL", "LIST_NOT_FOUND"].includes(error.code) || error.statusCode === 502) tmdbError = error.message;
     else throw error;
   }
   const preview = buildCollectionPreview({ type: builder.type, options: builder.options, tmdbResults, libraryItems });
+  // Apply the builder's limit to list-based builders too (recently added already applies it).
+  const limit = Number(builder.options?.limit);
+  if (builder.type !== "recently_added" && limit > 0 && preview.items.length > limit) preview.items = preview.items.slice(0, limit);
+  const lastRun = await db
+    .query(`SELECT status, item_count, message, created_at FROM jg_collection_runs WHERE builder_id = $1 ORDER BY created_at DESC LIMIT 1`, [id])
+    .then((result) => result.rows?.[0] || null)
+    .catch(() => null);
   return {
     builder,
     ...preview,
     tmdbError,
     automationAllowed: automationAllowed(),
+    lastRun: lastRun ? { status: lastRun.status, itemCount: lastRun.item_count, message: lastRun.message, at: lastRun.created_at } : null,
     now: now || undefined,
   };
 }
@@ -349,21 +430,138 @@ function assertApplyAllowed(builder) {
   }
 }
 
-async function applyBuilder(id, { confirm = false, jellyfin, tmdb = createTmdbClient() } = {}) {
+function escapeSvg(value) {
+  return String(value || "").replace(/[<>&"']/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[char]);
+}
+
+// Split a title into at most three lines for the poster banner.
+function wrapTitle(title, maxChars = 16) {
+  const words = String(title || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    if ((line ? `${line} ${word}` : word).length > maxChars && line) {
+      lines.push(line);
+      line = word;
+    } else line = line ? `${line} ${word}` : word;
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, 3);
+}
+
+// A 2x2 collage of the first posters with the collection name across the bottom.
+async function renderCollectionPoster(title, posters = []) {
+  const width = 1000;
+  const height = 1500;
+  const tiles = posters.filter(Boolean).slice(0, 4);
+  const composites = [];
+  if (tiles.length) {
+    const layout = tiles.length === 1 ? [[0, 0, width, height]] : tiles.length === 2 ? [[0, 0, 500, height], [500, 0, 500, height]] : [[0, 0, 500, 750], [500, 0, 500, 750], [0, 750, 500, 750], [500, 750, 500, 750]];
+    for (let index = 0; index < Math.min(tiles.length, layout.length); index += 1) {
+      const [left, top, w, h] = layout[index];
+      const input = await sharp(tiles[index]).resize(w, h, { fit: "cover" }).toBuffer().catch(() => null);
+      if (input) composites.push({ input, left, top });
+    }
+  }
+  const lines = wrapTitle(title);
+  const fontSize = lines.length > 2 ? 78 : 92;
+  const lineHeight = Math.round(fontSize * 1.1);
+  const textTop = height - 90 - lineHeight * (lines.length - 1);
+  const overlay = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0.45" stop-color="#05070c" stop-opacity="0"/><stop offset="1" stop-color="#05070c" stop-opacity="0.94"/></linearGradient></defs>
+      <rect width="${width}" height="${height}" fill="url(#g)"/>
+      ${lines.map((line, index) => `<text x="60" y="${textTop + index * lineHeight}" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="800" fill="#ffffff">${escapeSvg(line)}</text>`).join("")}
+      <rect x="60" y="${height - 60}" width="140" height="8" rx="4" fill="#a855f7"/>
+    </svg>`
+  );
+  composites.push({ input: overlay, left: 0, top: 0 });
+  const base = sharp({ create: { width, height, channels: 3, background: { r: 18, g: 22, b: 34 } } });
+  return base.composite(composites).jpeg({ quality: 88 }).toBuffer();
+}
+
+async function applyCollectionPoster(collectionId, title, itemIds, jellyfin) {
+  if (!collectionId || !jellyfin?.setPoster || !jellyfin?.getPoster) return false;
+  const posters = [];
+  for (const itemId of itemIds.slice(0, 4)) {
+    posters.push(await jellyfin.getPoster(itemId, { maxWidth: 600 }).catch(() => null));
+  }
+  const buffer = await renderCollectionPoster(title, posters);
+  await jellyfin.setPoster(collectionId, buffer, "image/jpeg");
+  return true;
+}
+
+async function previewCollectionPoster(id, { jellyfin = mediaServer } = {}) {
+  const preview = await previewBuilder(id);
+  const posters = [];
+  for (const item of preview.items.slice(0, 4)) posters.push(await jellyfin.getPoster(item.id, { maxWidth: 400 }).catch(() => null));
+  return renderCollectionPoster(preview.builder.name, posters);
+}
+
+async function applyBuilder(id, { confirm = false, jellyfin = mediaServer, tmdb } = {}) {
   const preview = await previewBuilder(id, { tmdb });
   if (!confirm) return { needsConfirm: true, ...preview };
   assertApplyAllowed(preview.builder);
-  if (!jellyfin?.createCollection) throw httpError("Jellyfin client is missing createCollection", 500);
-  const result = await jellyfin.createCollection({
-    name: preview.builder.name,
-    ids: preview.items.map((item) => item.id),
-  });
+  if (preview.tmdbError) throw httpError(preview.tmdbError, 503, "TMDB_MISSING");
+  const ids = preview.items.map((item) => item.id);
+  let result;
+  if (jellyfin?.syncCollection) result = await jellyfin.syncCollection({ name: preview.builder.name, ids });
+  else if (jellyfin?.createCollection) result = await jellyfin.createCollection({ name: preview.builder.name, ids });
+  else throw httpError("Media server client is missing collection methods", 500);
+  // Set a generated poster when the builder asks for one, or when JellyGlance just created the
+  // collection and the builder has no preference. An existing collection's own poster is never
+  // replaced unless the builder explicitly opted in.
+  let posterNote = "";
+  const posterChoice = preview.builder.options?.poster;
+  const wantsPoster = posterChoice === "collage" || (posterChoice === undefined && result?.created);
+  if (wantsPoster && result?.collectionId && ids.length) {
+    try {
+      await applyCollectionPoster(result.collectionId, preview.builder.name, ids, jellyfin);
+      posterNote = " · poster updated";
+    } catch (error) {
+      posterNote = ` · poster not updated (${error.message})`;
+    }
+  }
+  const message = (result?.created
+    ? `Created collection with ${ids.length} titles`
+    : result && "added" in result
+      ? `Updated collection: ${result.added} added, ${result.removed} removed`
+      : "Collection written") + posterNote;
   await db.query(
     `INSERT INTO jg_collection_runs (builder_id, preview, status, item_count, message)
      VALUES ($1, false, 'applied', $2, $3)`,
-    [id, preview.items.length, "Created collection in Jellyfin"]
+    [id, ids.length, message]
   );
-  return { needsConfirm: false, applied: true, result, ...preview };
+  return { needsConfirm: false, applied: true, result, message, ...preview };
+}
+
+const SCHEDULE_HOURS = { daily: 24, weekly: 24 * 7 };
+
+// Re-apply builders that have apply allowed and a schedule, once their interval has passed.
+async function runScheduledBuilders({ now = new Date() } = {}) {
+  if (!automationAllowed()) return [];
+  const builders = await listBuilders();
+  const results = [];
+  for (const builder of builders) {
+    const hours = SCHEDULE_HOURS[builder.options?.schedule];
+    if (!hours || builder.previewOnly !== false || !builder.applyEnabled) continue;
+    const last = await db
+      .query(`SELECT created_at FROM jg_collection_runs WHERE builder_id = $1 AND status IN ('applied', 'failed') ORDER BY created_at DESC LIMIT 1`, [builder.id])
+      .then((result) => result.rows?.[0]?.created_at || null)
+      .catch(() => null);
+    // A small margin so a daily run at 08:05 is not pushed to 08:15 the next day.
+    if (last && now.getTime() - new Date(last).getTime() < hours * 3600000 - 15 * 60000) continue;
+    try {
+      const result = await applyBuilder(builder.id, { confirm: true });
+      results.push({ id: builder.id, name: builder.name, ok: true, message: result.message });
+    } catch (error) {
+      results.push({ id: builder.id, name: builder.name, ok: false, message: error.message });
+      await db
+        .query(`INSERT INTO jg_collection_runs (builder_id, preview, status, item_count, message) VALUES ($1, false, 'failed', 0, $2)`, [builder.id, `Scheduled run failed: ${error.message}`])
+        .catch(() => {});
+    }
+  }
+  return results;
 }
 
 function parseMediaStreams(raw) {
@@ -376,12 +574,12 @@ function parseMediaStreams(raw) {
   const video = list.find((stream) => String(stream.Type || stream.type).toLowerCase() === "video") || {};
   const audio = list.find((stream) => String(stream.Type || stream.type).toLowerCase() === "audio") || {};
   return {
-    video: { height: video.Height || video.height, codec: video.Codec || video.codec, range: video.VideoRange || video.videoRange, profile: video.Profile || video.profile, displayTitle: video.DisplayTitle || video.displayTitle },
+    video: { height: video.Height || video.height, width: video.Width || video.width, codec: video.Codec || video.codec, range: video.VideoRange || video.videoRange, profile: video.Profile || video.profile, displayTitle: video.DisplayTitle || video.displayTitle },
     audio: { codec: audio.Codec || audio.codec, profile: audio.Profile || audio.profile, channels: audio.Channels || audio.channels, displayTitle: audio.DisplayTitle || audio.displayTitle },
   };
 }
 
-async function previewOverlays({ libraryId, limit = 8, jellyfin, posters } = {}) {
+async function previewOverlays({ libraryId, limit = 8, jellyfin = mediaServer, posters } = {}) {
   const items = (await loadLibraryItems(libraryId)).slice(0, Math.min(20, Number(limit) || 8));
   const previews = [];
   for (const item of items) {
@@ -390,39 +588,62 @@ async function previewOverlays({ libraryId, limit = 8, jellyfin, posters } = {})
     const badges = detectOverlayBadges(streams, item.rating);
     let posterBuffer = posters?.[item.id];
     if (!posterBuffer && jellyfin?.getPoster) {
-      posterBuffer = await jellyfin.getPoster(item.id).catch(() => null);
+      posterBuffer = await jellyfin.getPoster(item.id, { maxWidth: 400 }).catch(() => null);
     }
     if (!posterBuffer) {
       posterBuffer = await sharp({ create: { width: 300, height: 450, channels: 3, background: { r: 28, g: 36, b: 52 } } }).png().toBuffer();
     }
     const rendered = await renderPosterOverlay(posterBuffer, badges);
-    previews.push({ id: item.id, name: item.name, year: item.year, badges: badges.map((badge) => (typeof badge === "object" ? badge.text : badge)), preview: rendered.dataUrl });
+    const stored = await db.query(`SELECT 1 FROM jg_poster_originals WHERE item_id = $1`, [item.id]).catch(() => ({ rows: [] }));
+    previews.push({
+      id: item.id,
+      name: item.name,
+      year: item.year,
+      badges: badges.map((badge) => (typeof badge === "object" ? badge.text : badge)),
+      preview: rendered.dataUrl,
+      applied: Boolean(stored.rows?.length),
+    });
   }
-  return { previewOnly: true, applyEnabled: false, automationAllowed: automationAllowed(), items: previews };
+  return { previewOnly: true, automationAllowed: automationAllowed(), items: previews };
 }
 
-async function applyOverlays({ itemIds = [], confirm = false, jellyfin, posters } = {}) {
+async function applyOverlays({ itemIds = [], confirm = false, jellyfin = mediaServer, posters } = {}) {
   if (!confirm) return { needsConfirm: true, count: itemIds.length };
   if (!automationAllowed()) throw httpError("Server automation is disabled. Poster writes stay blocked.", 403, "AUTOMATION_DISABLED");
-  if (!jellyfin?.setPoster || !jellyfin?.getPoster) throw httpError("Jellyfin client is missing poster methods", 500);
+  if (!jellyfin?.setPoster || !jellyfin?.getPoster) throw httpError("Media server client is missing poster methods", 500);
+  const ids = [...new Set(itemIds.filter(Boolean))].slice(0, 100);
   const applied = [];
-  for (const itemId of itemIds) {
-    const existing = await db.query(`SELECT item_id FROM jg_poster_originals WHERE item_id = $1`, [itemId]);
-    if (!existing.rows.length) {
-      const original = posters?.[itemId] || (await jellyfin.getPoster(itemId));
-      if (!original) throw httpError(`No original poster for ${itemId}`, 400);
-      await db.query(
-        `INSERT INTO jg_poster_originals (item_id, image_bytes, content_type) VALUES ($1, $2, 'image/jpeg')`,
-        [itemId, original]
-      );
+  const failed = [];
+  for (const itemId of ids) {
+    try {
+      // Always draw badges on the stored original, so re-applying never stacks badges.
+      const existing = await db.query(`SELECT image_bytes FROM jg_poster_originals WHERE item_id = $1`, [itemId]);
+      let original = existing.rows?.[0]?.image_bytes || null;
+      if (!original) {
+        original = posters?.[itemId] || (await jellyfin.getPoster(itemId));
+        if (!original) throw new Error("No original poster");
+        const meta = await db.query(`SELECT "Name" AS name FROM jf_library_items WHERE "Id" = $1`, [itemId]).catch(() => ({ rows: [] }));
+        await db.query(
+          `INSERT INTO jg_poster_originals (item_id, item_name, image_bytes, content_type) VALUES ($1, $2, $3, 'image/jpeg')`,
+          [itemId, meta.rows?.[0]?.name || null, original]
+        );
+      }
+      const item = (await db.query(`SELECT "CommunityRating" AS rating FROM jf_library_items WHERE "Id" = $1`, [itemId]).catch(() => ({ rows: [] }))).rows?.[0];
+      const info = await db.query(`SELECT "MediaStreams" FROM jf_item_info WHERE "Id" = $1`, [itemId]).catch(() => ({ rows: [] }));
+      const badges = detectOverlayBadges(parseMediaStreams(info.rows?.[0]?.MediaStreams), item?.rating);
+      const rendered = posters?.[`${itemId}-overlay`]
+        ? { buffer: posters[`${itemId}-overlay`], contentType: "image/jpeg" }
+        : await renderPosterOverlay(original, badges, { width: 1000, format: "jpeg" });
+      await jellyfin.setPoster(itemId, rendered.buffer, rendered.contentType);
+      applied.push(itemId);
+    } catch (error) {
+      failed.push({ itemId, error: error.message });
     }
-    await jellyfin.setPoster(itemId, posters?.[`${itemId}-overlay`] || posters?.[itemId]);
-    applied.push(itemId);
   }
-  return { applied, storedOriginals: true };
+  return { applied, failed, storedOriginals: true };
 }
 
-async function revertOverlays({ itemIds, jellyfin } = {}) {
+async function revertOverlays({ itemIds, jellyfin = mediaServer } = {}) {
   if (!automationAllowed()) throw httpError("Server automation is disabled. Reverts stay blocked on this build.", 403, "AUTOMATION_DISABLED");
   if (!jellyfin?.setPoster) throw httpError("Jellyfin client is missing setPoster", 500);
   const ids = itemIds?.length ? itemIds : (await db.query(`SELECT item_id FROM jg_poster_originals`)).rows.map((row) => row.item_id);
@@ -431,6 +652,7 @@ async function revertOverlays({ itemIds, jellyfin } = {}) {
     const { rows } = await db.query(`SELECT image_bytes, content_type FROM jg_poster_originals WHERE item_id = $1`, [itemId]);
     if (!rows[0]) continue;
     await jellyfin.setPoster(itemId, rows[0].image_bytes, rows[0].content_type);
+    await db.query(`DELETE FROM jg_poster_originals WHERE item_id = $1`, [itemId]);
     restored.push(itemId);
   }
   return { restored };
@@ -445,10 +667,19 @@ module.exports = {
   BUILDER_TYPES,
   automationAllowed,
   createTmdbClient,
+  getTmdbClient,
+  tmdbStatus,
+  saveTmdbApiKey,
+  traktStatus: listSources.traktStatus,
+  saveTraktClientId: listSources.saveTraktClientId,
+  searchTmdbCollections,
   matchLibraryItem,
   buildCollectionPreview,
   detectOverlayBadges,
+  parseMediaStreams,
   renderPosterOverlay,
+  renderCollectionPoster,
+  previewCollectionPoster,
   normalizeBuilderInput,
   listLibraries,
   listBuilders,
@@ -458,6 +689,7 @@ module.exports = {
   deleteBuilder,
   previewBuilder,
   applyBuilder,
+  runScheduledBuilders,
   previewOverlays,
   applyOverlays,
   revertOverlays,

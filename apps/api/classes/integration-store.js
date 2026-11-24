@@ -246,4 +246,6 @@ module.exports = {
   saveIntegrationHealthResults,
   encryptSecret,
   decryptSecret,
+  getSettings,
+  saveSettings,
 };

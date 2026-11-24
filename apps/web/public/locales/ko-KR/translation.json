@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "공통 즐겨찾기",
       "UNFINISHED": "시작했지만 끝내지 않음",
       "NO_PICKS": "오늘 밤 대기 중인 항목이 없습니다.",
-      "USERS": "시청자 {{count}}명"
+      "USERS": "시청자 {{count}}명",
+      "USERS_one": "시청자 {{count}}명",
+      "USERS_other": "시청자 {{count}}명"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr에서 검색",

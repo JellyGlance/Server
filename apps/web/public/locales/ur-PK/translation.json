@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "مشترکہ پسندیدہ",
       "UNFINISHED": "شروع کیا، مکمل نہیں",
       "NO_PICKS": "آج رات کے لیے کچھ قطار میں نہیں۔",
-      "USERS": "{{count}} ناظرین"
+      "USERS": "{{count}} ناظرین",
+      "USERS_one": "{{count}} ناظرین",
+      "USERS_other": "{{count}} ناظرین"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr میں تلاش کریں",

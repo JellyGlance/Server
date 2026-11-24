@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "सामायिक आवडते",
       "UNFINISHED": "सुरू केले, पूर्ण नाही",
       "NO_PICKS": "आज रात्रीसाठी काहीही रांगेत नाही.",
-      "USERS": "{{count}} प्रेक्षक"
+      "USERS": "{{count}} प्रेक्षक",
+      "USERS_one": "{{count}} प्रेक्षक",
+      "USERS_other": "{{count}} प्रेक्षक"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Sonarr मध्ये शोधा",

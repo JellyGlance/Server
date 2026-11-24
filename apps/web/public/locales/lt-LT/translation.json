@@ -752,7 +752,9 @@
       "SHARED_FAVOURITE": "Bendras mėgstamas",
       "UNFINISHED": "Pradėta, nebaigta",
       "NO_PICKS": "Šįvakar eilėje nieko nėra.",
-      "USERS": "Žiūrovų: {{count}}"
+      "USERS": "Žiūrovų: {{count}}",
+      "USERS_one": "Žiūrovų: {{count}}",
+      "USERS_other": "Žiūrovų: {{count}}"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Ieškoti Sonarr",

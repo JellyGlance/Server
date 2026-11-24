@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Общ любим",
       "UNFINISHED": "Започнато, но недовършено",
       "NO_PICKS": "Няма нищо на опашка за тази вечер.",
-      "USERS": "{{count}} зрители"
+      "USERS": "{{count}} зрители",
+      "USERS_one": "{{count}} зрители",
+      "USERS_other": "{{count}} зрители"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Търси в Sonarr",

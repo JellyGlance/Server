@@ -26,3 +26,47 @@
 @media (max-width: 760px) {
   .ac-grid, .ac-builder { grid-template-columns: 1fr; }
 }
+
+/* Collections page v2 */
+.ac-banner.is-error { border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.08); color: #fecaca; }
+.ac-banner.is-ok { border-color: rgba(52,211,153,0.35); background: rgba(52,211,153,0.08); color: #bbf7d0; }
+.ac-btn { cursor: pointer; text-decoration: none; }
+.ac-btn:disabled { cursor: not-allowed; }
+.ac-btn.is-danger { border-color: rgba(248,113,113,0.35); color: #fecaca; }
+.ac-badge.is-ok { background: rgba(52,211,153,0.16); color: #bbf7d0; }
+.ac-builder-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: 0.55rem; }
+.ac-builder { cursor: pointer; }
+.ac-inline-link { padding: 0; border: 0; background: none; color: var(--primary-light-color); font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.ac-form { display: grid; gap: 0.7rem; }
+.ac-form h2, .ac-card h2 { margin: 0; font-size: 1.05rem; }
+.ac-card { display: grid; gap: 0.7rem; }
+.ac-card-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.6rem; }
+.ac-card-head p { margin-top: 0.2rem; }
+.ac-toolbar .ac-field { min-width: 12rem; }
+.ac-apply-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; }
+.ac-switch { display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; }
+.ac-switch input { margin-top: 0.25rem; width: 1.05rem; height: 1.05rem; accent-color: var(--primary-color, #8b5cf6); }
+.ac-switch span { display: grid; gap: 0.15rem; }
+.ac-switch strong { font-size: 0.9rem; }
+.ac-switch small { color: #9aa7bb; font-size: 0.78rem; }
+.ac-franchise { display: grid; gap: 0.5rem; }
+.ac-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ac-chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.3rem 0.2rem 0.6rem; border: 1px solid rgba(var(--primary-light-rgb), 0.45); border-radius: 999px; background: rgba(var(--primary-rgb), 0.2); font-size: 0.78rem; font-weight: 800; }
+.ac-chip button { display: grid; place-items: center; padding: 0.1rem; border: 0; border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
+.ac-search-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 0.4rem; }
+.ac-search-results button { display: grid; grid-template-columns: 2rem minmax(0,1fr) auto; align-items: center; gap: 0.55rem; padding: 0.35rem 0.5rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.55rem; background: rgba(7,10,15,0.85); color: #f8fafc; font-size: 0.8rem; font-weight: 750; text-align: left; cursor: pointer; }
+.ac-search-results button:hover:not(:disabled) { border-color: rgba(var(--primary-light-rgb), 0.5); }
+.ac-search-results button.is-chosen { opacity: 0.55; }
+.ac-search-results img, .ac-search-noart { width: 2rem; aspect-ratio: 2/3; object-fit: cover; border-radius: 0.3rem; background: rgba(255,255,255,0.06); }
+.ac-unmatched { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.2rem 1rem; margin: 0; padding: 0.6rem 0.8rem 0.6rem 1.6rem; border-radius: 0.6rem; background: rgba(255,255,255,0.03); color: #b9c5d6; font-size: 0.8rem; }
+.ac-overlay-grid .ac-poster button { position: relative; display: block; width: 100%; padding: 0; border: 2px solid transparent; border-radius: 0.6rem; background: none; cursor: pointer; }
+.ac-overlay-grid .ac-poster.is-picked button { border-color: var(--primary-light-color); }
+.ac-overlay-grid .ac-pick { position: absolute; top: 6px; left: 6px; color: var(--primary-light-color); filter: drop-shadow(0 1px 3px rgba(0,0,0,0.7)); }
+.ac-confirm { position: fixed; inset: 0; z-index: 2200; display: grid; place-items: center; padding: 1.5rem; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); }
+.ac-confirm-card { display: grid; gap: 0.8rem; width: min(30rem, 100%); padding: 1.2rem; border: 1px solid rgba(var(--primary-light-rgb), 0.35); border-radius: 0.9rem; background: rgba(10,13,20,0.98); color: #e8eef7; }
+.ac-confirm-card h2 { margin: 0; font-size: 1.1rem; }
+.ac-confirm-card p { margin: 0; color: #b9c5d6; font-size: 0.88rem; line-height: 1.5; }
+.ac-schedule { max-width: 20rem; }
+.ac-poster-option { display: grid; gap: 0.6rem; }
+.ac-poster-preview { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.7rem; }
+.ac-poster-preview img { width: 9rem; aspect-ratio: 2/3; object-fit: cover; border: 1px solid rgba(255,255,255,0.12); border-radius: 0.5rem; }

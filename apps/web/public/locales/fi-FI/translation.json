@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Yhteinen suosikki",
       "UNFINISHED": "Aloitettu, ei katsottu loppuun",
       "NO_PICKS": "Ei mitään jonossa tälle illalle.",
-      "USERS": "{{count}} katsojaa"
+      "USERS": "{{count}} katsojaa",
+      "USERS_one": "{{count}} katsojaa",
+      "USERS_other": "{{count}} katsojaa"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Hae Sonarrista",

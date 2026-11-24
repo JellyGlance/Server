@@ -32,7 +32,9 @@ function serverLabel(type = active) {
 
 // Ask the server what it is. Jellyfin always reports ProductName "Jellyfin Server";
 // Emby reports "Emby Server" or, on older builds, no ProductName at all.
-async function detectServerType(url, { probe = false } = {}) {
+// Returns { type, name, version, url } from the public info endpoint, or null when
+// nothing answers. No API key is needed.
+async function probeServerInfo(url, { probe = false } = {}) {
   const { stripTrailingSlashes, toSafeHttpUrl, safeHttpGet } = require("../utils/security");
   const { resolveProbeHost, probeRequestOptions } = require("../utils/probe-guard");
   const raw = String(url || "");
@@ -71,13 +73,26 @@ async function detectServerType(url, { probe = false } = {}) {
       const { data } = await safeHttpGet(target.href, path, options);
       if (!data || typeof data !== "object") continue;
       const product = String(data.ProductName || "");
-      if (/jellyfin/i.test(product)) return "jellyfin";
-      if (/emby/i.test(product) || (data.Id && data.Version)) return "emby";
+      let type = null;
+      if (/jellyfin/i.test(product)) type = "jellyfin";
+      else if (/emby/i.test(product) || (data.Id && data.Version)) type = "emby";
+      if (!type) continue;
+      return {
+        type,
+        name: typeof data.ServerName === "string" ? data.ServerName : null,
+        version: typeof data.Version === "string" ? data.Version : null,
+        url: stripTrailingSlashes(target.href),
+      };
     } catch {
       // try the next path
     }
   }
   return null;
+}
+
+async function detectServerType(url, options = {}) {
+  const info = await probeServerInfo(url, options);
+  return info ? info.type : null;
 }
 
 // Pick the server type for a setup/settings request: env override, then what the
@@ -128,6 +143,7 @@ module.exports = {
   serverLabel,
   mediaServerAuthHeaders,
   detectServerType,
+  probeServerInfo,
   chooseServerType,
   saveServerType,
   withServerType,

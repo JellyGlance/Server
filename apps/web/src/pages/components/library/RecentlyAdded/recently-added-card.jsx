@@ -6,6 +6,7 @@ import { Trans } from "react-i18next";
 import TvLineIcon from "remixicon-react/TvLineIcon";
 import FilmLineIcon from "remixicon-react/FilmLineIcon";
 import FileMusicLineIcon from "remixicon-react/FileMusicLineIcon";
+import BookOpenLineIcon from "remixicon-react/BookOpenLineIcon";
 import CheckboxMultipleBlankLineIcon from "remixicon-react/CheckboxMultipleBlankLineIcon";
 import baseUrl from "../../../../lib/baseurl";
 
@@ -29,6 +30,7 @@ function RecentlyAddedCard(props) {
   const MovieIcon = <FilmLineIcon size={"75%"} />;
   const MusicIcon = <FileMusicLineIcon size={"75%"} />;
   const MixedIcon = <CheckboxMultipleBlankLineIcon size={"75%"} />;
+  const BookIcon = <BookOpenLineIcon size={"75%"} />;
 
   const currentLibraryDefaultIcon =
     props.data.Type === "Movie"
@@ -37,6 +39,8 @@ function RecentlyAddedCard(props) {
       ? SeriesIcon
       : props.data.Type === "Audio"
       ? MusicIcon
+      : props.data.Type === "Book" || props.data.Type === "AudioBook"
+      ? BookIcon
       : MixedIcon;
   const imageIds = [
     props.data.Type === "Episode" ? props.data.SeriesId : null,

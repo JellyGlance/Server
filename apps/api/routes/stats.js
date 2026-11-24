@@ -1216,6 +1216,32 @@ router.get("/home/lastPlayback", async (req, res) => {
   }
 });
 
+router.get("/home/collections", async (req, res) => {
+  try {
+    if (!canViewAllUsers(req) || !req.permissions?.settings) {
+      return res.status(403).send({ error: "Only admins can see collections" });
+    }
+    const { getCollectionsWidget } = require("../classes/home-admin-widgets");
+    res.send(await getCollectionsWidget({ force: req.query.refresh === "1" }));
+  } catch (error) {
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
+router.get("/home/spaceToFree", async (req, res) => {
+  try {
+    if (!canViewAllUsers(req) || !req.permissions?.settings) {
+      return res.status(403).send({ error: "Only admins can see space you could free" });
+    }
+    const { getSpaceToFreeWidget } = require("../classes/home-admin-widgets");
+    res.send(await getSpaceToFreeWidget({ force: req.query.refresh === "1" }));
+  } catch (error) {
+    res.status(503);
+    sendSafeError(res, error);
+  }
+});
+
 router.get("/home/demoSessions", async (req, res) => {
   const { getDemoSessionsMode } = require("../classes/demo-sessions");
   res.send(getDemoSessionsMode());

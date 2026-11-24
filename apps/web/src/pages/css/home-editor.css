@@ -33,6 +33,16 @@
   font-size: 0.82rem;
 }
 
+.home-widget-note.is-warning {
+  color: #ffd25e;
+}
+
+.home-widget-note.is-warning a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Edit bar */
 .home-edit-bar {
   position: sticky;
@@ -521,11 +531,16 @@
 }
 
 .home-up-next-list article {
+  height: calc(var(--up-next-thumb-w) * 9 / 16);
+  min-width: 0;
+}
+
+.home-up-next-link {
   display: grid;
   grid-template-columns: var(--up-next-thumb-w) minmax(0, 1fr);
   align-items: center;
   gap: var(--up-next-gap);
-  height: calc(var(--up-next-thumb-w) * 9 / 16);
+  height: 100%;
   min-width: 0;
 }
 
@@ -534,7 +549,9 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-.home-up-next-list article > div {
+/* The text column. (Was "article > div", which also matched the non-link
+   .home-up-next-link wrapper used by calendar items and stacked them.) */
+.home-up-next-link > div {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1px;
@@ -845,4 +862,1078 @@
   .home-editor-resize-ghost {
     transition: none;
   }
+}
+
+/* Up next: the whole tile links to the series, and the episode code sits on
+   the still so the text lines can show the episode title and who/when. */
+a.home-up-next-link {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+a.home-up-next-link:hover strong,
+a.home-up-next-link:focus-visible strong {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.home-up-next-link:focus-visible {
+  outline: 2px solid var(--primary-color, #c90000);
+  outline-offset: 2px;
+}
+
+.home-up-next-media {
+  position: relative;
+  display: block;
+  width: var(--up-next-thumb-w);
+}
+
+.home-up-next-code {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 16px;
+  max-width: calc(100% - 10px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Widgets that don't set their own padding were drawn edge to edge, with text
+   touching the border. :where() keeps this at zero specificity, so any widget
+   rule that sets padding still wins. */
+:where(.home-section-stack > section.home-glass-card) {
+  padding: 0.7rem 0.8rem;
+}
+
+/* Wide layouts made each heatmap cell ~50px tall; cap the row height. */
+.home-heatmap-cell {
+  aspect-ratio: auto;
+  height: clamp(12px, 1.6vw, 20px);
+}
+
+.home-heatmap-empty {
+  margin: 0.4rem 0 0.1rem;
+}
+
+.home-all-quiet-link {
+  flex: none;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid rgba(var(--primary-light-rgb), 0.35);
+  border-radius: 8px;
+  background: rgba(var(--primary-rgb), 0.12);
+  color: #e9dcff !important;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+
+.home-all-quiet-link:hover {
+  background: rgba(var(--primary-rgb), 0.24);
+}
+
+/* Widget widths. ".home-section-stack > section" (home.css) spans all 12
+   columns and is more specific than a bare size class, so until now every
+   widget drew full width whatever size was picked. These match it and win. */
+.home-section-stack > .home-widget-size-quarter {
+  grid-column: span 3;
+}
+
+.home-section-stack > .home-widget-size-small {
+  grid-column: span 4;
+}
+
+.home-section-stack > .home-widget-size-medium {
+  grid-column: span 6;
+}
+
+.home-section-stack > .home-widget-size-wide {
+  grid-column: span 8;
+}
+
+.home-section-stack > .home-widget-size-threeQuarter {
+  grid-column: span 9;
+}
+
+.home-section-stack > .home-widget-size-large {
+  grid-column: span 12;
+}
+
+@media (max-width: 1180px) {
+  .home-section-stack > .home-widget-size-quarter,
+  .home-section-stack > .home-widget-size-small,
+  .home-section-stack > .home-widget-size-medium {
+    grid-column: span 6;
+  }
+
+  .home-section-stack > .home-widget-size-wide,
+  .home-section-stack > .home-widget-size-threeQuarter {
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-section-stack > [class*="home-widget-size-"] {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Widgets adapt to their own width, not the window's, so a widget squeezed
+   into 3 or 4 columns gets a compact layout. */
+.home-section-stack > section {
+  container-type: inline-size;
+}
+
+@container (max-width: 720px) {
+  .home-watch-party-list,
+  .home-catalog-grid,
+  .home-week-grid,
+  .home-trend-grid,
+  .home-integration-stat-grid,
+  .home-ops-grid,
+  .home-secondary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 440px) {
+  .home-watch-party-list,
+  .home-catalog-grid,
+  .home-week-grid,
+  .home-trend-grid,
+  .home-integration-stat-grid,
+  .home-ops-grid,
+  .home-secondary-grid,
+  .home-up-next-list {
+    grid-template-columns: 1fr;
+  }
+
+  .home-section-title h2 {
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+  }
+
+  .home-all-quiet img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .home-heatmap-row {
+    grid-template-columns: 1.8rem repeat(24, minmax(0, 1fr));
+  }
+
+  .home-heatmap-cell {
+    border-radius: 2px;
+  }
+}
+
+/* Some widgets are the grid themselves (the container can't query itself),
+   so narrow sizes set their columns directly. */
+.home-widget-size-quarter.home-hero-grid,
+.home-widget-size-quarter.home-issue-grid,
+.home-widget-size-small.home-hero-grid,
+.home-widget-size-small.home-issue-grid {
+  grid-template-columns: 1fr;
+}
+
+.home-widget-size-medium.home-hero-grid,
+.home-widget-size-medium.home-issue-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Add widget drawer: search and groups. */
+.home-add-drawer-search {
+  width: 100%;
+  margin-bottom: 0.8rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+  font-size: 0.88rem;
+}
+
+.home-add-drawer-search:focus {
+  border-color: rgba(var(--primary-light-rgb), 0.6);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18);
+}
+
+.home-add-drawer-list {
+  gap: 1rem;
+}
+
+.home-add-drawer-group {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.home-add-drawer-group h3 {
+  margin: 0 0 0.1rem;
+  color: #caa6ea;
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ".Home > *" makes every direct child position: relative so it sits above the
+   page backdrop. That also caught these two overlays, so the Add widget drawer
+   opened at the bottom of the page instead of over it. */
+.Home.Home > .home-add-drawer-backdrop {
+  position: fixed;
+  z-index: 2100;
+}
+
+.Home.Home > .home-undo-toast {
+  position: fixed;
+  z-index: 1060;
+}
+
+/* Fill gaps: later, smaller widgets move up into holes left by wider ones. */
+.home-section-stack.is-packed {
+  grid-auto-flow: row dense;
+}
+
+/* Per-widget height. */
+.home-section-stack > .home-widget-height-short {
+  max-height: 260px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.home-section-stack > .home-widget-height-tall {
+  min-height: 440px;
+}
+
+/* Size badge is now a button that opens the size and height menu. */
+.home-editor-size {
+  border: 1px solid rgba(var(--primary-light-rgb), 0.35);
+  color: #e9dcff;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.home-editor-size:hover,
+.home-editor-size[aria-expanded="true"] {
+  background: rgba(var(--primary-rgb), 0.45);
+}
+
+.home-editor-menu {
+  position: absolute;
+  top: 38px;
+  right: 6px;
+  z-index: 5;
+  display: grid;
+  gap: 0.3rem;
+  min-width: 230px;
+  padding: 0.6rem;
+  border: 1px solid rgba(var(--primary-light-rgb), 0.35);
+  border-radius: 12px;
+  background: #121729;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+
+.home-editor-menu-label {
+  margin-top: 0.15rem;
+  color: #caa6ea;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.home-editor-menu-row {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.home-editor-menu-row button {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.home-editor-menu-row button:hover {
+  border-color: rgba(var(--primary-light-rgb), 0.45);
+}
+
+.home-editor-menu-row button.is-active {
+  border-color: rgba(var(--primary-light-rgb), 0.6);
+  background: rgba(var(--primary-rgb), 0.45);
+  color: #fff;
+}
+
+/* Shared: title row with a "See all" link. */
+.home-widget-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.home-widget-head .home-section-title {
+  min-width: 0;
+}
+
+.home-widget-more {
+  flex: none;
+  color: #caa6ea !important;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+
+.home-widget-more:hover {
+  color: #fff !important;
+}
+
+.home-widget-alert {
+  color: #fca5a5;
+}
+
+/* Download queue. */
+.home-download-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-download-list li {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.home-download-list li.is-loading {
+  height: 38px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  animation: homeSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+.home-download-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.84rem;
+}
+
+.home-download-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-download-row span {
+  flex: none;
+  color: #c4b5fd;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.home-download-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.home-download-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-light-color));
+}
+
+.home-download-list small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Requests. */
+.home-request-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0.4rem 0 0.6rem;
+}
+
+.home-request-counts span {
+  display: grid;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.72rem;
+}
+
+.home-request-counts strong {
+  color: #fff;
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+.home-request-counts .is-pending strong {
+  color: #fcd34d;
+}
+
+.home-request-counts .is-available strong {
+  color: #6ee7b7;
+}
+
+.home-request-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-request-list li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.home-request-poster {
+  width: 28px;
+  height: 42px;
+  border-radius: 5px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.home-request-list div {
+  display: grid;
+  min-width: 0;
+}
+
+.home-request-list strong,
+.home-request-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-request-list strong {
+  font-size: 0.84rem;
+}
+
+.home-request-list small {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.74rem;
+}
+
+.home-request-chip {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.home-request-chip.is-pending {
+  background: rgba(252, 211, 77, 0.14);
+  color: #fcd34d;
+}
+
+.home-request-chip.is-available {
+  background: rgba(52, 211, 153, 0.14);
+  color: #6ee7b7;
+}
+
+.home-request-chip.is-processing,
+.home-request-chip.is-approved,
+.home-request-chip.is-partial {
+  background: rgba(var(--primary-rgb), 0.22);
+  color: #e9dcff;
+}
+
+.home-request-chip.is-declined,
+.home-request-chip.is-failed {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fca5a5;
+}
+
+/* Recently added poster strip. */
+.home-recent-strip {
+  display: grid;
+  grid-auto-columns: minmax(92px, 1fr);
+  grid-auto-flow: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.home-recent-card {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  color: inherit !important;
+  text-decoration: none !important;
+  scroll-snap-align: start;
+}
+
+.home-recent-card img,
+.home-recent-fallback,
+.home-recent-card.is-loading {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  object-fit: cover;
+}
+
+.home-recent-card.is-loading {
+  animation: homeSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+.home-recent-card:hover img {
+  outline: 2px solid rgba(var(--primary-light-rgb), 0.7);
+  outline-offset: 1px;
+}
+
+.home-recent-name {
+  overflow: hidden;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-recent-card small {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+}
+
+/* Playback quality. */
+.home-quality-headline {
+  margin: 0.35rem 0 0.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.84rem;
+}
+
+.home-quality-headline strong {
+  margin-right: 0.25rem;
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.home-quality-bar {
+  display: flex;
+  height: 10px;
+  gap: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.home-quality-bar span {
+  min-width: 4px;
+}
+
+.home-quality-bar .is-direct,
+.home-quality-legend .is-direct {
+  background: #34d399;
+}
+
+.home-quality-bar .is-audio,
+.home-quality-legend .is-audio {
+  background: #fbbf24;
+}
+
+.home-quality-bar .is-video,
+.home-quality-legend .is-video {
+  background: #f87171;
+}
+
+.home-quality-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  margin: 0.55rem 0 0.3rem;
+  padding: 0;
+  list-style: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.78rem;
+}
+
+.home-quality-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.home-quality-legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+.home-quality-legend strong {
+  color: #fff;
+}
+
+.home-quality-reasons,
+.home-widget-foot {
+  display: block;
+  margin-top: 0.3rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.72rem;
+}
+
+/* Horizontal bar list (Top clients). */
+.home-bar-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-bar-list li {
+  display: grid;
+  grid-template-columns: minmax(70px, 38%) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.8rem;
+}
+
+.home-bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-bar-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.home-bar-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-light-color));
+}
+
+.home-bar-list strong {
+  min-width: 2ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Clock. */
+.home-clock {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 120px;
+  gap: 0.2rem;
+  text-align: center;
+}
+
+.home-clock time {
+  color: #fff;
+  font-size: clamp(2.2rem, 18cqi, 5rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.home-clock span {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.9rem;
+}
+
+.home-widget-note a {
+  color: #caa6ea !important;
+  font-weight: 700;
+}
+
+/* Shared: small icon button and action group in a widget title row. */
+.home-widget-head-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.home-widget-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.home-widget-icon-button:hover {
+  border-color: rgba(var(--primary-light-rgb), 0.6);
+  color: #fff;
+}
+
+.home-widget-icon-button.is-busy svg {
+  animation: home-spin 0.9s linear infinite;
+}
+
+@keyframes home-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.home-widget-subhead {
+  margin: 0.75rem 0 0.4rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* App health. */
+.home-health-summary {
+  color: #6ee7b7;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.home-health-summary.is-bad {
+  color: #fca5a5;
+}
+
+.home-health-lights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-health-light {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 28px;
+  padding: 0.2rem 0.65rem 0.2rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.78rem;
+  cursor: default;
+}
+
+.home-health-light i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.home-health-light.is-ok i {
+  background: #34d399;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
+}
+
+.home-health-light.is-bad {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.home-health-light.is-bad i {
+  background: #f87171;
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.8);
+}
+
+.home-health-light.is-loading span {
+  width: 60px;
+  height: 10px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.home-health-failures {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-health-failures li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid #f87171;
+  border-radius: 6px;
+  background: rgba(248, 113, 113, 0.08);
+  font-size: 0.8rem;
+}
+
+.home-health-failures span {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.75);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-health-failures small {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Now listening (Audiobookshelf). */
+.home-listen-now {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-listen-now li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.home-listen-now div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.home-listen-now strong,
+.home-listen-now small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-listen-now strong {
+  font-size: 0.86rem;
+}
+
+.home-listen-now small {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.74rem;
+}
+
+.home-listen-cover {
+  display: block;
+  width: 48px;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.home-listen-progress {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.home-listen-progress span {
+  display: block;
+  height: 100%;
+  background: #e0b865;
+}
+
+.home-listen-added {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.55rem;
+}
+
+.home-listen-added-item {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.home-listen-added-item .home-listen-cover {
+  width: 100%;
+}
+
+.home-listen-added-item span,
+.home-listen-added-item small {
+  overflow: hidden;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-listen-added-item small {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Collections. */
+.home-collection-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.55rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-collection-list li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.home-collection-list li.is-failed {
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.home-collection-list div {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.home-collection-list strong,
+.home-collection-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-collection-list strong {
+  font-size: 0.84rem;
+}
+
+.home-collection-list small {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.72rem;
+}
+
+.home-collection-list small.is-bad {
+  color: #fca5a5;
+}
+
+.home-collection-poster {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 66px;
+  border-radius: 5px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Space you could free. */
+.home-space-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.4rem 0 0.6rem;
+}
+
+.home-space-total strong {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.home-space-total span {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.8rem;
+}
+
+.home-space-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-space-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.home-space-list a {
+  overflow: hidden;
+  color: #fff !important;
+  text-decoration: none !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-space-list a:hover {
+  color: #caa6ea !important;
+}
+
+.home-space-list em {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.7rem;
+  font-style: normal;
+}
+
+.home-space-list span {
+  flex: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-space-list li.is-muted span {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.5);
 }

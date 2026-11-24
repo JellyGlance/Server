@@ -748,7 +748,9 @@
       "SHARED_FAVOURITE": "Gedeelde favoriet",
       "UNFINISHED": "Begonnen, niet afgemaakt",
       "NO_PICKS": "Niets in de wachtrij voor vanavond.",
-      "USERS": "{{count}} kijkers"
+      "USERS": "{{count}} kijkers",
+      "USERS_one": "{{count}} kijkers",
+      "USERS_other": "{{count}} kijkers"
     },
     "SEASON_GAPS": {
       "SEARCH_SONARR": "Zoeken in Sonarr",
