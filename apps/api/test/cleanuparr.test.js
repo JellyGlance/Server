@@ -26,8 +26,30 @@ test("summarizeStats normalises the v2 stats response", () => {
   assert.equal(summary.events.total, 42);
   assert.equal(summary.health.healthy, false);
   assert.deepEqual(summary.health.unhealthy, [{ name: "Sonarr", type: "Sonarr", error: "Unauthorized" }]);
-  // 3 Error events + 1 failed job + 1 unhealthy arr
-  assert.equal(summary.needsAttention, 5);
+  // Error events are not counted (strikes/removals are Cleanuparr working); without a per-job
+  // breakdown the failed run counts once, plus 1 unhealthy arr.
+  assert.equal(summary.needsAttention, 2);
+  assert.equal(summary.jobs.total, 20);
+  assert.equal(summary.jobs.failed, 1);
+});
+
+test("summarizeStats names failing jobs and only flags frequent failures", () => {
+  const summary = cleanuparr.summarizeStats({
+    ...statsFixture,
+    health: { downloadClients: [], arrInstances: [] },
+    jobs: {
+      total: 1300,
+      completed: 1050,
+      failed: 250,
+      byType: {
+        MalwareBlocker: { total: 1000, completed: 980, failed: 20 },
+        QueueCleaner: { total: 300, completed: 70, failed: 230, lastRunAt: "2026-11-01T00:00:00Z" },
+      },
+    },
+  });
+  assert.deepEqual(summary.jobs.failing.map((job) => job.name), ["QueueCleaner", "MalwareBlocker"]);
+  // 2% failures on MalwareBlocker is noise; 77% on QueueCleaner needs a look.
+  assert.equal(summary.needsAttention, 1);
 });
 
 test("summarizeStats tolerates PascalCase and missing sections", () => {

@@ -1,8 +1,15 @@
 // api.js
 const express = require("express");
+const { stopSessionWithMessage } = require("../classes/session-stop-message");
 const { mediaServerAuthHeaders, chooseServerType, withServerType, saveServerType, envServerType } = require("../classes/server-type");
 const { clientSettings } = require("../classes/client-config");
 const audiobookshelf = require("../classes/audiobookshelf");
+const requestDiscover = require("../classes/request-discover");
+const requestProgress = require("../classes/request-progress");
+const requestInsights = require("../classes/request-insights");
+const requestBulk = require("../classes/request-bulk");
+const requestTrailer = require("../classes/request-trailer");
+const requestCalendar = require("../classes/request-calendar");
 const quietHours = require("../classes/quiet-hours");
 const fs = require("fs");
 const path = require("path");
@@ -3387,6 +3394,18 @@ async function normalizeSeerrRequest(item, source, options = {}) {
     languageProfileId: item.languageProfileId ?? null,
     is4k: Boolean(item.is4k),
     tags: Array.isArray(item.tags) ? item.tags : [],
+    // What Seerr itself reports from the *arr queues (the fallback for download progress).
+    downloadStatus: requestProgress.normalizeSeerrDownloadStatus(media.downloadStatus),
+    mediaAddedAt: media.mediaAddedAt || null,
+    mediaUpdatedAt: media.updatedAt || null,
+    nextEpisode: mediaDetails.nextEpisodeToAir?.airDate
+      ? {
+          airDate: mediaDetails.nextEpisodeToAir.airDate,
+          season: mediaDetails.nextEpisodeToAir.seasonNumber ?? null,
+          episode: mediaDetails.nextEpisodeToAir.episodeNumber ?? null,
+          name: mediaDetails.nextEpisodeToAir.name || "",
+        }
+      : null,
   };
 
   normalized.openUrl = buildSeerrOpenUrl(source, normalized);
@@ -3515,7 +3534,10 @@ async function buildSeerrRequests(options = {}) {
         params: { take: 100, skip: 0, filter: "all", sort: "added" },
       });
       const requests = Array.isArray(response.data?.results) ? response.data.results : Array.isArray(response.data) ? response.data : [];
-      if (!options.skipFolderRepair && !options.lightweight) {
+      // JG_READONLY_SEERR=1 (a copy with a GET-only route to Seerr) and
+      // JG_SKIP_FOLDER_REPAIR=1 (a second copy beside a live install) skip the
+      // folder auto-repair, which writes back to Seerr.
+      if (!options.skipFolderRepair && !options.lightweight && process.env.JG_READONLY_SEERR !== "1" && process.env.JG_SKIP_FOLDER_REPAIR !== "1") {
         try {
           await repairSeerrRequestFolders(app, requests);
         } catch (error) {
@@ -4620,11 +4642,17 @@ async function purgeLibraryItems(id, withActivity, purgeAll = false) {
   }
 
   if (episodeIds.length > 0) {
-    await db.deleteBulk("jf_library_episodes", episodeIds);
+    const result = await db.deleteBulk("jf_library_episodes", episodeIds);
+    if (result?.Result !== "SUCCESS") {
+      throw new Error(`Failed to purge jf_library_episodes: ${result?.message}`);
+    }
   }
 
   if (seasonIds.length > 0) {
-    await db.deleteBulk("jf_library_seasons", seasonIds);
+    const result = await db.deleteBulk("jf_library_seasons", seasonIds);
+    if (result?.Result !== "SUCCESS") {
+      throw new Error(`Failed to purge jf_library_seasons: ${result?.message}`);
+    }
   }
 
   items_query = items_query.replace("select *", "delete");
@@ -4714,7 +4742,7 @@ router.get("/requests", async (req, res) => {
       force: req.query?.force === "true",
       includeInterest: req.query?.includeInterest === "true",
     });
-    res.send(enrichRequestPayload(filterSeerrRequestsForUser(data, req.user)));
+    res.send({ ...enrichRequestPayload(filterSeerrRequestsForUser(data, req.user)), readOnly: requestDiscover.isReadOnlySeerr() });
   } catch (error) {
     console.error("Get Seerr requests failed:", error);
     res.status(503).send({ error: "Unable to load requests" });
@@ -4738,6 +4766,40 @@ router.get("/requests/home", async (req, res) => {
   }
 });
 
+// Live download progress and ETA per request (Sonarr, Radarr and qBittorrent queues).
+router.get("/requests/progress", async (req, res) => {
+  try {
+    // The full list is the one the page already loaded (cached), with library availability.
+    const data = filterSeerrRequestsForUser(await fetchSeerrRequests(), req.user);
+    res.send(await requestProgress.getProgress(data.requests || []));
+  } catch (error) {
+    console.error("Get request progress failed:", error);
+    res.status(503).send({ error: "Unable to load download progress" });
+  }
+});
+
+// Requested titles arriving in a window (default: the next 7 days).
+router.get("/requests/calendar", async (req, res) => {
+  try {
+    const data = filterSeerrRequestsForUser(await fetchSeerrRequests(), req.user);
+    res.send(await requestCalendar.getCalendar(data.requests || [], { from: req.query?.from, days: req.query?.days }));
+  } catch (error) {
+    console.error("Get request calendar failed:", error);
+    res.status(503).send({ error: "Unable to load the calendar" });
+  }
+});
+
+// Most-requested genres, time to fulfil, success rate and busiest requester.
+router.get("/requests/stats", async (req, res) => {
+  try {
+    const data = filterSeerrRequestsForUser(await fetchSeerrRequests(), req.user);
+    res.send(requestInsights.buildRequestInsights(data.requests || [], { days: req.query?.days }));
+  } catch (error) {
+    console.error("Get request stats failed:", error);
+    res.status(503).send({ error: "Unable to load request stats" });
+  }
+});
+
 router.get("/requests/summary", async (req, res) => {
   try {
     const data = await fetchSeerrRequests({ lightweight: true, force: req.query?.force === "true" });
@@ -4755,6 +4817,43 @@ router.get("/requests/search", async (req, res) => {
   } catch (error) {
     console.error("Seerr media search failed:", error);
     res.status(error.statusCode || 503).send({ error: error.message || "Unable to search Seerr media" });
+  }
+});
+
+router.get("/requests/discover", async (req, res) => {
+  try {
+    const source = await requestDiscover.getSeerrSource(req.query?.sourceId);
+    res.send(await requestDiscover.getDiscoverRows(source));
+  } catch (error) {
+    console.error("Seerr discover rows failed:", getAxiosErrorMessage(error));
+    res.status(error.statusCode || 503).send({ error: error.message || "Unable to load discover rows" });
+  }
+});
+
+router.get("/requests/discover/row", async (req, res) => {
+  try {
+    const source = await requestDiscover.getSeerrSource(req.query?.sourceId);
+    res.send(await requestDiscover.getDiscoverRow(source, String(req.query?.key || ""), { page: req.query?.page, chipId: req.query?.chipId }));
+  } catch (error) {
+    console.error("Seerr discover row failed:", getAxiosErrorMessage(error));
+    res.status(error.statusCode || 503).send({ error: error.message || "Unable to load discover row" });
+  }
+});
+
+// The trailer for a title, from the video list Seerr already holds (a GET to Seerr, cached).
+router.get("/requests/trailer", async (req, res) => {
+  try {
+    const mediaType = String(req.query?.mediaType || "").toLowerCase();
+    const mediaId = Number(req.query?.mediaId);
+    if (!["movie", "tv"].includes(mediaType) || !Number.isInteger(mediaId) || mediaId <= 0) {
+      return res.status(400).send({ error: "A valid movie or TV result is required" });
+    }
+    const source = await requestDiscover.getSeerrSource(req.query?.sourceId);
+    const details = await fetchSeerrMediaDetails(source, { mediaType, tmdbId: mediaId });
+    res.send({ trailer: requestTrailer.pickTrailer(details?.relatedVideos) });
+  } catch (error) {
+    console.error("Seerr trailer lookup failed:", getAxiosErrorMessage(error));
+    res.status(error.statusCode || 503).send({ error: error.message || "Unable to look up the trailer" });
   }
 });
 
@@ -4802,6 +4901,10 @@ router.get("/requests/issues", async (req, res) => {
 
 router.post("/requests/issues/:issueId/actions", async (req, res) => {
   try {
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Read-only demo: Seerr changes are blocked.", readOnly: true });
+      return;
+    }
     const result = await runSeerrIssueAction({
       issueId: req.params.issueId,
       sourceId: req.body?.sourceId,
@@ -4832,6 +4935,11 @@ router.get("/requests/:requestId/detail", async (req, res) => {
 
 router.post("/requests/media", async (req, res) => {
   try {
+    // A setup with read-only access to Seerr cannot file requests; say so without trying.
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Demo: request blocked. This Seerr connection is read-only.", readOnly: true });
+      return;
+    }
     const { getRequestPreferences, getUserRequestFolders, applyUserFolderOverride } = require("../classes/request-provider");
     const preferences = await getRequestPreferences();
     const userFolders = await getUserRequestFolders(req.user);
@@ -4916,6 +5024,10 @@ router.post("/requests/media", async (req, res) => {
 
 router.post("/requests/:requestId/actions", async (req, res) => {
   try {
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Read-only demo: Seerr changes are blocked.", readOnly: true });
+      return;
+    }
     const result = await runSeerrRequestAction({
       requestId: req.params.requestId,
       sourceId: req.body?.sourceId,
@@ -4929,8 +5041,45 @@ router.post("/requests/:requestId/actions", async (req, res) => {
   }
 });
 
+// Several requests at once: approve, decline or retry. Same per-request actions as the
+// single route, run one by one, each with its own result. Refused up front (before any
+// Seerr call) in a read-only setup and for anyone who isn't a server admin.
+router.post("/requests/bulk", async (req, res) => {
+  try {
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Read-only demo: Seerr changes are blocked.", readOnly: true });
+      return;
+    }
+    if (!require("../classes/request-rules").isAdmin(req.user)) {
+      res.status(403).send({ error: "Only server admins can change several requests at once" });
+      return;
+    }
+    const { action, items } = requestBulk.normalizeBulkInput(req.body);
+    const summary = await requestBulk.runBulk({
+      action,
+      items,
+      runOne: async (item) => {
+        if (action === "retry") {
+          // Same as the single Retry button: nudge the *arr grab first, then Seerr.
+          await require("../classes/command-center").retryFailedGrab(item).catch(() => {});
+        }
+        await runSeerrRequestAction({ requestId: item.requestId, sourceId: item.sourceId, action });
+      },
+    });
+    clearRequestCache();
+    res.send(summary);
+  } catch (error) {
+    if (error.statusCode !== 400) console.error("Bulk request action failed:", error);
+    res.status(error.statusCode || 503).send({ error: error.message || "Unable to update requests" });
+  }
+});
+
 router.put("/requests/:requestId/edit", async (req, res) => {
   try {
+    if (requestDiscover.isReadOnlySeerr()) {
+      res.status(403).send({ error: "Read-only demo: Seerr changes are blocked.", readOnly: true });
+      return;
+    }
     const result = await updateSeerrRequest({
       requestId: req.params.requestId,
       sourceId: req.body?.sourceId,
@@ -7604,6 +7753,101 @@ router.post("/integrations/test-all", async (req, res) => {
   }
 });
 
+// Home "App health" widget: one light per app. Checks run live (cached for a few
+// minutes) and a result is only written to Health History when an app's state
+// flips, so the history keeps the last failure without filling up with repeats.
+const APP_HEALTH_TTL_MS = 5 * 60 * 1000;
+const APP_HEALTH_MIN_REFRESH_MS = 30 * 1000;
+const appHealthCache = { at: 0, value: null, pending: null };
+
+async function checkJellyfinForAppHealth() {
+  const checkedAt = new Date().toISOString();
+  try {
+    const config = await new configClass().getConfig();
+    if (config.error) return { ok: false, message: config.error, checkedAt };
+    const systemInfo = await API.systemInfo();
+    if (!systemInfo) return { ok: false, message: "The media server did not answer", checkedAt };
+    return { ok: true, version: systemInfo.Version || "", message: systemInfo.ServerName || "Connected", checkedAt };
+  } catch (error) {
+    return { ok: false, message: getAxiosErrorMessage(error) || error.message, checkedAt };
+  }
+}
+
+async function buildAppHealth() {
+  const { getSettings, saveSettings } = require("../classes/integration-store");
+  const integrations = await getIntegrations();
+  const connected = [
+    ...(integrations.arrApps || []).filter((item) => item.connected).map((integration) => ({ integration, type: "automation" })),
+    ...(integrations.clients || []).filter((item) => item.connected).map((integration) => ({ integration, type: "download" })),
+    ...(integrations.thirdParty || []).filter((item) => item.connected).map((integration) => ({ integration, type: "thirdParty" })),
+  ];
+  const checkedAt = new Date().toISOString();
+  const [jellyfin, results] = await Promise.all([
+    checkJellyfinForAppHealth(),
+    Promise.all(
+      connected.map(async ({ integration, type }) => {
+        try {
+          const result =
+            type === "download" ? await testDownloadIntegration(integration) : type === "thirdParty" ? await testThirdPartyIntegration(integration) : await testArrIntegration(integration);
+          return { instanceId: integration.instanceId, name: integration.name, type, ok: Boolean(result.ok), version: result.version || "", message: result.message || result.error || (result.ok ? "Connected" : "Connection failed"), checkedAt };
+        } catch (error) {
+          return { instanceId: integration.instanceId, name: integration.name, type, ok: false, version: "", message: getAxiosErrorMessage(error) || "Connection failed", checkedAt };
+        }
+      })
+    ),
+  ]);
+
+  let history = await getIntegrationHealthHistory().catch(() => []);
+  const changed = results.filter((result) => {
+    const latest = history.find((entry) => entry.instanceId === result.instanceId);
+    return !latest || Boolean(latest.ok) !== result.ok;
+  });
+  if (changed.length) history = await saveIntegrationHealthResults(changed).catch(() => history);
+
+  const settings = await getSettings().catch(() => ({}));
+  let jellyfinFailure = settings.JellyfinHealthLastFailure || null;
+  if (!jellyfin.ok) {
+    jellyfinFailure = { message: jellyfin.message, at: jellyfin.checkedAt };
+    await saveSettings({ JellyfinHealthLastFailure: jellyfinFailure }).catch(() => {});
+  }
+
+  const lastFailureFor = (instanceId) => {
+    const entry = history.find((item) => item.instanceId === instanceId && !item.ok);
+    return entry ? { message: entry.message, at: entry.checkedAt } : null;
+  };
+  const apps = [
+    { id: "jellyfin", name: "Jellyfin", type: "mediaServer", ok: jellyfin.ok, version: jellyfin.version || "", message: jellyfin.message, checkedAt: jellyfin.checkedAt, lastFailure: jellyfinFailure },
+    ...results.map((result) => ({ id: result.instanceId, name: result.name, type: result.type, ok: result.ok, version: result.version, message: result.message, checkedAt: result.checkedAt, lastFailure: lastFailureFor(result.instanceId) })),
+  ];
+  return { checkedAt, apps, failing: apps.filter((app) => !app.ok).length, total: apps.length };
+}
+
+router.get("/home/appHealth", async (req, res) => {
+  if (!req.permissions?.settings) return res.status(403).send({ error: "Only admins can see app health" });
+  try {
+    const now = Date.now();
+    const wantsRefresh = req.query?.refresh === "1" && now - appHealthCache.at > APP_HEALTH_MIN_REFRESH_MS;
+    if (!appHealthCache.value || wantsRefresh || now - appHealthCache.at > APP_HEALTH_TTL_MS) {
+      if (!appHealthCache.pending) {
+        appHealthCache.pending = buildAppHealth()
+          .then((value) => {
+            appHealthCache.value = value;
+            appHealthCache.at = Date.now();
+            return value;
+          })
+          .finally(() => {
+            appHealthCache.pending = null;
+          });
+      }
+      await appHealthCache.pending;
+    }
+    res.send(appHealthCache.value);
+  } catch (error) {
+    console.error("App health failed:", sanitizeForLog(getAxiosErrorMessage(error)));
+    res.status(503).send({ error: "Unable to check app health" });
+  }
+});
+
 async function hydrateIntegrationForTest(integration, type) {
   const integrations = await getIntegrations();
   const list =
@@ -7623,23 +7867,49 @@ async function hydrateIntegrationForTest(integration, type) {
 }
 
 router.post("/integrations/test", async (req, res) => {
-  const { integration, type } = req.body || {};
+  const { integration, type, recordHealth } = req.body || {};
 
   if (!integration) {
     return res.status(400).send({ ok: false, error: "Integration is required" });
   }
 
+  // Saving an integration runs this test with recordHealth so the result lands in Health History.
+  const recordResult = async (ok, version, message) => {
+    if (!recordHealth || !integration.instanceId) return undefined;
+    try {
+      return await saveIntegrationHealthResults([
+        {
+          instanceId: integration.instanceId,
+          name: integration.name,
+          type: type === "download" ? "download" : type === "thirdParty" ? "thirdParty" : "automation",
+          ok: Boolean(ok),
+          version: version || "",
+          message: message || (ok ? "Connected" : "Connection failed"),
+          checkedAt: new Date().toISOString(),
+        },
+      ]);
+    } catch (error) {
+      console.error("Record integration health failed:", sanitizeForLog(getAxiosErrorMessage(error)));
+      return undefined;
+    }
+  };
+
   try {
     const hydrated = await hydrateIntegrationForTest(integration, type);
     const result = type === "download" ? await testDownloadIntegration(hydrated) : type === "thirdParty" ? await testThirdPartyIntegration(hydrated) : await testArrIntegration(hydrated);
+    const history = await recordResult(result.ok, result.version, result.message || result.error);
+    const body = history ? { ...result, history } : result;
     if (!result.ok) {
-      return res.status(400).send(result);
+      return res.status(400).send(body);
     }
-    return res.send(result);
+    return res.send(body);
   } catch (error) {
+    const message = getAxiosErrorMessage(error);
+    const history = await recordResult(false, "", message);
     return res.status(503).send({
       ok: false,
-      error: getAxiosErrorMessage(error),
+      error: message,
+      ...(history ? { history } : {}),
     });
   }
 });
@@ -7977,6 +8247,31 @@ router.post("/sessions/message", async (req, res) => {
   } catch (error) {
     console.error("Session message failed:", error);
     res.status(error.statusCode || error.response?.status || 500).send({ error: error.message || "Unable to send session message" });
+  }
+});
+
+router.post("/sessions/stop-with-message", async (req, res) => {
+  try {
+    const sessionId = String(req.body?.sessionId || "").trim();
+    const text = String(req.body?.text || "").trim();
+    if (!sessionId || !text) {
+      return res.status(400).send({ error: "Missing sessionId or message text" });
+    }
+    const result = await stopSessionWithMessage(
+      {
+        sessionId,
+        text,
+        header: req.body?.header || "JellyGlance",
+        delayMs: req.body?.delayMs,
+        timeoutMs: req.body?.timeoutMs,
+      },
+      { jellyfin: API }
+    );
+    await addAuditEntry(req, "session.stopped_with_message", { sessionId });
+    res.send(result);
+  } catch (error) {
+    console.error("Session stop-with-message failed:", error);
+    res.status(error.statusCode || error.response?.status || 500).send({ error: error.message || "Unable to stop the session" });
   }
 });
 

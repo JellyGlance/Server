@@ -327,3 +327,73 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Tab bar: same classes and look as the Requests page (.rq-tabs). */
+.libraries {
+  --rq-surface: #0b1119;
+  --rq-line: #1d232c;
+  --rq-muted: #94a3b8;
+}
+
+.libraries-tabs {
+  margin: 0 0 0.85rem;
+}
+
+.libraries .rq-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  box-sizing: border-box;
+  height: 40px;
+  min-width: 0;
+  padding: 4px;
+  overflow: hidden;
+  border: 1px solid var(--rq-line);
+  border-radius: 12px;
+  background: var(--rq-surface);
+  box-shadow: none;
+}
+
+.libraries .rq-tabs button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  height: 32px;
+  min-height: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--rq-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+  opacity: 1;
+  transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.libraries .rq-tabs button:hover {
+  color: #fff;
+}
+
+.libraries .rq-tabs button.is-active {
+  background: rgba(var(--primary-rgb), 0.28);
+  color: #fff;
+}
+
+@media (max-width: 699px) {
+  .libraries .rq-tabs {
+    width: 100%;
+  }
+
+  .libraries .rq-tabs button {
+    flex: 1 1 0;
+    padding: 0 8px;
+  }
+}

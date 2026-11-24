@@ -45,6 +45,25 @@ export default defineConfig(({ mode }) => {
           "/tautulli",
           "/jellystat",
           "/env.js",
+          // Mounted in apps/api/server.js but were missing here, so the dev server
+          // answered them with index.html (the Recap tab crashed on that).
+          "/alerts-data",
+          "/auto-collections",
+          "/backup-download",
+          "/cleanup-rules",
+          "/cleanuparr",
+          "/external-imports",
+          "/incomplete-seasons",
+          "/insights-data",
+          "/newsletter-archive-data",
+          "/ops-copilot",
+          "/server-tasks",
+          "/status-data",
+          "/subtitle-gap",
+          "/webhook-cards",
+          "/webhook-out-data",
+          "/calendar-feed",
+          "/library-tools",
         ];
         const proxy = Object.fromEntries(
           proxyPaths.map((pathName) => [

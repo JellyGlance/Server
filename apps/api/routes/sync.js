@@ -23,7 +23,7 @@ const { jf_libraries_columns, jf_libraries_mapping } = require("../models/jf_lib
 const { jf_library_items_columns, jf_library_items_mapping } = require("../models/jf_library_items");
 const { jf_library_seasons_columns, jf_library_seasons_mapping } = require("../models/jf_library_seasons");
 const { jf_library_episodes_columns, jf_library_episodes_mapping } = require("../models/jf_library_episodes");
-const { jf_item_info_columns, jf_item_info_mapping } = require("../models/jf_item_info");
+const { jf_item_info_columns, jf_item_info_mapping, jf_item_info_rows } = require("../models/jf_item_info");
 const { columnsPlaybackReporting, mappingPlaybackReporting } = require("../models/jf_playback_reporting_plugin_data");
 
 function isPlaybackReportingPlugin(plugin) {
@@ -240,7 +240,7 @@ async function archiveLibraryItems(fetchedData) {
 }
 
 async function syncSeasons(seasons) {
-  const shows = seasons.map((season) => season.SeriesId);
+  const shows = [...new Set(seasons.map((season) => season.SeriesId))];
 
   let insertSeasonsCount = 0;
   let updateSeasonsCount = 0;
@@ -253,7 +253,7 @@ async function syncSeasons(seasons) {
     let seasonsToInsert = [];
     seasonsToInsert = await seasons.filter((season) => season.SeriesId == show).map(jf_library_seasons_mapping);
 
-    if (syncTask.taskName === taskName.partialsync) {
+    if (syncTask?.taskName === taskName.partialsync) {
       seasonsToInsert = seasonsToInsert.filter((season) => !existingIdsSeasons.some((id) => id === season.Id));
     }
 
@@ -261,10 +261,10 @@ async function syncSeasons(seasons) {
       let result = await db.insertBulk("jf_library_seasons", seasonsToInsert, jf_library_seasons_columns);
       if (result.Result === "SUCCESS") {
         insertSeasonsCount +=
-          syncTask.taskName === taskName.partialsync
+          syncTask?.taskName === taskName.partialsync
             ? seasonsToInsert.length
             : Math.max(seasonsToInsert.length - existingIdsSeasons.length, 0);
-        updateSeasonsCount += syncTask.taskName === taskName.partialsync ? 0 : existingIdsSeasons.length;
+        updateSeasonsCount += syncTask?.taskName === taskName.partialsync ? 0 : existingIdsSeasons.length;
       } else {
         syncTask.loggedData.push({
           color: "red",
@@ -278,7 +278,7 @@ async function syncSeasons(seasons) {
   return { insertSeasonsCount: insertSeasonsCount, updateSeasonsCount: updateSeasonsCount };
 }
 async function syncEpisodes(episodes) {
-  const shows = episodes.map((episode) => episode.SeriesId);
+  const shows = [...new Set(episodes.map((episode) => episode.SeriesId))];
 
   let insertEpisodeCount = 0;
   let updateEpisodeCount = 0;
@@ -291,7 +291,7 @@ async function syncEpisodes(episodes) {
     let episodesToInsert = [];
     episodesToInsert = await episodes.filter((episode) => episode.SeriesId == show).map(jf_library_episodes_mapping);
 
-    if (syncTask.taskName === taskName.partialsync) {
+    if (syncTask?.taskName === taskName.partialsync) {
       episodesToInsert = episodesToInsert.filter(
         (episode) => !existingIdsEpisodes.some((EpisodeId) => EpisodeId === episode.EpisodeId)
       );
@@ -301,10 +301,10 @@ async function syncEpisodes(episodes) {
       let result = await db.insertBulk("jf_library_episodes", episodesToInsert, jf_library_episodes_columns);
       if (result.Result === "SUCCESS") {
         insertEpisodeCount +=
-          syncTask.taskName === taskName.partialsync
+          syncTask?.taskName === taskName.partialsync
             ? episodesToInsert.length
             : Math.max(episodesToInsert.length - existingIdsEpisodes.length, 0);
-        updateEpisodeCount += syncTask.taskName === taskName.partialsync ? 0 : existingIdsEpisodes.length;
+        updateEpisodeCount += syncTask?.taskName === taskName.partialsync ? 0 : existingIdsEpisodes.length;
       } else {
         syncTask.loggedData.push({
           color: "red",
@@ -372,7 +372,7 @@ async function syncItemInfo(seasons_and_episodes, library_items) {
 
     if ((existingItemInfo.length == 0 && syncTask.taskName === taskName.partialsync) || syncTask.taskName === taskName.fullsync) {
       //dont update item info if it already exists and running a partial sync
-      const mapped_data = await Item.MediaSources.map((item) => jf_item_info_mapping(item, "Item"));
+      const mapped_data = jf_item_info_rows(Item, "Item");
       data_to_insert.push(...mapped_data);
 
       if (mapped_data.length !== 0) {
@@ -393,7 +393,7 @@ async function syncItemInfo(seasons_and_episodes, library_items) {
       syncTask.taskName === taskName.fullsync
     ) {
       //dont update item info if it already exists and running a partial sync
-      const mapped_data = await Episode.MediaSources.map((item) => jf_item_info_mapping(item, "Episode"));
+      const mapped_data = jf_item_info_rows(Episode, "Episode");
       data_to_insert.push(...mapped_data);
 
       //filter fix if jf_libraries is empty
@@ -1445,4 +1445,6 @@ module.exports = {
   fullSync,
   partialSync,
   syncPlaybackPluginData,
+  syncSeasons,
+  syncEpisodes,
 };

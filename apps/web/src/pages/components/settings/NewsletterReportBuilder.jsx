@@ -1,31 +1,54 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Form, Spinner } from "react-bootstrap";
 import AddLineIcon from "remixicon-react/AddLineIcon";
-import ArrowDownLineIcon from "remixicon-react/ArrowDownLineIcon";
-import ArrowUpLineIcon from "remixicon-react/ArrowUpLineIcon";
 import DeleteBinLineIcon from "remixicon-react/DeleteBinLineIcon";
+import DragMove2LineIcon from "remixicon-react/DragMove2LineIcon";
 import ExternalLinkLineIcon from "remixicon-react/ExternalLinkLineIcon";
 import FileCopyLineIcon from "remixicon-react/FileCopyLineIcon";
 import LayoutMasonryLineIcon from "remixicon-react/LayoutMasonryLineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
 import axios from "../../../lib/axios_instance";
+import { moveBlockBy, reorderBlocks } from "../../../lib/newsletter-report-blocks";
 
 export const BLOCK_LIBRARY = [
   { type: "intro", label: "Intro message", text: "A heading and a short welcome.", fields: ["title", "text"] },
   { type: "stats", label: "Headline stats", text: "Plays, watch time, viewers and new items.", fields: ["title", "period"] },
-  { type: "recentlyAdded", label: "Recently added", text: "Newest items, optionally from one library.", fields: ["title", "limit", "library", "addedType"] },
-  { type: "topWatched", label: "Most watched", text: "Top titles by plays.", fields: ["title", "limit", "period", "mediaType"] },
+  { type: "recentlyAdded", label: "Recently added", text: "Newest items, optionally from one library.", fields: ["title", "limit", "library", "addedType", "style"] },
+  { type: "topWatched", label: "Most watched", text: "Top titles by plays.", fields: ["title", "limit", "period", "mediaType", "style"] },
   { type: "activeUsers", label: "Top viewers", text: "Who watched the most.", fields: ["title", "limit", "period"] },
   { type: "topClients", label: "Apps and devices", text: "Bar chart of the apps people used.", fields: ["title", "limit", "period"] },
   { type: "playMethods", label: "Play methods", text: "Direct play, direct stream and transcode split.", fields: ["title", "period"] },
   { type: "activityByDay", label: "Plays per day", text: "Daily bar chart (up to 31 days).", fields: ["title", "period"] },
   { type: "libraryOverview", label: "Library overview", text: "Item counts and new items per library.", fields: ["title", "limit", "period"] },
   { type: "repairSummary", label: "Repair snapshot", text: "Missing posters, logos and runtimes.", fields: ["title"] },
-  { type: "continueWatching", label: "Continue watching", text: "Per-user campaigns only.", fields: ["title", "limit"], perUser: true },
-  { type: "myRequests", label: "My requests", text: "Per-user campaigns only (Seerr).", fields: ["title", "limit"], perUser: true },
+  { type: "continueWatching", label: "Continue watching", text: "Per-user campaigns only.", fields: ["title", "limit", "style"], perUser: true },
+  { type: "myRequests", label: "My requests", text: "Per-user campaigns only (Seerr).", fields: ["title", "limit", "style"], perUser: true },
+  { type: "forYou", label: "For you", text: "Picks and because-you-watched rows. Per-user campaigns only.", fields: ["title", "limit", "style"], perUser: true },
+  { type: "wrappedRecap", label: "Wrapped recap", text: "Hours watched, top shows and films, and the busiest day.", fields: ["title", "limit", "wrappedPeriod", "style"] },
+  { type: "leavingSoon", label: "Leaving soon", text: "Cleanup countdown matches, plus Maintainerr if it is configured. Read-only.", fields: ["title", "limit", "style"] },
+  { type: "fulfilledRequests", label: "Newly available", text: "Seerr requests that became available since the last send. Per-user campaigns show only that person's requests.", fields: ["title", "limit", "period", "style"] },
+  { type: "serverNews", label: "Server news", text: "An admin-written maintenance or new-feature note, with optional dates and a link to the public status page when it is enabled.", fields: ["title", "kind", "text", "startAt", "endAt"] },
+  { type: "comingSoon", label: "Coming soon", text: "Upcoming titles from Sonarr, Radarr and Seerr over the next N days. Read-only.", fields: ["title", "limit", "comingDays", "style"] },
+  { type: "heroFeatured", label: "Featured title", text: "A hero title with a backdrop and a watch CTA. Leave the item ID blank to pick a trending title automatically.", fields: ["title", "itemId", "library", "ctaLabel"] },
+  { type: "newEpisodes", label: "New episodes", text: "New episodes of shows this person already watches. Per-user campaigns only.", fields: ["title", "limit", "period", "style"], perUser: true },
+  { type: "trendingWeek", label: "Trending this week", text: "The titles people watched most on the server this week.", fields: ["title", "limit", "library", "style"] },
+  { type: "topRequesters", label: "Top requesters", text: "A leaderboard of who requested the most on Seerr.", fields: ["title", "limit"] },
+  { type: "collectionsSpotlight", label: "Collection spotlight", text: "Auto-collection previews from the server. Read-only, no writes to Jellyfin.", fields: ["title", "limit", "library", "style"] },
+  { type: "qualityUpgrades", label: "Quality upgrades", text: "4K, HDR and Dolby Vision titles, newest first.", fields: ["title", "limit", "library", "style"] },
+  { type: "serverStats", label: "Storage and server stats", text: "Library storage and item counts. Included only in admin copies of the digest.", fields: ["title"], adminOnly: true },
+  { type: "genreChart", label: "Most-watched genres", text: "A bar chart of the genres people watched in the period.", fields: ["title", "limit", "period", "library"] },
+  { type: "hiddenGem", label: "Hidden gem", text: "A highly rated title that is rarely watched.", fields: ["title", "limit", "library", "style"] },
+  { type: "onThisDay", label: "On this day", text: "Titles that premiered on this date in past years.", fields: ["title", "limit", "library", "style"] },
+  { type: "countdown", label: "Countdown", text: "Days remaining until a date you set, with an optional button.", fields: ["title", "countdownLabel", "countdownAt", "ctaLabel", "ctaHref"] },
+  { type: "image", label: "Image", text: "A single image from an https URL, with an optional link.", fields: ["title", "imageUrl", "imageAlt", "ctaHref", "align"] },
+  { type: "buttonCta", label: "Button", text: "A call-to-action button with a link.", fields: ["title", "buttonLabel", "buttonHref", "align"] },
+  { type: "divider", label: "Divider or spacer", text: "A line, empty space, or both.", fields: ["dividerStyle", "space"] },
+  { type: "twoColumn", label: "Two columns", text: "Two side-by-side text columns.", fields: ["title", "leftTitle", "leftText", "rightTitle", "rightText"] },
+  { type: "quote", label: "Quote or tip", text: "A highlighted quote or tip of the week.", fields: ["title", "quote", "attribution"] },
+  { type: "inviteFriend", label: "Invite a friend", text: "A Wizarr invite link, or a URL you set. Never creates an invite.", fields: ["title", "text", "ctaLabel", "inviteUrl"] },
+  { type: "footerSocial", label: "Footer and social links", text: "Closing copy plus links to the site, Discord and other profiles.", fields: ["title", "text", "socialWebsite", "socialDiscord", "socialYoutube", "socialMastodon", "socialX", "socialGithub", "socialInstagram", "socialFacebook"] },
   { type: "text", label: "Text", text: "Free text. **bold** and blank lines for paragraphs.", fields: ["title", "text"] },
   { type: "customHtml", label: "Custom HTML", text: "Raw HTML dropped into the email.", fields: ["title", "html"] },
-  { type: "divider", label: "Divider", text: "A thin line between sections.", fields: [] },
 ];
 
 const BLOCK_BY_TYPE = Object.fromEntries(BLOCK_LIBRARY.map((block) => [block.type, block]));
@@ -38,7 +61,7 @@ function newBlock(type, { title = "", options = {} } = {}) {
     type,
     enabled: true,
     title,
-    options: { limit: 8, periodDays: null, mediaType: "all", libraryId: "", text: "", html: "", ...options },
+    options: { limit: 8, periodDays: null, mediaType: "all", libraryId: "", text: "", html: "", style: "list", ...options },
   };
 }
 
@@ -172,11 +195,197 @@ function BlockFields({ block, fields, libraries, onChange }) {
           <Form.Control as="textarea" rows={4} className="report-code" value={block.options?.html || ""} onChange={(event) => setOption("html", event.target.value)} />
         </Form.Group>
       ) : null}
+      {fields.includes("wrappedPeriod") ? (
+        <Form.Group>
+          <Form.Label>Recap period</Form.Label>
+          <Form.Select value={block.options?.wrappedPeriod || "week"} onChange={(event) => setOption("wrappedPeriod", event.target.value)}>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+            <option value="year">This year</option>
+          </Form.Select>
+        </Form.Group>
+      ) : null}
+      {fields.includes("comingDays") ? (
+        <Form.Group>
+          <Form.Label>Next</Form.Label>
+          <Form.Select value={block.options?.comingDays || 7} onChange={(event) => setOption("comingDays", Number(event.target.value))}>
+            <option value="3">3 days</option>
+            <option value="7">7 days</option>
+            <option value="14">14 days</option>
+            <option value="31">31 days</option>
+          </Form.Select>
+        </Form.Group>
+      ) : null}
+      {fields.includes("kind") ? (
+        <Form.Group>
+          <Form.Label>Kind</Form.Label>
+          <Form.Select value={block.options?.kind || "feature"} onChange={(event) => setOption("kind", event.target.value)}>
+            <option value="feature">New feature</option>
+            <option value="maintenance">Maintenance</option>
+          </Form.Select>
+        </Form.Group>
+      ) : null}
+      {fields.includes("startAt") ? (
+        <Form.Group>
+          <Form.Label>From</Form.Label>
+          <Form.Control type="date" value={block.options?.startAt || ""} onChange={(event) => setOption("startAt", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("endAt") ? (
+        <Form.Group>
+          <Form.Label>Until</Form.Label>
+          <Form.Control type="date" value={block.options?.endAt || ""} onChange={(event) => setOption("endAt", event.target.value)} />
+        </Form.Group>
+      ) : null}
+
+      {fields.includes("itemId") ? (
+        <Form.Group>
+          <Form.Label>Item ID</Form.Label>
+          <Form.Control value={block.options?.itemId || ""} placeholder="Leave blank to pick automatically" onChange={(event) => setOption("itemId", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("ctaLabel") ? (
+        <Form.Group>
+          <Form.Label>Button label</Form.Label>
+          <Form.Control value={block.options?.ctaLabel || ""} placeholder="Watch now" onChange={(event) => setOption("ctaLabel", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("ctaHref") ? (
+        <Form.Group>
+          <Form.Label>Button link</Form.Label>
+          <Form.Control value={block.options?.ctaHref || ""} placeholder="https://" onChange={(event) => setOption("ctaHref", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("imageUrl") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Image URL</Form.Label>
+          <Form.Control value={block.options?.imageUrl || ""} placeholder="https://" onChange={(event) => setOption("imageUrl", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("imageAlt") ? (
+        <Form.Group>
+          <Form.Label>Alt text</Form.Label>
+          <Form.Control value={block.options?.imageAlt || ""} onChange={(event) => setOption("imageAlt", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("buttonLabel") ? (
+        <Form.Group>
+          <Form.Label>Button label</Form.Label>
+          <Form.Control value={block.options?.buttonLabel || ""} placeholder="Open" onChange={(event) => setOption("buttonLabel", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("buttonHref") ? (
+        <Form.Group>
+          <Form.Label>Button link</Form.Label>
+          <Form.Control value={block.options?.buttonHref || ""} placeholder="https://" onChange={(event) => setOption("buttonHref", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("align") ? (
+        <Form.Group>
+          <Form.Label>Align</Form.Label>
+          <Form.Select value={block.options?.align || "center"} onChange={(event) => setOption("align", event.target.value)}>
+            <option value="left">Left</option>
+            <option value="center">Centre</option>
+            <option value="right">Right</option>
+          </Form.Select>
+        </Form.Group>
+      ) : null}
+      {fields.includes("dividerStyle") ? (
+        <Form.Group>
+          <Form.Label>Style</Form.Label>
+          <Form.Select value={block.options?.dividerStyle || "line"} onChange={(event) => setOption("dividerStyle", event.target.value)}>
+            <option value="line">Line</option>
+            <option value="spacer">Spacer</option>
+            <option value="both">Line and space</option>
+          </Form.Select>
+        </Form.Group>
+      ) : null}
+      {fields.includes("space") ? (
+        <Form.Group>
+          <Form.Label>Space (px)</Form.Label>
+          <Form.Control type="number" min="0" max="80" value={block.options?.space ?? 22} onChange={(event) => setOption("space", Number(event.target.value))} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("leftTitle") ? (
+        <Form.Group>
+          <Form.Label>Left heading</Form.Label>
+          <Form.Control value={block.options?.leftTitle || ""} onChange={(event) => setOption("leftTitle", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("leftText") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Left text</Form.Label>
+          <Form.Control as="textarea" rows={3} value={block.options?.leftText || ""} onChange={(event) => setOption("leftText", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("rightTitle") ? (
+        <Form.Group>
+          <Form.Label>Right heading</Form.Label>
+          <Form.Control value={block.options?.rightTitle || ""} onChange={(event) => setOption("rightTitle", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("rightText") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Right text</Form.Label>
+          <Form.Control as="textarea" rows={3} value={block.options?.rightText || ""} onChange={(event) => setOption("rightText", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("quote") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Quote or tip</Form.Label>
+          <Form.Control as="textarea" rows={3} value={block.options?.quote || ""} onChange={(event) => setOption("quote", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("attribution") ? (
+        <Form.Group>
+          <Form.Label>Attribution</Form.Label>
+          <Form.Control value={block.options?.attribution || ""} onChange={(event) => setOption("attribution", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("countdownLabel") ? (
+        <Form.Group>
+          <Form.Label>Event</Form.Label>
+          <Form.Control value={block.options?.countdownLabel || ""} placeholder="Season premiere" onChange={(event) => setOption("countdownLabel", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("countdownAt") ? (
+        <Form.Group>
+          <Form.Label>Date</Form.Label>
+          <Form.Control type="date" value={block.options?.countdownAt || ""} onChange={(event) => setOption("countdownAt", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {fields.includes("inviteUrl") ? (
+        <Form.Group className="report-block-wide">
+          <Form.Label>Invite URL override</Form.Label>
+          <Form.Control value={block.options?.inviteUrl || ""} placeholder="Uses the connected Wizarr URL if this is blank" onChange={(event) => setOption("inviteUrl", event.target.value)} />
+        </Form.Group>
+      ) : null}
+      {["socialWebsite", "socialDiscord", "socialYoutube", "socialMastodon", "socialX", "socialGithub", "socialInstagram", "socialFacebook"].map((field) => (
+        fields.includes(field) ? (
+          <Form.Group key={field}>
+            <Form.Label>{field.replace("social", "")}</Form.Label>
+            <Form.Control value={block.options?.[field] || ""} placeholder="https://" onChange={(event) => setOption(field, event.target.value)} />
+          </Form.Group>
+        ) : null
+      ))}
+
+      {fields.includes("style") ? (
+        <Form.Group>
+          <Form.Label>Layout</Form.Label>
+          <Form.Select value={block.options?.style || "list"} onChange={(event) => setOption("style", event.target.value)}>
+            <option value="list">List</option>
+            <option value="cards">Poster cards</option>
+          </Form.Select>
+          {block.options?.style === "cards" ? (
+            <Form.Text>Posters use the public JellyGlance URL when it is set, or this preview&apos;s address. Titles still show if no public URL is configured.</Form.Text>
+          ) : null}
+        </Form.Group>
+      ) : null}
     </div>
   );
 }
 
-export default function NewsletterReportBuilder({ report: reportInput, onChange, campaignType, campaignName, campaignId }) {
+export default function NewsletterReportBuilder({ report: reportInput, onChange, campaignType, campaignName, campaignId, previewLocale = "en-GB" }) {
   const report = useMemo(() => normalizeReportDraft(reportInput), [reportInput]);
   const [libraries, setLibraries] = useState([]);
   const [addType, setAddType] = useState("stats");
@@ -184,6 +393,8 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
   const [previewing, setPreviewing] = useState(false);
   const [previewError, setPreviewError] = useState("");
   const [openBlockId, setOpenBlockId] = useState("");
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
   const timer = useRef(null);
   const perUser = campaignType === "per-user";
 
@@ -200,7 +411,7 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
       setPreviewError("");
       const response = await axios.post(
         "/newsletter/report/preview",
-        { report: { ...nextReport, enabled: true }, type: perUser ? "per-user" : "global", campaignName, campaignId: campaignId || undefined },
+        { report: { ...nextReport, enabled: true }, type: perUser ? "per-user" : "global", campaignName, campaignId: campaignId || undefined, locale: previewLocale },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}`, "Content-Type": "application/json" } }
       );
       setPreview(response.data);
@@ -216,17 +427,51 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
     timer.current = setTimeout(() => refreshPreview(report), 700);
     return () => clearTimeout(timer.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [report, campaignType, campaignName]);
+  }, [report, campaignType, campaignName, previewLocale]);
 
   const update = (changes) => onChange({ ...report, ...changes });
   const updateBlocks = (blocks) => update({ blocks });
   const updateBlock = (index, block) => updateBlocks(report.blocks.map((current, position) => (position === index ? block : current)));
   const moveBlock = (index, delta) => {
-    const target = index + delta;
-    if (target < 0 || target >= report.blocks.length) return;
-    const blocks = [...report.blocks];
-    [blocks[index], blocks[target]] = [blocks[target], blocks[index]];
-    updateBlocks(blocks);
+    updateBlocks(moveBlockBy(report.blocks, index, delta));
+  };
+
+  const handleDragStart = (event, index) => {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(index));
+    setDragIndex(index);
+    setOverIndex(index);
+  };
+
+  const handleDragOver = (event, index) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (overIndex !== index) setOverIndex(index);
+  };
+
+  const handleDrop = (event, index) => {
+    event.preventDefault();
+    const from = Number(event.dataTransfer.getData("text/plain"));
+    const source = Number.isInteger(from) ? from : dragIndex;
+    if (source != null) updateBlocks(reorderBlocks(report.blocks, source, index));
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
+  const handleBlockKeyDown = (event, index) => {
+    if (event.target !== event.currentTarget && !event.target.classList?.contains("report-block-handle")) return;
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveBlock(index, -1);
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveBlock(index, 1);
+    }
   };
   const addBlock = () => {
     const block = newBlock(addType);
@@ -326,14 +571,32 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
               </Button>
             </div>
           </div>
+          <p className="newsletter-help">Drag the handle to reorder sections, or focus the handle and press the up or down arrow key.</p>
           <div className="report-block-list">
             {report.blocks.map((block, index) => {
               const definition = BLOCK_BY_TYPE[block.type] || { label: block.type, text: "", fields: [] };
               const open = openBlockId === block.id;
               const unsupported = definition.perUser && !perUser;
               return (
-                <article key={block.id} className={`report-block${block.enabled === false ? " is-off" : ""}${unsupported ? " is-warning" : ""}`}>
+                <article
+                  key={block.id}
+                  className={`report-block${block.enabled === false ? " is-off" : ""}${unsupported ? " is-warning" : ""}${dragIndex === index ? " is-dragging" : ""}${overIndex === index && dragIndex != null && dragIndex !== index ? " is-drop-target" : ""}`}
+                  onDragOver={(event) => handleDragOver(event, index)}
+                  onDrop={(event) => handleDrop(event, index)}
+                  onDragEnd={handleDragEnd}
+                >
                   <header>
+                    <button
+                      type="button"
+                      className="report-block-handle"
+                      draggable
+                      aria-label={`Reorder ${block.title || definition.label}. Use arrow keys to move.`}
+                      title="Drag to reorder, or focus and use the up and down arrow keys"
+                      onDragStart={(event) => handleDragStart(event, index)}
+                      onKeyDown={(event) => handleBlockKeyDown(event, index)}
+                    >
+                      <DragMove2LineIcon size={18} />
+                    </button>
                     <button type="button" className="report-block-name" onClick={() => setOpenBlockId(open ? "" : block.id)}>
                       <strong>{block.title || definition.label}</strong>
                       <small>{unsupported ? "Only shown in per-user campaigns" : definition.text}</small>
@@ -346,12 +609,6 @@ export default function NewsletterReportBuilder({ report: reportInput, onChange,
                         checked={block.enabled !== false}
                         onChange={(event) => updateBlock(index, { ...block, enabled: event.target.checked })}
                       />
-                      <Button type="button" size="sm" variant="link" title="Move up" disabled={index === 0} onClick={() => moveBlock(index, -1)}>
-                        <ArrowUpLineIcon size={16} />
-                      </Button>
-                      <Button type="button" size="sm" variant="link" title="Move down" disabled={index === report.blocks.length - 1} onClick={() => moveBlock(index, 1)}>
-                        <ArrowDownLineIcon size={16} />
-                      </Button>
                       <Button
                         type="button"
                         size="sm"

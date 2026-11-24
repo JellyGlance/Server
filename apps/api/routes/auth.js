@@ -1,5 +1,5 @@
 const express = require("express");
-const { mediaServerAuthHeaders, chooseServerType, withServerType, saveServerType, serverLabel } = require("../classes/server-type");
+const { mediaServerAuthHeaders, chooseServerType, withServerType, saveServerType, serverLabel, probeServerInfo } = require("../classes/server-type");
 const { publicAuth } = require("../classes/client-config");
 const { createHash, randomUUID } = require("crypto");
 const db = require("../db");
@@ -14,6 +14,7 @@ const triggertype = require("../logging/triggertype");
 const { getRolePermissions } = require("../classes/role-permissions");
 const {
   authRateLimit,
+  createRouteRateLimiter,
   hashPassword,
   isEmptyPassword,
   isQuickConnectSecret,
@@ -28,7 +29,25 @@ const oidc = require("../classes/oidc");
 const { encryptSecret, decryptSecret } = require("../classes/integration-store");
 
 const router = express.Router();
-router.use(authRateLimit);
+// The one rate limit for /auth (server.js mounts this router without its own).
+// The setup screens repeat a few status checks on their own: polling Quick Connect
+// approval, checking the server URL while it is typed and reading the setup state
+// (GET /isConfigured, also read on every page load). Counting those against the
+// sign-in limit locked people out of setup after a few minutes of waiting for
+// approval, so they get their own, roomier limit.
+const SETUP_POLL_PATHS = new Set(["/jellyfin-quick-connect/status", "/probe-server"]);
+const setupPollRateLimit = createRouteRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.AUTH_POLL_RATE_LIMIT_MAX || 600),
+  message: "Too many status checks. Try again shortly.",
+});
+
+router.use((req, res, next) => {
+  const isPoll =
+    (req.method === "GET" && req.path === "/isConfigured") || (req.method === "POST" && SETUP_POLL_PATHS.has(req.path));
+  if (isPoll) return setupPollRateLimit(req, res, next);
+  return authRateLimit(req, res, next);
+});
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JS_USER = process.env.JS_USER;
@@ -455,7 +474,9 @@ router.post("/jellyfin-quick-connect/initiate", async (req, res) => {
     res.json({
       code: data.Code,
       secret: data.Secret,
-      quickConnectUrl: `${config.host}/web/#/quickconnect`,
+      // JG_QUICK_CONNECT_URL_BASE: the address people open Jellyfin on, when JF_HOST is an internal-only name.
+      // Jellyfin's Quick Connect page fills in ?code= itself, so the admin only has to press Authorize.
+      quickConnectUrl: `${process.env.JG_QUICK_CONNECT_URL_BASE || config.host}/web/#/quickconnect?code=${encodeURIComponent(data.Code)}`,
       authenticated: data.Authenticated === true,
       dateAdded: data.DateAdded || null,
     });
@@ -1090,6 +1111,41 @@ async function setupComplete() {
   const config = await new configClass().getConfig();
   return config.state != null && config.state >= 2;
 }
+
+// Setup only: checks that a URL answers as Jellyfin or Emby before an API key is
+// entered. Uses the public info endpoint, so no key is sent.
+router.post("/probe-server", async (req, res) => {
+  try {
+    if (await setupComplete()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const { JF_HOST } = req.body || {};
+    if (!JF_HOST || typeof JF_HOST !== "string" || JF_HOST.length > 2048) {
+      res.status(400).json({ reachable: false, errorMessage: "Server URL is required" });
+      return;
+    }
+
+    const info = await probeServerInfo(JF_HOST);
+    if (!info) {
+      res.json({ reachable: false });
+      return;
+    }
+
+    res.json({
+      reachable: true,
+      serverType: info.type,
+      serverLabel: serverLabel(info.type),
+      serverName: info.name,
+      version: info.version,
+      cleanedUrl: info.url,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ reachable: false, errorMessage: "Unable to check the server address" });
+  }
+});
 
 router.post("/test-jellyfin", async (req, res) => {
   try {

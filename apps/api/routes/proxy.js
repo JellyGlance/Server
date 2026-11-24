@@ -369,6 +369,42 @@ router.get("/Audiobookshelf/Images/:itemId", async (req, res) => {
   }
 });
 
+// Sonarr/Radarr/Lidarr/Readarr artwork that only exists on the Arr itself (no public URL).
+// Only MediaCover image paths are allowed, and the Arr API key never leaves the server.
+// Checked segment by segment instead of with one big regex, which could backtrack badly on long input.
+const ARR_PATH_SEGMENT = /^[A-Za-z0-9_-]+$/;
+const ARR_FILE_SEGMENT = /^[A-Za-z0-9_.-]+$/;
+const ARR_IMAGE_EXTENSION = /\.(jpg|jpeg|png|webp|gif)$/i;
+function isArrMediaCoverPath(value) {
+  if (typeof value !== "string" || value.length > 512 || !value.startsWith("/") || value.includes("..")) return false;
+  const segments = value.slice(1).split("/");
+  const coverIndex = segments.findIndex((segment) => segment.toLowerCase() === "mediacover");
+  if (coverIndex < 0 || coverIndex === segments.length - 1) return false;
+  const before = segments.slice(0, coverIndex);
+  const after = segments.slice(coverIndex + 1);
+  return before.every((segment) => ARR_PATH_SEGMENT.test(segment)) && after.every((segment) => ARR_FILE_SEGMENT.test(segment)) && ARR_IMAGE_EXTENSION.test(after[after.length - 1]);
+}
+router.get("/Arr/Images/:instanceId", async (req, res) => {
+  try {
+    const path = String(req.query.path || "").split("?")[0];
+    if (!isArrMediaCoverPath(path)) return res.status(400).end();
+    const integrations = await getIntegrations();
+    const app = (integrations.arrApps || []).find((item) => item.instanceId === req.params.instanceId && item.connected);
+    if (!app?.values?.url || !app.values.secret) return res.status(404).end();
+    const response = await safeHttpGet(app.values.url, path, {
+      timeout: 12000,
+      headers: { "X-Api-Key": app.values.secret, Accept: "image/*" },
+      responseType: "arraybuffer",
+    });
+    const contentType = String(response.headers?.["content-type"] || "image/jpeg");
+    res.set("Content-Type", contentType.startsWith("image/") ? contentType : "image/jpeg");
+    res.set("Cache-Control", "public, max-age=86400");
+    res.send(Buffer.from(response.data));
+  } catch (error) {
+    res.status(error.response?.status === 404 ? 404 : 502).end();
+  }
+});
+
 router.post("/validateSettings", async (req, res) => {
   const { url, apikey, serverType: requestedType } = req.body;
 

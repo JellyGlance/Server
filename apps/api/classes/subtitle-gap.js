@@ -143,6 +143,8 @@ async function loadRows() {
   return result.rows.map((row) => ({ ...row, type: row.type === "Episode" ? "Episode" : "Movie" }));
 }
 
+const REPORT_ITEM_LIMIT = 5000;
+
 async function getReport() {
   const [prefs, bazarr, rows] = await Promise.all([getPrefs(), getBazarr(), loadRows()]);
   const items = buildReport(rows, prefs);
@@ -157,7 +159,10 @@ async function getReport() {
       filesMissingSubtitles: rows.filter((r) => detectGaps(r.streams, prefs).missingSubtitles.length).length,
       filesMissingAudio: rows.filter((r) => detectGaps(r.streams, prefs).missingAudio.length).length,
     },
-    items: items.slice(0, 500),
+    // The page shows 50 at a time, so send far more than the old 500, but keep a
+    // ceiling for very large libraries and say when the list was cut short.
+    items: items.slice(0, REPORT_ITEM_LIMIT),
+    truncated: items.length > REPORT_ITEM_LIMIT,
   };
 }
 

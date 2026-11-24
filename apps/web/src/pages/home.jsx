@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 import axios from "../lib/axios_instance";
@@ -25,9 +25,9 @@ import MagicLineIcon from "remixicon-react/MagicLineIcon";
 import MedalFillIcon from "remixicon-react/MedalFillIcon";
 import Music2LineIcon from "remixicon-react/Music2LineIcon";
 import PlayCircleLineIcon from "remixicon-react/PlayCircleLineIcon";
+import LayoutMasonryLineIcon from "remixicon-react/LayoutMasonryLineIcon";
 import RestartLineIcon from "remixicon-react/RestartLineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
-import ServerFillIcon from "remixicon-react/ServerFillIcon";
 import Settings3LineIcon from "remixicon-react/Settings3LineIcon";
 import StarSmileLineIcon from "remixicon-react/StarSmileLineIcon";
 import TimeLineIcon from "remixicon-react/TimeLineIcon";
@@ -37,6 +37,26 @@ import User3LineIcon from "remixicon-react/User3LineIcon";
 import MenuLineIcon from "remixicon-react/MenuLineIcon";
 
 import Sessions from "./components/sessions/sessions";
+import {
+  AllQuietSlot,
+  AppHealthWidget,
+  ClockWidget,
+  CollectionsWidget,
+  NowListeningWidget,
+  SpaceToFreeWidget,
+  DiskRunwayWidget,
+  DownloadQueueWidget,
+  NowPlayingStrip,
+  PeakHoursWidget,
+  PlaybackQualityWidget,
+  RecentlyAddedWidget,
+  RequestsWidget,
+  TopClientsWidget,
+  UpNextWidget,
+  useHomeWidgetData,
+} from "./components/home/home-widgets";
+import { AddWidgetDrawer, HomeEditBar, HomeLayoutEditor, UndoToast } from "./components/home/home-layout-editor";
+import "./css/home-editor.css";
 import { fetchActiveSessions, getCachedActiveSessions, subscribeActiveSessions } from "../lib/session-cache";
 import "./css/home.css";
 import {
@@ -440,6 +460,14 @@ export default function Home({ kioskMode = false }) {
   const [gapBusyId, setGapBusyId] = useState("");
   const [gapMessage, setGapMessage] = useState("");
   const [, setError] = useState("");
+  const [layoutHistory, setLayoutHistory] = useState([]);
+  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+  const [showLayoutOptions, setShowLayoutOptions] = useState(false);
+  const [undoToast, setUndoToast] = useState("");
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
+  const [connectedIntegrations, setConnectedIntegrations] = useState(null);
+  const [demoSessions, setDemoSessions] = useState(null);
+  const homeStackRef = useRef(null);
 
   useEffect(() => {
     if (kioskMode) return undefined;
@@ -551,7 +579,6 @@ export default function Home({ kioskMode = false }) {
   const runners = hallOfFame.slice(3, 5);
   const concentration = Number(dashboard?.libraryBalance?.concentration || 0);
   const requestStats = operations.requests?.stats || {};
-  const recentRequests = (operations.requests?.requests || []).slice(0, 4);
   const healthChecks = operations.health?.checks || [];
   const jellyfinCheck = healthChecks.find((check) => check.key === "jellyfin");
   const failingChecks = healthChecks.filter((check) => !check.ok);
@@ -578,7 +605,6 @@ export default function Home({ kioskMode = false }) {
   const maintainerrData = operations.maintainerr || null;
   const digestItems = operations.digest?.items || [];
   const storage = operations.storage || null;
-  const runningJobs = operations.jobs?.running || [];
   const maintainerrScheduled = Number(maintainerrData?.stats?.scheduledItems || 0);
   const maintainerrUpcoming = Number(maintainerrData?.stats?.upcomingWeek || 0);
   const maintainerrFailures = Number(maintainerrData?.stats?.collectionFailures || 0);
@@ -680,7 +706,49 @@ export default function Home({ kioskMode = false }) {
   }, [homeSettings, kioskMode]);
 
   function updateHomeSettings(updater) {
+    if (isOrderingHome) setLayoutHistory((history) => [...history.slice(-19), homeSettings]);
     setHomeSettings((current) => normalizeHomeSettings(typeof updater === "function" ? updater(current) : { ...current, ...updater }));
+  }
+
+  function undoLayoutChange() {
+    setLayoutHistory((history) => {
+      if (!history.length) return history;
+      setHomeSettings(normalizeHomeSettings(history[history.length - 1]));
+      return history.slice(0, -1);
+    });
+    setUndoToast("");
+  }
+
+  function placeSection(sectionId, targetId, after) {
+    if (!sectionId || !targetId || sectionId === targetId) return;
+    updateHomeSettings((current) => {
+      const order = normalizeHomeOrder(current.order).filter((id) => id !== sectionId);
+      const targetIndex = order.indexOf(targetId);
+      order.splice(targetIndex < 0 ? order.length : targetIndex + (after ? 1 : 0), 0, sectionId);
+      return { ...current, order, preset: "custom", pinned: current.pinned === sectionId || current.pinned === targetId ? "" : current.pinned };
+    });
+  }
+
+  // Keyboard moves step past hidden widgets so every press visibly moves one slot.
+  function moveVisibleSection(sectionId, direction) {
+    const visible = orderedSectionIds;
+    const index = visible.indexOf(sectionId);
+    const target = visible[index + direction];
+    if (index < 0 || !target) return null;
+    placeSection(sectionId, target, direction > 0);
+    return { index: index + direction, count: visible.length };
+  }
+
+  function hideSectionWithUndo(sectionId) {
+    updateHomeSettings((current) => ({ ...current, hidden: [...new Set([...(current.hidden || []), sectionId])], preset: "custom" }));
+    setUndoToast(`${sectionLabels[sectionId]} hidden`);
+  }
+
+  function addSectionFromDrawer(sectionId) {
+    updateHomeSettings((current) => ({ ...current, hidden: (current.hidden || []).filter((id) => id !== sectionId), preset: "custom" }));
+    setIsAddDrawerOpen(false);
+    setLiveAnnouncement(`${sectionLabels[sectionId]} added.`);
+    setTimeout(() => document.querySelector(`.home-widget-id-${sectionId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
   }
 
   function moveHomeSection(sectionId, direction) {
@@ -700,6 +768,7 @@ export default function Home({ kioskMode = false }) {
 
   function resetHomeOrder() {
     updateHomeSettings(DEFAULT_HOME_SETTINGS);
+    setUndoToast("Home layout reset");
   }
 
   function toggleHomeSection(sectionId) {
@@ -720,6 +789,15 @@ export default function Home({ kioskMode = false }) {
       dismissedAlerts: { ...(current.dismissedAlerts || {}), [alertKey]: new Date().toISOString() },
       preset: "custom",
     }));
+  }
+
+  function updateWidgetHeight(sectionId, height) {
+    updateHomeSettings((current) => {
+      const heights = { ...(current.heights || {}) };
+      if (height === "auto") delete heights[sectionId];
+      else heights[sectionId] = height;
+      return { ...current, heights, preset: "custom" };
+    });
   }
 
   function updateWidgetSize(sectionId, size) {
@@ -800,8 +878,86 @@ export default function Home({ kioskMode = false }) {
   const activeRotateSection = effectiveAutoRotate && orderedSectionIds.length ? orderedSectionIds[rotateIndex % orderedSectionIds.length] : null;
   const homeSectionOrder = useMemo(() => Object.fromEntries(orderedSectionIds.map((sectionId, index) => [sectionId, index])), [orderedSectionIds]);
   const getHomeSectionStyle = (sectionId) => ({ order: homeSectionOrder[sectionId] ?? DEFAULT_HOME_ORDER.indexOf(sectionId) });
-  const getHomeSectionClass = (sectionId, className = "") => `${className} home-widget-size-${homeSettings.sizes?.[sectionId] || "medium"} ${isOrderingHome ? "is-home-widget-editing" : ""}`.trim();
+  const getHomeSectionClass = (sectionId, className = "") =>
+    `${className} home-widget-id-${sectionId} home-widget-size-${homeSettings.sizes?.[sectionId] || "medium"} home-widget-height-${homeSettings.heights?.[sectionId] || "auto"} ${isOrderingHome ? "is-home-widget-editing" : ""}`.trim();
   const shouldRenderSection = (sectionId) => orderedSectionIds.includes(sectionId) && (!activeRotateSection || activeRotateSection === sectionId);
+  const sessionsIdle = orderedSectionIds.includes("sessions") && activeSessionCount === 0;
+  const peakWidget = useHomeWidgetData("/stats/home/peakHours", { enabled: !kioskMode && (orderedSectionIds.includes("peakHours") || sessionsIdle) });
+  const upNextWidget = useHomeWidgetData("/stats/home/upNext", { enabled: orderedSectionIds.includes("upNext") });
+  const diskRunwayWidget = useHomeWidgetData("/stats/home/diskRunway", { enabled: orderedSectionIds.includes("diskRunway") });
+  const downloadQueueWidget = useHomeWidgetData("/api/downloads/stitched", {
+    enabled: !ownActivityOnly && orderedSectionIds.includes("downloadQueue"),
+    refreshMs: 30 * 1000,
+  });
+  const requestsWidget = useHomeWidgetData("/api/requests", { enabled: orderedSectionIds.includes("requests"), refreshMs: 2 * 60 * 1000 });
+  const recentlyAddedWidget = useHomeWidgetData("/api/getRecentlyAddedShelves?limit=12", { enabled: orderedSectionIds.includes("recentlyAdded") });
+  const playbackQualityWidget = useHomeWidgetData("/stats/getPlaybackMethodStats", {
+    enabled: !ownActivityOnly && orderedSectionIds.includes("playbackQuality"),
+    body: { days: 30 },
+  });
+  const topClientsWidget = useHomeWidgetData("/stats/getMostUsedClient", {
+    enabled: !ownActivityOnly && orderedSectionIds.includes("topClients"),
+    body: { days: 30 },
+  });
+  // Admin-only widgets: they read integration checks, collections and cleanup data.
+  const appHealthWidget = useHomeWidgetData("/api/home/appHealth", { enabled: !ownActivityOnly && orderedSectionIds.includes("appHealth") });
+  const nowListeningWidget = useHomeWidgetData("/api/audiobookshelf", {
+    enabled: !ownActivityOnly && orderedSectionIds.includes("nowListening"),
+    refreshMs: 60 * 1000,
+  });
+  const collectionsWidget = useHomeWidgetData("/stats/home/collections", { enabled: !ownActivityOnly && orderedSectionIds.includes("autoCollections") });
+  const spaceToFreeWidget = useHomeWidgetData("/stats/home/spaceToFree", {
+    enabled: !ownActivityOnly && orderedSectionIds.includes("spaceToFree"),
+    refreshMs: 15 * 60 * 1000,
+  });
+  const lastPlaybackWidget = useHomeWidgetData("/stats/home/lastPlayback", { enabled: sessionsIdle, refreshMs: 60 * 1000 });
+
+  useEffect(() => {
+    if (!isOrderingHome) return undefined;
+    const onKey = (event) => {
+      const tag = String(event.target?.tagName || "").toLowerCase();
+      if (["input", "select", "textarea"].includes(tag)) return;
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        undoLayoutChange();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOrderingHome]);
+
+  useEffect(() => {
+    if (!isOrderingHome || connectedIntegrations) return;
+    axios
+      .get("/api/integrations")
+      .then((response) => {
+        const all = [...(response.data?.arrApps || []), ...(response.data?.clients || []), ...(response.data?.thirdParty || [])];
+        setConnectedIntegrations(new Set(all.filter((item) => item?.connected).map((item) => item.slug)));
+      })
+      .catch(() => setConnectedIntegrations(new Set()));
+  }, [isOrderingHome, connectedIntegrations]);
+
+  useEffect(() => {
+    if (kioskMode) return;
+    axios
+      .get("/stats/home/demoSessions")
+      .then((response) => setDemoSessions(response.data?.enabled ? response.data : null))
+      .catch(() => setDemoSessions(null));
+  }, [kioskMode]);
+
+  const closeUndoToast = useCallback(() => setUndoToast(""), []);
+  const closeAddDrawer = useCallback(() => setIsAddDrawerOpen(false), []);
+
+  const changeDemoSessions = useCallback((mode) => {
+    axios
+      .post("/stats/home/demoSessions", { mode })
+      .then((response) => {
+        setDemoSessions(response.data);
+        fetchActiveSessions().catch(() => {});
+      })
+      .catch(() => {});
+  }, []);
+
   const visibleIntegrationWidgets = useMemo(
     () => ({
       tdarr: orderedSectionIds.includes("tdarr"),
@@ -933,33 +1089,15 @@ export default function Home({ kioskMode = false }) {
           <button
             type="button"
             onClick={() => {
-              loadDashboardData();
-              setIsHomeActionsOpen(false);
-            }}
-          >
-            <RefreshLineIcon size={17} />
-            Dashboard
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              loadOperationsData(true);
-              setIsHomeActionsOpen(false);
-            }}
-          >
-            <RefreshLineIcon size={17} />
-            Ops
-          </button>
-          <button
-            type="button"
-            onClick={() => {
               setIsOrderingHome((current) => !current);
+              setLayoutHistory([]);
+              setShowLayoutOptions(false);
               setIsHomeActionsOpen(false);
             }}
             aria-pressed={isOrderingHome}
           >
             <Settings3LineIcon size={17} />
-            Edit widgets
+            {isOrderingHome ? "Done editing" : "Edit Home"}
           </button>
         </div>
       </div>
@@ -976,6 +1114,35 @@ export default function Home({ kioskMode = false }) {
       ) : null}
 
       {isOrderingHome ? (
+        <HomeEditBar
+          canUndo={layoutHistory.length > 0}
+          onUndo={undoLayoutChange}
+          onReset={resetHomeOrder}
+          onDone={() => {
+            setIsOrderingHome(false);
+            setShowLayoutOptions(false);
+            setLayoutHistory([]);
+          }}
+          onAdd={() => setIsAddDrawerOpen(true)}
+          onOptions={() => setShowLayoutOptions((current) => !current)}
+          optionsOpen={showLayoutOptions}
+          hiddenCount={homeSettings.hidden.length}
+        />
+      ) : null}
+
+      {demoSessions && !kioskMode ? (
+        <div className="home-demo-switch" role="group" aria-label="Demo sessions">
+          <span className="home-demo-badge">Demo</span>
+          <span>Active sessions: live, or demo streams from playback history:</span>
+          {demoSessions.modes.map((mode) => (
+            <button key={mode} type="button" className={demoSessions.mode === mode ? "is-active" : ""} aria-pressed={demoSessions.mode === mode} onClick={() => changeDemoSessions(mode)}>
+              {mode === "off" ? "Live" : mode === "idle" ? "Nobody" : mode}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {isOrderingHome && showLayoutOptions ? (
         <div className="home-order-panel home-glass-card">
           <div className="home-order-panel-heading">
             <div>
@@ -1036,6 +1203,16 @@ export default function Home({ kioskMode = false }) {
               <PlayCircleLineIcon size={16} />
               Auto rotate
             </button>
+            <button
+              type="button"
+              className={homeSettings.packGaps ? "is-enabled" : ""}
+              title="Move smaller widgets up into empty spaces so rows don't leave gaps"
+              aria-pressed={homeSettings.packGaps}
+              onClick={() => updateHomeSettings((current) => ({ ...current, packGaps: !current.packGaps, preset: "custom" }))}
+            >
+              <LayoutMasonryLineIcon size={16} />
+              Fill gaps
+            </button>
           </div>
           <div className="home-order-options is-alert-rules">
             <label>
@@ -1084,8 +1261,11 @@ export default function Home({ kioskMode = false }) {
                 </strong>
                 <div>
                   <select title={t("HOME_PAGE.WIDGET_SIZE")} value={homeSettings.sizes?.[sectionId] || "medium"} onChange={(event) => updateWidgetSize(sectionId, event.target.value)}>
+                    <option value="quarter">{HOME_WIDGET_SIZE_LABELS.quarter}</option>
                     <option value="small">{t("HOME_PAGE.SIZE_SMALL")}</option>
                     <option value="medium">{t("HOME_PAGE.SIZE_MEDIUM")}</option>
+                    <option value="wide">{HOME_WIDGET_SIZE_LABELS.wide}</option>
+                    <option value="threeQuarter">{HOME_WIDGET_SIZE_LABELS.threeQuarter}</option>
                     <option value="large">{t("HOME_PAGE.SIZE_LARGE")}</option>
                   </select>
                   <button type="button" title={isHidden ? t("HOME_PAGE.SHOW_SECTION") : t("HOME_PAGE.HIDE_SECTION")} onClick={() => toggleHomeSection(sectionId)}>
@@ -1105,10 +1285,103 @@ export default function Home({ kioskMode = false }) {
         </div>
       ) : null}
 
-      <div className="home-section-stack">
+      {!kioskMode && homeSettings.nowPlayingStrip && activeSessionCount > 0 ? (
+        <NowPlayingStrip sessions={liveSessions} onOpen={() => document.querySelector(".home-widget-id-sessions")?.scrollIntoView({ behavior: "smooth", block: "start" })} />
+      ) : null}
+
+      <div className={`home-stack-wrapper${isOrderingHome ? " is-editing" : ""}`}>
+      <div className={`home-section-stack${homeSettings.packGaps ? " is-packed" : ""}`} ref={homeStackRef}>
       {shouldRenderSection("sessions") && activeSessionCount > 0 ? <section className={getHomeSectionClass("sessions", "home-active-sessions home-glass-card")} style={getHomeSectionStyle("sessions")}>
-        <Sessions surface={kioskMode ? "kiosk" : "home"} />
+        <Sessions
+          surface={kioskMode ? "kiosk" : "home"}
+          view={kioskMode ? undefined : homeSettings.sessionsView}
+          onViewChange={(view) => updateHomeSettings((current) => ({ ...current, sessionsView: view }))}
+        />
       </section> : null}
+
+      {shouldRenderSection("sessions") && activeSessionCount === 0 && !kioskMode ? (
+        <section className={getHomeSectionClass("sessions", "home-all-quiet-section home-glass-card")} style={getHomeSectionStyle("sessions")} aria-label="Active sessions">
+          <AllQuietSlot lastPlayback={lastPlaybackWidget.data} peak={peakWidget.data} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("peakHours") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("peakHours", "home-peak-hours home-glass-card")} style={getHomeSectionStyle("peakHours")}>
+          <PeakHoursWidget data={peakWidget.data} error={peakWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("upNext") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("upNext", "home-up-next home-glass-card")} style={getHomeSectionStyle("upNext")}>
+          <UpNextWidget data={upNextWidget.data} error={upNextWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("diskRunway") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("diskRunway", "home-disk-runway home-glass-card")} style={getHomeSectionStyle("diskRunway")}>
+          <DiskRunwayWidget data={diskRunwayWidget.data} error={diskRunwayWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("recentlyAdded") ? (
+        <section className={getHomeSectionClass("recentlyAdded", "home-recently-added home-glass-card")} style={getHomeSectionStyle("recentlyAdded")}>
+          <RecentlyAddedWidget data={recentlyAddedWidget.data} error={recentlyAddedWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("downloadQueue") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("downloadQueue", "home-download-queue home-glass-card")} style={getHomeSectionStyle("downloadQueue")}>
+          <DownloadQueueWidget data={downloadQueueWidget.data} error={downloadQueueWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("requests") ? (
+        <section className={getHomeSectionClass("requests", "home-requests-widget home-glass-card")} style={getHomeSectionStyle("requests")}>
+          <RequestsWidget data={requestsWidget.data} error={requestsWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("playbackQuality") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("playbackQuality", "home-playback-quality home-glass-card")} style={getHomeSectionStyle("playbackQuality")}>
+          <PlaybackQualityWidget data={playbackQualityWidget.data} error={playbackQualityWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("topClients") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("topClients", "home-top-clients home-glass-card")} style={getHomeSectionStyle("topClients")}>
+          <TopClientsWidget data={topClientsWidget.data} error={topClientsWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("clock") ? (
+        <section className={getHomeSectionClass("clock", "home-clock-widget home-glass-card")} aria-label="Clock" style={getHomeSectionStyle("clock")}>
+          <ClockWidget />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("appHealth") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("appHealth", "home-app-health home-glass-card")} style={getHomeSectionStyle("appHealth")}>
+          <AppHealthWidget data={appHealthWidget.data} error={appHealthWidget.error} onRefresh={appHealthWidget.reload} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("nowListening") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("nowListening", "home-now-listening home-glass-card")} style={getHomeSectionStyle("nowListening")}>
+          <NowListeningWidget data={nowListeningWidget.data} error={nowListeningWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("autoCollections") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("autoCollections", "home-auto-collections home-glass-card")} style={getHomeSectionStyle("autoCollections")}>
+          <CollectionsWidget data={collectionsWidget.data} error={collectionsWidget.error} />
+        </section>
+      ) : null}
+
+      {shouldRenderSection("spaceToFree") && !ownActivityOnly ? (
+        <section className={getHomeSectionClass("spaceToFree", "home-space-to-free home-glass-card")} style={getHomeSectionStyle("spaceToFree")}>
+          <SpaceToFreeWidget data={spaceToFreeWidget.data} error={spaceToFreeWidget.error} onRefresh={spaceToFreeWidget.reload} />
+        </section>
+      ) : null}
 
       {shouldRenderSection("streamCapacity") ? (
         <section className={getHomeSectionClass("streamCapacity", "home-stream-capacity home-glass-card")} aria-label="Stream capacity" style={getHomeSectionStyle("streamCapacity")}>
@@ -1418,7 +1691,9 @@ export default function Home({ kioskMode = false }) {
                   {(item.users || []).length ? <span className="home-watch-tonight-users">{item.users.join(", ")}</span> : null}
                   {(item.reasons || []).length ? (
                     <span className="home-watch-tonight-reasons">
-                      {item.reasons.map((reason) => (
+                      {item.reasons
+                        .filter((reason) => !(reason === "unfinished" && item.reasons.includes("continue")))
+                        .map((reason) => (
                         <em key={`${item.itemId}-${reason}`}>{watchTonightReasonLabel[reason] || reason}</em>
                       ))}
                     </span>
@@ -1565,14 +1840,6 @@ export default function Home({ kioskMode = false }) {
 
         <div className="home-ops-grid">
           <HomeOpsCard
-            icon={ChatCheckLineIcon}
-            label="Request queue"
-            value={`${formatNumber(requestStats.pending)} pending`}
-            detail={`${formatNumber(requestStats.failed)} failed · ${formatNumber(requestStats.available)} available`}
-            to="/requests"
-            accent="purple"
-          />
-          <HomeOpsCard
             icon={operations.health?.ok ? CheckboxCircleLineIcon : ErrorWarningLineIcon}
             label="System health"
             value={healthLabel}
@@ -1587,42 +1854,35 @@ export default function Home({ kioskMode = false }) {
             to="/settings"
             accent="purple"
           />
-          <HomeOpsCard
-            icon={ServerFillIcon}
-            label="Server jobs"
-            value={runningJobs.length ? `${runningJobs.length} running` : "Idle"}
-            detail={runningJobs[0]?.name || "No library scans in progress"}
-            to="/server-management"
-          />
-        </div>
-
-        <div className="home-request-preview home-glass-card">
-          <div className="home-request-preview-heading">
-            <div>
-              <p>Recent requests</p>
-              <strong>{formatNumber(operations.requests?.requests?.length || 0)} total</strong>
-            </div>
-            <Link to="/requests">Open Requests</Link>
-          </div>
-          <div className="home-request-list">
-            {recentRequests.length ? (
-              recentRequests.map((request) => (
-                <article key={request.id}>
-                  <span className={`home-request-status is-${String(request.pipelineStatus || request.status || "unknown").toLowerCase()}`}>{request.pipelineLabel || request.status}</span>
-                  <div>
-                    <strong>{request.title}{request.year ? ` (${request.year})` : ""}</strong>
-                    <small>{request.requestedBy} · {request.source}</small>
-                  </div>
-                  <em>{request.availability?.status || "Unknown"}</em>
-                </article>
-              ))
-            ) : (
-              <span className="home-request-empty">No requests to show yet.</span>
-            )}
-          </div>
         </div>
       </section> : null}
       </div>
+      {isOrderingHome ? (
+        <HomeLayoutEditor
+          stackRef={homeStackRef}
+          sectionIds={orderedSectionIds}
+          sizes={homeSettings.sizes || {}}
+          heights={homeSettings.heights || {}}
+          onHeight={updateWidgetHeight}
+          labels={sectionLabels}
+          onMove={placeSection}
+          onMoveBy={moveVisibleSection}
+          onResize={updateWidgetSize}
+          onHide={hideSectionWithUndo}
+          announce={setLiveAnnouncement}
+        />
+      ) : null}
+      </div>
+      <AddWidgetDrawer
+        open={isAddDrawerOpen}
+        hiddenIds={normalizeHomeOrder(homeSettings.order).filter((id) => homeSettings.hidden.includes(id))}
+        labels={sectionLabels}
+        connected={connectedIntegrations}
+        onAdd={addSectionFromDrawer}
+        onClose={closeAddDrawer}
+      />
+      <UndoToast message={undoToast} onUndo={undoLayoutChange} onClose={closeUndoToast} />
+      <div className="visually-hidden" aria-live="polite">{liveAnnouncement}</div>
       <Modal show={Boolean(detailModal)} onHide={() => setDetailModal(null)} centered contentClassName="home-detail-modal">
         <Modal.Header closeButton>
           <Modal.Title>{detailModal?.title}</Modal.Title>

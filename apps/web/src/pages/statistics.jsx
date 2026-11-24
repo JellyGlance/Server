@@ -140,7 +140,8 @@ function StatsOverview({ days }) {
       .filter((item) => String(item.Name).toLowerCase() === "directplay")
       .reduce((sum, item) => sum + getStatValue(item), 0);
     const transcodes = overview.methods
-      .filter((item) => String(item.Name).toLowerCase() === "transcode")
+      // Jellyfin names these "Transcode (v:h264 a:aac)" and so on, so match the prefix.
+      .filter((item) => String(item.Name).toLowerCase().startsWith("transcode"))
       .reduce((sum, item) => sum + getStatValue(item), 0);
 
     return {

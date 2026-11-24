@@ -390,6 +390,7 @@ async function sendRuleTest(draft = {}) {
 }
 
 function start() {
+  if (process.env.JG_DISABLE_NOTIFICATIONS === "1") return;
   if (timer) return;
   timers.after(() => runChecks().catch((error) => console.error("[ALERTS] Check failed:", error.message)), 60 * 1000);
   timer = timers.every(() => runChecks().catch((error) => console.error("[ALERTS] Check failed:", error.message)), CHECK_INTERVAL_MS);

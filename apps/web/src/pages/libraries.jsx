@@ -4,7 +4,7 @@ import Config from "../lib/config";
 
 import "./css/library/libraries.css";
 import Loading from "./components/general/loading";
-import LibraryCard from "./components/library/library-card";
+import LibraryCard, { LibraryListHeader } from "./components/library/library-card";
 import StorageByLibrary from "./components/library/storage-by-library";
 import DiskForecastCard from "./components/library/disk-forecast-card";
 import ErrorBoundary from "./components/general/ErrorBoundary";
@@ -14,9 +14,12 @@ import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
 import GridLineIcon from "remixicon-react/GridLineIcon";
 import FileList3LineIcon from "remixicon-react/FileList3LineIcon";
 import SearchLineIcon from "remixicon-react/SearchLineIcon";
+import Database2LineIcon from "remixicon-react/Database2LineIcon";
+import HardDrive2LineIcon from "remixicon-react/HardDrive2LineIcon";
 import { Tooltip } from "react-bootstrap";
 import { Trans } from "react-i18next";
 import i18next from "i18next";
+import { normalizeLibraryTab } from "./libraries-tabs";
 
 const LIBRARY_VIEW_MODE_KEY = "PREF_LIBRARIES_VIEW_MODE";
 
@@ -29,6 +32,9 @@ function Libraries() {
   const [scanMessage, setScanMessage] = useState(null);
   const [viewMode, setViewMode] = useState(() => localStorage.getItem(LIBRARY_VIEW_MODE_KEY) || "grid");
   const [searchQuery, setSearchQuery] = useState("");
+  const [tab, setTab] = useState(() =>
+    typeof window !== "undefined" ? normalizeLibraryTab(window.location.search) : "overview"
+  );
 
   const fetchLibraries = useCallback(() => {
     if (config) {
@@ -113,6 +119,23 @@ function Libraries() {
     return () => clearInterval(intervalId);
   }, [config, fetchLibraries]);
 
+  // The URL carries the tab (?tab=storage or ?tab=forecast). Tab changes use
+  // replaceState, matching Requests, and popstate keeps Back/Forward in sync
+  // when the entry came from a real history push (a pasted or linked URL).
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("tab") === tab && !url.hash) return;
+    url.searchParams.set("tab", tab);
+    url.hash = "";
+    window.history.replaceState(window.history.state, "", url);
+  }, [tab]);
+
+  useEffect(() => {
+    const onPop = () => setTab(normalizeLibraryTab(window.location.search));
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   function updateViewMode(nextViewMode) {
     const normalizedViewMode = nextViewMode === "list" ? "list" : "grid";
     setViewMode(normalizedViewMode);
@@ -168,55 +191,77 @@ function Libraries() {
           ))}
       </div>
 
-      {config?.token ? <StorageByLibrary token={config.token} /> : null}
-      {config?.token ? <DiskForecastCard token={config.token} /> : null}
-
-      {scanMessage ? <div className={`libraries-scan-message is-${scanMessage.type}`}>{scanMessage.text}</div> : null}
-
-      <div className="libraries-toolbar">
-        <label className="libraries-search" htmlFor="libraries-search">
-          <SearchLineIcon size={18} />
-          <input
-            id="libraries-search"
-            type="search"
-            value={searchQuery}
-            placeholder="Search libraries"
-            onChange={(event) => setSearchQuery(event.target.value)}
-          />
-        </label>
-        <div className="libraries-view-toggle" aria-label="Library view">
-          <button type="button" className={viewMode === "grid" ? "is-active" : ""} onClick={() => updateViewMode("grid")} title="Grid view">
-            <GridLineIcon size={18} />
-            <span>Grid</span>
+      <div className="libraries-tabs">
+        <div className="rq-tabs" role="tablist" aria-label="Libraries sections">
+          <button type="button" role="tab" aria-label="Overview" aria-selected={tab === "overview"} className={tab === "overview" ? "is-active" : ""} onClick={() => setTab("overview")}>
+            <GridLineIcon size={16} />
+            <span className="rq-tab-label">Overview</span>
           </button>
-          <button type="button" className={viewMode === "list" ? "is-active" : ""} onClick={() => updateViewMode("list")} title="List view">
-            <FileList3LineIcon size={18} />
-            <span>List</span>
+          <button type="button" role="tab" aria-label="Storage" aria-selected={tab === "storage"} className={tab === "storage" ? "is-active" : ""} onClick={() => setTab("storage")}>
+            <Database2LineIcon size={16} />
+            <span className="rq-tab-label">Storage</span>
+          </button>
+          <button type="button" role="tab" aria-label="Forecast" aria-selected={tab === "forecast"} className={tab === "forecast" ? "is-active" : ""} onClick={() => setTab("forecast")}>
+            <HardDrive2LineIcon size={16} />
+            <span className="rq-tab-label">Forecast</span>
           </button>
         </div>
       </div>
 
-      {filteredLibraries.length === 0 ? (
-        <div className="libraries-empty">No libraries match your search.</div>
-      ) : null}
+      {tab === "storage" && config?.token ? <StorageByLibrary token={config.token} /> : null}
+      {tab === "forecast" && config?.token ? <DiskForecastCard token={config.token} /> : null}
 
-      <div className={`libraries-container library-view-${viewMode}`}>
-        {filteredLibraries.map((item) => (
-          <ErrorBoundary key={item.Id}>
-            <LibraryCard
-              data={item}
-              metadata={metadata.find((data) => data.Id === item.Id)}
-              base_url={config.settings?.EXTERNAL_URL ?? config.hostUrl}
-              onScan={() => scanLibrary(item)}
-              scanning={scanningLibraryId === item.Id}
-              scanDisabled={Boolean(scanningLibraryId)}
-              scanIcon={<RefreshLineIcon size={17} />}
-              showName={showLibraryCardNames}
-              viewMode={viewMode}
-            />
-          </ErrorBoundary>
-        ))}
-      </div>
+      {tab === "overview" ? (
+        <>
+          {scanMessage ? <div className={`libraries-scan-message is-${scanMessage.type}`}>{scanMessage.text}</div> : null}
+
+          <div className="libraries-toolbar">
+            <label className="libraries-search" htmlFor="libraries-search">
+              <SearchLineIcon size={18} />
+              <input
+                id="libraries-search"
+                type="search"
+                value={searchQuery}
+                placeholder="Search libraries"
+                onChange={(event) => setSearchQuery(event.target.value)}
+              />
+            </label>
+            <div className="libraries-view-toggle" aria-label="Library view">
+              <button type="button" className={viewMode === "grid" ? "is-active" : ""} onClick={() => updateViewMode("grid")} title="Grid view">
+                <GridLineIcon size={18} />
+                <span>Grid</span>
+              </button>
+              <button type="button" className={viewMode === "list" ? "is-active" : ""} onClick={() => updateViewMode("list")} title="List view">
+                <FileList3LineIcon size={18} />
+                <span>List</span>
+              </button>
+            </div>
+          </div>
+
+          {filteredLibraries.length === 0 ? (
+            <div className="libraries-empty">No libraries match your search.</div>
+          ) : null}
+
+          <div className={`libraries-container library-view-${viewMode}`}>
+            {viewMode === "list" && filteredLibraries.length > 0 ? <LibraryListHeader /> : null}
+            {filteredLibraries.map((item) => (
+              <ErrorBoundary key={item.Id}>
+                <LibraryCard
+                  data={item}
+                  metadata={metadata.find((data) => data.Id === item.Id)}
+                  base_url={config.settings?.EXTERNAL_URL ?? config.hostUrl}
+                  onScan={() => scanLibrary(item)}
+                  scanning={scanningLibraryId === item.Id}
+                  scanDisabled={Boolean(scanningLibraryId)}
+                  scanIcon={<RefreshLineIcon size={17} />}
+                  showName={showLibraryCardNames}
+                  viewMode={viewMode}
+                />
+              </ErrorBoundary>
+            ))}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

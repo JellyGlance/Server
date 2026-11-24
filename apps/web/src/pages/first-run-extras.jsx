@@ -1,8 +1,10 @@
 import { useState } from "react";
 import Button from "react-bootstrap/Button";
-import Plug2LineIcon from "remixicon-react/Plug2LineIcon";
-import Database2LineIcon from "remixicon-react/Database2LineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
+import RocketLineIcon from "remixicon-react/RocketLineIcon";
+import ServerLineIcon from "remixicon-react/ServerLineIcon";
+import Database2LineIcon from "remixicon-react/Database2LineIcon";
+import DashboardLineIcon from "remixicon-react/DashboardLineIcon";
 import axios from "../lib/axios_instance";
 import Config from "../lib/config";
 import baseUrl from "../lib/baseurl";
@@ -15,9 +17,20 @@ import SetupShell from "./components/setup/SetupShell";
 import "./css/settings/settings.css";
 import { mediaServerName } from "../lib/media-server";
 
+// Integrations are set up one group at a time; see firstRunGroups in integrations.jsx.
+const INTEGRATION_GROUPS = [
+  { id: "arr", label: "Arr apps" },
+  { id: "requests", label: "Requests" },
+  { id: "download", label: "Download clients" },
+  { id: "third", label: "Other apps" },
+];
+
 export default function FirstRunExtras() {
   const [activePanel, setActivePanel] = useState("integrations");
   const [activeImportSource, setActiveImportSource] = useState("jellystat");
+  const [integrationGroup, setIntegrationGroup] = useState(INTEGRATION_GROUPS[0].id);
+  const groupIndex = INTEGRATION_GROUPS.findIndex((group) => group.id === integrationGroup);
+  const nextGroup = INTEGRATION_GROUPS[groupIndex + 1];
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -49,6 +62,11 @@ export default function FirstRunExtras() {
 
   function goNext() {
     if (activePanel === "integrations") {
+      if (nextGroup) {
+        setIntegrationGroup(nextGroup.id);
+        document.querySelector(".setup-content")?.scrollTo({ top: 0 });
+        return;
+      }
       setActivePanel("imports");
       return;
     }
@@ -62,7 +80,13 @@ export default function FirstRunExtras() {
   }
 
   function goBack() {
+    if (activePanel === "integrations" && groupIndex > 0) {
+      setIntegrationGroup(INTEGRATION_GROUPS[groupIndex - 1].id);
+      return;
+    }
+
     if (activePanel === "imports") {
+      setIntegrationGroup(INTEGRATION_GROUPS[INTEGRATION_GROUPS.length - 1].id);
       setActivePanel("integrations");
       return;
     }
@@ -74,16 +98,26 @@ export default function FirstRunExtras() {
 
   const actionRow = (
     <div className="setup-button-row setup-extra-actions">
-      {activePanel !== "integrations" ? (
+      {activePanel !== "integrations" || groupIndex > 0 ? (
         <Button type="button" className="setup-secondary-button" onClick={goBack} disabled={busy}>
           Back
         </Button>
       ) : null}
-      <Button type="button" className="setup-secondary-button" onClick={() => setActivePanel("sync")} disabled={busy}>
-        Skip to sync
-      </Button>
-      <Button type="button" className="setup-button" onClick={goNext} disabled={busy}>
-        {busy ? "Starting sync..." : activePanel === "sync" ? "Start first sync" : "Continue"}
+      {activePanel === "integrations" ? (
+        <Button type="button" className="setup-secondary-button" onClick={() => setActivePanel("sync")} disabled={busy}>
+          Skip to sync
+        </Button>
+      ) : null}
+      <Button type="button" className={`setup-button${activePanel === "sync" ? " setup-launch-button" : ""}`} onClick={goNext} disabled={busy}>
+        {busy
+          ? "Starting sync..."
+          : activePanel === "sync"
+            ? "Start first sync"
+            : activePanel === "integrations" && nextGroup
+              ? `Next: ${nextGroup.label}`
+              : activePanel === "integrations"
+                ? "Next: History import"
+                : "Next: First sync"}
       </Button>
     </div>
   );
@@ -109,64 +143,86 @@ export default function FirstRunExtras() {
       minimal
     >
       <div className={`setup-extras ${activePanel === "integrations" ? "is-integrations-step" : ""}`}>
-        {activePanel !== "integrations" ? (
-          <nav className="setup-extra-tabs" aria-label="First-run setup areas">
-            <button type="button" className={activePanel === "integrations" ? "is-active" : ""} onClick={() => setActivePanel("integrations")}>
-              <Plug2LineIcon size={18} />
-              Integrations
-            </button>
-            <button type="button" className={activePanel === "imports" ? "is-active" : ""} onClick={() => setActivePanel("imports")}>
-              <Database2LineIcon size={18} />
-              History Import
-            </button>
-            <button type="button" className={activePanel === "sync" ? "is-active" : ""} onClick={() => setActivePanel("sync")}>
-              <RefreshLineIcon size={18} />
-              First Sync
-            </button>
-          </nav>
-        ) : null}
-
         {message ? <div className="setup-connection-status is-error">{message}</div> : null}
 
         <div className="setup-extra-panel">
-          {activePanel === "integrations" ? <Integrations embedded firstRun actions={actionRow} /> : null}
+          {activePanel === "integrations" ? <Integrations
+              embedded
+              firstRun
+              actions={actionRow}
+              firstRunGroup={integrationGroup}
+              onFirstRunGroupChange={setIntegrationGroup}
+            /> : null}
           {activePanel === "imports" ? (
             <>
-              <div className="setup-import-source-tabs" role="tablist" aria-label="History import source">
-                <button
-                  type="button"
-                  className={activeImportSource === "jellystat" ? "is-active" : ""}
-                  onClick={() => setActiveImportSource("jellystat")}
-                >
-                  <ImportSourceLabel source="jellystat" label="Jellystat" />
-                </button>
-                <button
-                  type="button"
-                  className={activeImportSource === "tautulli" ? "is-active" : ""}
-                  onClick={() => setActiveImportSource("tautulli")}
-                >
-                  <ImportSourceLabel source="tautulli" label="Tautulli" />
-                </button>
+              <div className="setup-import-intro">
+                <div>
+                  <strong>
+                    Bring in old watch history <span className="setup-optional-badge">Optional</span>
+                  </strong>
+                  <span>
+                    Moving from Jellystat or Tautulli? Import its history so your stats start with the full picture. Starting
+                    fresh? Just continue.
+                  </span>
+                </div>
+                <div className="setup-import-source-tabs" role="tablist" aria-label="History import source">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeImportSource === "jellystat"}
+                    className={activeImportSource === "jellystat" ? "is-active" : ""}
+                    onClick={() => setActiveImportSource("jellystat")}
+                  >
+                    <ImportSourceLabel source="jellystat" label="Jellystat" />
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeImportSource === "tautulli"}
+                    className={activeImportSource === "tautulli" ? "is-active" : ""}
+                    onClick={() => setActiveImportSource("tautulli")}
+                  >
+                    <ImportSourceLabel source="tautulli" label="Tautulli" />
+                  </button>
+                </div>
               </div>
               {activeImportSource === "jellystat" ? <JellystatImport compact /> : <TautulliImport compact />}
             </>
           ) : null}
           {activePanel === "sync" ? (
-            <section className="setup-sync-panel">
-              <RefreshLineIcon />
-              <div>
-                <h3>Ready to build your first dashboard</h3>
-                <p>
-                  The first sync starts only after this step. You can still skip integrations or imports, then configure them later
-                  from Settings.
-                </p>
-                <ul>
-                  <li>Complete {mediaServerName()} library and user sync</li>
-                  <li>Recently added media sync</li>
-                  <li>Playback Reporting Plugin import when available</li>
-                  <li>Dashboard statistics refresh</li>
-                </ul>
+            <section className="setup-launch">
+              <div className="setup-launch-hero">
+                <span className="setup-launch-orb" aria-hidden="true">
+                  <RocketLineIcon size={30} />
+                </span>
+                <div>
+                  <span className="setup-launch-kicker">Final step</span>
+                  <h3>Ready to build your dashboard</h3>
+                  <p>
+                    One click and JellyGlance reads your {mediaServerName()} server. Anything you skipped can be set up later in
+                    Settings.
+                  </p>
+                </div>
               </div>
+
+              <ol className="setup-launch-tasks">
+                {[
+                  { icon: ServerLineIcon, title: "Libraries and users", text: `Full ${mediaServerName()} library and user sync` },
+                  { icon: RefreshLineIcon, title: "Recently added", text: "Your newest media, ready on the home page" },
+                  { icon: Database2LineIcon, title: "Playback history", text: "Playback Reporting Plugin import, when installed" },
+                  { icon: DashboardLineIcon, title: "Dashboard stats", text: "Charts and totals refreshed with the new data" },
+                ].map((task, index) => (
+                  <li key={task.title} style={{ "--task-delay": `${index * 90}ms` }}>
+                    <span className="setup-launch-task-icon" aria-hidden="true">
+                      <task.icon size={18} />
+                    </span>
+                    <div>
+                      <strong>{task.title}</strong>
+                      <small>{task.text}</small>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </section>
           ) : null}
         </div>

@@ -5,6 +5,21 @@ import { Routes, Route } from "react-router-dom";
 import axios from "./lib/axios_instance";
 
 import socket from "./socket";
+
+// Desktop pages are drawn with transform: scale() and widened to 100% / scale, so their
+// layout box is wider than the screen. overflow-x: hidden hides that, but focusing a
+// control can still scroll the page sideways; snap it back so content never shifts left.
+function lockHorizontalScroll(node) {
+  if (!node || node.dataset.jgScrollLock) return;
+  node.dataset.jgScrollLock = "1";
+  node.addEventListener(
+    "scroll",
+    () => {
+      if (node.scrollLeft !== 0) node.scrollLeft = 0;
+    },
+    { passive: true }
+  );
+}
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -414,7 +429,7 @@ function App() {
       <div className="App">
         <div className="d-flex flex-column flex-md-row">
           {kioskMode ? null : <Navbar />}
-          <main className="app-shell-main w-md-100">
+          <main className="app-shell-main w-md-100" ref={lockHorizontalScroll}>
             <Routes>
               {routes.map((route, index) => (
                 <Route key={index} path={route.path} element={route.element} />

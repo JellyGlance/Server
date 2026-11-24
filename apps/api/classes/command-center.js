@@ -99,7 +99,8 @@ async function fetchSeerrSnapshot() {
       const response = await axios.get(`${cleanUrl(app.values.url)}/api/v1/request`, {
         timeout: 12000,
         headers: { "X-Api-Key": app.values.secret },
-        params: { take: 100, skip: 0, sort: "added", skipCount: "false" },
+        // Seerr 3.x rejects unknown query parameters (skipCount gave a 400).
+        params: { take: 100, skip: 0, sort: "added" },
       });
       const rows = response.data?.results || response.data || [];
       for (const row of Array.isArray(rows) ? rows : []) {
@@ -784,6 +785,8 @@ async function buildCleanuparrWidgets() {
     events: snapshot.totals.events,
     unhealthy: snapshot.totals.unhealthy,
     needsAttention: snapshot.totals.needsAttention + snapshot.totals.interventions,
+    // What makes up needsAttention, so the number can be explained.
+    attention: { failedJobs: snapshot.totals.failedJobs || 0, failingJobs: snapshot.totals.failingJobs || [], unhealthy: snapshot.totals.unhealthy, interventions: snapshot.totals.interventions },
     items: snapshot.recentEvents.slice(0, 8).map((event) => ({
       name: event.item || event.title,
       event: event.eventType,

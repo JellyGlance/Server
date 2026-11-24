@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "../lib/axios_instance";
 import baseUrl from "../lib/baseurl";
 import { clearApiCache } from "../lib/api-cache";
@@ -10,6 +10,10 @@ import EyeFillIcon from "remixicon-react/EyeFillIcon";
 import EyeOffFillIcon from "remixicon-react/EyeOffFillIcon";
 import UploadCloud2LineIcon from "remixicon-react/UploadCloud2LineIcon";
 import Database2LineIcon from "remixicon-react/Database2LineIcon";
+import ArrowDownSLineIcon from "remixicon-react/ArrowDownSLineIcon";
+import CheckboxCircleFillIcon from "remixicon-react/CheckboxCircleFillIcon";
+import CloseCircleFillIcon from "remixicon-react/CloseCircleFillIcon";
+import CheckboxBlankCircleLineIcon from "remixicon-react/CheckboxBlankCircleLineIcon";
 import jellyfinLogo from "./images/jellyfin.svg";
 import embyLogo from "./images/emby.svg";
 
@@ -28,6 +32,61 @@ const SERVER_TYPES = [
 
 function serverName(type) {
   return type === "emby" ? "Emby" : type === "jellyfin" ? "Jellyfin" : "media server";
+}
+
+// Where to find an API key on each server, shown under the API key field.
+const API_KEY_HELP = {
+  jellyfin: "In Jellyfin: Dashboard → API Keys → + (name it JellyGlance).",
+  emby: "In Emby: Settings → Advanced → API Keys → New API Key.",
+  auto: "Jellyfin: Dashboard → API Keys. Emby: Settings → Advanced → API Keys.",
+};
+
+// Error bodies can be a string, { errorMessage }, { error } or an HTML page.
+function readableError(error, fallback) {
+  if (error?.code === "ERR_NETWORK") return i18next.t("ERROR_MESSAGES.NETWORK_ERROR");
+  const data = error?.response?.data;
+  if (typeof data === "string" && data.trim() && !data.trim().startsWith("<")) return data.trim();
+  if (data && typeof data === "object") return data.errorMessage || data.error || data.message || fallback;
+  return error?.response?.status ? `${fallback} (HTTP ${error.response.status})` : fallback;
+}
+
+// Only probe things that look like an address, so typing "h", "ht", "htt" does not
+// fire a request for each letter.
+function looksLikeHost(value) {
+  const text = String(value || "").trim();
+  if (text.length < 4) return false;
+  return /[.:]/.test(text) || /localhost/i.test(text);
+}
+
+function CheckSpinner(props) {
+  return <span className={`setup-spinner ${props.className || ""}`} />;
+}
+
+const CHECK_ICONS = {
+  pending: CheckboxBlankCircleLineIcon,
+  running: CheckSpinner,
+  success: CheckboxCircleFillIcon,
+  error: CloseCircleFillIcon,
+};
+
+// The two things a connection needs: the address answers, and the key is accepted.
+function ConnectionChecks({ checks }) {
+  return (
+    <ul className="setup-checks" aria-live="polite">
+      {checks.map((check) => {
+        const Icon = CHECK_ICONS[check.state];
+        return (
+          <li className={`setup-check is-${check.state}`} key={check.id}>
+            <Icon className="setup-check-icon" size={18} aria-hidden="true" />
+            <div>
+              <strong>{check.label}</strong>
+              {check.detail ? <small>{check.detail}</small> : null}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function waitForFirstRunRestoreComplete() {
@@ -81,13 +140,40 @@ function waitForFirstRunRestoreComplete() {
 function Setup() {
   const [formValues, setFormValues] = useState({ SERVER_TYPE: "auto" });
   const [processing, setProcessing] = useState(false);
-  const [submitButtonText, setsubmitButtonText] = useState(i18next.t("SAVE_JELLYFIN_DETAILS"));
+  const [saveState, setSaveState] = useState("idle");
   const [showPassword, setShowPassword] = useState(false);
   const [connectionTest, setConnectionTest] = useState({ status: "idle", message: "" });
   const [restoreStatus, setRestoreStatus] = useState({ status: "idle", message: "" });
   const [restoreProgress, setRestoreProgress] = useState(0);
   const [restorePhase, setRestorePhase] = useState("idle");
+  const [probe, setProbe] = useState({ status: "idle" });
   const fileInputRef = useRef(null);
+  const probeRequest = useRef(0);
+
+  // Check the URL a moment after typing stops. Older answers are ignored if the
+  // URL changed again while they were in flight.
+  useEffect(() => {
+    const host = formValues.JF_HOST?.trim();
+    if (!looksLikeHost(host)) {
+      setProbe({ status: "idle" });
+      return undefined;
+    }
+
+    const requestId = ++probeRequest.current;
+    setProbe({ status: "checking" });
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await axios.post("/auth/probe-server", { JF_HOST: host });
+        if (requestId !== probeRequest.current) return;
+        setProbe(data?.reachable ? { status: "ok", info: data } : { status: "fail" });
+      } catch {
+        if (requestId !== probeRequest.current) return;
+        setProbe({ status: "fail" });
+      }
+    }, 650);
+
+    return () => clearTimeout(timer);
+  }, [formValues.JF_HOST]);
 
   function redirectToAppRoot() {
     const rootPath = baseUrl ? `${baseUrl}/` : "/";
@@ -135,7 +221,7 @@ function Setup() {
   function handleFormChange(event) {
     setFormValues({ ...formValues, [event.target.name]: event.target.value });
     setConnectionTest({ status: "idle", message: "" });
-    setsubmitButtonText(i18next.t("SAVE_JELLYFIN_DETAILS"));
+    setSaveState("idle");
   }
 
   function chooseServerType(type) {
@@ -172,63 +258,53 @@ function Setup() {
         testedType: detected,
         message: `Connected to ${serverName(detected)} at ${response.data.cleanedUrl || formValues.JF_HOST}`,
       });
-      setsubmitButtonText(`Save ${serverName(detected)} Details`);
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.errorMessage ||
-        error.response?.data ||
-        (error.code === "ERR_NETWORK" ? i18next.t("ERROR_MESSAGES.NETWORK_ERROR") : `Error : ${error.response?.status || "Unknown"}`);
-      setConnectionTest({ status: "error", message: errorMessage });
-      setsubmitButtonText("Test connection first");
+      const status = error?.response?.status;
+      const message =
+        status === 401 || status === 403
+          ? "The server rejected this API key. Check it was copied in full, or create a new one."
+          : readableError(error, "Couldn't reach the server. Check the URL and API key.");
+      setConnectionTest({ status: "error", message });
     } finally {
       setProcessing(false);
     }
   }
 
-  async function handleFormSubmit(event) {
-    setProcessing(true);
-    event.preventDefault();
-
+  // The connection must have passed a test with exactly these values.
+  function isTestedForCurrentValues() {
     const testedHost = connectionTest.testedHost?.replace(/\/+$/, "");
     const currentHost = formValues.JF_HOST?.trim()?.replace(/\/+$/, "");
-    const testedKey = connectionTest.testedKey;
+    return (
+      connectionTest.status === "success" &&
+      testedHost === currentHost &&
+      connectionTest.testedKey === formValues.JF_API_KEY &&
+      connectionTest.testedType === formValues.SERVER_TYPE
+    );
+  }
 
-    if (
-      connectionTest.status !== "success" ||
-      testedHost !== currentHost ||
-      testedKey !== formValues.JF_API_KEY ||
-      connectionTest.testedType !== formValues.SERVER_TYPE
-    ) {
-      setConnectionTest({ status: "error", message: `Test the ${serverName(formValues.SERVER_TYPE)} connection before saving.` });
-      setsubmitButtonText("Test connection first");
-      setProcessing(false);
+  // One primary button: it tests the connection first, then saves.
+  async function handleFormSubmit(event) {
+    event.preventDefault();
+    if (!isTestedForCurrentValues()) {
+      await testConnection();
       return;
     }
 
-    axios
-      .post("/auth/configSetup/", serverPayload(formValues))
-      .then(async () => {
-        setsubmitButtonText(i18next.t("SETTINGS_SAVED"));
-        setProcessing(false);
-        setTimeout(() => window.location.reload(), 600);
-
-        return;
-      })
-      .catch((error) => {
-        let errorMessage;
-        if (error.code === "ERR_NETWORK") {
-          errorMessage = i18next.t("ERROR_MESSAGES.NETWORK_ERROR");
-        } else if (error.response.status === 401) {
-          errorMessage = i18next.t("ERROR_MESSAGES.INVALID_LOGIN");
-        } else if (error.response.status === 404) {
-          errorMessage = i18next.t("ERROR_MESSAGES.INVALID_URL").replace("{STATUS}", error.response.status);
-        } else {
-          errorMessage = `Error : ${error.errorMessage ?? error.response.status}`;
-        }
-        console.log(error);
-        setsubmitButtonText(errorMessage);
-        setProcessing(false);
-      });
+    setProcessing(true);
+    setSaveState("saving");
+    try {
+      await axios.post("/auth/configSetup/", serverPayload(formValues));
+      setSaveState("saved");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      let errorMessage;
+      if (error.response?.status === 401) errorMessage = i18next.t("ERROR_MESSAGES.INVALID_LOGIN");
+      else if (error.response?.status === 404) errorMessage = i18next.t("ERROR_MESSAGES.INVALID_URL").replace("{STATUS}", error.response.status);
+      else errorMessage = readableError(error, "Couldn't save the server details.");
+      setConnectionTest({ status: "error", message: errorMessage });
+      setSaveState("idle");
+      setProcessing(false);
+    }
   }
 
   async function handleBackupRestore(event) {
@@ -294,6 +370,38 @@ function Setup() {
     }
   }
 
+  const detectedType = probe.status === "ok" ? probe.info?.serverType : null;
+  const shownType = formValues.SERVER_TYPE !== "auto" ? formValues.SERVER_TYPE : detectedType;
+  const hasHost = Boolean(formValues.JF_HOST?.trim());
+  const hasKey = Boolean(formValues.JF_API_KEY?.trim());
+  const testing = connectionTest.status === "testing";
+
+  const addressCheck = (() => {
+    if (probe.status === "checking") return { state: "running", detail: "Looking for Jellyfin or Emby at this address..." };
+    if (probe.status === "ok") {
+      const { serverLabel, version, serverName: name } = probe.info || {};
+      const parts = [[serverLabel, version].filter(Boolean).join(" "), name].filter(Boolean);
+      return { state: "success", detail: parts.join(" · ") || "The server answered." };
+    }
+    if (probe.status === "fail") {
+      return { state: "error", detail: "Nothing answered as Jellyfin or Emby. Check the port and whether it is http or https." };
+    }
+    return { state: "pending", detail: hasHost ? "Finish typing the address." : "Enter the server address." };
+  })();
+
+  const keyCheck = (() => {
+    if (testing) return { state: "running", detail: "Signing in with the API key..." };
+    if (connectionTest.status === "success") return { state: "success", detail: connectionTest.message };
+    if (connectionTest.status === "error") return { state: "error", detail: connectionTest.message };
+    return { state: "pending", detail: hasKey ? "Press Test connection to check it." : "Paste an API key from your server." };
+  })();
+
+  const checks = [
+    { id: "address", label: "Server reachable", ...addressCheck },
+    { id: "key", label: "API key accepted", ...keyCheck },
+  ];
+  const showChecks = hasHost || connectionTest.status !== "idle";
+
   return (
     <SetupShell
       step={1}
@@ -306,10 +414,10 @@ function Setup() {
         <section className="setup-stage-form-card">
           <div className="setup-jellyfin-form-header">
             <div className="setup-jellyfin-logo" aria-hidden="true">
-              <img src={formValues.SERVER_TYPE === "emby" ? embyLogo : jellyfinLogo} alt="" />
+              <img src={shownType === "emby" ? embyLogo : jellyfinLogo} alt="" />
             </div>
             <div className="setup-form-heading-block">
-              <strong>{formValues.SERVER_TYPE === "auto" ? "Server connection" : `${serverName(formValues.SERVER_TYPE)} connection`}</strong>
+              <strong>{shownType ? `${serverName(shownType)} connection` : "Server connection"}</strong>
               <span>Enter the server you want JellyGlance to index and monitor.</span>
             </div>
           </div>
@@ -325,6 +433,9 @@ function Setup() {
                   onClick={() => chooseServerType(type.id)}
                 >
                   {type.label}
+                  {type.id === "auto" && formValues.SERVER_TYPE === "auto" && detectedType ? (
+                    <span className="setup-server-type-detected"> · {serverName(detectedType)}</span>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -335,8 +446,12 @@ function Setup() {
                 name="JF_HOST"
                 value={formValues.JF_HOST || ""}
                 onChange={handleFormChange}
-                placeholder={formValues.SERVER_TYPE === "emby" ? "https://emby.example.com" : "https://jellyfin.example.com"}
+                placeholder={formValues.SERVER_TYPE === "emby" ? "http://192.168.1.10:8096 or https://emby.example.com" : "http://192.168.1.10:8096 or https://jellyfin.example.com"}
+                autoComplete="off"
+                autoFocus
+                spellCheck={false}
               />
+              <small className="setup-field-hint">The address the JellyGlance server uses to reach it. A LAN address is fine.</small>
             </Form.Group>
 
             <Form.Group className="inputbox">
@@ -354,70 +469,87 @@ function Setup() {
                   placeholder={`Paste ${serverName(formValues.SERVER_TYPE)} API key`}
                   autoComplete="off"
                 />
-                <Button className="login-show-password" type="button" onClick={() => setShowPassword(!showPassword)}>
+                <Button
+                  className="login-show-password"
+                  type="button"
+                  aria-label={showPassword ? "Hide API key" : "Show API key"}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
                   {showPassword ? <EyeFillIcon /> : <EyeOffFillIcon />}
                 </Button>
               </InputGroup>
+              <small className="setup-field-hint">{API_KEY_HELP[formValues.SERVER_TYPE] || API_KEY_HELP.auto}</small>
             </Form.Group>
 
-            {connectionTest.message && (
-              <div className={`setup-connection-status is-${connectionTest.status}`} role="status">
-                {connectionTest.message}
-              </div>
-            )}
+            {showChecks ? <ConnectionChecks checks={checks} /> : null}
 
             <div className="setup-button-row">
-              <Button type="button" className="setup-secondary-button" disabled={processing} onClick={testConnection}>
-                {connectionTest.status === "testing" ? `${i18next.t("VALIDATING")}...` : "Test Connection"}
-              </Button>
-              <Button type="submit" className="setup-button" disabled={processing || connectionTest.status !== "success"}>
-                {processing && restoreStatus.status === "idle" ? `${i18next.t("VALIDATING")}...` : submitButtonText}
+              {connectionTest.status === "success" ? (
+                <Button type="button" className="setup-secondary-button" disabled={processing} onClick={testConnection}>
+                  Test again
+                </Button>
+              ) : null}
+              <Button type="submit" className="setup-button" disabled={processing || !formValues.JF_HOST?.trim() || !formValues.JF_API_KEY?.trim()}>
+                {testing ? <span className="setup-spinner setup-button-spinner" aria-hidden="true" /> : null}
+                {testing
+                  ? "Testing connection..."
+                  : saveState === "saving"
+                    ? "Saving..."
+                    : saveState === "saved"
+                      ? i18next.t("SETTINGS_SAVED")
+                      : isTestedForCurrentValues()
+                        ? "Save and continue"
+                        : "Test connection"}
               </Button>
             </div>
           </Form>
         </section>
 
         <section className="setup-stage-form-card setup-restore-card">
-          <div className="setup-jellyfin-form-header">
-            <div className="setup-jellyfin-logo" aria-hidden="true">
-              <Database2LineIcon size={28} />
-            </div>
-            <div className="setup-form-heading-block">
-              <strong>Restore from backup</strong>
-              <span>Moving installs? Upload a JellyGlance JSON backup to restore config, libraries, and activity.</span>
-            </div>
-          </div>
+          <details className="setup-restore-details" open={restoreStatus.status !== "idle" || undefined}>
+            <summary className="setup-jellyfin-form-header">
+              <div className="setup-jellyfin-logo" aria-hidden="true">
+                <Database2LineIcon size={28} />
+              </div>
+              <div className="setup-form-heading-block">
+                <strong>Moving from another install?</strong>
+                <span>Restore a JellyGlance or Jellystat JSON backup instead of starting fresh.</span>
+              </div>
+              <ArrowDownSLineIcon className="setup-restore-chevron" size={20} aria-hidden="true" />
+            </summary>
+            <div className="setup-restore-body">
+              <div className="setup-restore-actions">
+                <label className={`setup-restore-upload${processing ? " is-disabled" : ""}`}>
+                  <UploadCloud2LineIcon size={18} />
+                  <span>
+                    {processing && restoreStatus.status === "testing"
+                      ? restorePhase === "applying"
+                        ? "Applying backup..."
+                        : restoreProgress > 0
+                          ? `Uploading ${restoreProgress}%...`
+                          : "Preparing upload..."
+                      : restorePhase === "complete"
+                        ? "Restore complete"
+                        : "Choose backup JSON"}
+                  </span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json,application/json"
+                    disabled={processing}
+                    onChange={handleBackupRestore}
+                  />
+                </label>
+                <p className="setup-restore-hint">Restores config, libraries and activity. Older backups without app config still restore library and activity data.</p>
+              </div>
 
-          <div className="setup-restore-actions">
-            <label className={`setup-restore-upload${processing ? " is-disabled" : ""}`}>
-              <UploadCloud2LineIcon size={18} />
-              <span>
-                {processing && restoreStatus.status === "testing"
-                  ? restorePhase === "applying"
-                    ? "Applying backup..."
-                    : restoreProgress > 0
-                      ? `Uploading ${restoreProgress}%...`
-                      : "Preparing upload..."
-                  : restorePhase === "complete"
-                    ? "Restore complete"
-                    : "Choose backup JSON"}
-              </span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json,application/json"
-                disabled={processing}
-                onChange={handleBackupRestore}
-              />
-            </label>
-            <p className="setup-restore-hint">Works with JellyGlance backups. Older backups without app config still restore library and activity data.</p>
-          </div>
-
-          {restoreStatus.message ? (
-            <div className={`setup-connection-status is-${restoreStatus.status}`} role="status">
-              {restoreStatus.message}
+              {restoreStatus.message ? (
+                <div className={`setup-connection-status is-${restoreStatus.status}`} role="status">
+                  {restoreStatus.message}
+                </div>
+              ) : null}
             </div>
-          ) : null}
+          </details>
         </section>
       </section>
     </SetupShell>

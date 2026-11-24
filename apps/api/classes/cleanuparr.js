@@ -1,5 +1,6 @@
 // Cleanuparr integration (#317).
-// - Stats/health come from Cleanuparr's v2 stats API (GET /api/v2/stats, X-Api-Key).
+// - Stats/health come from Cleanuparr's stats API (GET /api/v2/stats, X-Api-Key; /api/stats on versions without v2).
+// - Connection tests use the light /api/health endpoint: the stats query can take well over 10s on a busy instance.
 // - Events arrive through Cleanuparr's Gotify notification provider pointed at JellyGlance
 //   (POST {base}/message?token=...). Discord-style embeds and plain JSON with an eventType are accepted too.
 // - Downloads Cleanuparr is already striking or removing are tagged so JellyGlance does not double-alert,
@@ -70,7 +71,20 @@ function healthRows(rows) {
   }));
 }
 
-// Normalise a /api/v2/stats response into what the card and widgets need.
+// Sum a per-job map ({ QueueCleaner: { totalRuns, completed, failed } }) from the documented /api/stats shape.
+function sumJobs(byType) {
+  return Object.values(byType && typeof byType === "object" ? byType : {}).reduce(
+    (sum, job) => ({
+      total: sum.total + asNumber(pick(job, "TotalRuns", "Total")),
+      completed: sum.completed + asNumber(pick(job, "Completed")),
+      failed: sum.failed + asNumber(pick(job, "Failed")),
+    }),
+    { total: 0, completed: 0, failed: 0 }
+  );
+}
+
+// Normalise a Cleanuparr stats response into what the card and widgets need.
+// Accepts the documented /api/stats shape (TotalCount, ItemsRemoved, Jobs.ByType) and the older flat shape.
 function summarizeStats(raw = {}) {
   const events = pick(raw, "Events") || {};
   const strikes = pick(raw, "Strikes") || {};
@@ -82,29 +96,49 @@ function summarizeStats(raw = {}) {
   const bySeverity = countMap(pick(events, "BySeverity"));
   const downloadClients = healthRows(pick(health, "DownloadClients"));
   const arrInstances = healthRows(pick(health, "ArrInstances"));
-  const failedJobs = asNumber(pick(jobs, "Failed"));
+  // v2 has flat totals plus a per-type breakdown; the documented /api/stats only has the breakdown.
+  const byTypeJobs = pick(jobs, "ByType");
+  const hasFlatJobTotals = pick(jobs, "Total") !== undefined || pick(jobs, "Failed") !== undefined;
+  const jobTotals = !hasFlatJobTotals && byTypeJobs && Object.keys(byTypeJobs).length ? sumJobs(byTypeJobs) : null;
+  // Which Cleanuparr jobs failed in the window (v2 stats give per-job-type counts).
+  const failingJobs = Object.entries(byTypeJobs || {})
+    .map(([name, job]) => ({
+      name,
+      failed: asNumber(pick(job, "Failed")),
+      total: asNumber(pick(job, "TotalRuns", "Total")),
+      lastRunAt: pick(job, "LastRunAt", "LastRun") || null,
+    }))
+    .filter((job) => job.failed > 0)
+    .sort((a, b) => b.failed - a.failed);
+  const failedJobs = jobTotals ? jobTotals.failed : asNumber(pick(jobs, "Failed"));
   const errorEvents = asNumber(bySeverity.Error ?? bySeverity.error);
   const unhealthy = [...downloadClients, ...arrInstances].filter((row) => !row.healthy);
   return {
-    timeframeHours: asNumber(pick(raw, "TimeframeHours")) || 168,
+    timeframeHours: asNumber(pick(raw, "TimeframeHours") ?? pick(events, "TimeframeHours") ?? pick(strikes, "TimeframeHours")) || 168,
     generatedAt: pick(raw, "GeneratedAt") || null,
-    events: { total: asNumber(pick(events, "Total")), byType: countMap(pick(events, "ByType")), bySeverity },
-    strikes: { total: asNumber(pick(strikes, "Total")), byType: countMap(pick(strikes, "ByType")), recovered: asNumber(pick(strikes, "Recovered")) },
-    removals: { total: asNumber(pick(removals, "Total")), byReason: countMap(pick(removals, "ByReason")) },
+    events: { total: asNumber(pick(events, "TotalCount", "Total")), byType: countMap(pick(events, "ByType")), bySeverity },
+    strikes: { total: asNumber(pick(strikes, "TotalCount", "Total")), byType: countMap(pick(strikes, "ByType")), recovered: asNumber(pick(strikes, "Recovered")) },
+    removals: { total: asNumber(pick(removals, "Total") ?? pick(strikes, "ItemsRemoved")), byReason: countMap(pick(removals, "ByReason")) },
     cleaned: { total: asNumber(pick(cleaned, "Total")), byReason: countMap(pick(cleaned, "ByReason")) },
     searches: {
       total: asNumber(pick(searches, "Total")),
       grabbed: asNumber(pick(searches, "Grabbed")),
       failed: asNumber(pick(searches, "Failed")),
     },
-    jobs: { total: asNumber(pick(jobs, "Total")), completed: asNumber(pick(jobs, "Completed")), failed: failedJobs },
+    jobs: { ...(jobTotals || { total: asNumber(pick(jobs, "Total")), completed: asNumber(pick(jobs, "Completed")), failed: failedJobs }), failing: failingJobs },
     health: {
       downloadClients,
       arrInstances,
       unhealthy: unhealthy.map((row) => ({ name: row.name, type: row.type, error: row.error })),
       healthy: unhealthy.length === 0,
     },
-    needsAttention: errorEvents + failedJobs + unhealthy.length,
+    // Only count what a person has to fix. Strikes and removals are Cleanuparr doing its job, and
+    // failed imports that need a human arrive separately as inbound events (interventions). A job
+    // that runs every few seconds fails now and then, so each job failing at least 1 run in 10
+    // counts once; without a per-job breakdown, any failed run counts once. Plus unhealthy apps.
+    needsAttention:
+      (failingJobs.length ? failingJobs.filter((job) => job.total && job.failed / job.total >= 0.1).length : failedJobs > 0 ? 1 : 0) + unhealthy.length,
+    errorEvents,
   };
 }
 
@@ -129,15 +163,45 @@ function baseUrl(app) {
   return `${url}/${basePath}`;
 }
 
-async function fetchStats(app, { hours = 168 } = {}) {
+const STATS_TIMEOUT_MS = 45000;
+const STATS_CACHE_TTL_MS = 5 * 60 * 1000;
+const statsCache = new Map();
+
+function statsCacheKey(app, hours) {
+  return `${app.instanceId || baseUrl(app)}|${hours}`;
+}
+
+// Serve recent stats from memory, and fall back to the last good result when Cleanuparr is slow.
+async function fetchStats(app, { hours = 168, timeout = STATS_TIMEOUT_MS, maxAgeMs = STATS_CACHE_TTL_MS } = {}) {
+  const key = statsCacheKey(app, hours);
+  const cached = statsCache.get(key);
+  if (cached && Date.now() - cached.at < maxAgeMs) return cached.stats;
+  try {
+    const stats = await fetchStatsLive(app, { hours, timeout });
+    statsCache.set(key, { at: Date.now(), stats });
+    return stats;
+  } catch (error) {
+    if (cached && /timeout/i.test(error.message)) return { ...cached.stats, stale: true, cachedAt: new Date(cached.at).toISOString() };
+    throw error;
+  }
+}
+
+async function fetchStatsLive(app, { hours = 168, timeout = STATS_TIMEOUT_MS } = {}) {
   const url = baseUrl(app);
   if (!url || !app.values?.secret) throw new Error("URL and API key required");
-  const response = await safeHttpGet(url, "/api/v2/stats", {
-    timeout: 12000,
-    headers: apiHeaders(app),
-    params: { hours: Math.min(8760, Math.max(1, Number(hours) || 168)), includeDryRun: false },
-    validateStatus: () => true,
-  });
+  const request = (path) =>
+    safeHttpGet(url, path, {
+      timeout,
+      headers: apiHeaders(app),
+      // v2 accepts 1–8760 hours and an includeDryRun flag; the older /api/stats accepts 1–720 hours.
+      params:
+        path === "/api/v2/stats"
+          ? { hours: Math.min(8760, Math.max(1, Number(hours) || 168)), includeDryRun: false }
+          : { hours: Math.min(720, Math.max(1, Number(hours) || 168)) },
+      validateStatus: () => true,
+    });
+  let response = await request("/api/v2/stats");
+  if (response.status === 404) response = await request("/api/stats");
   if (response.status === 401 || response.status === 403) throw new Error("Cleanuparr rejected the API key");
   if (response.status >= 400) throw new Error(`HTTP ${response.status}`);
   if (!response.data || typeof response.data !== "object") throw new Error("Unexpected response from Cleanuparr");
@@ -145,20 +209,38 @@ async function fetchStats(app, { hours = 168 } = {}) {
 }
 
 async function pingCleanuparr(integration) {
+  const url = baseUrl(integration);
+  if (!url || !integration.values?.secret) return { ok: false, error: "URL and API key required" };
   try {
-    const stats = await fetchStats(integration, { hours: 24 });
+    const response = await safeHttpGet(url, "/api/health", { timeout: 10000, headers: apiHeaders(integration), validateStatus: () => true });
+    if (response.status === 401 || response.status === 403) return { ok: false, error: "Cleanuparr rejected the API key" };
+    if (response.status >= 400) return { ok: false, error: `Cleanuparr health check failed (HTTP ${response.status})` };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+  // Stats only enrich the message; a slow stats query must not fail the connection test.
+  try {
+    const stats = await fetchStats(integration, { hours: 24, timeout: 8000 });
     const { downloadClients, arrInstances, unhealthy } = stats.health;
     const parts = [`${downloadClients.length} client${downloadClients.length === 1 ? "" : "s"}`, `${arrInstances.length} arr`];
     return {
       ok: true,
       version: "Cleanuparr",
-      message: unhealthy.length
-        ? `Reachable · ${unhealthy.length} unhealthy (${unhealthy.map((row) => row.name).join(", ")})`
-        : `Reachable · ${parts.join(", ")} healthy`,
+      message: [
+        unhealthy.length ? `Reachable · ${unhealthy.length} unhealthy (${unhealthy.map((row) => row.name).join(", ")})` : `Reachable · ${parts.join(", ")} healthy`,
+        ...(stats.jobs.failing || []).map(
+          (job) => `${job.name}: ${job.failed} of ${job.total || "?"} runs failed in 24h${job.total ? ` (${Math.max(1, Math.round((job.failed / job.total) * 100))}%)` : ""} — see Cleanuparr → Logs`
+        ),
+      ].join(" · "),
+      failingJobs: stats.jobs.failing || [],
       health: stats.health,
     };
   } catch (error) {
-    return { ok: false, error: error.message };
+    return {
+      ok: true,
+      version: "Cleanuparr",
+      message: /timeout/i.test(error.message) ? "Reachable · stats are slow to load" : `Reachable · stats unavailable (${error.message})`,
+    };
   }
 }
 
@@ -188,9 +270,11 @@ async function fetchCleanuparrSnapshot({ hours = 168 } = {}) {
         cleaned: sum.cleaned + stats.cleaned.total,
         unhealthy: sum.unhealthy + stats.health.unhealthy.length,
         needsAttention: sum.needsAttention + stats.needsAttention,
+        failedJobs: sum.failedJobs + stats.jobs.failed,
+        failingJobs: [...sum.failingJobs, ...(stats.jobs.failing || []).map((job) => ({ ...job, instance: instance.name }))],
       };
     },
-    { events: 0, strikes: 0, removals: 0, cleaned: 0, unhealthy: 0, needsAttention: 0, unreachable: 0 }
+    { events: 0, strikes: 0, removals: 0, cleaned: 0, unhealthy: 0, needsAttention: 0, failedJobs: 0, failingJobs: [], unreachable: 0 }
   );
   return {
     configured: apps.length > 0,
