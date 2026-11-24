@@ -34,3 +34,14 @@
 .sg-status { font-size: 0.78rem; margin-top: 4px; }
 .sg-status.is-queued { color: #5ad18f; }
 .sg-status.is-error, .sg-status.is-not-found { color: #ffb36b; }
+
+/* Search box, type filter divider and pager. */
+.sg-filters { align-items: center; }
+.sg-filter-divider { width: 1px; height: 20px; margin: 0 2px; background: rgba(255, 255, 255, 0.14); }
+.sg-search { display: inline-flex; align-items: center; gap: 6px; min-width: 200px; flex: 0 1 260px; padding: 0 10px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; background: rgba(255, 255, 255, 0.04); }
+.sg-search svg { width: 16px; height: 16px; opacity: 0.6; }
+.sg-search input { flex: 1; min-width: 0; padding: 6px 0; border: 0; background: transparent; color: inherit; font-size: 0.85rem; outline: none; }
+.sg-search:focus-within { border-color: rgba(var(--primary-light-rgb, 139, 92, 246), 0.6); }
+.sg-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); }
+.sg-pager > div { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sg-pager-count { padding: 0 6px; font-variant-numeric: tabular-nums; }

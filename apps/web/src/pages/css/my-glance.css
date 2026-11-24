@@ -427,3 +427,89 @@
 .achievements-badge-progress { height: 5px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .achievements-badge-progress span { display: block; height: 100%; background: var(--medal); }
 .achievements-more { justify-self: center; }
+
+/* Rails: one scrolling row of posters, with arrows and an Expand toggle. */
+.user-media-rail-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-media-arrow,
+.user-media-expand {
+  display: inline-grid;
+  place-items: center;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  cursor: pointer;
+}
+
+.user-media-arrow {
+  width: 30px;
+  padding: 0;
+}
+
+.user-media-expand {
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.user-media-arrow:hover,
+.user-media-expand:hover {
+  border-color: rgba(var(--primary-light-rgb), 0.5);
+  background: rgba(var(--primary-rgb), 0.18);
+}
+
+.user-media-grid.is-row {
+  grid-template-columns: none;
+  grid-auto-columns: minmax(150px, 160px);
+  grid-auto-flow: column;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 6px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.user-media-grid.is-row > .user-media-card {
+  scroll-snap-align: start;
+}
+
+button.user-media-more {
+  display: block;
+  margin: 10px auto 0;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+/* Empty rails shrink to a single line instead of a full panel. */
+.user-media-rail.is-empty {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.user-media-rail.is-empty .user-media-grid {
+  display: block;
+}
+
+.user-media-rail.is-empty .user-media-empty {
+  min-height: 0;
+  padding: 4px 0 0;
+}
+
+/* Keep the page one column wide: without this, a row of 40 posters sets the
+   column's width and the whole page scrolls sideways. */
+.my-glance-page {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.my-glance-page > * {
+  min-width: 0;
+}

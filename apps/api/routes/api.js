@@ -7753,6 +7753,101 @@ router.post("/integrations/test-all", async (req, res) => {
   }
 });
 
+// Home "App health" widget: one light per app. Checks run live (cached for a few
+// minutes) and a result is only written to Health History when an app's state
+// flips, so the history keeps the last failure without filling up with repeats.
+const APP_HEALTH_TTL_MS = 5 * 60 * 1000;
+const APP_HEALTH_MIN_REFRESH_MS = 30 * 1000;
+const appHealthCache = { at: 0, value: null, pending: null };
+
+async function checkJellyfinForAppHealth() {
+  const checkedAt = new Date().toISOString();
+  try {
+    const config = await new configClass().getConfig();
+    if (config.error) return { ok: false, message: config.error, checkedAt };
+    const systemInfo = await API.systemInfo();
+    if (!systemInfo) return { ok: false, message: "The media server did not answer", checkedAt };
+    return { ok: true, version: systemInfo.Version || "", message: systemInfo.ServerName || "Connected", checkedAt };
+  } catch (error) {
+    return { ok: false, message: getAxiosErrorMessage(error) || error.message, checkedAt };
+  }
+}
+
+async function buildAppHealth() {
+  const { getSettings, saveSettings } = require("../classes/integration-store");
+  const integrations = await getIntegrations();
+  const connected = [
+    ...(integrations.arrApps || []).filter((item) => item.connected).map((integration) => ({ integration, type: "automation" })),
+    ...(integrations.clients || []).filter((item) => item.connected).map((integration) => ({ integration, type: "download" })),
+    ...(integrations.thirdParty || []).filter((item) => item.connected).map((integration) => ({ integration, type: "thirdParty" })),
+  ];
+  const checkedAt = new Date().toISOString();
+  const [jellyfin, results] = await Promise.all([
+    checkJellyfinForAppHealth(),
+    Promise.all(
+      connected.map(async ({ integration, type }) => {
+        try {
+          const result =
+            type === "download" ? await testDownloadIntegration(integration) : type === "thirdParty" ? await testThirdPartyIntegration(integration) : await testArrIntegration(integration);
+          return { instanceId: integration.instanceId, name: integration.name, type, ok: Boolean(result.ok), version: result.version || "", message: result.message || result.error || (result.ok ? "Connected" : "Connection failed"), checkedAt };
+        } catch (error) {
+          return { instanceId: integration.instanceId, name: integration.name, type, ok: false, version: "", message: getAxiosErrorMessage(error) || "Connection failed", checkedAt };
+        }
+      })
+    ),
+  ]);
+
+  let history = await getIntegrationHealthHistory().catch(() => []);
+  const changed = results.filter((result) => {
+    const latest = history.find((entry) => entry.instanceId === result.instanceId);
+    return !latest || Boolean(latest.ok) !== result.ok;
+  });
+  if (changed.length) history = await saveIntegrationHealthResults(changed).catch(() => history);
+
+  const settings = await getSettings().catch(() => ({}));
+  let jellyfinFailure = settings.JellyfinHealthLastFailure || null;
+  if (!jellyfin.ok) {
+    jellyfinFailure = { message: jellyfin.message, at: jellyfin.checkedAt };
+    await saveSettings({ JellyfinHealthLastFailure: jellyfinFailure }).catch(() => {});
+  }
+
+  const lastFailureFor = (instanceId) => {
+    const entry = history.find((item) => item.instanceId === instanceId && !item.ok);
+    return entry ? { message: entry.message, at: entry.checkedAt } : null;
+  };
+  const apps = [
+    { id: "jellyfin", name: "Jellyfin", type: "mediaServer", ok: jellyfin.ok, version: jellyfin.version || "", message: jellyfin.message, checkedAt: jellyfin.checkedAt, lastFailure: jellyfinFailure },
+    ...results.map((result) => ({ id: result.instanceId, name: result.name, type: result.type, ok: result.ok, version: result.version, message: result.message, checkedAt: result.checkedAt, lastFailure: lastFailureFor(result.instanceId) })),
+  ];
+  return { checkedAt, apps, failing: apps.filter((app) => !app.ok).length, total: apps.length };
+}
+
+router.get("/home/appHealth", async (req, res) => {
+  if (!req.permissions?.settings) return res.status(403).send({ error: "Only admins can see app health" });
+  try {
+    const now = Date.now();
+    const wantsRefresh = req.query?.refresh === "1" && now - appHealthCache.at > APP_HEALTH_MIN_REFRESH_MS;
+    if (!appHealthCache.value || wantsRefresh || now - appHealthCache.at > APP_HEALTH_TTL_MS) {
+      if (!appHealthCache.pending) {
+        appHealthCache.pending = buildAppHealth()
+          .then((value) => {
+            appHealthCache.value = value;
+            appHealthCache.at = Date.now();
+            return value;
+          })
+          .finally(() => {
+            appHealthCache.pending = null;
+          });
+      }
+      await appHealthCache.pending;
+    }
+    res.send(appHealthCache.value);
+  } catch (error) {
+    console.error("App health failed:", sanitizeForLog(getAxiosErrorMessage(error)));
+    res.status(503).send({ error: "Unable to check app health" });
+  }
+});
+
 async function hydrateIntegrationForTest(integration, type) {
   const integrations = await getIntegrations();
   const list =
@@ -7772,23 +7867,49 @@ async function hydrateIntegrationForTest(integration, type) {
 }
 
 router.post("/integrations/test", async (req, res) => {
-  const { integration, type } = req.body || {};
+  const { integration, type, recordHealth } = req.body || {};
 
   if (!integration) {
     return res.status(400).send({ ok: false, error: "Integration is required" });
   }
 
+  // Saving an integration runs this test with recordHealth so the result lands in Health History.
+  const recordResult = async (ok, version, message) => {
+    if (!recordHealth || !integration.instanceId) return undefined;
+    try {
+      return await saveIntegrationHealthResults([
+        {
+          instanceId: integration.instanceId,
+          name: integration.name,
+          type: type === "download" ? "download" : type === "thirdParty" ? "thirdParty" : "automation",
+          ok: Boolean(ok),
+          version: version || "",
+          message: message || (ok ? "Connected" : "Connection failed"),
+          checkedAt: new Date().toISOString(),
+        },
+      ]);
+    } catch (error) {
+      console.error("Record integration health failed:", sanitizeForLog(getAxiosErrorMessage(error)));
+      return undefined;
+    }
+  };
+
   try {
     const hydrated = await hydrateIntegrationForTest(integration, type);
     const result = type === "download" ? await testDownloadIntegration(hydrated) : type === "thirdParty" ? await testThirdPartyIntegration(hydrated) : await testArrIntegration(hydrated);
+    const history = await recordResult(result.ok, result.version, result.message || result.error);
+    const body = history ? { ...result, history } : result;
     if (!result.ok) {
-      return res.status(400).send(result);
+      return res.status(400).send(body);
     }
-    return res.send(result);
+    return res.send(body);
   } catch (error) {
+    const message = getAxiosErrorMessage(error);
+    const history = await recordResult(false, "", message);
     return res.status(503).send({
       ok: false,
-      error: getAxiosErrorMessage(error),
+      error: message,
+      ...(history ? { history } : {}),
     });
   }
 });

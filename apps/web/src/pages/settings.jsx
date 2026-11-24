@@ -207,6 +207,9 @@ const integrationSettingsTabAliases = {
   "invites-transcodes": "invites",
   transcodes: "invites",
   tdarr: "invites",
+  metadata: "metadata",
+  tmdb: "metadata",
+  "metadata-providers": "metadata",
 };
 
 function normalizeSettingsSlug(value = "") {

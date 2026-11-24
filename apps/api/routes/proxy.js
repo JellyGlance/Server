@@ -369,6 +369,30 @@ router.get("/Audiobookshelf/Images/:itemId", async (req, res) => {
   }
 });
 
+// Sonarr/Radarr/Lidarr/Readarr artwork that only exists on the Arr itself (no public URL).
+// Only MediaCover image paths are allowed, and the Arr API key never leaves the server.
+const ARR_MEDIACOVER_PATH = /^(\/[A-Za-z0-9_-]+)*\/MediaCover\/[A-Za-z0-9_.\/-]+\.(jpg|jpeg|png|webp|gif)$/i;
+router.get("/Arr/Images/:instanceId", async (req, res) => {
+  try {
+    const path = String(req.query.path || "").split("?")[0];
+    if (!ARR_MEDIACOVER_PATH.test(path) || path.includes("..")) return res.status(400).end();
+    const integrations = await getIntegrations();
+    const app = (integrations.arrApps || []).find((item) => item.instanceId === req.params.instanceId && item.connected);
+    if (!app?.values?.url || !app.values.secret) return res.status(404).end();
+    const response = await safeHttpGet(app.values.url, path, {
+      timeout: 12000,
+      headers: { "X-Api-Key": app.values.secret, Accept: "image/*" },
+      responseType: "arraybuffer",
+    });
+    const contentType = String(response.headers?.["content-type"] || "image/jpeg");
+    res.set("Content-Type", contentType.startsWith("image/") ? contentType : "image/jpeg");
+    res.set("Cache-Control", "public, max-age=86400");
+    res.send(Buffer.from(response.data));
+  } catch (error) {
+    res.status(error.response?.status === 404 ? 404 : 502).end();
+  }
+});
+
 router.post("/validateSettings", async (req, res) => {
   const { url, apikey, serverType: requestedType } = req.body;
 

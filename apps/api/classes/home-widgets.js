@@ -80,6 +80,10 @@ function calendarItemsInWindow(calendar, { now = new Date(), hours = 24 } = {}) 
       monitored: item.monitored !== false,
       hasFile: Boolean(item.hasFile),
       service: item.service || "",
+      // Artwork from the calendar sync (public TMDB/TVDB or JellyGlance's Arr image proxy).
+      imageUrl: item.backdropUrl || item.posterUrl || "",
+      // Date-only releases (movies, albums) are stored as midnight UTC.
+      allDay: !["tv", "audiobook"].includes(String(item.type || "tv")) && new Date(item.ms).getUTCHours() === 0 && new Date(item.ms).getUTCMinutes() === 0,
     }));
 }
 

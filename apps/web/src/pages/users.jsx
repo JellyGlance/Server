@@ -48,6 +48,20 @@ function formatWatchTime(seconds = 0) {
   return `${hours ? `${hours} ${i18next.t("UNITS.HOURS")}` : ""}${minutes ? ` ${minutes} ${i18next.t("UNITS.MINUTES")}` : ""}`.trim();
 }
 
+// Compact form for the user cards: "174h 30m", "45m".
+function formatWatchTimeShort(seconds = 0) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (!hours) return `${minutes}m`;
+  return minutes ? `${hours.toLocaleString()}h ${minutes}m` : `${hours.toLocaleString()}h`;
+}
+
+// "Jellyfin for Android" -> "Android", "Jellyfin Web" -> "Web".
+function shortClientName(client) {
+  const name = String(client || "").trim();
+  return name.replace(/^(Jellyfin|Emby)\s+(for\s+)?/i, "") || name;
+}
+
 function formatLastSeen(time) {
   if (!time) {
     return "Never";
@@ -94,7 +108,7 @@ export default function Users() {
   const [config, setConfig] = useState(null);
   const [access, setAccess] = useState(null);
   const [activeUserIds, setActiveUserIds] = useState(new Set());
-  const [rowsPerPage, setRowsPerPage] = useState(parseInt(localStorage.getItem("PREF_USER_ACTIVITY_ItemCount") ?? "10"));
+  const [rowsPerPage, setRowsPerPage] = useState(parseInt(localStorage.getItem("PREF_USER_ACTIVITY_ItemCount") ?? "25"));
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
@@ -680,6 +694,8 @@ export default function Users() {
             onClick={() => toggleTrackedState(user.UserId)}
             disabled={savingUserId === user.UserId}
             title={user.Tracked ? "Hide user" : "Unhide user"}
+            aria-label={`${user.Tracked ? "Hide" : "Unhide"} ${user.UserName}`}
+            aria-pressed={!user.Tracked}
           >
             {savingUserId === user.UserId ? <Spinner size="sm" animation="border" /> : user.Tracked ? <EyeLineIcon size={20} /> : <EyeOffLineIcon size={20} />}
           </Button>
@@ -819,9 +835,9 @@ export default function Users() {
                   setPage(0);
                 }}
               >
-                <option value="10">10 rows</option>
-                <option value="25">25 rows</option>
-                <option value="50">50 rows</option>
+                <option value="10">10 per page</option>
+                <option value="25">25 per page</option>
+                <option value="50">50 per page</option>
               </FormSelect>
               <label className="users-hidden-toggle">
                 <Form.Check type="switch" checked={showHiddenUsers} onChange={(event) => updateShowHiddenUsers(event.target.checked)} />
@@ -852,17 +868,17 @@ export default function Users() {
                     {user.Source === "Jellyfin" && !user.Tracked ? <Badge className="users-source-badge source-hidden">Hidden</Badge> : null}
                   </div>
                   <div className="users-profile-metrics">
-                    <span>
+                    <span title={formatWatchTime(user.TotalWatchTime)}>
                       <small>Watch time</small>
-                      <strong>{formatWatchTime(user.TotalWatchTime)}</strong>
+                      <strong>{formatWatchTimeShort(user.TotalWatchTime)}</strong>
                     </span>
-                    <span>
-                      <small>Last watched</small>
-                      <strong>{user.LastWatched || "Never"}</strong>
+                    <span title={user.LastWatched || "Never"}>
+                      <small>Watched</small>
+                      <strong className="is-wrap">{user.LastWatched || "Never"}</strong>
                     </span>
-                    <span>
+                    <span title={user.LastClient || ""}>
                       <small>Client</small>
-                      <strong>{user.LastClient || "N/A"}</strong>
+                      <strong>{user.LastClient ? shortClientName(user.LastClient) : "—"}</strong>
                     </span>
                     <span>
                       <small>{user.IsRunning ? "Watching now" : "Last seen"}</small>

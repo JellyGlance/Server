@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import "./css/integrations.css";
 import { useWatchingLock } from "./components/general/WatchingLockModal";
 import { selfhstIconUrl } from "../lib/selfhst-icons";
+import { downloadStateLabel } from "../lib/download-state";
 
 const iconUrl = (slug) => selfhstIconUrl(slug);
 
@@ -280,7 +281,7 @@ export default function Downloads() {
           <AddLineIcon size={18} />
           {isSubmitting ? t("FEATURES.DOWNLOADS.ADDING") : t("FEATURES.DOWNLOADS.ADD_TORRENT")}
         </button>
-        <button type="button" className="download-add-button" onClick={runDownloadSync}>
+        <button type="button" className="download-add-button is-secondary" onClick={runDownloadSync}>
           <TimerFlashLineIcon size={18} />
           {t("FEATURES.DOWNLOADS.SYNC_NOW")}
         </button>
@@ -301,7 +302,7 @@ export default function Downloads() {
                     <div>
                       <strong>{download.name}</strong>
                       <span>
-                        {download.client} · {download.source} · {download.state}
+                        {[download.client, download.source, downloadStateLabel(download.state)].filter(Boolean).join(" · ")}
                         {download.request ? ` · Request ${download.request.status}` : ""}
                       </span>
                     </div>
@@ -367,7 +368,18 @@ export default function Downloads() {
                 </div>
               </div>
             )) : (
-              <div className="integration-empty-state">{t("FEATURES.DOWNLOADS.EMPTY")}</div>
+              <div className="integration-empty-state">
+                {usableClients.length ? (
+                  <>
+                    Nothing downloading on {usableClients.map((client) => client.name).join(", ")} right now. Press{" "}
+                    <strong>{t("FEATURES.DOWNLOADS.SYNC_NOW")}</strong> to check straight away.
+                  </>
+                ) : (
+                  <>
+                    No download client yet. Add one in <Link to="/integrations">Integrations</Link>, then sync the queue.
+                  </>
+                )}
+              </div>
             )}
           </div>
         </article>
@@ -383,11 +395,16 @@ export default function Downloads() {
                   <div>
                     <strong>{client.name}</strong>
                     <span>
-                      {client.name} · {t("FEATURES.DOWNLOADS.DOWNLOAD_COUNT", { count })}
+                      {[client.protocol, t("FEATURES.DOWNLOADS.DOWNLOAD_COUNT", { count })].filter(Boolean).join(" · ")}
                     </span>
-                    {client.message ? <small>{client.message}</small> : null}
+                    {/* Only problems are worth repeating here; "Saved" and similar are leftovers from Integrations. */}
+                    {client.message && (client.messageType === "error" || !client.connected) ? <small>{client.message}</small> : null}
                   </div>
-                  <span className={`integration-status-light ${client.connected ? "is-connected" : "is-disconnected"}`} />
+                  <span
+                    className={`integration-status-light ${client.connected ? "is-connected" : "is-disconnected"}`}
+                    title={client.connected ? "Connected" : "Not connected"}
+                    aria-label={client.connected ? "Connected" : "Not connected"}
+                  />
                 </div>
               );
             }) : (

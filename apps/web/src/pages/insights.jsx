@@ -49,7 +49,11 @@ function useInsight(path, params) {
     setState((current) => ({ ...current, loading: true, error: null }));
     axios
       .get(`/insights-data/${path}`, { headers: authHeader(), params })
-      .then((response) => active && setState({ loading: false, data: response.data, error: null }))
+      .then((response) => {
+        if (!active) return;
+        const ok = response.data && typeof response.data === "object";
+        setState({ loading: false, data: ok ? response.data : null, error: ok ? null : "Unable to load this report." });
+      })
       .catch((error) => {
         if (!active) return;
         const status = error.response?.status;
@@ -152,7 +156,13 @@ function RecapDelivery({ users, selectedUserId, selectedPeriod }) {
   const load = () =>
     axios
       .get("/insights-data/wrapped/delivery", { headers: authHeader() })
-      .then((response) => setState({ loading: false, data: response.data, error: null }))
+      .then((response) =>
+        // Anything but the expected object (an HTML page from a misrouted proxy, say)
+        // shows the error line instead of crashing the whole Statistics page.
+        response.data && typeof response.data === "object" && Array.isArray(response.data.subscriptions)
+          ? setState({ loading: false, data: response.data, error: null })
+          : setState({ loading: false, data: null, error: "Unable to load recap delivery." })
+      )
       .catch((error) => setState({ loading: false, data: null, error: error.response?.data?.error || "Unable to load recap delivery." }));
   useEffect(() => {
     load();

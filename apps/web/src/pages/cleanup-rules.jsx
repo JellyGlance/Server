@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import DeleteBin6LineIcon from "remixicon-react/DeleteBin6LineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
 import AddLineIcon from "remixicon-react/AddLineIcon";
+import ArrowDownSLineIcon from "remixicon-react/ArrowDownSLineIcon";
+import CheckLineIcon from "remixicon-react/CheckLineIcon";
+import FilmLineIcon from "remixicon-react/FilmLineIcon";
+import TvLineIcon from "remixicon-react/TvLineIcon";
 import axios from "../lib/axios_instance";
 import "./css/cleanup-rules.css";
 
@@ -19,6 +23,101 @@ const emptyForm = {
   unmonitor: true,
   delete: false,
 };
+
+// Starter rules. Each is created per matching library, disabled and in dry run, and never deletes files.
+const DEFAULT_RULES = [
+  {
+    key: "stale-movies",
+    name: "Unwatched movies older than a year",
+    description: "Movies added over a year ago that nobody has played in the last year.",
+    kind: "movies",
+    conditions: { unwatchedDays: 365, addedDays: 365 },
+  },
+  {
+    key: "never-watched-movies",
+    name: "Movies no one started in 6 months",
+    description: "Recent-ish additions that have sat unplayed for six months.",
+    kind: "movies",
+    conditions: { unwatchedDays: 180, addedDays: 180 },
+  },
+  {
+    key: "large-movies",
+    name: "Large unwatched movies (40 GB+)",
+    description: "Big remuxes and 4K files nobody has watched for six months — the quickest space wins.",
+    kind: "movies",
+    conditions: { unwatchedDays: 180, addedDays: 90, sizeGb: 40 },
+  },
+  {
+    key: "low-rated-movies",
+    name: "Low-rated movies nobody watched",
+    description: "Rated below 5.0 and unplayed for 90 days since being added.",
+    kind: "movies",
+    conditions: { unwatchedDays: 90, addedDays: 90, ratingBelow: 5 },
+  },
+  {
+    key: "watched-by-everyone",
+    name: "Movies everyone has watched",
+    description: "Every user has seen it and nobody has rewatched it in 60 days.",
+    kind: "movies",
+    conditions: { watchedBy: "all", unwatchedDays: 60, addedDays: 90 },
+  },
+  {
+    key: "stale-shows",
+    name: "TV shows untouched for two years",
+    description: "Series added over a year ago with no plays in the last two years.",
+    kind: "tvshows",
+    conditions: { unwatchedDays: 730, addedDays: 365 },
+  },
+  {
+    key: "large-shows",
+    name: "Large unwatched TV shows (100 GB+)",
+    description: "Whole series over 100 GB that nobody has played for a year.",
+    kind: "tvshows",
+    conditions: { unwatchedDays: 365, addedDays: 180, sizeGb: 100 },
+  },
+];
+
+const DEFAULT_RULE_ACTIONS = { tag: "leaving-soon", leavingSoon: true, leavingSoonDays: 14, unmonitor: true, delete: false };
+
+function libraryKind(library) {
+  const type = String(library?.collection_type || library?.collectionType || "").toLowerCase();
+  if (type === "movies") return "movies";
+  if (type === "tvshows") return "tvshows";
+  return "";
+}
+
+function describeConditions(conditions = {}) {
+  const parts = [];
+  if (conditions.unwatchedDays) parts.push(`unplayed ${conditions.unwatchedDays}d`);
+  if (conditions.addedDays) parts.push(`added ${conditions.addedDays}d+ ago`);
+  if (conditions.sizeGb) parts.push(`over ${conditions.sizeGb} GB`);
+  if (conditions.ratingBelow) parts.push(`rated under ${conditions.ratingBelow}`);
+  if (conditions.watchedBy === "all") parts.push("watched by everyone");
+  if (conditions.watchedBy === "active") parts.push("watched by all active users");
+  return parts.join(" · ");
+}
+
+function defaultRuleName(preset, library, multipleLibraries) {
+  return multipleLibraries ? `${preset.name} — ${library.name}` : preset.name;
+}
+
+function formFromPreset(preset, libraryId) {
+  return {
+    ...emptyForm,
+    name: preset.name,
+    libraryId: libraryId || "",
+    unwatchedDays: preset.conditions.unwatchedDays ?? "",
+    watchedBy: preset.conditions.watchedBy || "",
+    addedDays: preset.conditions.addedDays ?? "",
+    sizeGb: preset.conditions.sizeGb ?? "",
+    ratingBelow: preset.conditions.ratingBelow ?? "",
+    tag: DEFAULT_RULE_ACTIONS.tag,
+    leavingSoon: DEFAULT_RULE_ACTIONS.leavingSoon,
+    leavingSoonDays: String(DEFAULT_RULE_ACTIONS.leavingSoonDays),
+    unmonitor: DEFAULT_RULE_ACTIONS.unmonitor,
+    delete: false,
+  };
+}
 
 function formatBytes(bytes) {
   const value = Number(bytes) || 0;
@@ -82,6 +181,14 @@ export default function CleanupRules() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(null);
+  const [defaultsOpen, setDefaultsOpen] = useState(null);
+  // Nothing is pre-selected: the admin opts in to each default rule and library.
+  const [pickedDefaults, setPickedDefaults] = useState(() => new Set());
+  const [defaultsNotice, setDefaultsNotice] = useState("");
+  // Libraries the default rules are added to (null = every movie and TV library). Starts with none selected.
+  const [defaultLibraryIds, setDefaultLibraryIds] = useState(() => new Set());
+  // A form to show once the selection is cleared (templates, "New rule"), so the reset below doesn't wipe it.
+  const pendingForm = useRef(null);
 
   const selected = useMemo(() => rules.find((rule) => rule.id === selectedId) || null, [rules, selectedId]);
 
@@ -126,15 +233,94 @@ export default function CleanupRules() {
   }, []);
 
   useEffect(() => {
-    setForm(formFromRule(selected));
+    setForm(pendingForm.current || formFromRule(selected));
+    pendingForm.current = null;
     loadRuleExtras(selectedId);
   }, [selectedId, selected]);
 
   const updateField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
-  const startNew = () => {
+  // Libraries each default applies to, and which of those already have a rule with the same name.
+  const defaultTargets = useMemo(
+    () =>
+      DEFAULT_RULES.map((preset) => {
+        const allOfKind = libraries.filter((library) => libraryKind(library) === preset.kind);
+        const targets = allOfKind.filter((library) => !defaultLibraryIds || defaultLibraryIds.has(library.id));
+        const ruleNames = new Set(rules.map((rule) => String(rule.name || "").trim().toLowerCase()));
+        // Name by library whenever more than one library of this kind exists, so names stay stable as the selection changes.
+        const missing = targets.filter((library) => !ruleNames.has(defaultRuleName(preset, library, allOfKind.length > 1).toLowerCase()));
+        return { preset, targets, missing, multiple: allOfKind.length > 1 };
+      }),
+    [libraries, rules, defaultLibraryIds]
+  );
+  const defaultLibraries = libraries.filter((library) => libraryKind(library));
+  const isLibraryPicked = (id) => !defaultLibraryIds || defaultLibraryIds.has(id);
+  const toggleLibrary = (id) =>
+    setDefaultLibraryIds((current) => {
+      const next = new Set(current || defaultLibraries.map((library) => library.id));
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const pickedTargets = defaultTargets.filter(({ preset }) => pickedDefaults.has(preset.key));
+  const rulesToCreate = pickedTargets.reduce((sum, row) => sum + row.missing.length, 0);
+  const showDefaults = defaultsOpen ?? (!loading && rules.length === 0);
+
+  const togglePicked = (key) =>
+    setPickedDefaults((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  const usePresetAsTemplate = (preset) => {
+    const target =
+      libraries.find((library) => libraryKind(library) === preset.kind && isLibraryPicked(library.id)) ||
+      libraries.find((library) => libraryKind(library) === preset.kind);
+    const next = formFromPreset(preset, target?.id || libraries[0]?.id || "");
+    if (selectedId) pendingForm.current = next;
     setSelectedId("");
-    setForm({ ...emptyForm, libraryId: libraries[0]?.id || "" });
+    setForm(next);
+    setPreview(null);
+    setRuns([]);
+    setExclusions([]);
+    setDefaultsNotice(`Loaded “${preset.name}” into the form below. Adjust it, then save.`);
+    window.requestAnimationFrame(() => document.querySelector(".cleanup-form")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+
+  const addDefaultRules = async () => {
+    if (!rulesToCreate) return;
+    setBusy(true);
+    setError("");
+    setDefaultsNotice("");
+    const created = [];
+    const failed = [];
+    for (const { preset, missing, multiple } of pickedTargets) {
+      for (const library of missing) {
+        const name = defaultRuleName(preset, library, multiple);
+        try {
+          const { data } = await axios.post("/cleanup-rules/rules", payloadFromForm({ ...formFromPreset(preset, library.id), name }));
+          if (data?.rule) created.push(data.rule);
+        } catch (err) {
+          failed.push(`${name}: ${err.response?.data?.error || "failed"}`);
+        }
+      }
+    }
+    if (created.length) setRules((current) => [...current, ...created]);
+    setBusy(false);
+    if (failed.length) setError(`Some default rules could not be added — ${failed.join("; ")}`);
+    if (created.length) {
+      setDefaultsNotice(`Added ${created.length} rule${created.length === 1 ? "" : "s"}. They are disabled and in dry run — select one to preview its matches.`);
+      setDefaultsOpen(false);
+    }
+  };
+
+  const startNew = () => {
+    const next = { ...emptyForm, libraryId: libraries[0]?.id || "" };
+    if (selectedId) pendingForm.current = next;
+    setSelectedId("");
+    setForm(next);
     setPreview(null);
     setRuns([]);
     setExclusions([]);
@@ -289,9 +475,100 @@ export default function CleanupRules() {
       </div>
 
       <div className="cleanup-toolbar">
-        <button type="button" className="cleanup-btn is-primary" onClick={startNew}><AddLineIcon size={16} /> New rule</button>
+        <div className="cleanup-inline">
+          <button type="button" className="cleanup-btn is-primary" onClick={startNew}><AddLineIcon size={16} /> New rule</button>
+          <button type="button" className={`cleanup-btn${showDefaults ? " is-active" : ""}`} aria-expanded={showDefaults} onClick={() => setDefaultsOpen(!showDefaults)}>
+            <ArrowDownSLineIcon size={16} className={showDefaults ? "is-flipped" : ""} /> Default rules
+          </button>
+        </div>
         <button type="button" className="cleanup-btn" onClick={loadLists} disabled={loading}><RefreshLineIcon size={16} /> Refresh</button>
       </div>
+
+      {defaultsNotice ? <p className="cleanup-banner is-ok">{defaultsNotice}</p> : null}
+
+      {showDefaults ? (
+        <section className="cleanup-defaults" aria-label="Default rules">
+          <header>
+            <div>
+              <h2>Default rules</h2>
+              <p className="cleanup-muted">
+                Pick the starters you want. Each one is added for every matching library, disabled and in dry run, tags items <code>leaving-soon</code>, adds them to Leaving soon for 14 days and unmonitors — nothing is deleted.
+              </p>
+            </div>
+            <div className="cleanup-inline">
+              <button type="button" className="cleanup-btn" onClick={() => setPickedDefaults(new Set(DEFAULT_RULES.map((preset) => preset.key)))}>Select all</button>
+              <button type="button" className="cleanup-btn" onClick={() => setPickedDefaults(new Set())}>Clear</button>
+            </div>
+          </header>
+          <div className="cleanup-default-libraries">
+            <span className="cleanup-muted">Libraries</span>
+            {defaultLibraries.map((library) => (
+              <button
+                type="button"
+                key={library.id}
+                className={`cleanup-chip${isLibraryPicked(library.id) ? " is-on" : ""}`}
+                aria-pressed={isLibraryPicked(library.id)}
+                onClick={() => toggleLibrary(library.id)}
+              >
+                {libraryKind(library) === "movies" ? <FilmLineIcon size={13} /> : <TvLineIcon size={13} />}
+                {library.name}
+              </button>
+            ))}
+            <button type="button" className="cleanup-link" onClick={() => setDefaultLibraryIds(null)}>All</button>
+            <button type="button" className="cleanup-link" onClick={() => setDefaultLibraryIds(new Set())}>None</button>
+          </div>
+          <div className="cleanup-default-grid">
+            {defaultTargets.map(({ preset, targets, missing }) => {
+              const picked = pickedDefaults.has(preset.key);
+              const unavailable = !targets.length;
+              const noLibraryOfKind = !libraries.some((library) => libraryKind(library) === preset.kind);
+              const allAdded = targets.length > 0 && !missing.length;
+              return (
+                <article key={preset.key} className={`cleanup-default${picked && !allAdded ? " is-picked" : ""}${noLibraryOfKind || allAdded ? " is-muted" : ""}`}>
+                  <label className="cleanup-default-main">
+                    <input type="checkbox" checked={picked && !allAdded} disabled={noLibraryOfKind || allAdded} onChange={() => togglePicked(preset.key)} />
+                    <span className="cleanup-default-icon">{preset.kind === "movies" ? <FilmLineIcon size={16} /> : <TvLineIcon size={16} />}</span>
+                    <span className="cleanup-default-copy">
+                      <strong>{preset.name}</strong>
+                      <small>{preset.description}</small>
+                      <em>{describeConditions(preset.conditions)}</em>
+                    </span>
+                  </label>
+                  <footer>
+                    <span className={`cleanup-badge${allAdded ? " is-ok" : unavailable ? " is-off" : ""}`}>
+                      {allAdded ? (
+                        <>
+                          <CheckLineIcon size={11} /> Added
+                        </>
+                      ) : unavailable ? (
+                        noLibraryOfKind ? `No ${preset.kind === "movies" ? "movie" : "TV"} library` : "No library selected"
+                      ) : (
+                        `${missing.length} ${missing.length === 1 ? "library" : "libraries"}`
+                      )}
+                    </span>
+                    <button type="button" className="cleanup-link" disabled={noLibraryOfKind} onClick={() => usePresetAsTemplate(preset)}>
+                      Use as template
+                    </button>
+                  </footer>
+                </article>
+              );
+            })}
+          </div>
+          <div className="cleanup-actions">
+            <button type="button" className="cleanup-btn is-primary" disabled={busy || !rulesToCreate} onClick={addDefaultRules}>
+              <AddLineIcon size={16} />
+              {rulesToCreate
+                ? `Add ${rulesToCreate} rule${rulesToCreate === 1 ? "" : "s"}`
+                : !pickedDefaults.size
+                  ? "Pick a rule to add"
+                  : defaultLibraryIds && !defaultLibraryIds.size
+                    ? "Pick a library"
+                    : "Nothing new to add"}
+            </button>
+            <span className="cleanup-muted">Existing rules with the same name are skipped.</span>
+          </div>
+        </section>
+      ) : null}
 
       {loading ? <p className="cleanup-muted">Loading rules…</p> : null}
 
@@ -309,7 +586,7 @@ export default function CleanupRules() {
             <small>Select</small>
           </button>
         ))}
-        {!loading && !rules.length ? <p className="cleanup-muted">No cleanup rules yet. New rules are saved disabled and in dry run.</p> : null}
+        {!loading && !rules.length ? <p className="cleanup-muted">No cleanup rules yet. Add some of the default rules above, or build your own below. New rules are saved disabled and in dry run.</p> : null}
       </div>
 
       <form
@@ -394,7 +671,23 @@ export default function CleanupRules() {
       {selectedId && preview ? (
         <section className="cleanup-preview">
           <h2>Preview</h2>
-          <p className="cleanup-muted">{preview.count} items, {formatBytes(preview.bytes)} would be affected. {preview.excludedCount || 0} excluded.</p>
+          <p className="cleanup-muted">
+            {preview.count} items, {formatBytes(preview.bytes)} would be affected. {preview.excludedCount || 0} excluded
+            {preview.protectedCount ? `, ${preview.protectedCount} protected because someone is watching or has favourited them` : ""}.
+          </p>
+          {preview.protectionError ? <p className="cleanup-banner is-warn">{preview.protectionError}. Live runs are blocked until this works again.</p> : null}
+          {preview.protected?.length ? (
+            <details className="cleanup-protected">
+              <summary>Protected ({preview.protected.length})</summary>
+              <ul>
+                {preview.protected.map((item) => (
+                  <li key={item.id}>
+                    <strong>{item.name}</strong> — {item.reasons.join("; ")}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
           <table className="cleanup-table">
             <thead>
               <tr>

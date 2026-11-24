@@ -785,6 +785,8 @@ async function buildCleanuparrWidgets() {
     events: snapshot.totals.events,
     unhealthy: snapshot.totals.unhealthy,
     needsAttention: snapshot.totals.needsAttention + snapshot.totals.interventions,
+    // What makes up needsAttention, so the number can be explained.
+    attention: { failedJobs: snapshot.totals.failedJobs || 0, failingJobs: snapshot.totals.failingJobs || [], unhealthy: snapshot.totals.unhealthy, interventions: snapshot.totals.interventions },
     items: snapshot.recentEvents.slice(0, 8).map((event) => ({
       name: event.item || event.title,
       event: event.eventType,

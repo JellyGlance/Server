@@ -11,10 +11,13 @@ import QuietHoursPanel, { isHeldByQuietHours } from "./QuietHoursPanel";
 import ServerLineIcon from "remixicon-react/ServerLineIcon";
 import PlayCircleLineIcon from "remixicon-react/PlayCircleLineIcon";
 import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
-import TimeLineIcon from "remixicon-react/TimeLineIcon";
+import SearchLineIcon from "remixicon-react/SearchLineIcon";
+import MoonClearLineIcon from "remixicon-react/MoonClearLineIcon";
+import ArrowDownSLineIcon from "remixicon-react/ArrowDownSLineIcon";
 import { formatJellyfinSchedule } from "../../../lib/jellyfin-job-triggers";
 
 import "../../css/settings/settings.css";
+import "../../css/settings/server-jobs.css";
 import { mediaServerName } from "../../../lib/media-server";
 
 function errorText(error, fallback) {
@@ -45,13 +48,34 @@ function formatLastRun(task) {
   }
 }
 
-function taskStatusClass(task) {
+function relativeTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime()) || date.getFullYear() < 2000) return "";
+  const minutes = Math.round((Date.now() - date.getTime()) / 60000);
+  const future = minutes < 0;
+  const abs = Math.abs(minutes);
+  const text = abs < 1 ? "now" : abs < 60 ? `${abs} min` : abs < 1440 ? `${Math.round(abs / 60)} hr` : `${Math.round(abs / 1440)} d`;
+  if (text === "now") return "just now";
+  return future ? `in ${text}` : `${text} ago`;
+}
+
+// Normalised status used for filtering, sorting and the coloured pill.
+function jobStatus(task) {
+  if (String(task.state || "").toLowerCase() === "running") return "running";
   const state = formatTaskState(task).toLowerCase();
-  if (state.includes("fail") || state.includes("error")) return "is-error";
-  if (state.includes("running")) return "is-running";
-  if (state.includes("completed") || state.includes("success"))
-    return "is-success";
-  return "";
+  if (state.includes("fail") || state.includes("error") || state.includes("abort")) return "failed";
+  if (state.includes("cancel")) return "cancelled";
+  if (!task.lastExecutionResult) return "never";
+  if (state.includes("completed") || state.includes("success")) return "ok";
+  return "idle";
+}
+
+const STATUS_LABELS = { running: "Running", failed: "Failed", cancelled: "Cancelled", never: "Never run", ok: "Completed", idle: "Idle" };
+const STATUS_ORDER = { running: 0, failed: 1, cancelled: 2, idle: 3, never: 4, ok: 5 };
+
+function lastRunValue(task) {
+  return task.lastExecutionResult?.EndTimeUtc || task.lastExecutionResult?.StartTimeUtc || null;
 }
 
 const APP_LOGOS = {
@@ -114,25 +138,93 @@ function formatInterval(task) {
 function ActiveTimesButton({ schedule, globalSchedule, onClick, disabled }) {
   const followsGlobal =
     Boolean(globalSchedule) && (!schedule || schedule.useGlobal);
-  let label = "Active times";
-  if (schedule && !schedule.useGlobal) label = describeActiveTimes(schedule);
-  else if (followsGlobal)
-    label = `Global · ${describeActiveTimes(globalSchedule)}`;
+  const custom = Boolean(schedule && !schedule.useGlobal);
+  let label = "";
+  if (custom) label = describeActiveTimes(schedule);
+  else if (followsGlobal) label = `Global · ${describeActiveTimes(globalSchedule)}`;
   return (
-    <Button
+    <button
       type="button"
-      variant={
-        schedule && !schedule.useGlobal ? "outline-info" : "outline-secondary"
-      }
       onClick={onClick}
       disabled={disabled}
-      className="server-active-times-btn"
-      title={followsGlobal ? "Following the global active times" : undefined}
+      className={`sj-times-btn${custom ? " is-custom" : followsGlobal ? " is-global" : ""}`}
+      title={label ? `Active times: ${label}${schedule?.autoRun ? " (runs automatically)" : ""}` : "Set the days and hours this job may run"}
     >
-      <TimerLineIcon size={17} />
-      {label}
+      <TimerLineIcon size={15} />
+      <span>{label || "Any time"}</span>
       {schedule?.autoRun ? <small>auto</small> : null}
-    </Button>
+    </button>
+  );
+}
+
+function JobRow({ status, name, category, description, lastRun, schedule, held, timesButton, onRun, runDisabled, running }) {
+  return (
+    <article className={`sj-row is-${status}`}>
+      <span className="sj-dot" aria-hidden="true" />
+      <div className="sj-main">
+        <strong title={name}>{name}</strong>
+        <span className="sj-sub">
+          {category ? <em>{category}</em> : null}
+          {description ? <span title={description}>{description}</span> : null}
+        </span>
+      </div>
+      <div className="sj-when">
+        <span title={lastRun.title}>{lastRun.text}</span>
+        <small title={schedule}>{schedule}</small>
+      </div>
+      <div className="sj-state">
+        <span className={`sj-pill is-${status}`}>{STATUS_LABELS[status] || status}</span>
+        {held ? (
+          <span className="sj-pill is-quiet" title="Scheduled runs are held until quiet hours end. Run still starts it now.">
+            <MoonClearLineIcon size={12} /> Quiet hours
+          </span>
+        ) : null}
+      </div>
+      <div className="sj-actions">
+        {timesButton}
+        <button type="button" className="sj-run-btn" onClick={onRun} disabled={runDisabled} title={running ? "Already running" : "Run now"}>
+          <PlayCircleLineIcon size={16} />
+          {running ? "Running" : "Run"}
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function JobToolbar({ query, onQuery, statusFilter, onStatus, counts, sort, onSort, extra }) {
+  const filters = [
+    ["all", "All"],
+    ["running", "Running"],
+    ["failed", "Failed"],
+    ["cancelled", "Cancelled"],
+    ["never", "Never run"],
+  ];
+  return (
+    <div className="sj-toolbar">
+      <label className="sj-search">
+        <SearchLineIcon size={16} />
+        <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Search jobs" aria-label="Search jobs" />
+      </label>
+      <div className="sj-chips" role="group" aria-label="Filter by status">
+        {filters.map(([key, label]) =>
+          key === "all" || counts[key] ? (
+            <button key={key} type="button" className={statusFilter === key ? "is-active" : ""} onClick={() => onStatus(key)}>
+              {label}
+              {key !== "all" ? <em className={`is-${key}`}>{counts[key]}</em> : null}
+            </button>
+          ) : null
+        )}
+      </div>
+      {extra}
+      <label className="sj-select">
+        <span>Sort</span>
+        <select value={sort} onChange={(event) => onSort(event.target.value)}>
+          <option value="status">Needs attention first</option>
+          <option value="name">Name</option>
+          <option value="recent">Last run</option>
+        </select>
+      </label>
+    </div>
   );
 }
 
@@ -149,6 +241,10 @@ export default function ServerManagement() {
   const [busyAction, setBusyAction] = useState("");
   const [message, setMessage] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sort, setSort] = useState("status");
+  const [showQuiet, setShowQuiet] = useState(false);
 
   const jellyfinTasks = status?.jellyfinTasks || [];
   const categories = useMemo(
@@ -160,15 +256,26 @@ export default function ServerManagement() {
     ],
     [jellyfinTasks],
   );
-  const visibleTasks = useMemo(
-    () =>
-      categoryFilter === "All"
-        ? jellyfinTasks
-        : jellyfinTasks.filter(
-            (task) => (task.category || "Jellyfin") === categoryFilter,
-          ),
-    [categoryFilter, jellyfinTasks],
-  );
+  const statusCounts = useMemo(() => {
+    const counts = { running: 0, failed: 0, cancelled: 0, never: 0, ok: 0, idle: 0 };
+    jellyfinTasks.forEach((task) => {
+      counts[jobStatus(task)] += 1;
+    });
+    return counts;
+  }, [jellyfinTasks]);
+  const visibleTasks = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const rows = jellyfinTasks.filter(
+      (task) =>
+        (categoryFilter === "All" || (task.category || "Jellyfin") === categoryFilter) &&
+        (statusFilter === "all" || jobStatus(task) === statusFilter) &&
+        (!needle || `${task.name} ${task.category} ${task.description}`.toLowerCase().includes(needle))
+    );
+    const byName = (a, b) => String(a.name).localeCompare(String(b.name));
+    if (sort === "name") return rows.sort(byName);
+    if (sort === "recent") return rows.sort((a, b) => new Date(lastRunValue(b) || 0) - new Date(lastRunValue(a) || 0) || byName(a, b));
+    return rows.sort((a, b) => STATUS_ORDER[jobStatus(a)] - STATUS_ORDER[jobStatus(b)] || byName(a, b));
+  }, [categoryFilter, jellyfinTasks, query, statusFilter, sort]);
   const globalSchedule = activeTimes.schedules.global || null;
   const runningCount = jellyfinTasks.filter(
     (task) => String(task.state || "").toLowerCase() === "running",
@@ -394,121 +501,123 @@ export default function ServerManagement() {
             />
           }
         >
-          <section className="server-management-grid">
-            <article className="server-management-panel server-status-panel">
-              <div className="server-management-panel-heading">
-                <AppLogo kind="jellyfin" size={22} />
-                <div>
-                  <h2>{status?.jellyfin?.name || mediaServerName()}</h2>
-                  <p>
-                    {status?.jellyfin?.ok
-                      ? "Connected media server"
-                      : status?.jellyfin?.error || "Status unavailable"}
-                  </p>
-                </div>
+          <section className="sj-overview">
+            <div className="sj-server">
+              <AppLogo kind="jellyfin" size={26} />
+              <div>
+                <strong>{status?.jellyfin?.name || mediaServerName()}</strong>
+                <span className={status?.jellyfin?.ok ? "is-ok" : "is-error"}>
+                  {status?.jellyfin?.ok ? `Connected · ${status?.jellyfin?.version || "unknown version"}` : status?.jellyfin?.error || "Status unavailable"}
+                </span>
               </div>
-              <div className="server-management-facts">
-                <span>Version</span>
-                <strong>{status?.jellyfin?.version || "Unknown"}</strong>
-                <span>{mediaServerName()} jobs</span>
-                <strong>{status?.jellyfinTasks?.length || 0} available</strong>
-                <span>Running</span>
-                <strong>{runningCount}</strong>
-              </div>
-            </article>
-            <QuietHoursPanel quiet={quiet} onSaved={setQuiet} />
+            </div>
+            <div className="sj-stat">
+              <strong>{jellyfinTasks.length}</strong>
+              <span>Jobs</span>
+            </div>
+            <button type="button" className={`sj-stat${statusCounts.running ? " is-running" : ""}`} onClick={() => setStatusFilter(statusCounts.running ? "running" : "all")}>
+              <strong>{statusCounts.running}</strong>
+              <span>Running</span>
+            </button>
+            <button type="button" className={`sj-stat${statusCounts.failed ? " is-failed" : ""}`} onClick={() => setStatusFilter(statusCounts.failed ? "failed" : "all")}>
+              <strong>{statusCounts.failed}</strong>
+              <span>Failed</span>
+            </button>
+            <button type="button" className={`sj-stat${statusCounts.cancelled ? " is-cancelled" : ""}`} onClick={() => setStatusFilter(statusCounts.cancelled ? "cancelled" : "all")}>
+              <strong>{statusCounts.cancelled}</strong>
+              <span>Cancelled</span>
+            </button>
+            <button type="button" className={`sj-quiet${quiet?.enabled ? " is-on" : ""}`} onClick={() => setShowQuiet(!showQuiet)} aria-expanded={showQuiet}>
+              <MoonClearLineIcon size={18} />
+              <span>
+                <strong>Quiet hours</strong>
+                <small>{quiet?.enabled ? `${quiet.active ? "Active now" : "On"} · ${quiet.start || ""}–${quiet.end || ""}` : "Off"}</small>
+              </span>
+              <ArrowDownSLineIcon size={18} className={showQuiet ? "is-flipped" : ""} />
+            </button>
           </section>
 
-          <section className="server-management-section">
-            <div className="server-management-section-heading">
-              <h2>Scheduled Jobs</h2>
+          {showQuiet ? (
+            <section className="sj-quiet-panel">
+              <QuietHoursPanel quiet={quiet} onSaved={setQuiet} />
+            </section>
+          ) : null}
+
+          <section className="server-management-section sj-section">
+            <div className="sj-section-heading">
+              <h2>Scheduled jobs</h2>
               <p>
-                These are Jellyfin jobs returned by the Jellyfin scheduled task
-                API.{" "}
-                <Link to="/settings/jellyfin-jobs">
-                  Set Jellyfin&apos;s own run times in Settings
-                </Link>
-                , or use Active times to limit when they may run.
+                From {mediaServerName()}&apos;s scheduled task API.{" "}
+                <Link to="/settings/jellyfin-jobs">Change {mediaServerName()}&apos;s own run times</Link>, or use Active times to limit when JellyGlance lets them run.
               </p>
             </div>
-            {categories.length > 2 ? (
-              <div
-                className="server-job-filters"
-                aria-label={`Filter ${mediaServerName()} jobs`}
-              >
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    type="button"
-                    className={categoryFilter === category ? "is-active" : ""}
-                    onClick={() => setCategoryFilter(category)}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            <div className="server-task-list">
-              {loading ? (
-                <div className="server-management-empty">
-                  Loading Jellyfin jobs...
-                </div>
-              ) : null}
+            <JobToolbar
+              query={query}
+              onQuery={setQuery}
+              statusFilter={statusFilter}
+              onStatus={setStatusFilter}
+              counts={statusCounts}
+              sort={sort}
+              onSort={setSort}
+              extra={
+                categories.length > 2 ? (
+                  <label className="sj-select">
+                    <span>Category</span>
+                    <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+                      {categories.map((category) => (
+                        <option key={category} value={category}>
+                          {category === "All" ? "All categories" : category}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null
+              }
+            />
+            <div className="sj-list">
+              {loading && !jellyfinTasks.length ? <div className="server-management-empty">Loading {mediaServerName()} jobs…</div> : null}
               {visibleTasks.map((task) => {
                 const key = `jellyfin:${task.id}`;
                 const held = quiet?.active && isHeldByQuietHours(quiet, task);
+                const status = jobStatus(task);
+                const last = lastRunValue(task);
                 return (
-                  <article
+                  <JobRow
                     key={task.id}
-                    className={`server-task-row ${taskStatusClass(task)}`}
-                  >
-                    <div>
-                      <span>{task.category}</span>
-                      <strong>{task.name}</strong>
-                      <p>{task.description || formatTaskState(task)}</p>
-                      <small>
-                        <TimeLineIcon size={15} />
-                        {formatLastRun(task)} ·{" "}
-                        {formatJellyfinSchedule(task.triggers)}
-                      </small>
-                    </div>
-                    <div className="server-task-actions">
-                      {held ? (
-                        <em
-                          className="quiet-hours-chip"
-                          title="Scheduled runs are held until quiet hours end. Run still starts it now."
-                        >
-                          In quiet hours
-                        </em>
-                      ) : null}
-                      <em>{formatTaskState(task)}</em>
+                    status={status}
+                    name={task.name}
+                    category={task.category}
+                    description={task.description}
+                    lastRun={{ text: last ? `Ran ${relativeTime(last)}` : "Never run", title: formatLastRun(task) }}
+                    schedule={formatJellyfinSchedule(task.triggers)}
+                    held={held}
+                    running={status === "running"}
+                    timesButton={
                       <ActiveTimesButton
                         schedule={activeTimes.schedules[key]}
                         globalSchedule={globalSchedule}
-                        onClick={() =>
-                          setEditing({ key, task, supportsEnforce: true })
-                        }
+                        onClick={() => setEditing({ key, task, supportsEnforce: true })}
                       />
-                      <Button
-                        type="button"
-                        variant="outline-primary"
-                        onClick={() =>
-                          runAction("runJellyfinTask", { taskId: task.id })
-                        }
-                        disabled={
-                          Boolean(busyAction) || task.state === "Running"
-                        }
-                      >
-                        <PlayCircleLineIcon size={17} />
-                        Run
-                      </Button>
-                    </div>
-                  </article>
+                    }
+                    onRun={() => runAction("runJellyfinTask", { taskId: task.id })}
+                    runDisabled={Boolean(busyAction) || status === "running"}
+                  />
                 );
               })}
               {!loading && !visibleTasks.length ? (
                 <div className="server-management-empty">
-                  No Jellyfin jobs matched this view.
+                  No jobs match this view.{" "}
+                  <button
+                    type="button"
+                    className="sj-link"
+                    onClick={() => {
+                      setQuery("");
+                      setStatusFilter("all");
+                      setCategoryFilter("All");
+                    }}
+                  >
+                    Clear filters
+                  </button>
                 </div>
               ) : null}
             </div>
@@ -529,95 +638,64 @@ export default function ServerManagement() {
                 />
               }
             >
-              <section className="server-management-grid">
-                <article className="server-management-panel server-status-panel">
-                  <div className="server-management-panel-heading">
-                    <AppLogo kind={app.kind} size={22} />
-                    <div>
-                      <h2>{app.name}</h2>
-                      <p>{app.ok ? app.url : app.error}</p>
-                    </div>
+              <section className="sj-overview">
+                <div className="sj-server">
+                  <AppLogo kind={app.kind} size={26} />
+                  <div>
+                    <strong>{app.name}</strong>
+                    <span className={app.ok ? "is-ok" : "is-error"}>{app.ok ? app.url : app.error}</span>
                   </div>
-                  <div className="server-management-facts">
-                    <span>Tasks</span>
-                    <strong>{app.tasks.length} available</strong>
-                    <span>Running</span>
-                    <strong>{running}</strong>
-                    <span>With active times</span>
-                    <strong>
-                      {
-                        app.tasks.filter(
-                          (task) =>
-                            activeTimes.schedules[
-                              `arr:${app.instanceId}:${task.command}`
-                            ],
-                        ).length
-                      }
-                    </strong>
-                  </div>
-                </article>
-              </section>
-              <section className="server-management-section">
-                <div className="server-management-section-heading">
-                  <h2>Scheduled Tasks</h2>
-                  <p>
-                    Tasks reported by {app.name}. Run one now, or set active
-                    times so JellyGlance runs it only on the days and hours you
-                    pick.
-                  </p>
                 </div>
-                <div className="server-task-list">
-                  {app.tasks.map((task) => {
-                    const key = `arr:${app.instanceId}:${task.command}`;
-                    return (
-                      <article
-                        key={task.id}
-                        className={`server-task-row ${task.running ? "is-running" : ""}`}
-                      >
-                        <div>
-                          <span>{formatInterval(task)}</span>
-                          <strong>{task.name}</strong>
-                          <p>
-                            {task.nextExecution
-                              ? `Next run ${formatDateTime(task.nextExecution)}`
-                              : task.nextRunIn
-                                ? `Next run in ${task.nextRunIn}`
-                                : "No next run scheduled"}
-                          </p>
-                          <small>
-                            <TimeLineIcon size={15} />
-                            {task.lastExecution
-                              ? `Last run ${formatDateTime(task.lastExecution)}`
-                              : "Last run unknown"}
-                          </small>
-                        </div>
-                        <div className="server-task-actions">
-                          <em>{task.running ? "Running" : "Idle"}</em>
-                          <ActiveTimesButton
-                            schedule={activeTimes.schedules[key]}
-                            globalSchedule={globalSchedule}
-                            onClick={() =>
-                              setEditing({ key, task, supportsEnforce: false })
-                            }
-                          />
-                          <Button
-                            type="button"
-                            variant="outline-primary"
-                            onClick={() => runArrTask(app, task)}
-                            disabled={Boolean(busyAction) || task.running}
-                          >
-                            <PlayCircleLineIcon size={17} />
-                            Run
-                          </Button>
-                        </div>
-                      </article>
-                    );
-                  })}
-                  {!app.tasks.length ? (
-                    <div className="server-management-empty">
-                      {app.ok ? "No tasks reported." : app.error}
-                    </div>
-                  ) : null}
+                <div className="sj-stat">
+                  <strong>{app.tasks.length}</strong>
+                  <span>Tasks</span>
+                </div>
+                <div className={`sj-stat${running ? " is-running" : ""}`}>
+                  <strong>{running}</strong>
+                  <span>Running</span>
+                </div>
+                <div className="sj-stat">
+                  <strong>{app.tasks.filter((task) => activeTimes.schedules[`arr:${app.instanceId}:${task.command}`]).length}</strong>
+                  <span>With active times</span>
+                </div>
+              </section>
+              <section className="server-management-section sj-section">
+                <div className="sj-section-heading">
+                  <h2>Scheduled tasks</h2>
+                  <p>Tasks reported by {app.name}. Run one now, or set active times so JellyGlance runs it only on the days and hours you pick.</p>
+                </div>
+                <div className="sj-list">
+                  {[...app.tasks]
+                    .sort((a, b) => Number(Boolean(b.running)) - Number(Boolean(a.running)) || String(a.name).localeCompare(String(b.name)))
+                    .map((task) => {
+                      const key = `arr:${app.instanceId}:${task.command}`;
+                      const next = task.nextExecution ? `Next ${relativeTime(task.nextExecution)}` : task.nextRunIn ? `Next in ${task.nextRunIn}` : "No next run";
+                      return (
+                        <JobRow
+                          key={task.id}
+                          status={task.running ? "running" : task.lastExecution ? "ok" : "never"}
+                          name={task.name}
+                          category={formatInterval(task)}
+                          description=""
+                          lastRun={{
+                            text: task.lastExecution ? `Ran ${relativeTime(task.lastExecution)}` : "Last run unknown",
+                            title: task.lastExecution ? formatDateTime(task.lastExecution) : "",
+                          }}
+                          schedule={next}
+                          running={Boolean(task.running)}
+                          timesButton={
+                            <ActiveTimesButton
+                              schedule={activeTimes.schedules[key]}
+                              globalSchedule={globalSchedule}
+                              onClick={() => setEditing({ key, task, supportsEnforce: false })}
+                            />
+                          }
+                          onRun={() => runArrTask(app, task)}
+                          runDisabled={Boolean(busyAction) || task.running}
+                        />
+                      );
+                    })}
+                  {!app.tasks.length ? <div className="server-management-empty">{app.ok ? "No tasks reported." : app.error}</div> : null}
                 </div>
               </section>
             </Tab>

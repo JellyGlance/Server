@@ -6944,3 +6944,16 @@
   color: var(--bs-secondary-color, #8fa3bd);
   font-size: 13px;
 }
+
+/* Jellyfin Jobs: two jobs per row on wide screens instead of 57 full-width rows.
+   A job being edited spans both columns so its schedule editor has room. */
+@media (min-width: 1200px) {
+  .jellyfin-job-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .jellyfin-job-list > .jellyfin-job-card.is-editing {
+    grid-column: 1 / -1;
+  }
+}

@@ -12,7 +12,8 @@ import RecentlyAddedCard from "./components/library/RecentlyAdded/recently-added
 import "./css/home.css";
 import "./css/recently-added-page.css";
 
-const mediaTypes = ["Series", "Movie", "Audio", "Episode"];
+const mediaTypes = ["Series", "Movie", "Audio", "Episode", "Book", "AudioBook"];
+const bookTypes = ["Book", "AudioBook"];
 const shelfCacheKey = "jellyglance_recently_added_shelves_v2_posters";
 const typeFilterKey = "PREF_RECENTLY_ADDED_TypeFilter";
 const libraryFilterKey = "PREF_RECENTLY_ADDED_LibraryFilter";
@@ -163,7 +164,7 @@ export default function RecentlyAddedPage() {
       .map((shelf) => {
         const items = sortItems(
           shelf.items.filter((item) => {
-            const matchesType = typeFilter === "All" || item.Type === typeFilter;
+            const matchesType = typeFilter === "All" || item.Type === typeFilter || (typeFilter === "Book" && bookTypes.includes(item.Type));
             const matchesSearch =
               !search ||
               [item.Name, item.SeriesName, item.Type]
@@ -259,6 +260,7 @@ export default function RecentlyAddedPage() {
             <option value="Movie">Movies</option>
             <option value="Episode">Episodes</option>
             <option value="Audio">Audio</option>
+            <option value="Book">Books</option>
           </select>
         </label>
 

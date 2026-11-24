@@ -1019,3 +1019,10 @@ a.stats-rank-row:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* Inside the Statistics tabs, line Overview up with the other tabs, which use
+   the full width, instead of capping it at 1840px and centring it. */
+.page-tabs-hub .watch-stats {
+  max-width: none;
+  margin: 0;
+}

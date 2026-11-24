@@ -11,14 +11,58 @@ function sendError(res, error, fallback) {
 
 router.get("/status", async (req, res) => {
   try {
+    const tmdb = await collections.tmdbStatus();
     res.send({
       automationAllowed: collections.automationAllowed(),
-      tmdbConfigured: Boolean(collections.createTmdbClient()),
+      tmdbConfigured: tmdb.configured,
+      tmdb,
+      trakt: await collections.traktStatus(),
       types: collections.BUILDER_TYPES,
       libraries: await collections.listLibraries(),
     });
   } catch (error) {
     sendError(res, error, "Unable to load collection status");
+  }
+});
+
+// TMDB key, managed from Settings > Integrations > Metadata. Never returns the key itself.
+router.get("/tmdb", async (req, res) => {
+  try {
+    res.send(await collections.tmdbStatus());
+  } catch (error) {
+    sendError(res, error, "Unable to load TMDB settings");
+  }
+});
+
+router.put("/tmdb", async (req, res) => {
+  try {
+    res.send(await collections.saveTmdbApiKey(req.body?.apiKey));
+  } catch (error) {
+    sendError(res, error, "Unable to save the TMDB key");
+  }
+});
+
+router.get("/trakt", async (req, res) => {
+  try {
+    res.send(await collections.traktStatus());
+  } catch (error) {
+    sendError(res, error, "Unable to load Trakt settings");
+  }
+});
+
+router.put("/trakt", async (req, res) => {
+  try {
+    res.send(await collections.saveTraktClientId(req.body?.clientId));
+  } catch (error) {
+    sendError(res, error, "Unable to save the Trakt Client ID");
+  }
+});
+
+router.get("/tmdb/collections", async (req, res) => {
+  try {
+    res.send({ results: await collections.searchTmdbCollections(req.query.q) });
+  } catch (error) {
+    sendError(res, error, "Unable to search TMDB collections");
   }
 });
 
@@ -59,6 +103,17 @@ router.get("/builders/:id/preview", async (req, res) => {
     res.send(await collections.previewBuilder(req.params.id));
   } catch (error) {
     sendError(res, error, "Unable to preview the builder");
+  }
+});
+
+router.get("/builders/:id/poster", async (req, res) => {
+  try {
+    const buffer = await collections.previewCollectionPoster(req.params.id);
+    res.set("Content-Type", "image/jpeg");
+    res.set("Cache-Control", "no-store");
+    res.send(buffer);
+  } catch (error) {
+    sendError(res, error, "Unable to render the collection poster");
   }
 });
 

@@ -1,6 +1,6 @@
 {
   "name": "minimatch",
-  "version": "1.4.3-beta.3",
+  "version": "1.4.3-beta.4",
   "private": true,
   "description": "CommonJS v3-style wrapper around patched minimatch v11 (CVE-2026-118764). Used via npm overrides for transitive deps that still call require('minimatch') as a function.",
   "main": "index.js",

@@ -1286,3 +1286,43 @@
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
+
+/* Cards fill the row instead of sitting in fixed 198px columns. */
+.users-profile-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr));
+  gap: 0.7rem;
+}
+
+.users-profile-metrics {
+  grid-auto-rows: minmax(3.15rem, auto);
+}
+
+/* Titles can use two lines; everything else stays on one. */
+.users-profile-metrics strong.is-wrap {
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.users-profile-metrics strong {
+  font-size: 0.8rem;
+}
+
+/* Smaller stat tiles: icon, label, then the number on the right. */
+.users-stat-card {
+  grid-template-columns: auto 1fr auto;
+  min-height: 0;
+  padding: 0.5rem 0.8rem;
+}
+
+.users-stat-card svg {
+  grid-row: auto;
+  width: 18px;
+  height: 18px;
+}
+
+.users-stat-card strong {
+  font-size: 1.25rem;
+  line-height: 1;
+}

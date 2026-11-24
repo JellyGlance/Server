@@ -355,11 +355,55 @@ async function loadLibraryItems(libraryId) {
   }));
 }
 
+// Items someone is part-way through, or has marked as a favourite, are never cleaned up.
+let protectionCache = { at: 0, map: null };
+async function loadProtectedItems() {
+  if (protectionCache.map && Date.now() - protectionCache.at < 5 * 60 * 1000) return protectionCache.map;
+  const mediaServer = require("./media-server-collections");
+  const map = new Map();
+  const note = (id, reason) => {
+    if (!id) return;
+    const reasons = map.get(id) || new Set();
+    reasons.add(reason);
+    map.set(id, reasons);
+  };
+  const users = await mediaServer.request("get", "/Users");
+  for (const user of Array.isArray(users) ? users : []) {
+    if (user?.Policy?.IsDisabled) continue;
+    const base = `/Users/${encodeURIComponent(user.Id)}/Items`;
+    const [resumable, favourites] = await Promise.all([
+      mediaServer.request("get", base, { params: { Filters: "IsResumable", Recursive: true, IncludeItemTypes: "Movie,Episode", Fields: "SeriesId", Limit: 500 } }).catch(() => null),
+      mediaServer.request("get", base, { params: { Filters: "IsFavorite", Recursive: true, IncludeItemTypes: "Movie,Series", Limit: 1000 } }).catch(() => null),
+    ]);
+    for (const item of resumable?.Items || []) note(item.Type === "Episode" ? item.SeriesId : item.Id, `${user.Name} is part-way through it`);
+    for (const item of favourites?.Items || []) note(item.Id, `favourite of ${user.Name}`);
+  }
+  protectionCache = { at: Date.now(), map };
+  return map;
+}
+
 async function previewRule(id, { now } = {}) {
   const rule = await getRule(id);
   const [items, users, exclusions] = await Promise.all([loadLibraryItems(rule.libraryId), loadUsers(), listExclusions(id)]);
   const preview = previewItems(items, { ...rule, conditions: rule.conditions, actions: rule.actions, dry_run: rule.dryRun, enabled: rule.enabled }, { now: now || new Date(), users, exclusions });
-  return { rule, ...preview };
+  // Protection needs the media server; if it cannot be reached, keep the preview but say so.
+  let protectedItems = [];
+  let protectionError = null;
+  try {
+    const protectedMap = await loadProtectedItems();
+    const kept = [];
+    for (const item of preview.matches) {
+      const reasons = protectedMap.get(item.id);
+      if (reasons) protectedItems.push({ id: item.id, name: item.name, size: item.size, reasons: [...reasons] });
+      else kept.push(item);
+    }
+    preview.matches = kept;
+    preview.count = kept.length;
+    preview.bytes = kept.reduce((sum, item) => sum + (Number(item.size) || 0), 0);
+  } catch (error) {
+    protectionError = `Could not check favourites and in-progress items (${error.message})`;
+  }
+  return { rule, ...preview, protected: protectedItems, protectedCount: protectedItems.length, protectionError };
 }
 
 function defaultArrClients() {
@@ -469,6 +513,29 @@ async function listRuns(ruleId) {
   return runs;
 }
 
+// Tell people what is about to go, through webhooks subscribed to "leaving_soon" (e.g. Discord).
+async function notifyLeavingSoon(rule, results) {
+  const leaving = results.filter((item) => item.actions.some((step) => step.type === "leavingSoon" && step.status === "done"));
+  if (!leaving.length) return;
+  const days = Number(leaving[0].actions.find((step) => step.type === "leavingSoon")?.days) || 14;
+  const leaveOn = new Date(Date.now() + days * 86400000);
+  const lines = leaving.slice(0, 25).map((item) => `• ${item.name}${item.year ? ` (${item.year})` : ""}`);
+  const WebhookManager = require("./webhook-manager");
+  const manager = new WebhookManager();
+  await manager.triggerEventWebhooks("leaving_soon", {
+    event: "leaving_soon",
+    integrationEvent: "Leaving soon",
+    source: rule.libraryName || "Library",
+    title: `Leaving soon · ${leaving.length} title${leaving.length === 1 ? "" : "s"}`,
+    rule: rule.name,
+    days,
+    leaveOn: leaveOn.toISOString(),
+    items: leaving.slice(0, 50).map((item) => ({ id: item.id, name: item.name, year: item.year || null })),
+    message: `These leave in ${days} days (around ${leaveOn.toLocaleDateString("en-GB", { day: "numeric", month: "long" })}). Watch them while you can:\n${lines.join("\n")}${leaving.length > 25 ? `\n…and ${leaving.length - 25} more` : ""}`,
+  });
+  if (typeof manager.flushCoalescedWebhooks === "function") await manager.flushCoalescedWebhooks();
+}
+
 async function runRule(id, { confirm = false, createdBy } = {}, { jellyfin, arr, now } = {}) {
   const preview = await previewRule(id, { now });
   const rule = preview.rule;
@@ -494,16 +561,29 @@ async function runRule(id, { confirm = false, createdBy } = {}, { jellyfin, arr,
   }
 
   const dryRun = !wantsLive || !automationAllowed();
+  if (!dryRun && preview.protectionError) {
+    // Without the protection check a live run could remove something a user is watching.
+    throw httpError(`${preview.protectionError}. Live cleanup was not run.`, 503, "PROTECTION_UNAVAILABLE");
+  }
   const results = [];
   if (!dryRun) {
-    if (!jellyfin || !arr) {
-      throw httpError("Live cleanup needs Jellyfin and Arr clients", 500);
-    }
+    // Use the built-in media server and Sonarr/Radarr clients unless a caller (tests) injects its own.
+    const clients = require("./cleanup-clients");
+    jellyfin = jellyfin || clients.createMediaServerCleanupClient();
+    arr = arr || (await clients.createArrCleanupClient());
   }
+  let failures = 0;
   for (const item of preview.matches) {
     const actions = [];
     for (const step of item.actions) {
-      actions.push(await executeStep(step, item, { jellyfin, arr: arr || defaultArrClients(), dryRun }));
+      try {
+        actions.push(await executeStep(step, item, { jellyfin, arr: arr || defaultArrClients(), dryRun }));
+      } catch (error) {
+        // One item failing (e.g. not in Radarr) must not stop the rest; later steps for it are skipped.
+        failures += 1;
+        actions.push({ ...step, status: "failed", error: error.message });
+        break;
+      }
     }
     results.push({ ...item, actions });
   }
@@ -512,11 +592,16 @@ async function runRule(id, { confirm = false, createdBy } = {}, { jellyfin, arr,
     rule,
     preview,
     dryRun,
-    status: dryRun ? "dry-run" : "completed",
-    message: dryRun ? "Dry run only. No library, tag, collection or Arr changes were made." : "Cleanup actions were applied.",
+    status: dryRun ? "dry-run" : failures ? "partial" : "completed",
+    message: dryRun
+      ? "Dry run only. No library, tag, collection or Arr changes were made."
+      : failures
+        ? `Cleanup ran with ${failures} failed step${failures === 1 ? "" : "s"}; see the items for details.`
+        : "Cleanup actions were applied.",
     createdBy,
     items: results,
   });
+  if (!dryRun) await notifyLeavingSoon(rule, results).catch((error) => console.error("[CLEANUP] Leaving soon notice failed:", error.message));
   return { needsConfirm: false, dryRun, ...preview, matches: results, run };
 }
 
