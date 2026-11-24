@@ -8,8 +8,10 @@ function httpError(message, statusCode = 400) {
   return error;
 }
 
+// Clamped here as well as in normalizeDelayMs, so no caller can start a longer timer.
 function defaultSleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  const delay = Math.min(MAX_DELAY_MS, Math.max(0, Number(ms) || 0));
+  return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
 function normalizeDelayMs(value, { allowZero = false } = {}) {
@@ -33,7 +35,7 @@ async function stopSessionWithMessage(
   }
 
   const delayedMs = normalizeDelayMs(delayMs, { allowZero: allowZeroDelay });
-  const displayTimeout = Number(timeoutMs) || Math.max(8000, delayedMs + 2000);
+  const displayTimeout = Math.min(60000, Math.max(1000, Number(timeoutMs) || Math.max(8000, delayedMs + 2000)));
 
   await jellyfin.sendSessionMessage(id, { header, text: message, timeoutMs: displayTimeout });
   if (delayedMs > 0) await sleep(delayedMs);

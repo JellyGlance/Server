@@ -3,14 +3,17 @@
 // youtube-nocookie embed, so nothing else from the video list ever reaches the page.
 const KEY_PATTERN = /^[A-Za-z0-9_-]{6,20}$/;
 const TYPE_RANK = { Trailer: 0, Teaser: 1, Clip: 2 };
+// Exact host names only, so a host like "notyoutube.com" is never treated as YouTube.
+const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
+const YOUTU_BE_HOSTS = new Set(["youtu.be", "www.youtu.be"]);
 
 function videoKey(video) {
   if (typeof video?.key === "string" && KEY_PATTERN.test(video.key)) return video.key;
   // Seerr also sends the watch URL; recover the key from it when `key` is missing.
   try {
     const url = new URL(String(video?.url || ""));
-    const host = url.hostname.replace(/^www\./, "");
-    const key = host === "youtu.be" ? url.pathname.slice(1) : host.endsWith("youtube.com") ? url.searchParams.get("v") : "";
+    const host = url.hostname.toLowerCase();
+    const key = YOUTU_BE_HOSTS.has(host) ? url.pathname.slice(1) : YOUTUBE_HOSTS.has(host) ? url.searchParams.get("v") : "";
     return KEY_PATTERN.test(key || "") ? key : "";
   } catch {
     return "";

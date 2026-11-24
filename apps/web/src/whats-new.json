@@ -1,64 +1,79 @@
 {
-  "1.4.3-beta": [
+  "1.4.3": [
+    {
+      "icon": "rocket",
+      "title": "Four New Home Widgets",
+      "body": "Edit Home has four new widgets. App health shows a status light for Jellyfin and every connected app, with the last failure when one goes red. Now listening shows who is on Audiobookshelf and what was just added. Collections shows each auto collection's poster, size and last refresh. Space you could free adds up extra copies of duplicated movies and current cleanup rule matches. They start hidden, so your layout stays as it is until you add them."
+    },
+    {
+      "icon": "magic",
+      "title": "A Much Better Calendar",
+      "body": "The calendar has Month and Agenda views, filters for TV, movies, music, books and audiobooks, and a Hide downloaded switch, and it remembers your choices. Movies show their cinema, digital and physical release dates, Audiobookshelf books and podcast episodes are included, and artwork from Sonarr and Radarr loads even when they aren't reachable from your browser. You can subscribe to the calendar from any calendar app, and send an airing today digest to a webhook each morning."
+    },
     {
       "icon": "movie",
       "title": "Requests Overhaul",
-      "body": "Requests now has Discover as sideways shelves with a See all view, a cards layout you can switch to on any screen, a calendar of requested titles arriving this week, trailers from Discover and the title dialog, bulk approve, decline or retry, a stats tab for genres, fulfilment time and the busiest requester, and Ask Blobbo for plain questions about the queue. Live download progress and ETA also show on rows and cards."
+      "body": "Requests has Discover as shelves with a See all view, a cards layout, a calendar of requested titles arriving this week, trailers, bulk approve, decline or retry, a stats tab, and Ask Blobbo for plain questions about the queue. Live download progress and ETA show on rows and cards."
+    },
+    {
+      "icon": "palette",
+      "title": "Collections That Build Themselves",
+      "body": "Auto collections can follow a TMDB franchise, a Trakt list or a Letterboxd list, then create or update the matching collection in Jellyfin. They can make a poster from the first few titles, refresh daily or weekly, and show which list titles you don't have. Poster overlays use the real poster and can be reverted. Nothing is written to Jellyfin until you turn Apply on."
+    },
+    {
+      "icon": "shield",
+      "title": "Safer Cleanup Rules",
+      "body": "Cleanup rules start from ready-made presets, none of them switched on. Dry run is on by default, favourites and anything someone is partway through are always protected, and a live run stops before touching anything if that protection can't be checked. A leaving soon webhook can warn people before titles go."
+    },
+    {
+      "icon": "speed",
+      "title": "Duplicates And Upgrades",
+      "body": "Server has two new tabs. Duplicates finds the same movie stored more than once and shows how much space the extra copies use; the best copy can never be deleted. Upgrades lists titles below the quality you pick, can ask Radarr to search for better copies and, if you turn it on, works through them a few each night."
+    },
+    {
+      "icon": "users",
+      "title": "Integrations Check Themselves",
+      "body": "Saving an integration now runs a health check straight away and records it in Health History. A new Metadata tab holds your TMDB, Trakt and Letterboxd settings in one place. Cleanuparr works again with its current API and no longer times out."
     },
     {
       "icon": "magic",
       "title": "Libraries Overview, Storage And Forecast",
-      "body": "Libraries is split into Overview, Storage and Forecast tabs. Overview cards have a clearer title, even stats, relative last-played time and hide empty sizes, and the list view lines up on a shared column grid. A library such as DC TV no longer appears twice; the stats view now picks one latest activity per library and matches episodes by season as well as episode."
-    },
-    {
-      "icon": "shield",
-      "title": "Cleanup Rules With A Dry Run",
-      "body": "A cleanup rules engine lets you set conditions and actions per library. Dry run is on by default, so you can preview matches before anything is removed."
-    },
-    {
-      "icon": "chat",
-      "title": "Stop A Stream With A Message",
-      "body": "You can stop a playback session in one click and show an on-screen message on the player."
-    },
-    {
-      "icon": "palette",
-      "title": "Collections And Poster Overlays",
-      "body": "Build collection rules and preview poster overlays before you apply them. Apply stays off until you turn it on."
+      "body": "Libraries is split into Overview, Storage and Forecast tabs, with clearer cards and a list view on a shared column grid. A library no longer appears twice."
     },
     {
       "icon": "mail",
       "title": "Newsletter Builder, Channels And Automatic Emails",
-      "body": "The newsletter report builder adds more digest blocks, poster cards, per-recipient language, and Halloween and winter themes. You can post the same digest to Discord or Telegram, send automatic welcome, milestone, admin digest and welcome-back emails, and publish a public archive. Channels, automations and the archive stay off until you turn them on."
+      "body": "The newsletter builder has more blocks, poster cards, per-recipient language and seasonal themes. You can post the same digest to Discord or Telegram, send automatic welcome, milestone and welcome-back emails, and publish a public archive. All of these stay off until you turn them on."
     },
     {
       "icon": "rocket",
-      "title": "Home Layout, Session Cards And Recently Added",
-      "body": "Home can be rearranged in place with new widgets, and Active Sessions has Simple, Detailed and Wall views with fuller posters and clearer playback info. Recently Added fills shelves first, folds away empty libraries, and uses one arrow on every dropdown."
+      "title": "Home, Sessions And Recently Added",
+      "body": "Home can be rearranged in place, and Active Sessions has Simple, Detailed and Wall views. The wall keeps its tiles in place instead of reshuffling, and position, time left and the progress bar always agree. Recently Added now shows books and audiobooks too."
+    },
+    {
+      "icon": "chat",
+      "title": "Stop A Stream With A Message",
+      "body": "Stop a playback session in one click and show a message on the player first."
+    },
+    {
+      "icon": "speed",
+      "title": "A Tidier Server Jobs Page",
+      "body": "Server jobs are now compact rows with search, status and category filters and sorting, and the overview numbers filter the list when you click them. Quiet hours fold away until you need them."
     },
     {
       "icon": "movie",
       "title": "Full Jellyfin Sync Finishes Again",
-      "body": "Full Jellyfin Sync no longer stops partway through Media Sync when a library has Live TV channels, extras or other items with no media files attached. Those items are skipped for file info and the rest of the sync carries on, so titles you removed from Jellyfin get marked as gone again and Purge Cached Library Items Only has something to clear. Run one full sync after updating, then purge."
+      "body": "Full Jellyfin Sync no longer stops partway when a library has Live TV channels, extras or other items with no media files. Run one full sync after updating, then purge cached library items to clear titles you removed from Jellyfin."
     },
     {
       "icon": "shield",
       "title": "Postgres 18 Recommended",
-      "body": "Postgres 18 is the recommended database again. The bundled Docker Compose files, the Proxmox and Unraid packaging and the README all use postgres:18-alpine. Postgres 18 keeps its data under /var/lib/postgresql/18/docker, so mount the database volume at /var/lib/postgresql, not the old /var/lib/postgresql/data. Changing the image tag or the mount does not move existing data: dump it with your current version, restore it into a fresh Postgres 18 volume and check it before removing the old one. Purging items removed from Jellyfin still shows an error when it fails, instead of a success message."
+      "body": "The bundled Docker Compose files, Proxmox and Unraid packaging and the README now use postgres:18-alpine. Postgres 18 keeps its data under /var/lib/postgresql/18/docker, so mount the volume at /var/lib/postgresql, not /var/lib/postgresql/data. Changing the image does not move existing data: dump it with your current version, restore it into a fresh Postgres 18 volume and check it before removing the old one. You don't have to move to 18 to update."
     },
     {
-      "icon": "speed",
-      "title": "Active Sessions Wall Stays Put",
-      "body": "The Active Sessions wall on Home no longer shuffles its tiles every few seconds. Jellyfin reorders sessions on every progress update and the wall used to follow along. Wall and Cards now keep the same fixed order, so a tile only moves when someone starts or stops watching."
-    },
-    {
-      "icon": "speed",
-      "title": "Active Sessions Timings Fixed",
-      "body": "Active Sessions cards now read position, runtime, time left and the progress bar from the same playback values, so they always agree. The ETA field is now Left: it shows the time remaining, plus the clock time it ends while playing. Paused streams just show what's left instead of an end time that keeps moving. A stream that hasn't reported its position yet shows --:--:-- instead of NaN or Invalid Date, and an empty bar no longer shows a stray dot. The progress bar now sits between the two timestamps, and the poster fills the card with space before the text, so nothing crowds the artwork."
-    },
-    {
-      "icon": "rocket",
-      "title": "One-Click Deploy and Updates",
-      "body": "The README Quick start now links a one-click deploy option. Under the hood, follow-redirects is on 1.16.3, eslint on 10.14.0 and the Renovate action on 46.3.13."
+      "icon": "shield",
+      "title": "Security Fixes",
+      "body": "Tighter checks on Discord webhook and YouTube trailer links, safer handling of Letterboxd titles and Arr image paths, and a cap on how long a stop-with-message can wait. The README also links a one-click deploy option."
     }
   ],
   "1.4.2": [

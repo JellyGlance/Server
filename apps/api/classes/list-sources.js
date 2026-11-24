@@ -101,14 +101,15 @@ function parseLetterboxdUrl(value) {
   return null;
 }
 
+// &amp; is decoded last so "&amp;lt;" becomes the text "&lt;", not "<".
 function decodeEntities(value) {
   return String(value || "")
-    .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&#0?39;|&apos;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&amp;/g, "&");
 }
 
 function parseLetterboxdPage(html) {

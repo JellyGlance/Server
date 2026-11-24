@@ -182,10 +182,22 @@ function buildTelegramDigest({
   return { method: "sendMessage", ...payload, text: lines.join("\n").slice(0, 4096) };
 }
 
+const DISCORD_WEBHOOK_HOSTS = new Set(["discord.com", "discordapp.com", "ptb.discord.com", "canary.discord.com"]);
+
+// Checks the parsed host exactly, so "https://evil.example/discord.com/api/webhooks/" is rejected.
+function isDiscordWebhookUrl(value) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && DISCORD_WEBHOOK_HOSTS.has(parsed.hostname.toLowerCase()) && parsed.pathname.startsWith("/api/webhooks/");
+  } catch {
+    return false;
+  }
+}
+
 async function postDiscordWebhook(webhookUrl, payload) {
   if (notificationsDisabled()) return { skipped: "notifications-disabled" };
   const url = publicUrl.safeHttpUrl(webhookUrl);
-  if (!url || !/discord(?:app)?\.com\/api\/webhooks\//i.test(url)) {
+  if (!url || !isDiscordWebhookUrl(url)) {
     return { skipped: "invalid-webhook" };
   }
   const response = await axios.post(url, payload, { timeout: 12000, validateStatus: () => true });
